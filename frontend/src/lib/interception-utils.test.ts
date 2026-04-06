@@ -6,7 +6,7 @@ function makeGeneral(overrides: Partial<General> & { id: number }): General {
     return {
         worldId: 1,
         userId: null,
-        name: overrides.name ?? `장수${overrides.id}`,
+        name: overrides.name ?? `장교${overrides.id}`,
         nationId: overrides.nationId ?? 1,
         cityId: overrides.cityId ?? 10,
         troopId: 0,
@@ -102,7 +102,7 @@ describe('getInterceptionMarkers', () => {
         const result = getInterceptionMarkers(generals, 1, colorMap);
         expect(result).toHaveLength(1);
         expect(result[0]).toEqual({
-            generalName: '장수1',
+            generalName: '장교1',
             nationColor: '#ff0000',
             fromCityId: 10,
             toCityId: 20,

@@ -64,14 +64,14 @@ function getContrastTextColor(hex: string): string {
   return luminance > 0.5 ? '#000000' : '#ffffff';
 }
 
-/** Canvas 2D로 국가색 배경 + 국가명 텍스처 생성 */
+/** Canvas 2D로 진영색 배경 + 진영명 텍스처 생성 */
 function createFlagTexture(color: string, text: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
   canvas.height = 128;
   const ctx = canvas.getContext('2d')!;
 
-  // 배경: 국가 색상
+  // 배경: 진영 색상
   ctx.fillStyle = color;
   ctx.fillRect(0, 0, 256, 128);
 
@@ -80,7 +80,7 @@ function createFlagTexture(color: string, text: string): THREE.CanvasTexture {
   ctx.lineWidth = 4;
   ctx.strokeRect(2, 2, 252, 124);
 
-  // 국가명 텍스트 (배경 밝기에 따라 흑/백 자동 선택)
+  // 진영명 텍스트 (배경 밝기에 따라 흑/백 자동 선택)
   const textColor = getContrastTextColor(color);
   const shadowColor = textColor === '#ffffff' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.4)';
   ctx.fillStyle = textColor;
@@ -147,7 +147,7 @@ function WavingFlag({
   );
 }
 
-/** 내 도시 여부에 따라 펄스 링 표시 결정 */
+/** 내 행성 여부에 따라 펄스 링 표시 결정 */
 export function shouldShowMyLocationRing(isMyCity: boolean): boolean {
   return isMyCity;
 }
@@ -157,7 +157,7 @@ export function calcPulseOpacity(time: number): number {
   return 0.6 + 0.3 * Math.sin(time * 3);
 }
 
-/** 내 도시 위치 표시 펄스 링 */
+/** 내 행성 위치 표시 펄스 링 */
 function MyLocationRing({ baseR }: { baseR: number }) {
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
 
@@ -234,7 +234,7 @@ export function CityModel({ city, heightMap, segments = 64, onClick, onHover }: 
         />
       </mesh>
 
-      {/* 내 도시 펄스 링 */}
+      {/* 내 행성 펄스 링 */}
       {shouldShowMyLocationRing(city.isMyCity) && <MyLocationRing baseR={baseR} />}
 
       {/* GLB 모델 */}
@@ -248,7 +248,7 @@ export function CityModel({ city, heightMap, segments = 64, onClick, onHover }: 
         onPointerOut={() => onHover?.(null)}
       />
 
-      {/* 국가 깃발 (펄럭이는 셰이더) */}
+      {/* 진영 깃발 (펄럭이는 셰이더) */}
       {nationColor && (
         <group position={[0, flagH, 0]}>
           {/* 깃대 */}
@@ -268,7 +268,7 @@ export function CityModel({ city, heightMap, segments = 64, onClick, onHover }: 
         </group>
       )}
 
-      {/* 도시 이름 (GPU SDF 텍스트) */}
+      {/* 행성 이름 (GPU SDF 텍스트) */}
       <Text
         position={[0, labelY, 0]}
         fontSize={3 * S}

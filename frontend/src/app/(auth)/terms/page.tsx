@@ -13,7 +13,7 @@ export default function TermsPage() {
                             <ArrowLeft className="size-4" />
                         </Link>
                     </Button>
-                    <CardTitle className="text-xl">오픈삼국 이용 약관</CardTitle>
+                    <CardTitle className="text-xl">오픈은하영웅전설 이용 약관</CardTitle>
                 </div>
             </CardHeader>
             <CardContent className="px-0 pb-0 space-y-8 text-sm leading-relaxed text-muted-foreground">
@@ -21,7 +21,7 @@ export default function TermsPage() {
                 <section className="space-y-2">
                     <h2 className="text-base font-semibold text-foreground">제1조 (목적)</h2>
                     <p>
-                        이 약관은 오픈삼국 서비스 제공자가 제공하는 삼국지 모의전투 서비스와 관련하여 서비스 제공자와
+                        이 약관은 오픈은하영웅전설 서비스 제공자가 제공하는 은하영웅전설 모의전투 서비스와 관련하여 서비스 제공자와
                         이용자의 권리, 의무, 책임사항 및 기타 필요 사항을 규정함을 목적으로 합니다.
                     </p>
                 </section>
@@ -32,7 +32,7 @@ export default function TermsPage() {
                     <p>이 약관에서 사용하는 용어의 정의는 다음과 같습니다.</p>
                     <ol className="list-decimal pl-5 space-y-1">
                         <li>
-                            &quot;서비스&quot;: 디스플레이가 구현되는 단말 장치(PC, 휴대폰 등)에서 제공되는 삼국지
+                            &quot;서비스&quot;: 디스플레이가 구현되는 단말 장치(PC, 휴대폰 등)에서 제공되는 은하영웅전설
                             모의전투 서비스 및 관련 제반 서비스
                         </li>
                         <li>
@@ -205,9 +205,9 @@ export default function TermsPage() {
                         <li>
                             ① 서비스 제공자는 다음의 서비스를 이용자에게 제공합니다:
                             <ul className="list-disc pl-5 mt-1 space-y-1">
-                                <li>삼국지 모의전투</li>
+                                <li>은하영웅전설 모의전투</li>
                                 <li>게시판 커뮤니티</li>
-                                <li>삼국지 모의전투 내 채팅</li>
+                                <li>은하영웅전설 모의전투 내 채팅</li>
                                 <li>기타 서비스 제공자가 추가 개발하거나 제휴 등을 통해 제공하는 서비스</li>
                             </ul>
                         </li>

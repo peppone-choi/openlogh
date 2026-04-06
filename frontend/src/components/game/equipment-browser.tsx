@@ -434,7 +434,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
                                         <div className="flex gap-2 mt-0.5 text-[10px] text-muted-foreground">
                                             {item.attack && <span>공격+{item.attack}</span>}
                                             {item.defence && <span>방어+{item.defence}</span>}
-                                            {item.intel && <span>지력+{item.intel}</span>}
+                                            {item.intel && <span>정보+{item.intel}</span>}
                                             {item.leadership && <span>통솔+{item.leadership}</span>}
                                             {item.speed && <span>속도+{item.speed}</span>}
                                             <span className="ml-auto">치안 {item.reqSecu}+</span>
@@ -502,7 +502,7 @@ export function EquipmentBrowser({ commandName, citySecu, gold, onSubmit }: Equi
                     <div className="flex gap-2 mt-1 text-[10px]">
                         {selectedItem.attack && <span>⚔️ 공격+{selectedItem.attack}</span>}
                         {selectedItem.defence && <span>🛡️ 방어+{selectedItem.defence}</span>}
-                        {selectedItem.intel && <span>📖 지력+{selectedItem.intel}</span>}
+                        {selectedItem.intel && <span>📖 정보+{selectedItem.intel}</span>}
                         {selectedItem.leadership && <span>👑 통솔+{selectedItem.leadership}</span>}
                         {selectedItem.speed && <span>🏇 속도+{selectedItem.speed}</span>}
                     </div>

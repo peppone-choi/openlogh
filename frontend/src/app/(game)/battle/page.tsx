@@ -38,7 +38,7 @@ interface MilitaryRow {
 type OldLogType = 'generalHistory' | 'generalAction' | 'battleResult' | 'battleDetail';
 
 const GENERAL_LOG_SECTIONS: { type: OldLogType; title: string; emptyTitle: string }[] = [
-    { type: 'generalHistory', title: '장수 열전', emptyTitle: '장수 열전 기록이 없습니다.' },
+    { type: 'generalHistory', title: '장교 열전', emptyTitle: '장교 열전 기록이 없습니다.' },
     { type: 'battleResult', title: '전투 기록', emptyTitle: '전투 기록이 없습니다.' },
     { type: 'battleDetail', title: '전투 결과', emptyTitle: '전투 결과가 없습니다.' },
     { type: 'generalAction', title: '개인 기록', emptyTitle: '개인 기록이 없습니다.' },
@@ -270,7 +270,7 @@ export default function BattlePage() {
                             내 전투기록
                         </TabsTrigger>
                     )}
-                    {myOfficer && <TabsTrigger value="general-logs">장수 기록</TabsTrigger>}
+                    {myOfficer && <TabsTrigger value="general-logs">장교 기록</TabsTrigger>}
                 </TabsList>
 
                 {/* Tab 1: War Status */}
@@ -391,7 +391,7 @@ export default function BattlePage() {
                 <TabsContent value="military" className="mt-4 space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>국가별 군사력 비교</CardTitle>
+                            <CardTitle>진영별 군사력 비교</CardTitle>
                         </CardHeader>
                         <CardContent>
                             {sortedMilitary.length === 0 ? (
@@ -401,12 +401,12 @@ export default function BattlePage() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>국가</TableHead>
+                                                <TableHead>진영</TableHead>
                                                 <TableHead
                                                     className="cursor-pointer select-none text-right"
                                                     onClick={() => handleSort('totalCrew')}
                                                 >
-                                                    총 병력
+                                                    총 함선
                                                     <SortIndicator active={sortKey === 'totalCrew'} />
                                                 </TableHead>
                                                 <TableHead
@@ -486,7 +486,7 @@ export default function BattlePage() {
                 {/* Tab 3: Front Lines */}
                 <TabsContent value="frontline" className="mt-4 space-y-4">
                     {frontCities.length === 0 ? (
-                        <EmptyState icon={Shield} title="전선 도시가 없습니다." />
+                        <EmptyState icon={Shield} title="전선 행성이 없습니다." />
                     ) : (
                         frontCities.map((c) => {
                             const cityGenerals = generalsByCity.get(c.id) ?? [];
@@ -512,7 +512,7 @@ export default function BattlePage() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1">
                                                 <div className="flex justify-between text-xs">
-                                                    <span className="text-muted-foreground">성벽</span>
+                                                    <span className="text-muted-foreground">요새</span>
                                                     <span>
                                                         {c.wall}/{c.wallMax} ({wallPercent}%)
                                                     </span>
@@ -544,14 +544,14 @@ export default function BattlePage() {
                                         {cityGenerals.length > 0 && (
                                             <div>
                                                 <div className="text-xs text-muted-foreground mb-1">
-                                                    주둔 장수 ({cityGenerals.length}명)
+                                                    주둔 장교 ({cityGenerals.length}명)
                                                 </div>
                                                 <div className="overflow-x-auto">
                                                     <Table>
                                                         <TableHeader>
                                                             <TableRow>
                                                                 <TableHead>이름</TableHead>
-                                                                <TableHead className="text-right">병력</TableHead>
+                                                                <TableHead className="text-right">함선</TableHead>
                                                                 <TableHead className="text-right">훈련</TableHead>
                                                                 <TableHead className="text-right">사기</TableHead>
                                                             </TableRow>
@@ -656,7 +656,7 @@ export default function BattlePage() {
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-sm">
                                     <User className="size-4" />
-                                    장수 선택
+                                    장교 선택
                                     <div className="ml-auto flex items-center gap-2">
                                         <span className="text-xs text-muted-foreground">로그 스타일:</span>
                                         <select
@@ -684,7 +684,7 @@ export default function BattlePage() {
                                 </select>
                                 {selectedGeneral && (
                                     <div className="mt-2 text-xs text-muted-foreground">
-                                        선택된 장수: {selectedGeneral.name}
+                                        선택된 장교: {selectedGeneral.name}
                                     </div>
                                 )}
                             </CardContent>

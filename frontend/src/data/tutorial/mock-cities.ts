@@ -54,7 +54,7 @@ export const MOCK_CITY_CHENGDU: City = {
     wallMax: 3000,
 };
 
-/** 면죽 — 촉 도시 */
+/** 면죽 — 촉 행성 */
 export const MOCK_CITY_MIANZHU: City = {
     ...BASE_CITY,
     id: -2,
@@ -96,7 +96,7 @@ export const MOCK_CITY_XUCHANG: City = {
     wallMax: 3500,
 };
 
-/** 한중 — 중립 도시 */
+/** 한중 — 중립 행성 */
 export const MOCK_CITY_HANZHONG: City = {
     ...BASE_CITY,
     id: -4,

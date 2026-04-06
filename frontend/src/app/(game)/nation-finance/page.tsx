@@ -182,14 +182,14 @@ export default function NationFinancePage() {
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (!myOfficer || !myOfficer.nationId)
-        return <div className="p-4 text-muted-foreground">국가에 소속되어있지 않습니다.</div>;
+        return <div className="p-4 text-muted-foreground">진영에 소속되어있지 않습니다.</div>;
     if (loading)
         return (
             <div className="p-4">
                 <LoadingState />
             </div>
         );
-    if (!nation) return <div className="p-4 text-muted-foreground">국가 정보를 불러올 수 없습니다.</div>;
+    if (!nation) return <div className="p-4 text-muted-foreground">진영 정보를 불러올 수 없습니다.</div>;
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">
@@ -205,8 +205,8 @@ export default function NationFinancePage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>국가명</TableHead>
-                                    <TableHead className="text-right">국력</TableHead>
+                                    <TableHead>진영명</TableHead>
+                                    <TableHead className="text-right">군사력</TableHead>
                                     <TableHead className="text-right">속령</TableHead>
                                     <TableHead>상태</TableHead>
                                     <TableHead className="text-right">기간</TableHead>
@@ -234,7 +234,7 @@ export default function NationFinancePage() {
                                 {otherNations.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={5} className="text-center text-muted-foreground">
-                                            다른 국가가 없습니다.
+                                            다른 진영이 없습니다.
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -284,7 +284,7 @@ export default function NationFinancePage() {
                 {/* Rice Budget */}
                 <Card>
                     <CardHeader className="py-2 px-4">
-                        <CardTitle className="text-sm">군량 예산</CardTitle>
+                        <CardTitle className="text-sm">물자 예산</CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 pb-3 space-y-1 text-sm">
                         <div className="flex justify-between">
@@ -413,7 +413,7 @@ export default function NationFinancePage() {
                     {/* Summary badges */}
                     <div className="flex flex-wrap gap-2 text-xs">
                         <Badge variant="secondary">국력: {getNationLevelLabel(nation.level, nation.typeCode)}</Badge>
-                        <Badge variant="secondary">도시: {cities.length}개</Badge>
+                        <Badge variant="secondary">행성: {cities.length}개</Badge>
                         <Badge variant="secondary">장수: {generals.filter((g) => g.npcState !== 5).length}명</Badge>
                         <Badge variant="secondary">기술: {nation.tech}</Badge>
                     </div>

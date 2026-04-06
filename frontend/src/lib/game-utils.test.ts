@@ -83,17 +83,17 @@ describe('nation level labels (10 levels)', () => {
         expect(Object.keys(NATION_LEVEL_LABELS)).toHaveLength(10);
         expect(NATION_LEVEL_LABELS[0]).toBe('방랑군');
         expect(NATION_LEVEL_LABELS[1]).toBe('도위');
-        expect(NATION_LEVEL_LABELS[9]).toBe('황제');
+        expect(NATION_LEVEL_LABELS[9]).toBe('원수');
     });
 });
 
 describe('officer level text with ruler level 20', () => {
-    it('returns 군주 for officer level 20 with default map', () => {
-        expect(formatOfficerLevelText(20)).toBe('군주');
+    it('returns 원수 for officer level 20 with default map', () => {
+        expect(formatOfficerLevelText(20)).toBe('원수');
     });
 
-    it('returns 황제 for officer level 20 at nation level 9', () => {
-        expect(formatOfficerLevelText(20, 9)).toBe('황제');
+    it('returns 원수 for officer level 20 at nation level 9', () => {
+        expect(formatOfficerLevelText(20, 9)).toBe('원수');
     });
 
     it('returns 방주 for officer level 20 at nation level 0', () => {
@@ -143,18 +143,18 @@ describe('황건(태평도) special officer ranks', () => {
         expect(formatOfficerLevelText(20, 2, false, 'che_태평도')).toBe('천공장군');
     });
 
-    it('returns 황제 when npcState is 10', () => {
-        expect(formatOfficerLevelText(1, 9, true, undefined, 10)).toBe('황제');
+    it('returns 원수 when npcState is 10', () => {
+        expect(formatOfficerLevelText(1, 9, true, undefined, 10)).toBe('원수');
     });
 
-    it('does not return 황제 for normal npcState', () => {
+    it('does not return 원수 for normal npcState', () => {
         expect(formatOfficerLevelText(1, 9, true)).toBe('일반');
     });
 });
 
 describe('getNationLevelLabel', () => {
-    it('returns 황제 for level 9 default', () => {
-        expect(getNationLevelLabel(9)).toBe('황제');
+    it('returns 원수 for level 9 default', () => {
+        expect(getNationLevelLabel(9)).toBe('원수');
     });
 
     it('returns 천공장군 for level 9 황건적', () => {

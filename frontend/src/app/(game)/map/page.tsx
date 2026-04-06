@@ -446,7 +446,7 @@ export default function MapPage() {
         return <div className="flex items-center justify-center h-64 text-gray-500">지도를 불러오는 중...</div>;
     }
 
-    const serverName = currentWorld?.name ?? '삼국지';
+    const serverName = currentWorld?.name ?? '은하영웅전설';
     const getHistoryBullet = (text: string | undefined) => {
         if (!text) return '●';
         if (text.includes('【대회】') || text.includes('【안내】')) return '◆';
@@ -518,8 +518,8 @@ export default function MapPage() {
                     </select>
                     <span className="ml-1 text-muted-foreground">레이어</span>
                     {[
-                        { key: 'nations' as MapLayer, label: '국가색' },
-                        { key: 'troops' as MapLayer, label: '병력' },
+                        { key: 'nations' as MapLayer, label: '진영색' },
+                        { key: 'troops' as MapLayer, label: '함선' },
                         { key: 'supply' as MapLayer, label: '보급' },
                         { key: 'terrain' as MapLayer, label: '지형' },
                     ].map((layer) => (

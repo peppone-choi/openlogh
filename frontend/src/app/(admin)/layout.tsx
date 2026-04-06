@@ -22,11 +22,11 @@ import {
 
 const adminNav = [
     { href: '/admin', label: '대시보드', icon: LayoutDashboard },
-    { href: '/admin/members', label: '장수 관리', icon: Users },
+    { href: '/admin/members', label: '장교 관리', icon: Users },
     { href: '/admin/statistics', label: '통계', icon: BarChart3 },
     { href: '/admin/logs', label: '로그', icon: ScrollText },
     { href: '/admin/diplomacy', label: '외교', icon: Handshake },
-    { href: '/admin/select-pool', label: '장수 풀', icon: Users },
+    { href: '/admin/select-pool', label: '장교 풀', icon: Users },
     { href: '/admin/users', label: '유저 관리', icon: UserCog },
     { href: '/admin/game-versions', label: '게임 버전', icon: Container },
 ];

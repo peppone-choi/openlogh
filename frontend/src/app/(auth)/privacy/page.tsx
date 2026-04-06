@@ -24,7 +24,7 @@ export default function PrivacyPage() {
 
                 <section className="space-y-3">
                     <h2 className="text-base font-semibold text-foreground">1. 개인정보 처리 내역</h2>
-                    <p>오픈삼국 서비스 이용 시 개인정보 처리 내역은 다음과 같습니다.</p>
+                    <p>오픈은하영웅전설 서비스 이용 시 개인정보 처리 내역은 다음과 같습니다.</p>
                     <ul className="list-disc pl-5 space-y-1">
                         <li>
                             <strong className="text-foreground">수집·이용 목적:</strong> 이용자 연령 확인, 중복 가입

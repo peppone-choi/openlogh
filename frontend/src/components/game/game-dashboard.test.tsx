@@ -30,7 +30,7 @@ describe('game-dashboard.tsx source scan', () => {
         expect(dashboardSrc).toContain('joinMode');
     });
 
-    it('displays officerCity (관할 도시) in general summary or dashboard', () => {
+    it('displays officerCity (관할 행성) in general summary or dashboard', () => {
         // officerCity is shown in general-basic-card already, but joinMode should be in dashboard
         // This test just checks that the dashboard source references joinMode display
         expect(dashboardSrc).toContain('joinMode');

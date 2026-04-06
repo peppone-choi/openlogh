@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 describe('terms page', () => {
     it('should have correct title', () => {
-        const title = '오픈삼국 이용 약관';
-        expect(title).toContain('오픈삼국');
+        const title = '오픈은하영웅전설 이용 약관';
+        expect(title).toContain('오픈은하영웅전설');
     });
 
     it('should cover all major articles', () => {

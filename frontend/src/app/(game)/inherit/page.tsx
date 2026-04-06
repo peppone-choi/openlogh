@@ -26,7 +26,7 @@ const POINT_CATEGORY_LABELS: Record<string, string> = {
     previous: '기존 포인트',
     lived_month: '생존',
     max_belong: '최대 임관년 수',
-    max_domestic_critical: '최대 연속 내정 성공',
+    max_domestic_critical: '최대 연속 행성 관리 성공',
     active_action: '능동 행동 수',
     combat: '전투 횟수',
     sabotage: '계략 성공 횟수',
@@ -89,12 +89,12 @@ const COMBAT_BUFF_LIST: {
     },
     {
         code: 'domesticSuccessProb',
-        label: '내정 성공 확률 증가',
+        label: '행성 관리 성공 확률 증가',
         info: '내정의 성공 확률이 1%p ~ 5%p 증가합니다.',
     },
     {
         code: 'domesticFailProb',
-        label: '내정 실패 확률 감소',
+        label: '행성 관리 실패 확률 감소',
         info: '내정의 실패 확률이 1%p ~ 5%p 감소합니다.',
     },
 ];
@@ -265,11 +265,11 @@ export default function InheritPage() {
         try {
             await inheritanceApi.setCity(currentWorld.id, Number(selectedCity));
             const cityName = cities.find((c) => c.id === Number(selectedCity))?.name;
-            toast.success(`시작 도시 지정: ${cityName}`);
+            toast.success(`시작 행성 지정: ${cityName}`);
             setSelectedCity('');
             fetchInfo();
         } catch {
-            toast.error('시작 도시 지정 실패');
+            toast.error('시작 행성 지정 실패');
         }
     };
 
@@ -394,9 +394,9 @@ export default function InheritPage() {
         try {
             const { data } = await inheritanceApi.checkOwner(currentWorld.id, Number(targetOwnerId));
             if (data.found) {
-                setOwnerResult(`'${targetName}' 장수의 소유주: ${data.ownerName}`);
+                setOwnerResult(`'${targetName}' 장교의 소유주: ${data.ownerName}`);
             } else {
-                setOwnerResult(`'${targetName}' 장수를 찾을 수 없습니다.`);
+                setOwnerResult(`'${targetName}' 장교를 찾을 수 없습니다.`);
             }
             fetchInfo();
         } catch {
@@ -534,7 +534,7 @@ export default function InheritPage() {
                     )}
 
                     <p className="text-sm text-muted-foreground">
-                        이전 게임에서 획득한 포인트로 새 장수에게 보너스를 줄 수 있습니다.
+                        이전 게임에서 획득한 포인트로 새 장교에게 보너스를 줄 수 있습니다.
                     </p>
                 </CardContent>
             </Card>
@@ -542,7 +542,7 @@ export default function InheritPage() {
             <Tabs defaultValue="combat-buffs">
                 <TabsList className="flex-wrap">
                     <TabsTrigger value="combat-buffs">전투 버프</TabsTrigger>
-                    <TabsTrigger value="specials">특기/도시</TabsTrigger>
+                    <TabsTrigger value="specials">특기/행성</TabsTrigger>
                     <TabsTrigger value="shop">상점</TabsTrigger>
                     <TabsTrigger value="unique">유니크</TabsTrigger>
                     <TabsTrigger value="misc">기타</TabsTrigger>
@@ -555,12 +555,12 @@ export default function InheritPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Shield className="size-4" />
-                                전투/내정 버프
+                                전투/행성 관리 버프
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <p className="text-xs text-muted-foreground">
-                                전투 및 내정에 영향을 주는 숨겨진 버프입니다. 레벨을 선택한 후 구입하세요.
+                                전투 및 행성 관리에 영향을 주는 숨겨진 버프입니다. 레벨을 선택한 후 구입하세요.
                             </p>
                             {COMBAT_BUFF_LIST.map((buff) => {
                                 const prevLevel = info?.inheritBuff?.[buff.code] ?? 0;
@@ -673,10 +673,10 @@ export default function InheritPage() {
                     {/* Start City Designation */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">시작 도시 지정</CardTitle>
+                            <CardTitle className="text-sm">시작 행성 지정</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <p className="text-sm text-muted-foreground">다음에 시작할 도시를 지정합니다.</p>
+                            <p className="text-sm text-muted-foreground">다음에 시작할 행성을 지정합니다.</p>
                             <div className="flex gap-2">
                                 <select
                                     className="flex-1 rounded-none border bg-background px-3 py-2 text-sm"
@@ -777,18 +777,18 @@ export default function InheritPage() {
                                             },
                                             {
                                                 id: 'strength',
-                                                label: '무력',
+                                                label: '지휘',
                                                 value: statStrength,
                                                 setter: setStatStrength,
                                             },
-                                            { id: 'intel', label: '지력', value: statIntel, setter: setStatIntel },
+                                            { id: 'intel', label: '정보', value: statIntel, setter: setStatIntel },
                                             {
                                                 id: 'politics',
                                                 label: '정치',
                                                 value: statPolitics,
                                                 setter: setStatPolitics,
                                             },
-                                            { id: 'charm', label: '매력', value: statCharm, setter: setStatCharm },
+                                            { id: 'charm', label: '운영', value: statCharm, setter: setStatCharm },
                                         ] as const
                                     ).map((stat) => (
                                         <div key={stat.id} className="space-y-1">
@@ -814,10 +814,10 @@ export default function InheritPage() {
                                     {(
                                         [
                                             [0, 'leadership', '통솔'],
-                                            [1, 'strength', '무력'],
-                                            [2, 'intel', '지력'],
+                                            [1, 'strength', '지휘'],
+                                            [2, 'intel', '정보'],
                                             [3, 'politics', '정치'],
-                                            [4, 'charm', '매력'],
+                                            [4, 'charm', '운영'],
                                         ] as [number, string, string][]
                                     ).map(([idx, id, label]) => (
                                         <div key={id} className="space-y-1">
@@ -949,7 +949,7 @@ export default function InheritPage() {
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <p className="text-sm text-muted-foreground">
-                                특정 장수의 실제 소유주(유저)를 확인합니다. 대상에게도 알림이 전송됩니다.
+                                특정 장교의 실제 소유주(유저)를 확인합니다. 대상에게도 알림이 전송됩니다.
                             </p>
                             <div className="flex gap-2">
                                 <select
@@ -957,7 +957,7 @@ export default function InheritPage() {
                                     value={targetOwnerId}
                                     onChange={(e) => setTargetOwnerId(e.target.value)}
                                 >
-                                    <option value="">장수 선택...</option>
+                                    <option value="">장교 선택...</option>
                                     {Object.entries(availableTargetGeneral).map(([id, name]) => (
                                         <option key={id} value={id}>
                                             {name}

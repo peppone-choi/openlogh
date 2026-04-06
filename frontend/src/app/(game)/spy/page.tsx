@@ -108,7 +108,7 @@ export default function SpyPage() {
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Badge variant="secondary">{myNation?.name ?? '무소속'}</Badge>
-                <span>소속 장수 {nationGenerals.length}명</span>
+                <span>소속 장교 {nationGenerals.length}명</span>
             </div>
 
             <div className="grid grid-cols-4 gap-px bg-gray-700 rounded overflow-hidden text-xs">
@@ -133,25 +133,25 @@ export default function SpyPage() {
                     </div>
                 </div>
                 <div className="bg-muted/30 px-2 py-1 text-center">
-                    <span className="text-muted-foreground">전체 병력/장수</span>
+                    <span className="text-muted-foreground">전체 함선/장수</span>
                     <div className="font-medium">
                         {summary.crewTotal.toLocaleString()}/{summary.effCount.toLocaleString()}
                     </div>
                 </div>
                 <div className="bg-muted/30 px-2 py-1 text-center">
-                    <span className="text-muted-foreground">훈사90 병력/장수</span>
+                    <span className="text-muted-foreground">훈사90 함선/장수</span>
                     <div className="font-medium text-green-400">
                         {summary.crew90.toLocaleString()}/{summary.gen90.toLocaleString()}
                     </div>
                 </div>
                 <div className="bg-muted/30 px-2 py-1 text-center">
-                    <span className="text-muted-foreground">훈사80 병력/장수</span>
+                    <span className="text-muted-foreground">훈사80 함선/장수</span>
                     <div className="font-medium text-yellow-400">
                         {summary.crew80.toLocaleString()}/{summary.gen80.toLocaleString()}
                     </div>
                 </div>
                 <div className="bg-muted/30 px-2 py-1 text-center">
-                    <span className="text-muted-foreground">훈사60 병력/장수</span>
+                    <span className="text-muted-foreground">훈사60 함선/장수</span>
                     <div className="font-medium text-orange-400">
                         {summary.crew60.toLocaleString()}/{summary.gen60.toLocaleString()}
                     </div>
@@ -163,10 +163,10 @@ export default function SpyPage() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>이름</TableHead>
-                            <TableHead>도시</TableHead>
+                            <TableHead>행성</TableHead>
                             <TableHead>자금</TableHead>
-                            <TableHead>군량</TableHead>
-                            <TableHead>병종</TableHead>
+                            <TableHead>물자</TableHead>
+                            <TableHead>함종</TableHead>
                             <TableHead>병사</TableHead>
                             <TableHead>훈련</TableHead>
                             <TableHead>사기</TableHead>
@@ -196,7 +196,7 @@ export default function SpyPage() {
                         {nationGenerals.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={11} className="text-center text-muted-foreground">
-                                    소속 장수가 없습니다.
+                                    소속 장교가 없습니다.
                                 </TableCell>
                             </TableRow>
                         )}

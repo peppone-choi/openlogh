@@ -58,7 +58,7 @@ export default function GeneralPage() {
     useEffect(() => {
         if (!currentWorld) return;
         fetchMyOfficer(currentWorld.id).catch(() => {
-            setError('장수 정보를 불러올 수 없습니다.');
+            setError('장교 정보를 불러올 수 없습니다.');
         });
     }, [currentWorld, fetchMyOfficer]);
 
@@ -92,7 +92,7 @@ export default function GeneralPage() {
             setCity(cityData);
             setNation(nationData);
         } catch {
-            setError('나의 장수 정보를 불러오지 못했습니다.');
+            setError('나의 장교 정보를 불러오지 못했습니다.');
         }
     }, [currentWorld, myOfficer]);
 
@@ -152,7 +152,7 @@ export default function GeneralPage() {
         return <LoadingState />;
     }
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myOfficer) return <LoadingState message="장수 정보가 없습니다." />;
+    if (!myOfficer) return <LoadingState message="장교 정보가 없습니다." />;
 
     const g = myOfficer;
     const fi = frontInfo;
@@ -198,7 +198,7 @@ export default function GeneralPage() {
 
     return (
         <div className="p-4 space-y-4 max-w-4xl mx-auto">
-            <PageHeader icon={User} title="나의 장수" />
+            <PageHeader icon={User} title="나의 장교" />
 
             {/* Tab selector */}
             <div className="flex gap-1 border-b pb-1">
@@ -217,7 +217,7 @@ export default function GeneralPage() {
                         onClick={() => setActiveTab('nation-generals')}
                     >
                         <Users className="size-4 mr-1" />
-                        소속 세력 장수 목록
+                        소속 세력 장교 목록
                     </Button>
                 )}
             </div>
@@ -250,7 +250,7 @@ export default function GeneralPage() {
                                         <span className="text-yellow-400">{typeCall}</span>
                                     </p>
                                     <p className="text-sm">
-                                        <span className="text-muted-foreground">위치:</span> {city?.name ?? '도시 미상'}
+                                        <span className="text-muted-foreground">위치:</span> {city?.name ?? '행성 미상'}
                                     </p>
                                     <p className="text-sm">
                                         <span className="text-muted-foreground">나이:</span>{' '}
@@ -306,13 +306,13 @@ export default function GeneralPage() {
                                         color: 'red',
                                     },
                                     {
-                                        label: '무력',
+                                        label: '지휘',
                                         value: g.strength,
                                         exp: g.strengthExp,
                                         color: 'orange',
                                     },
                                     {
-                                        label: '지력',
+                                        label: '정보',
                                         value: g.intel,
                                         exp: g.intelExp,
                                         color: 'dodgerblue',
@@ -324,7 +324,7 @@ export default function GeneralPage() {
                                         color: 'limegreen',
                                     },
                                     {
-                                        label: '매력',
+                                        label: '운영',
                                         value: g.charm,
                                         exp: 0,
                                         color: 'mediumpurple',
@@ -392,7 +392,7 @@ export default function GeneralPage() {
                                         <span>{g.crew.toLocaleString()}</span>
                                     </div>
                                     <div>
-                                        <span className="text-muted-foreground">병종:</span>{' '}
+                                        <span className="text-muted-foreground">함종:</span>{' '}
                                         <span className="text-cyan-300">
                                             {CREW_TYPE_NAMES[g.crewType] ?? g.crewType}
                                         </span>
@@ -535,7 +535,7 @@ export default function GeneralPage() {
                     {/* Biography */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">장수 열전</CardTitle>
+                            <CardTitle className="text-sm">장교 열전</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2">
                             {biographyRows.length === 0 ? (
@@ -580,12 +580,12 @@ function NationGeneralsList({
         [generals]
     );
 
-    if (loading) return <LoadingState message="세력 장수 목록 로딩 중..." />;
+    if (loading) return <LoadingState message="세력 장교 목록 로딩 중..." />;
     if (generals.length === 0) {
         return (
             <Card>
                 <CardContent className="py-8 text-center text-muted-foreground">
-                    세력에 소속된 장수가 없습니다.
+                    세력에 소속된 장교가 없습니다.
                 </CardContent>
             </Card>
         );
@@ -596,7 +596,7 @@ function NationGeneralsList({
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                     <Users className="size-4" />
-                    {nation?.name ?? '세력'} 장수 목록 ({generals.length}명)
+                    {nation?.name ?? '세력'} 장교 목록 ({generals.length}명)
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -607,7 +607,7 @@ function NationGeneralsList({
                                 <TableHead className="w-10"></TableHead>
                                 <TableHead>이름</TableHead>
                                 <TableHead>관직</TableHead>
-                                <TableHead>도시</TableHead>
+                                <TableHead>행성</TableHead>
                                 <TableHead className="text-center">Lv</TableHead>
                                 <TableHead className="text-center">통</TableHead>
                                 <TableHead className="text-center">무</TableHead>
@@ -615,7 +615,7 @@ function NationGeneralsList({
                                 <TableHead className="text-center">정</TableHead>
                                 <TableHead className="text-center">매</TableHead>
                                 <TableHead className="text-center">병사</TableHead>
-                                <TableHead className="text-center">병종</TableHead>
+                                <TableHead className="text-center">함종</TableHead>
                                 <TableHead>특기</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -691,9 +691,9 @@ function getCurrentCommandName(lastTurn: LastTurnInfo): string {
 function getCurrentCommandTarget(lastTurn: LastTurnInfo, currentCityName: string | undefined): string {
     const arg = lastTurn.arg;
     const targetCity = arg?.destCityId;
-    if (typeof targetCity === 'number') return `도시 #${targetCity}`;
+    if (typeof targetCity === 'number') return `행성 #${targetCity}`;
     if (typeof targetCity === 'string' && targetCity.length > 0) {
-        return `도시 #${targetCity}`;
+        return `행성 #${targetCity}`;
     }
     return currentCityName ?? '-';
 }

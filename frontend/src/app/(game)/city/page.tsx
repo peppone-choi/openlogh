@@ -42,12 +42,12 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
     { value: 'default', label: '기본' },
     { value: 'pop', label: '인구' },
     { value: 'popRate', label: '인구율' },
-    { value: 'trust', label: '민심' },
-    { value: 'agri', label: '농업' },
-    { value: 'comm', label: '상업' },
+    { value: 'trust', label: '지지도' },
+    { value: 'agri', label: '생산' },
+    { value: 'comm', label: '교역' },
     { value: 'secu', label: '치안' },
     { value: 'def', label: '수비' },
-    { value: 'wall', label: '성벽' },
+    { value: 'wall', label: '요새' },
     { value: 'trade', label: '시세' },
     { value: 'region', label: '지역' },
     { value: 'level', label: '규모' },
@@ -128,7 +128,7 @@ function CityPageContent() {
     useEffect(() => {
         if (!currentWorld) return;
         if (!myOfficer) {
-            fetchMyOfficer(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
+            fetchMyOfficer(currentWorld.id).catch(() => setError('장교 정보를 불러올 수 없습니다.'));
         }
     }, [currentWorld, myOfficer, fetchMyOfficer]);
 
@@ -187,7 +187,7 @@ function CityPageContent() {
             }
             setAdjacencyMap(next);
         } catch {
-            setError('도시 정보를 불러올 수 없습니다.');
+            setError('행성 정보를 불러올 수 없습니다.');
         } finally {
             setLoading(false);
         }
@@ -274,7 +274,7 @@ function CityPageContent() {
 
     return (
         <div className="legacy-page-wrap pb-16 lg:pb-0">
-            <PageHeader title={requestedCityId != null ? '도시정보' : '현재 도시'} />
+            <PageHeader title={requestedCityId != null ? '행성정보' : '현재 행성'} />
 
             {/* Controls: sort + city filter */}
             <div className="legacy-bg0 border-b border-gray-600 px-2 py-1.5 text-sm flex flex-wrap items-center gap-3">
@@ -293,7 +293,7 @@ function CityPageContent() {
                     </select>
                 </span>
                 <span>
-                    도시 :{' '}
+                    행성 :{' '}
                     <select
                         className="bg-[#222] text-white border border-gray-600 px-1 py-0.5 text-sm"
                         value={filterCityId}
@@ -365,7 +365,7 @@ function CityPageContent() {
                                         fontSize: '13px',
                                     }}
                                     onClick={() => toggleExpand(city.id)}
-                                    title="클릭하여 장수 상세 보기"
+                                    title="클릭하여 장교 상세 보기"
                                 >
                                     <span>
                                         {'【 '}
@@ -403,7 +403,7 @@ function CityPageContent() {
                                         <span>?</span>
                                     )}
                                 </ValueCell>
-                                <LabelCell>민심</LabelCell>
+                                <LabelCell>지지도</LabelCell>
                                 <ValueCell>
                                     {isVisible ? (
                                         <>
@@ -425,7 +425,7 @@ function CityPageContent() {
 
                                 {isMyNationCity && nation && (
                                     <>
-                                        <LabelCell>자금 수입</LabelCell>
+                                        <LabelCell>자자금 수입</LabelCell>
                                         <ValueCell>
                                             {(
                                                 (calcCityGoldIncome(
@@ -439,7 +439,7 @@ function CityPageContent() {
                                                 20
                                             ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                         </ValueCell>
-                                        <LabelCell>군량 수입</LabelCell>
+                                        <LabelCell>물자 수입</LabelCell>
                                         <ValueCell>
                                             {(
                                                 (calcCityRiceIncome(
@@ -471,7 +471,7 @@ function CityPageContent() {
                                 )}
 
                                 {/* Row 2: agri, comm, secu, def, wall */}
-                                <LabelCell>농업</LabelCell>
+                                <LabelCell>생산</LabelCell>
                                 <StatValueCell
                                     val={city.agri}
                                     max={city.agriMax}
@@ -479,7 +479,7 @@ function CityPageContent() {
                                     kind="agri"
                                     perTurn={100}
                                 />
-                                <LabelCell>상업</LabelCell>
+                                <LabelCell>교역</LabelCell>
                                 <StatValueCell
                                     val={city.comm}
                                     max={city.commMax}
@@ -503,7 +503,7 @@ function CityPageContent() {
                                     kind="def"
                                     perTurn={70}
                                 />
-                                <LabelCell>성벽</LabelCell>
+                                <LabelCell>요새</LabelCell>
                                 <StatValueCell
                                     val={city.wall}
                                     max={city.wallMax}
@@ -526,13 +526,13 @@ function CityPageContent() {
 
                                 <LabelCell>수비장</LabelCell>
                                 <ValueCell>{isVisible && defendingGeneral ? defendingGeneral.name : '?'}</ValueCell>
-                                <LabelCell>주둔병력</LabelCell>
+                                <LabelCell>주둔함선</LabelCell>
                                 <ValueCell>
                                     {isVisible ? cityGens.reduce((sum, g) => sum + g.crew, 0).toLocaleString() : '?'}
                                 </ValueCell>
-                                <LabelCell>성벽/수비</LabelCell>
+                                <LabelCell>요새/수비</LabelCell>
                                 <ValueCell>{isVisible ? `${city.wall}/${city.def}` : '?'}</ValueCell>
-                                <LabelCell>인접 도시</LabelCell>
+                                <LabelCell>인접 행성</LabelCell>
                                 <div className="border-t border-l border-gray-600 px-1 py-0.5 col-span-4 text-xs">
                                     {adjacentCities.length === 0 ? (
                                         <span className="text-gray-500">-</span>
@@ -602,13 +602,13 @@ function CityPageContent() {
                                         const totalCrew = cityGens.reduce((s, g) => s + g.crew, 0);
                                         return (
                                             <>
-                                                <LabelCell>적국 병력</LabelCell>
+                                                <LabelCell>적 진영 함선</LabelCell>
                                                 <ValueCell>
                                                     <span className={enemyCrew > 0 ? 'text-red-400' : ''}>
                                                         {enemyCrew.toLocaleString()}/{enemyArmed}({enemyGens.length})
                                                     </span>
                                                 </ValueCell>
-                                                <LabelCell>아국 병력</LabelCell>
+                                                <LabelCell>아국 함선</LabelCell>
                                                 <ValueCell>
                                                     {crewTotal.toLocaleString()}/{armedTotal}({allyGens.length})
                                                 </ValueCell>
@@ -630,7 +630,7 @@ function CityPageContent() {
                                                         {crewDef.toLocaleString()}/{defReady.length}
                                                     </span>
                                                 </ValueCell>
-                                                <LabelCell>총 주둔 병력</LabelCell>
+                                                <LabelCell>총 주둔 함선</LabelCell>
                                                 <ValueCell>
                                                     <span className="text-blue-400">{totalCrew.toLocaleString()}</span>
                                                 </ValueCell>
@@ -652,7 +652,7 @@ function CityPageContent() {
                 );
             })}
 
-            {sortedCities.length === 0 && <div className="text-center text-gray-500 py-8">소속 도시가 없습니다.</div>}
+            {sortedCities.length === 0 && <div className="text-center text-gray-500 py-8">소속 행성가 없습니다.</div>}
         </div>
     );
 }
@@ -662,7 +662,7 @@ export default function CityPage() {
         <Suspense
             fallback={
                 <div className="p-4">
-                    <LoadingState message="도시 정보를 불러오는 중..." />
+                    <LoadingState message="행성 정보를 불러오는 중..." />
                 </div>
             }
         >
@@ -689,21 +689,21 @@ function GarrisonTable({
                     <tr className="legacy-bg1 text-center">
                         <Th>이름</Th>
                         <Th>관직</Th>
-                        <Th>병종</Th>
-                        <Th>병력</Th>
+                        <Th>함종</Th>
+                        <Th>함선</Th>
                         <Th>훈련</Th>
                         <Th>사기</Th>
                         <Th>수비</Th>
                         <Th>부상</Th>
                         <Th>통솔</Th>
-                        <Th>무력</Th>
-                        <Th>지력</Th>
+                        <Th>지휘</Th>
+                        <Th>정보</Th>
                         <Th>정치</Th>
-                        <Th>매력</Th>
+                        <Th>운영</Th>
                         <Th>턴시간</Th>
                         <Th>명령</Th>
                         <Th>자금</Th>
-                        <Th>군량</Th>
+                        <Th>물자</Th>
                     </tr>
                 </thead>
                 <tbody>

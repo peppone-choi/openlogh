@@ -187,11 +187,11 @@ function pointLineDistance(
 let cachedMask: { mask: Uint8Array; width: number; height: number } | null = null;
 let cachedUrl = '';
 
-/** 캐시: 도시 간 경로 */
+/** 캐시: 행성 간 경로 */
 const pathCache = new Map<string, { x: number; y: number }[]>();
 
 /**
- * 도시 간 도로 픽셀 경로를 계산 (캐시됨)
+ * 행성 간 도로 픽셀 경로를 계산 (캐시됨)
  * @returns 2D 맵 좌표 배열 (단순화됨)
  */
 export async function findRoadPath(
@@ -245,7 +245,7 @@ export async function findRoadPath(
 }
 
 /**
- * BFS 폴백 (도시 연결 기반 — 도로 이미지 없을 때)
+ * BFS 폴백 (행성 연결 기반 — 도로 이미지 없을 때)
  */
 export function findCityPath(cities: CityConst[], fromId: number, toId: number): number[] {
   if (fromId === toId) return [fromId];

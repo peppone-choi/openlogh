@@ -6,9 +6,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.test.context.ActiveProfiles
 
-@SpringBootTest(classes = [OpensamApplicationTests.TestConfig::class])
+@SpringBootTest(classes = [OpenloghApplicationTests.TestConfig::class])
 @ActiveProfiles("test")
-class OpensamApplicationTests {
+class OpenloghApplicationTests {
 
     @SpringBootConfiguration
     @EnableAutoConfiguration

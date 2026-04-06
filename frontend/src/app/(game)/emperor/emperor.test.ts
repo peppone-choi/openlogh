@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 // Mirrors the imperialStatus badge logic in emperor/page.tsx and emperor/detail/page.tsx:
-//   emperorNation.meta?.imperialStatus === 'regent' ? '협천자' : '황제국'
+//   emperorNation.meta?.imperialStatus === 'regent' ? '협천자' : '원수국'
 function resolveEmperorBadge(imperialStatus: string | undefined): string {
-    return imperialStatus === 'regent' ? '협천자' : '황제국';
+    return imperialStatus === 'regent' ? '협천자' : '원수국';
 }
 
 // Mirrors the emperorNation finder logic:
@@ -17,16 +17,16 @@ describe('emperor page badge (imperialStatus)', () => {
         expect(resolveEmperorBadge('regent')).toBe('협천자');
     });
 
-    it('shows 황제국 for emperor status', () => {
-        expect(resolveEmperorBadge('emperor')).toBe('황제국');
+    it('shows 원수국 for emperor status', () => {
+        expect(resolveEmperorBadge('emperor')).toBe('원수국');
     });
 
-    it('shows 황제국 for undefined status', () => {
-        expect(resolveEmperorBadge(undefined)).toBe('황제국');
+    it('shows 원수국 for undefined status', () => {
+        expect(resolveEmperorBadge(undefined)).toBe('원수국');
     });
 
-    it('shows 황제국 for independent status', () => {
-        expect(resolveEmperorBadge('independent')).toBe('황제국');
+    it('shows 원수국 for independent status', () => {
+        expect(resolveEmperorBadge('independent')).toBe('원수국');
     });
 });
 

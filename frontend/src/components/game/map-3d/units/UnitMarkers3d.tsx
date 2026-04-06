@@ -21,7 +21,7 @@ interface UnitMarkers3dProps {
 const S = WORLD_SCALE;
 const UNIT_Y_OFFSET = 12 * S; // 지형 위 높이
 
-/** 병종 코드 → 색상 (계열별 구분) */
+/** 함종 코드 → 색상 (계열별 구분) */
 function crewColor(crewType: number): string {
   const base = crewType >= 1000 ? Math.floor(crewType / 100) * 100 : crewType;
   if (base === 0 || base === 1100) return '#4ade80'; // 보병 — 녹색
@@ -144,7 +144,7 @@ function UnitMarker3d({
           <meshBasicMaterial color={borderColor} side={THREE.DoubleSide} />
         </mesh>
 
-        {/* 장수 이름 */}
+        {/* 장교 이름 */}
         <Billboard position={[0, 4 * S, 0]}>
           <Text
             fontSize={2 * S}
@@ -158,7 +158,7 @@ function UnitMarker3d({
           </Text>
         </Billboard>
 
-        {/* 병력 수 */}
+        {/* 함선 수 */}
         <Billboard position={[0, 2 * S, 0]}>
           <Text
             fontSize={1.5 * S}
@@ -176,7 +176,7 @@ function UnitMarker3d({
   );
 }
 
-/** 전투 이펙트: 전투 발생 도시에 파티클 */
+/** 전투 이펙트: 전투 발생 행성에 파티클 */
 function BattleEffect({ x, y }: { x: number; y: number }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const pos = useMemo(() => toWorld3d(x, y, 0), [x, y]);
@@ -204,7 +204,7 @@ function BattleEffect({ x, y }: { x: number; y: number }) {
 }
 
 export function UnitMarkers3d({ markers, cities, mapCode, onMarkerClick }: UnitMarkers3dProps) {
-  // 전투 중인 도시 = 같은 도시에 적군+아군 존재
+  // 전투 중인 행성 = 같은 행성에 적군+아군 존재
   const battleCities = useMemo(() => {
     const cityNations = new Map<string, Set<boolean>>();
     for (const m of markers) {

@@ -154,7 +154,7 @@ export default function AdminUsersPage() {
                         }
                     }}
                 >
-                    <BrushCleaning className="mr-1 size-4" /> 전콘 정리(1개월+)
+                    <BrushCleaning className="mr-1 size-4" /> 초상화 정리(1개월+)
                 </Button>
             </div>
 

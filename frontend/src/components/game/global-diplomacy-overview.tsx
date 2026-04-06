@@ -102,23 +102,23 @@ export function GlobalDiplomacyOverview({
 
             <Card>
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">국력 비교</CardTitle>
+                    <CardTitle className="text-sm">군사력 비교</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {nationStats.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">국가가 없습니다.</p>
+                        <p className="text-xs text-muted-foreground">진영이 없습니다.</p>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-xs">
                                 <thead>
                                     <tr className="border-b border-gray-700">
-                                        <th className="px-2 py-1.5 text-left">국가</th>
-                                        <th className="px-2 py-1.5 text-right">장수</th>
-                                        <th className="px-2 py-1.5 text-right">도시</th>
+                                        <th className="px-2 py-1.5 text-left">진영</th>
+                                        <th className="px-2 py-1.5 text-right">장교</th>
+                                        <th className="px-2 py-1.5 text-right">행성</th>
                                         <th className="px-2 py-1.5 text-right">인구</th>
-                                        <th className="px-2 py-1.5 text-right">병력</th>
+                                        <th className="px-2 py-1.5 text-right">함선</th>
                                         <th className="px-2 py-1.5 text-right">기술</th>
-                                        <th className="px-2 py-1.5 text-right">국력</th>
+                                        <th className="px-2 py-1.5 text-right">군사력</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -162,7 +162,7 @@ function DiplomacyMatrix({
     diplomacyLookup: Map<string, string>;
     myNationId?: number;
 }) {
-    if (nations.length === 0) return <p className="text-xs text-muted-foreground">국가가 없습니다.</p>;
+    if (nations.length === 0) return <p className="text-xs text-muted-foreground">진영이 없습니다.</p>;
 
     return (
         <div className="overflow-x-auto">
@@ -303,10 +303,10 @@ function ConflictAreaCard({
                                 className="flex items-center gap-2 rounded border border-red-900/50 bg-red-950/20 px-3 py-2 text-xs"
                             >
                                 <NationBadge name={pair.src.name} color={pair.src.color} />
-                                <span className="text-muted-foreground">({pair.srcCount}도시)</span>
+                                <span className="text-muted-foreground">({pair.srcCount}행성)</span>
                                 <span className="font-bold text-red-400">⚔</span>
                                 <NationBadge name={pair.dest.name} color={pair.dest.color} />
-                                <span className="text-muted-foreground">({pair.destCount}도시)</span>
+                                <span className="text-muted-foreground">({pair.destCount}행성)</span>
                             </div>
                         ))}
                     </div>
@@ -326,7 +326,7 @@ function ConflictAreaCard({
                                 <div key={nation.id} className="space-y-1">
                                     <div className="flex items-center gap-2 text-xs">
                                         <NationBadge name={nation.name} color={nation.color} />
-                                        <span className="text-muted-foreground">{count}개 도시</span>
+                                        <span className="text-muted-foreground">{count}개 행성</span>
                                         <span className="text-muted-foreground">({pct}%)</span>
                                         {atWar && <span className="text-[10px] text-red-400">⚔ 교전</span>}
                                     </div>

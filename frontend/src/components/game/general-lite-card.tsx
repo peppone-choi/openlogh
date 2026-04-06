@@ -81,11 +81,11 @@ export function GeneralLiteCard({ general, nation, gameConst }: GeneralLiteCardP
                 <span style={{ color: injuryColor }}>{calcInjury(general.leadership, general.injury)}</span>
                 {general.lbonus > 0 && <span className="text-cyan-400">+{general.lbonus}</span>}
             </div>
-            <div className="bg-muted/50 border-b border-border">무력</div>
+            <div className="bg-muted/50 border-b border-border">지휘</div>
             <div className="border-b border-border" style={{ color: injuryColor }}>
                 {calcInjury(general.strength, general.injury)}
             </div>
-            <div className="bg-muted/50 border-b border-border">지력</div>
+            <div className="bg-muted/50 border-b border-border">정보</div>
             <div className="border-b border-border" style={{ color: injuryColor }}>
                 {calcInjury(general.intel, general.injury)}
             </div>
@@ -93,7 +93,7 @@ export function GeneralLiteCard({ general, nation, gameConst }: GeneralLiteCardP
             {/* Row 3: resources */}
             <div className="bg-muted/50 border-b border-border">자금</div>
             <div className="border-b border-border">{general.gold.toLocaleString()}</div>
-            <div className="bg-muted/50 border-b border-border">군량</div>
+            <div className="bg-muted/50 border-b border-border">물자</div>
             <div className="border-b border-border">{general.rice.toLocaleString()}</div>
             <div className="bg-muted/50 border-b border-border">성격</div>
             <div className="border-b border-border">

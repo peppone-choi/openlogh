@@ -1,6 +1,6 @@
 {
   "version": "3.0",
-  "lastUpdated": "2026-04-06T10:02:11.184Z",
+  "lastUpdated": "2026-04-06T10:45:52.667Z",
   "activeFeatures": [
     "engine",
     "war",
@@ -62,7 +62,9 @@
     "tactical",
     "victory",
     "politics",
-    "processing"
+    "processing",
+    "generals",
+    "terms"
   ],
   "primaryFeature": "engine",
   "features": {
@@ -296,9 +298,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T00:32:24.227Z",
-        "lastUpdated": "2026-04-06T09:59:02.551Z"
+        "lastUpdated": "2026-04-06T10:45:48.220Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/top-bar.tsx"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/hooks/useMap3d.ts"
     },
     "city": {
       "phase": "do",
@@ -335,9 +337,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T01:40:57.067Z",
-        "lastUpdated": "2026-03-24T01:52:20.574Z"
+        "lastUpdated": "2026-04-06T10:44:51.690Z"
       },
-      "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(game)/emperor/emperor.test.ts"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(game)/emperor/page.tsx"
     },
     "detail": {
       "phase": "do",
@@ -361,9 +363,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T01:47:02.468Z",
-        "lastUpdated": "2026-04-06T02:55:18.300Z"
+        "lastUpdated": "2026-04-06T10:39:13.862Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/data/tutorial/mock-generals.ts",
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/data/tutorial/index.ts",
       "previousPhase": "check",
       "autoAdvanced": true
     },
@@ -879,6 +881,32 @@
         "lastUpdated": "2026-04-06T10:01:30.197Z"
       },
       "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(game)/processing/page.tsx"
+    },
+    "generals": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-06T10:45:18.934Z",
+        "lastUpdated": "2026-04-06T10:45:21.326Z"
+      },
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(game)/generals/generals-detail.test.ts"
+    },
+    "terms": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-06T10:45:52.666Z",
+        "lastUpdated": "2026-04-06T10:45:52.666Z"
+      },
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(auth)/terms/page.tsx"
     }
   },
   "pipeline": {
@@ -889,7 +917,7 @@
   "session": {
     "startedAt": "2026-03-23T06:31:12.665Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-06T10:02:11.184Z"
+    "lastActivity": "2026-04-06T10:45:52.667Z"
   },
   "history": [
     {
@@ -8287,6 +8315,204 @@
     {
       "timestamp": "2026-04-06T10:02:11.184Z",
       "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:37:40.285Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:37:46.519Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:37:54.733Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:38:03.152Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:38:10.282Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:38:39.913Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:38:56.146Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:38:57.512Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:38:58.863Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:03.191Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:04.771Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:07.441Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:09.288Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:10.324Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:11.304Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:12.849Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:13.863Z",
+      "feature": "tutorial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:22.931Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:23.781Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:25.198Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:27.716Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:28.688Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:29.677Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:31.417Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:33.061Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:39:35.988Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:44:51.693Z",
+      "feature": "emperor",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:45:08.770Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:45:18.935Z",
+      "feature": "generals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:45:20.365Z",
+      "feature": "generals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:45:21.328Z",
+      "feature": "generals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:45:48.221Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:45:52.667Z",
+      "feature": "terms",
       "phase": "do",
       "action": "updated"
     }

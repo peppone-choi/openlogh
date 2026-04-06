@@ -60,7 +60,7 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
                 <span style={{ color: 'magenta' }}>{nation.type.cons}</span>)
             </Body>
 
-            {/* 군주/참모 */}
+            {/* 원수/참모 */}
             <Head>{formatOfficerLevelText(20, nationLevel, false, nation.typeCode)}</Head>
             <Body style={{ color: getNPCColor(nation.topChiefs[20]?.npc ?? 1) }}>
                 {nation.topChiefs[20]?.name ?? '-'}
@@ -99,11 +99,11 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
             {/* 속령/장수 */}
             <Head>속령</Head>
             <Body>{noNation ? '해당 없음' : nation.population.cityCnt.toLocaleString()}</Body>
-            <Head>장수</Head>
+            <Head>장교</Head>
             <Body>{noNation ? '해당 없음' : nation.crew.generalCnt.toLocaleString()}</Body>
 
             {/* 국력/기술력 */}
-            <Head>국력</Head>
+            <Head>군사력</Head>
             <Body>{noNation ? '해당 없음' : nation.power.toLocaleString()}</Body>
             <Head>기술력</Head>
             <Body>

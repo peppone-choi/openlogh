@@ -5,15 +5,15 @@ export const MOCK_COMMAND_TABLE: CommandTableEntry[] = [
     {
         actionCode: 'che_develop_agri',
         name: '개간',
-        category: '내정',
+        category: '행성 관리',
         enabled: true,
         durationSeconds: 0,
         commandPointCost: 1,
     },
     {
         actionCode: 'che_develop_comm',
-        name: '상업투자',
-        category: '내정',
+        name: '교역투자',
+        category: '행성 관리',
         enabled: true,
         durationSeconds: 0,
         commandPointCost: 1,
@@ -21,7 +21,7 @@ export const MOCK_COMMAND_TABLE: CommandTableEntry[] = [
     {
         actionCode: 'che_develop_secu',
         name: '치안강화',
-        category: '내정',
+        category: '행성 관리',
         enabled: true,
         durationSeconds: 0,
         commandPointCost: 1,
@@ -55,13 +55,13 @@ export const MOCK_COMMAND_TABLE: CommandTableEntry[] = [
 /** 개간 결과 */
 export const MOCK_RESULT_AGRI: CommandResult = {
     success: true,
-    logs: ['[개간] 성도의 농업 수치가 100 상승했습니다. (5000 → 5100)'],
+    logs: ['[개간] 성도의 생산 수치가 100 상승했습니다. (5000 → 5100)'],
 };
 
-/** 징병 결과 */
+/** 징집 결과 */
 export const MOCK_RESULT_RECRUIT: CommandResult = {
     success: true,
-    logs: ['[징병] 500명을 징병했습니다. (1000 → 1500)'],
+    logs: ['[징집] 함선 500척을 징집했습니다. (1000 → 1500)'],
 };
 
 /** 훈련 결과 */
@@ -74,7 +74,7 @@ export const MOCK_RESULT_TRAIN: CommandResult = {
 export const MOCK_RESULT_WAR: CommandResult = {
     success: true,
     logs: [
-        '[출진] 유비 부대가 한중을 향해 출진합니다.',
+        '[출진] 유비 함대가 한중을 향해 출진합니다.',
         '[전투] 유비(촉) vs 수비대(중립)',
         '[전투] 유비의 공격! 수비대에 320 피해',
         '[전투] 수비대의 반격! 유비에 85 피해',

@@ -184,7 +184,7 @@ export default function VoteDetailPage() {
 
                         {!open && d.reward && lotteryWinner && (
                             <div className="rounded border border-amber-400/30 bg-amber-400/10 p-2 text-xs text-amber-300">
-                                추첨 당첨자: 장수 #{lotteryWinner}
+                                추첨 당첨자: 장교 #{lotteryWinner}
                             </div>
                         )}
 
@@ -290,7 +290,7 @@ export default function VoteDetailPage() {
                                 {comments.map((comment) => (
                                     <div key={comment.id} className="rounded border p-2 text-xs">
                                         <div className="mb-1 flex items-center justify-between text-muted-foreground">
-                                            <span>장수 #{comment.authorGeneralId}</span>
+                                            <span>장교 #{comment.authorGeneralId}</span>
                                             <span>{formatDeadline(comment.createdAt)}</span>
                                         </div>
                                         <p>{comment.content}</p>

@@ -59,10 +59,10 @@ export default function EmperorDetailPage() {
     if (!emperorNation) {
         return (
             <div className="p-4 space-y-6 max-w-3xl mx-auto">
-                <PageHeader icon={Crown} title="황제 상세" />
+                <PageHeader icon={Crown} title="원수 상세" />
                 <Card>
                     <CardContent>
-                        <p className="text-sm text-muted-foreground">아직 황제를 칭한 국가가 없습니다.</p>
+                        <p className="text-sm text-muted-foreground">아직 원수를 칭한 진영이 없습니다.</p>
                     </CardContent>
                 </Card>
             </div>
@@ -71,7 +71,7 @@ export default function EmperorDetailPage() {
 
     return (
         <div className="p-4 space-y-6 max-w-3xl mx-auto">
-            <PageHeader icon={Crown} title="황제 상세" />
+            <PageHeader icon={Crown} title="원수 상세" />
 
             {/* Emperor nation info */}
             <Card>
@@ -80,13 +80,13 @@ export default function EmperorDetailPage() {
                         <Crown className="size-5 text-amber-400" />
                         <NationBadge name={emperorNation.name} color={emperorNation.color} />
                         <Badge variant="secondary">
-                            {emperorNation.meta?.imperialStatus === 'regent' ? '협천자' : '황제국'}
+                            {emperorNation.meta?.imperialStatus === 'regent' ? '협천자' : '원수국'}
                         </Badge>
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-3 text-sm">
-                        <Row label="국가 레벨" value={String(emperorNation.level)} />
+                        <Row label="진영 등급" value={String(emperorNation.level)} />
                         <Row label="기술력" value={String(emperorNation.tech)} />
                         <Row label="국력" value={String(emperorNation.power)} />
                         <Row
@@ -98,14 +98,14 @@ export default function EmperorDetailPage() {
                             value={<span className="text-green-400">{emperorNation.rice.toLocaleString()}</span>}
                         />
                         <Row label="수도" value={capitalCity?.name ?? '-'} />
-                        <Row label="도시 수" value={`${nationCities.length}개`} />
+                        <Row label="행성 수" value={`${nationCities.length}개`} />
                         <Row label="장수 수" value={`${nationGenerals.length}명`} />
                     </div>
 
                     {/* Chief general */}
                     {chiefGeneral && (
                         <div className="border-t border-gray-600 pt-3">
-                            <h3 className="text-sm font-semibold mb-2">군주</h3>
+                            <h3 className="text-sm font-semibold mb-2">원수</h3>
                             <div className="flex items-center gap-3">
                                 <GeneralPortrait picture={chiefGeneral.picture} name={chiefGeneral.name} size="md" />
                                 <div>
@@ -154,7 +154,7 @@ export default function EmperorDetailPage() {
                                 </div>
                             ))}
                         {nationGenerals.filter((g) => g.officerLevel >= 5).length === 0 && (
-                            <p className="text-sm text-muted-foreground">주요 관직 장수가 없습니다.</p>
+                            <p className="text-sm text-muted-foreground">주요 관직 장교가 없습니다.</p>
                         )}
                     </div>
                 </CardContent>

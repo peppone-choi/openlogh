@@ -53,13 +53,13 @@ const GROUPS: {
             },
             {
                 key: 'strength',
-                label: '무력',
+                label: '지휘',
                 sortBy: 'strength',
                 getValue: (g) => g.strength,
             },
             {
                 key: 'intel',
-                label: '지력',
+                label: '정보',
                 sortBy: 'intel',
                 getValue: (g) => g.intel,
             },
@@ -71,7 +71,7 @@ const GROUPS: {
             },
             {
                 key: 'charm',
-                label: '매력',
+                label: '운영',
                 sortBy: 'charm',
                 getValue: (g) => g.charm,
             },
@@ -499,10 +499,10 @@ export default function BestGeneralsPage() {
                             {isStatGroup ? (
                                 <>
                                     <TableHead>통솔</TableHead>
-                                    <TableHead>무력</TableHead>
-                                    <TableHead>지력</TableHead>
+                                    <TableHead>지휘</TableHead>
+                                    <TableHead>정보</TableHead>
                                     <TableHead>정치</TableHead>
-                                    <TableHead>매력</TableHead>
+                                    <TableHead>운영</TableHead>
                                     <TableHead>총합</TableHead>
                                 </>
                             ) : (

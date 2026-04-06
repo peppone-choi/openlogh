@@ -5,7 +5,7 @@ const CDN_BASE =
   process.env.NEXT_PUBLIC_IMAGE_CDN_BASE ||
   'https://cdn.jsdelivr.net/gh/peppone-choi/openlogh-image@master';
 
-// 거점 모델 (Lv1-4, 비도시)
+// 거점 모델 (Lv1-4, 비행성)
 const SPOT_MODELS = {
   naval: 'spot_naval.glb',
   camp: 'spot_camp.glb',
@@ -13,7 +13,7 @@ const SPOT_MODELS = {
   tribal: 'spot_tribal.glb',
 } as const;
 
-// 성곽 도시 모델 (Lv5-8)
+// 성곽 행성 모델 (Lv5-8)
 const CITY_MODELS = {
   small: 'city_small.glb',
   medium: 'city_medium.glb',

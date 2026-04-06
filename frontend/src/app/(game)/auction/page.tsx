@@ -298,7 +298,7 @@ export default function AuctionPage() {
             alert(`쌀 ${data.amount.toLocaleString()} 구매 완료 (금 ${data.costGold.toLocaleString()} 소비)`);
             await load();
         } catch {
-            alert('쌀 구매에 실패했습니다.');
+            alert('물자 구매에 실패했습니다.');
         } finally {
             setMarketBusy(false);
         }
@@ -314,7 +314,7 @@ export default function AuctionPage() {
             alert(`쌀 ${data.amount.toLocaleString()} 판매 완료 (금 ${data.revenueGold.toLocaleString()} 획득)`);
             await load();
         } catch {
-            alert('쌀 판매에 실패했습니다.');
+            alert('물자 판매에 실패했습니다.');
         } finally {
             setMarketBusy(false);
         }
@@ -397,7 +397,7 @@ export default function AuctionPage() {
                 <TabsList className="w-full justify-start border-b border-gray-600">
                     <TabsTrigger value="resource">
                         <TrendingUp className="size-3.5 mr-1" />
-                        금/쌀
+                        자금/물자
                     </TabsTrigger>
                     <TabsTrigger value="item">
                         <Package className="size-3.5 mr-1" />
@@ -478,14 +478,14 @@ export default function AuctionPage() {
                         </Card>
                     )}
 
-                    {/* Buy Rice section (쌀 구매 - legacy orange header) */}
+                    {/* Buy Rice section (물자 구매 - legacy orange header) */}
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-orange-400">쌀 구매</CardTitle>
+                            <CardTitle className="text-sm text-orange-400">물자 구매</CardTitle>
                         </CardHeader>
                         <CardContent>
                             {activeBuyRice.length === 0 && activeOtherResource.length === 0 ? (
-                                <p className="text-xs text-muted-foreground">진행중인 쌀 구매 경매가 없습니다.</p>
+                                <p className="text-xs text-muted-foreground">진행중인 물자 구매 경매가 없습니다.</p>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <ResourceAuctionTable
@@ -507,14 +507,14 @@ export default function AuctionPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Sell Rice section (쌀 판매 - legacy skyblue header) */}
+                    {/* Sell Rice section (물자 판매 - legacy skyblue header) */}
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-sky-400">쌀 판매</CardTitle>
+                            <CardTitle className="text-sm text-sky-400">물자 판매</CardTitle>
                         </CardHeader>
                         <CardContent>
                             {activeSellRice.length === 0 ? (
-                                <p className="text-xs text-muted-foreground">진행중인 쌀 판매 경매가 없습니다.</p>
+                                <p className="text-xs text-muted-foreground">진행중인 물자 판매 경매가 없습니다.</p>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <ResourceAuctionTable
@@ -678,7 +678,7 @@ export default function AuctionPage() {
                     {myOfficer && marketPrice && (
                         <Card>
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm">쌀 시세 거래</CardTitle>
+                                <CardTitle className="text-sm">물자 시세 거래</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 <div className="text-xs text-muted-foreground">
@@ -705,7 +705,7 @@ export default function AuctionPage() {
                                         disabled={marketBusy}
                                         onClick={handleMarketBuy}
                                     >
-                                        쌀 구매
+                                        물자 구매
                                     </Button>
                                     <Button
                                         size="sm"
@@ -714,7 +714,7 @@ export default function AuctionPage() {
                                         disabled={marketBusy}
                                         onClick={handleMarketSell}
                                     >
-                                        쌀 판매
+                                        물자 판매
                                     </Button>
                                 </div>
                             </CardContent>

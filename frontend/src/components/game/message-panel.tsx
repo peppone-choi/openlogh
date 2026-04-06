@@ -330,7 +330,7 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
                         onChange={(e) => setDestId(e.target.value)}
                         className="h-8 flex-1 min-w-0 border border-gray-600 bg-[#111] px-2 text-xs"
                     >
-                        <option value="">받는 장수...</option>
+                        <option value="">받는 장교...</option>
                         {recipientMode === 'all'
                             ? // Nation-grouped optgroups with color coding
                               Array.from(nationGroups.entries()).map(([nationName, group]) => (

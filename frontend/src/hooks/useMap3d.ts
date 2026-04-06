@@ -16,6 +16,8 @@ interface Map3dState {
 }
 
 function loadSavedMode(): MapRenderMode {
+  // LOGH: force 2D mode — 3D castle map is for Three Kingdoms only
+  return '2d';
   if (typeof window === 'undefined') return '2d';
   try {
     const saved = sessionStorage.getItem(STORAGE_KEY);

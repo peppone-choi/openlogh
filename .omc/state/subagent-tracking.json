@@ -143,10 +143,17 @@
       "status": "completed",
       "completed_at": "2026-04-06T10:09:33.232Z",
       "duration_ms": 2324438
+    },
+    {
+      "agent_id": "ad84b7f66ff35527a",
+      "agent_type": "gsd-executor",
+      "started_at": "2026-04-06T10:36:30.195Z",
+      "parent_mode": "none",
+      "status": "running"
     }
   ],
-  "total_spawned": 16,
+  "total_spawned": 17,
   "total_completed": 16,
   "total_failed": 0,
-  "last_updated": "2026-04-06T10:09:33.338Z"
+  "last_updated": "2026-04-06T10:36:30.300Z"
 }

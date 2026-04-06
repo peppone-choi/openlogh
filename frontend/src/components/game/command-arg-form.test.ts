@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 // Mirror of COMMAND_ARGS entries relevant to field battle
 const FIELD_BATTLE_COMMAND_ARGS: Record<string, { type: string; key: string; label: string }[]> = {
-    요격: [{ type: 'city', key: 'destCityId', label: '매복 방면 (인접 도시)' }],
+    요격: [{ type: 'city', key: 'destCityId', label: '매복 방면 (인접 행성)' }],
 };
 
 describe('field battle command args', () => {

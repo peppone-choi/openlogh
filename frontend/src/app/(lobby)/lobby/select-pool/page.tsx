@@ -27,10 +27,10 @@ const STAT_KEYS = ['leadership', 'strength', 'intel', 'politics', 'charm'] as co
 type StatKey = (typeof STAT_KEYS)[number];
 const STAT_LABELS: Record<StatKey, string> = {
     leadership: '통솔',
-    strength: '무력',
-    intel: '지력',
+    strength: '지휘',
+    intel: '정보',
     politics: '정치',
-    charm: '매력',
+    charm: '운영',
 };
 const STAT_COLORS: Record<StatKey, string> = {
     leadership: 'bg-red-500',
@@ -99,10 +99,10 @@ export default function LobbySelectPoolPage() {
         try {
             await generalApi.selectFromPool(currentWorld.id, generalId);
             await fetchMyOfficer(currentWorld.id);
-            toast.success('장수를 선택했습니다.');
+            toast.success('장교를 선택했습니다.');
             router.push('/');
         } catch {
-            toast.error('장수 선택에 실패했습니다.');
+            toast.error('장교 선택에 실패했습니다.');
         } finally {
             setSelecting(null);
         }
@@ -113,7 +113,7 @@ export default function LobbySelectPoolPage() {
 
     const handleBuildCustom = async () => {
         if (!currentWorld || !customName.trim()) {
-            toast.error('장수 이름을 입력해주세요.');
+            toast.error('장교 이름을 입력해주세요.');
             return;
         }
         if (customRemaining !== 0) {
@@ -129,12 +129,12 @@ export default function LobbySelectPoolPage() {
                 personality: customEgo,
             };
             await generalApi.buildPoolGeneral(currentWorld.id, buildPayload);
-            toast.success('커스텀 장수가 풀에 등록되었습니다.');
+            toast.success('커스텀 장교가 풀에 등록되었습니다.');
             setCustomName('');
             setCustomEgo('Random');
             await loadPool();
         } catch {
-            toast.error('커스텀 장수 생성에 실패했습니다.');
+            toast.error('커스텀 장교 생성에 실패했습니다.');
         } finally {
             setBuilding(false);
         }
@@ -163,11 +163,11 @@ export default function LobbySelectPoolPage() {
         setUpdating(true);
         try {
             await generalApi.updatePoolGeneral(currentWorld.id, selectedForUpdate.id, updateStats);
-            toast.success('장수 능력치가 수정되었습니다.');
+            toast.success('장교 능력치가 수정되었습니다.');
             setSelectedForUpdate(null);
             await loadPool();
         } catch {
-            toast.error('장수 수정에 실패했습니다.');
+            toast.error('장교 수정에 실패했습니다.');
         } finally {
             setUpdating(false);
         }
@@ -182,13 +182,13 @@ export default function LobbySelectPoolPage() {
                 <ArrowLeft className="size-4 mr-1" /> 로비로 돌아가기
             </Button>
 
-            <PageHeader icon={Users} title="장수 선택 (풀)" />
+            <PageHeader icon={Users} title="장교 선택 (풀)" />
 
             <Tabs value={tab} onValueChange={setTab}>
                 <TabsList>
                     <TabsTrigger value="pick">
                         <Users className="size-3.5 mr-1" />
-                        기존 장수 선택
+                        기존 장교 선택
                     </TabsTrigger>
                     <TabsTrigger value="build">
                         <Pencil className="size-3.5 mr-1" />
@@ -203,10 +203,10 @@ export default function LobbySelectPoolPage() {
                 {/* ═══ Pick existing ═══ */}
                 <TabsContent value="pick" className="mt-4">
                     <p className="text-sm text-muted-foreground mb-3">
-                        풀에 등록된 장수 중 하나를 선택하여 플레이할 수 있습니다.
+                        풀에 등록된 장교 중 하나를 선택하여 플레이할 수 있습니다.
                     </p>
                     {pool.length === 0 ? (
-                        <EmptyState icon={Users} title="선택 가능한 장수가 없습니다." />
+                        <EmptyState icon={Users} title="선택 가능한 장교가 없습니다." />
                     ) : (
                         <div className="grid gap-3 sm:grid-cols-2">
                             {pool.map((g) => (
@@ -221,13 +221,13 @@ export default function LobbySelectPoolPage() {
                                         </div>
                                         <div className="space-y-1">
                                             <StatBar label="통솔" value={g.leadership} color="bg-red-500" />
-                                            <StatBar label="무력" value={g.strength} color="bg-orange-500" />
-                                            <StatBar label="지력" value={g.intel} color="bg-blue-500" />
+                                            <StatBar label="지휘" value={g.strength} color="bg-orange-500" />
+                                            <StatBar label="정보" value={g.intel} color="bg-blue-500" />
                                             <StatBar label="정치" value={g.politics} color="bg-green-500" />
-                                            <StatBar label="매력" value={g.charm} color="bg-purple-500" />
+                                            <StatBar label="운영" value={g.charm} color="bg-purple-500" />
                                         </div>
                                         <div className="flex gap-2 text-xs text-muted-foreground">
-                                            <span>병력: {g.crew.toLocaleString()}</span>
+                                            <span>함선: {g.crew.toLocaleString()}</span>
                                             <span>경험: {g.experience}</span>
                                         </div>
                                         <Button
@@ -247,22 +247,22 @@ export default function LobbySelectPoolPage() {
                 {/* ═══ Build custom ═══ */}
                 <TabsContent value="build" className="mt-4 space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        능력치를 직접 배분하여 커스텀 장수를 풀에 등록합니다.
+                        능력치를 직접 배분하여 커스텀 장교를 풀에 등록합니다.
                     </p>
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">커스텀 장수 생성</CardTitle>
+                            <CardTitle className="text-sm">커스텀 장교 생성</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-1">
                                 <label htmlFor="pool-custom-name" className="text-sm text-muted-foreground">
-                                    장수명
+                                    장교명
                                 </label>
                                 <Input
                                     id="pool-custom-name"
                                     value={customName}
                                     onChange={(e) => setCustomName(e.target.value)}
-                                    placeholder="장수 이름 입력"
+                                    placeholder="장교 이름 입력"
                                     maxLength={20}
                                 />
                             </div>
@@ -412,7 +412,7 @@ export default function LobbySelectPoolPage() {
                                 onClick={handleBuildCustom}
                                 disabled={building || customRemaining !== 0 || !customName.trim()}
                             >
-                                {building ? '생성 중...' : '커스텀 장수 등록'}
+                                {building ? '생성 중...' : '커스텀 장교 등록'}
                             </Button>
                         </CardContent>
                     </Card>
@@ -420,10 +420,10 @@ export default function LobbySelectPoolPage() {
 
                 {/* ═══ Update existing ═══ */}
                 <TabsContent value="update" className="mt-4 space-y-4">
-                    <p className="text-sm text-muted-foreground">풀에 있는 기존 장수의 능력치를 수정합니다.</p>
+                    <p className="text-sm text-muted-foreground">풀에 있는 기존 장교의 능력치를 수정합니다.</p>
 
                     {pool.length === 0 ? (
-                        <EmptyState icon={Users} title="수정할 장수가 없습니다." />
+                        <EmptyState icon={Users} title="수정할 장교가 없습니다." />
                     ) : !selectedForUpdate ? (
                         <div className="grid gap-2 sm:grid-cols-2">
                             {pool.map((g) => (

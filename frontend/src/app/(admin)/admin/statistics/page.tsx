@@ -174,22 +174,22 @@ export default function AdminStatisticsPage() {
     if (loading) return <LoadingState />;
 
     const columns: { key: SortKey; label: string }[] = [
-        { key: 'name', label: '국가' },
+        { key: 'name', label: '진영' },
         { key: 'level', label: '레벨' },
         { key: 'gold', label: '금' },
         { key: 'rice', label: '쌀' },
         { key: 'tech', label: '기술' },
-        { key: 'power', label: '국력' },
-        { key: 'genCount', label: '장수' },
-        { key: 'cityCount', label: '도시' },
-        { key: 'totalCrew', label: '총병력' },
+        { key: 'power', label: '군사력' },
+        { key: 'genCount', label: '장교' },
+        { key: 'cityCount', label: '행성' },
+        { key: 'totalCrew', label: '총함선' },
         { key: 'totalPop', label: '총인구' },
     ];
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <PageHeader icon={BarChart3} title="국가 통계" />
+                <PageHeader icon={BarChart3} title="진영 통계" />
                 <Button variant="outline" size="sm" onClick={load}>
                     <RefreshCw className="size-4 mr-1" />
                     새로고침
@@ -201,7 +201,7 @@ export default function AdminStatisticsPage() {
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                             <TrendingUp className="size-3" />
-                            국가 수
+                            진영 수
                         </div>
                         <div className="text-2xl font-bold">{totals.nations}</div>
                     </CardContent>
@@ -217,7 +217,7 @@ export default function AdminStatisticsPage() {
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                            <MapPin className="size-3" />총 도시
+                            <MapPin className="size-3" />총 행성
                         </div>
                         <div className="text-2xl font-bold">{totals.cities}</div>
                     </CardContent>
@@ -225,7 +225,7 @@ export default function AdminStatisticsPage() {
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                            <Coins className="size-3" />총 병력
+                            <Coins className="size-3" />총 함선
                         </div>
                         <div className="text-2xl font-bold">{totals.totalCrew.toLocaleString()}</div>
                     </CardContent>
@@ -234,8 +234,8 @@ export default function AdminStatisticsPage() {
 
             <Tabs defaultValue="table">
                 <TabsList>
-                    <TabsTrigger value="table">국가 지표</TabsTrigger>
-                    <TabsTrigger value="power">국력 비교</TabsTrigger>
+                    <TabsTrigger value="table">진영 지표</TabsTrigger>
+                    <TabsTrigger value="power">군사력 비교</TabsTrigger>
                     <TabsTrigger value="diplomacy">외교 관계</TabsTrigger>
                 </TabsList>
 
@@ -286,7 +286,7 @@ export default function AdminStatisticsPage() {
                                         {sorted.length === 0 && (
                                             <TableRow>
                                                 <TableCell colSpan={10} className="text-center text-muted-foreground">
-                                                    국가가 없습니다.
+                                                    진영이 없습니다.
                                                 </TableCell>
                                             </TableRow>
                                         )}
@@ -301,7 +301,7 @@ export default function AdminStatisticsPage() {
                     <div className="space-y-4">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-base">국력 순위</CardTitle>
+                                <CardTitle className="text-base">군사력 순위</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 {nations.map((n, idx) => (
@@ -334,7 +334,7 @@ export default function AdminStatisticsPage() {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-base">병력 비교</CardTitle>
+                                <CardTitle className="text-base">함선 비교</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 {[...nations]
@@ -406,7 +406,7 @@ export default function AdminStatisticsPage() {
                         </CardHeader>
                         <CardContent>
                             {nations.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-4">국가가 없습니다.</p>
+                                <p className="text-center text-muted-foreground py-4">진영이 없습니다.</p>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="border-collapse text-xs w-full">

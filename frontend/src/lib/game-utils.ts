@@ -67,8 +67,8 @@ export function formatGeneralTypeCall(
     const maxStat = Math.max(leadership, strength, intel);
     const sum2Stat = Math.min(leadership + strength, strength + intel, intel + leadership);
     if (maxStat >= chiefStatMin + statGradeLevel && sum2Stat >= maxStat * 1.7) return '만능(균형형)';
-    if (strength >= chiefStatMin - statGradeLevel && intel < strength * 0.8) return '용장(무력형)';
-    if (intel >= chiefStatMin - statGradeLevel && strength < intel * 0.8) return '명장(지력형)';
+    if (strength >= chiefStatMin - statGradeLevel && intel < strength * 0.8) return '용장(지휘형)';
+    if (intel >= chiefStatMin - statGradeLevel && strength < intel * 0.8) return '명장(정보형)';
     if (leadership >= chiefStatMin - statGradeLevel && strength + intel < leadership) return '차장(통솔형)';
     return '평범';
 }
@@ -135,7 +135,7 @@ export function nextExpLevelRemain(experience: number, expLevel: number): [numbe
 // --- Officer level text ---
 
 const OfficerLevelMapDefault: Record<number, string> = {
-    20: '군주',
+    20: '원수',
     19: '참모',
     18: '제1장군',
     17: '제1모사',
@@ -160,7 +160,7 @@ const OfficerLevelMapDefault: Record<number, string> = {
 
 const OfficerLevelMapByNationLevel: Record<number, Record<number, string>> = {
     9: {
-        20: '황제',
+        20: '원수',
         19: '승상',
         18: '태위',
         17: '사도',
@@ -316,7 +316,7 @@ export function formatOfficerLevelText(
     nationTypeCode?: string,
     npcState?: number
 ): string {
-    if (npcState === 10) return '황제';
+    if (npcState === 10) return '원수';
     if (officerLevel <= 0 && hasNation) return '일반';
 
     if (officerLevel < 5) {
@@ -638,7 +638,7 @@ export function getPersonalityName(code: string | undefined | null): string {
 
 export const REGION_NAMES: Record<number, string> = {
     1: '하북',
-    2: '중원',
+    2: '은하',
     3: '서북',
     4: '서촉',
     5: '남중',
@@ -658,7 +658,7 @@ export function statColor(value: number): string {
     return '#6b7280'; // dim
 }
 
-// --- Trust (민심) color ---
+// --- Trust (지지도) color ---
 
 export function trustColor(trust: number): string {
     if (trust >= 80) return '#22c55e';
@@ -679,10 +679,10 @@ export const NATION_LEVEL_LABELS: Record<number, string> = {
     6: '대사마',
     7: '공',
     8: '왕',
-    9: '황제',
+    9: '원수',
 };
 
-/** Get nation level label respecting special nation types (e.g. 황건적 → 천공장군 instead of 황제) */
+/** Get nation level label respecting special nation types (e.g. 황건적 → 천공장군 instead of 원수) */
 export function getNationLevelLabel(level: number, typeCode?: string): string {
     const specialKey = getSpecialNationKey(typeCode);
     if (specialKey && level >= 9) {
@@ -732,7 +732,7 @@ export function isOfficerSet(officerSet: number, reqOfficerLevel: number): boole
 
 export function formatCityName(cityId: number, cityMap: Map<number, { name: string }>): string {
     const city = cityMap.get(cityId);
-    if (!city) return `도시#${cityId}`;
+    if (!city) return `행성#${cityId}`;
     return city.name;
 }
 
@@ -760,7 +760,7 @@ export function calcTournamentTerm(turnTerm: number): number {
 
 // --- Tournament type & step formatting (legacy formatTournament) ---
 
-const TOURNAMENT_TYPE_MAP = ['전력전(전투력 대결)', '통솔전(지휘력 대결)', '일기토(1:1 무력전)', '설전(1:1 지력전)'];
+const TOURNAMENT_TYPE_MAP = ['전력전(전투력 대결)', '통솔전(지휘력 대결)', '일기토(1:1 지휘전)', '설전(1:1 정보전)'];
 
 export function formatTournamentType(type: number | null | undefined): string {
     if (type === null || type === undefined) return '?';

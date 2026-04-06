@@ -97,7 +97,7 @@ export default function MyPage() {
 
     useEffect(() => {
         if (!currentWorld) return;
-        fetchMyOfficer(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
+        fetchMyOfficer(currentWorld.id).catch(() => setError('장교 정보를 불러올 수 없습니다.'));
     }, [currentWorld, fetchMyOfficer]);
 
     useEffect(() => {
@@ -195,7 +195,7 @@ export default function MyPage() {
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
     if (loading) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myOfficer) return <LoadingState message="장수 정보가 없습니다." />;
+    if (!myOfficer) return <LoadingState message="장교 정보가 없습니다." />;
 
     const g = myOfficer;
     const nationLevel = nation?.level ?? 0;
@@ -262,7 +262,7 @@ export default function MyPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <p className="text-sm text-muted-foreground">
-                            정식 오픈 전까지는 사전 거병과 장수 삭제만 가능합니다.
+                            정식 오픈 전까지는 사전 거병과 장교 삭제만 가능합니다.
                         </p>
                         <div className="flex gap-2 flex-wrap">
                             {myOfficer.nationId !== 0 ? (
@@ -290,18 +290,18 @@ export default function MyPage() {
                             <Button
                                 variant="destructive"
                                 onClick={async () => {
-                                    if (!confirm('장수를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+                                    if (!confirm('장교를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
                                     try {
                                         await accountApi.dieOnPrestart();
-                                        toast.success('장수가 삭제되었습니다.');
+                                        toast.success('장교가 삭제되었습니다.');
                                         if (currentWorld) fetchMyOfficer(currentWorld.id);
                                     } catch {
-                                        toast.error('장수 삭제에 실패했습니다.');
+                                        toast.error('장교 삭제에 실패했습니다.');
                                     }
                                 }}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                장수 삭제
+                                장교 삭제
                             </Button>
                         </div>
                     </CardContent>
@@ -316,13 +316,13 @@ export default function MyPage() {
 
             <Tabs defaultValue="info">
                 <TabsList>
-                    <TabsTrigger value="info">장수 정보</TabsTrigger>
+                    <TabsTrigger value="info">장교 정보</TabsTrigger>
                     <TabsTrigger value="battle">전투 통계</TabsTrigger>
                     <TabsTrigger value="settings">설정</TabsTrigger>
                     <TabsTrigger value="log">기록</TabsTrigger>
                 </TabsList>
 
-                {/* ===== TAB 1: 장수 정보 ===== */}
+                {/* ===== TAB 1: 장교 정보 ===== */}
                 <TabsContent value="info" className="space-y-4 mt-4">
                     <div className="grid gap-4 lg:grid-cols-2">
                         {/* Profile + Basic Info */}
@@ -387,13 +387,13 @@ export default function MyPage() {
                                         color: 'red',
                                     },
                                     {
-                                        label: '무력',
+                                        label: '지휘',
                                         value: g.strength,
                                         exp: g.strengthExp,
                                         color: 'orange',
                                     },
                                     {
-                                        label: '지력',
+                                        label: '정보',
                                         value: g.intel,
                                         exp: g.intelExp,
                                         color: 'dodgerblue',
@@ -405,7 +405,7 @@ export default function MyPage() {
                                         color: 'limegreen',
                                     },
                                     {
-                                        label: '매력',
+                                        label: '운영',
                                         value: g.charm,
                                         exp: 0,
                                         color: 'mediumpurple',
@@ -445,11 +445,11 @@ export default function MyPage() {
                                         <span className="text-green-400">{numberWithCommas(g.rice)}</span>
                                     </div>
                                     <div>
-                                        <span className="text-muted-foreground">병력:</span>{' '}
+                                        <span className="text-muted-foreground">함선:</span>{' '}
                                         <span className="text-white">{numberWithCommas(g.crew)}</span>
                                     </div>
                                     <div>
-                                        <span className="text-muted-foreground">병종:</span>{' '}
+                                        <span className="text-muted-foreground">함종:</span>{' '}
                                         <span className="text-cyan-300">{CREW_TYPE_NAMES[g.crewType] ?? '보병'}</span>
                                     </div>
                                     <div>
@@ -689,7 +689,7 @@ export default function MyPage() {
                             <CardHeader>
                                 <CardTitle className="text-sm flex items-center gap-2">
                                     <Settings className="size-4" />
-                                    장수 설정
+                                    장교 설정
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -730,7 +730,7 @@ export default function MyPage() {
 
                                 {/* Auto Nation Turn */}
                                 <div className="space-y-1">
-                                    <label className="text-sm text-muted-foreground">자동 국가턴</label>
+                                    <label className="text-sm text-muted-foreground">자동 진영턴</label>
                                     <select
                                         value={autoNationTurn ? '1' : '0'}
                                         onChange={(e) => setAutoNationTurn(e.target.value === '1')}
@@ -740,7 +740,7 @@ export default function MyPage() {
                                         <option value="1">자동 실행</option>
                                     </select>
                                     <p className="text-xs text-muted-foreground">
-                                        국가 턴을 자동으로 실행합니다 (수뇌 전용)
+                                        진영 턴을 자동으로 실행합니다 (수뇌 전용)
                                     </p>
                                 </div>
 
@@ -808,7 +808,7 @@ export default function MyPage() {
                                         <span className="text-sm">사전거병 시 삭제</span>
                                     </label>
                                     <p className="text-xs text-muted-foreground ml-6">
-                                        거병 전에 장수를 삭제하고 새로 시작합니다.
+                                        거병 전에 장교를 삭제하고 새로 시작합니다.
                                     </p>
 
                                     {currentWorld?.meta?.phase === 'pre_open' && (
@@ -823,7 +823,7 @@ export default function MyPage() {
                                                 <span className="text-sm">가오픈 삭제</span>
                                             </label>
                                             <p className="text-xs text-muted-foreground ml-6">
-                                                가오픈 시 장수를 삭제합니다.
+                                                가오픈 시 장교를 삭제합니다.
                                             </p>
                                         </>
                                     )}
@@ -838,7 +838,7 @@ export default function MyPage() {
                                         <span className="text-sm">접경 귀환</span>
                                     </label>
                                     <p className="text-xs text-muted-foreground ml-6">
-                                        접경 도시에 도달하면 자동으로 귀환합니다.
+                                        접경 행성에 도달하면 자동으로 귀환합니다.
                                     </p>
                                 </div>
 
@@ -898,7 +898,7 @@ export default function MyPage() {
                                         className="w-full"
                                         onClick={async () => {
                                             if (!confirm('거병후보로 등록하시겠습니까?')) return;
-                                            if (!confirm('거병 이후 장수를 삭제할 수 없게 됩니다. 계속하시겠습니까?'))
+                                            if (!confirm('거병 이후 장교를 삭제할 수 없게 됩니다. 계속하시겠습니까?'))
                                                 return;
                                             try {
                                                 await accountApi.buildNationCandidate();
@@ -1100,7 +1100,7 @@ function LogTabContent({
             <TabsList>
                 <TabsTrigger value="personal">개인 기록</TabsTrigger>
                 <TabsTrigger value="battle">전투 기록</TabsTrigger>
-                <TabsTrigger value="history">장수 열전</TabsTrigger>
+                <TabsTrigger value="history">장교 열전</TabsTrigger>
                 <TabsTrigger value="old">이전 기록</TabsTrigger>
             </TabsList>
 
@@ -1202,7 +1202,7 @@ function LogTabContent({
                                 className="h-7 px-2 bg-background border border-input rounded text-xs"
                             >
                                 <option value="generalAction">행동 기록</option>
-                                <option value="generalHistory">장수 열전</option>
+                                <option value="generalHistory">장교 열전</option>
                                 <option value="battleResult">전투 결과</option>
                                 <option value="battleDetail">전투 상세</option>
                             </select>

@@ -97,7 +97,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
 
     const getNation = (nationId: number): Nation | undefined => nations.find((n) => n.id === nationId);
 
-    const getCityName = (cityId: number): string => cities.find((c) => c.id === cityId)?.name ?? `도시${cityId}`;
+    const getCityName = (cityId: number): string => cities.find((c) => c.id === cityId)?.name ?? `행성${cityId}`;
 
     const handleSubmit = () => {
         if (selectedGeneralId != null && selectedCityId != null) {
@@ -109,15 +109,15 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
         <div className="space-y-3">
             {/* Help text */}
             <div className="rounded-none bg-amber-900/20 border border-amber-800/40 px-3 py-2 text-xs text-amber-200/90">
-                선택된 도시로 아국 장수를 발령합니다. 아국 도시로만 발령이 가능합니다.
+                선택된 행성으로 아국 장교를 발령합니다. 아국 행성으로만 발령이 가능합니다.
             </div>
 
             {/* General selector */}
             <div className="space-y-1">
-                <label className="text-[10px] text-muted-foreground font-medium">장수 선택</label>
+                <label className="text-[10px] text-muted-foreground font-medium">장교 선택</label>
                 <div className="max-h-48 overflow-y-auto space-y-1">
                     {myNationGenerals.length === 0 ? (
-                        <p className="text-xs text-muted-foreground text-center py-3">소속 장수 없음</p>
+                        <p className="text-xs text-muted-foreground text-center py-3">소속 장교 없음</p>
                     ) : (
                         myNationGenerals.map((gen) => {
                             const isSelected = selectedGeneralId === gen.id;
@@ -161,7 +161,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
 
             {/* City selector grouped by distance */}
             <div className="space-y-1">
-                <label className="text-[10px] text-muted-foreground font-medium">발령 도시</label>
+                <label className="text-[10px] text-muted-foreground font-medium">발령 행성</label>
                 <div className="max-h-48 overflow-y-auto space-y-2">
                     {(['근접', '중거리', '원거리'] as DistanceGroup[]).map((group) => {
                         const citiesInGroup = groupedCities[group];

@@ -94,7 +94,7 @@ export default function NationCitiesPage() {
     useEffect(() => {
         if (!currentWorld) return;
         if (!myOfficer) {
-            fetchMyOfficer(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
+            fetchMyOfficer(currentWorld.id).catch(() => setError('장교 정보를 불러올 수 없습니다.'));
         }
     }, [currentWorld, myOfficer, fetchMyOfficer]);
 
@@ -117,7 +117,7 @@ export default function NationCitiesPage() {
                 setRate(Number(policyRes.data.rate) || 20);
                 setBill(Number(policyRes.data.bill) || 100);
             })
-            .catch(() => setError('국가 도시 정보를 불러올 수 없습니다.'));
+            .catch(() => setError('진영 행성 정보를 불러올 수 없습니다.'));
     }, [myOfficer?.nationId, currentWorld]);
 
     const handleSavePolicy = async () => {
@@ -264,8 +264,8 @@ export default function NationCitiesPage() {
             <div className="p-4">
                 <EmptyState
                     icon={Building2}
-                    title="소속 국가가 없습니다."
-                    description="국가에 가입한 후 이용할 수 있습니다."
+                    title="소속 진영가 없습니다."
+                    description="진영에 가입한 후 이용할 수 있습니다."
                 />
             </div>
         );
@@ -275,23 +275,23 @@ export default function NationCitiesPage() {
         { key: 'region', label: '지역' },
         { key: 'level', label: '레벨' },
         { key: 'pop', label: '인구' },
-        { key: 'trust', label: '민심' },
+        { key: 'trust', label: '지지도' },
         { key: 'trade', label: '시세' },
-        { key: 'agri', label: '농업' },
-        { key: 'comm', label: '상업' },
+        { key: 'agri', label: '생산' },
+        { key: 'comm', label: '교역' },
         { key: 'secu', label: '치안' },
         { key: 'def', label: '수비' },
-        { key: 'wall', label: '성벽' },
+        { key: 'wall', label: '요새' },
         { key: 'supplyState', label: '보급' },
     ];
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">
-            <PageHeader icon={Building2} title="세력 도시" />
+            <PageHeader icon={Building2} title="세력 행성" />
 
             <Card>
                 <CardHeader>
-                    <CardTitle>국가 정책 편집</CardTitle>
+                    <CardTitle>진영 정책 편집</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
@@ -343,7 +343,7 @@ export default function NationCitiesPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>국가</TableHead>
+                                        <TableHead>진영</TableHead>
                                         <TableHead>관계</TableHead>
                                         <TableHead className="text-right">잔여 턴</TableHead>
                                     </TableRow>
@@ -387,22 +387,22 @@ export default function NationCitiesPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>도시별 예산 계산</CardTitle>
+                    <CardTitle>행성별 예산 계산</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <div className="text-sm grid grid-cols-2 gap-2">
-                        <div>금 총수입: +{totalGoldIncome.toLocaleString()}</div>
-                        <div>쌀 총수입: +{totalRiceIncome.toLocaleString()}</div>
+                        <div>자금 총수입: +{totalGoldIncome.toLocaleString()}</div>
+                        <div>물자 총수입: +{totalRiceIncome.toLocaleString()}</div>
                         <div>총지출(녹봉): -{totalExpense.toLocaleString()}</div>
                         <div className={totalGoldIncome - totalExpense >= 0 ? 'text-green-400' : 'text-red-400'}>
-                            금 순수익: {(totalGoldIncome - totalExpense).toLocaleString()}
+                            자자금 순수익: {(totalGoldIncome - totalExpense).toLocaleString()}
                         </div>
                     </div>
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>도시</TableHead>
+                                    <TableHead>행성</TableHead>
                                     <TableHead className="text-right">금수입</TableHead>
                                     <TableHead className="text-right">쌀수입</TableHead>
                                     <TableHead className="text-right">지출</TableHead>
@@ -440,7 +440,7 @@ export default function NationCitiesPage() {
                 <div className="relative w-48">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
-                        placeholder="도시 검색..."
+                        placeholder="행성 검색..."
                         value={cityFilter}
                         onChange={(e) => setCityFilter(e.target.value)}
                         className="pl-8"
@@ -456,7 +456,7 @@ export default function NationCitiesPage() {
             </div>
 
             {(cities ?? []).length === 0 ? (
-                <EmptyState icon={Building2} title="보유 도시가 없습니다." />
+                <EmptyState icon={Building2} title="보유 행성가 없습니다." />
             ) : (
                 <div className="overflow-x-auto">
                     <Table>
@@ -473,7 +473,7 @@ export default function NationCitiesPage() {
                                     </TableHead>
                                 ))}
                                 <TableHead className="text-right">자금수입</TableHead>
-                                <TableHead className="text-right">군량수입</TableHead>
+                                <TableHead className="text-right">물자수입</TableHead>
                                 <TableHead className="text-right">둔전수입</TableHead>
                                 <TableHead>관직</TableHead>
                             </TableRow>
@@ -659,7 +659,7 @@ export default function NationCitiesPage() {
                                                                 onValueChange={setAppointGeneralId}
                                                             >
                                                                 <SelectTrigger className="h-7 text-xs">
-                                                                    <SelectValue placeholder="장수 선택" />
+                                                                    <SelectValue placeholder="장교 선택" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
                                                                     {getUnassignedGenerals().map((g) => (
@@ -689,26 +689,26 @@ export default function NationCitiesPage() {
                                                 <TableCell colSpan={16} className="py-2">
                                                     <div className="text-xs space-y-1 pl-4">
                                                         <div className="font-medium text-muted-foreground mb-1">
-                                                            배치 장수 (
+                                                            배치 장교 (
                                                             {nationGenerals.filter((g) => g.cityId === c.id).length}
                                                             명)
                                                         </div>
                                                         {nationGenerals.filter((g) => g.cityId === c.id).length ===
                                                         0 ? (
                                                             <span className="text-muted-foreground">
-                                                                배치된 장수가 없습니다.
+                                                                배치된 장교가 없습니다.
                                                             </span>
                                                         ) : (
                                                             <table className="w-full text-xs">
                                                                 <thead>
                                                                     <tr className="border-b border-gray-700">
-                                                                        <th className="text-left py-0.5 px-1">장수</th>
+                                                                        <th className="text-left py-0.5 px-1">장교</th>
                                                                         <th className="text-left py-0.5 px-1">관직</th>
                                                                         <th className="text-right py-0.5 px-1">통솔</th>
-                                                                        <th className="text-right py-0.5 px-1">무력</th>
-                                                                        <th className="text-right py-0.5 px-1">지력</th>
-                                                                        <th className="text-right py-0.5 px-1">병종</th>
-                                                                        <th className="text-right py-0.5 px-1">병력</th>
+                                                                        <th className="text-right py-0.5 px-1">지휘</th>
+                                                                        <th className="text-right py-0.5 px-1">정보</th>
+                                                                        <th className="text-right py-0.5 px-1">함종</th>
+                                                                        <th className="text-right py-0.5 px-1">함선</th>
                                                                         <th className="text-right py-0.5 px-1">훈련</th>
                                                                         <th className="text-right py-0.5 px-1">사기</th>
                                                                         <th className="text-right py-0.5 px-1">금</th>

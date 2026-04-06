@@ -27,10 +27,10 @@ type StatKey = (typeof STAT_KEYS)[number];
 
 const STAT_LABELS: Record<StatKey, string> = {
     leadership: '통솔',
-    strength: '무력',
-    intel: '지력',
+    strength: '지휘',
+    intel: '정보',
     politics: '정치',
-    charm: '매력',
+    charm: '운영',
 };
 
 const STAT_COLORS: Record<StatKey, string> = {
@@ -294,7 +294,7 @@ function LobbyJoinPageContent() {
             return;
         }
         if (nationId === 0 && cityId !== 'random' && !cityId) {
-            setError('도시를 선택해주세요.');
+            setError('행성을 선택해주세요.');
             return;
         }
         if (remaining !== 0) {
@@ -325,7 +325,7 @@ function LobbyJoinPageContent() {
             await fetchMyOfficer(currentWorld.id);
             router.push('/');
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : '장수 생성에 실패했습니다.';
+            const msg = err instanceof Error ? err.message : '장교 생성에 실패했습니다.';
             setError(msg);
         } finally {
             setSubmitting(false);
@@ -340,7 +340,7 @@ function LobbyJoinPageContent() {
                 <ArrowLeft className="size-4 mr-1" /> 로비로 돌아가기
             </Button>
 
-            <PageHeader icon={UserPlus} title="장수 생성" />
+            <PageHeader icon={UserPlus} title="장교 생성" />
 
             {error && <div className="text-sm px-3 py-2 rounded bg-destructive/20 text-destructive">{error}</div>}
 
@@ -348,7 +348,7 @@ function LobbyJoinPageContent() {
             {nationsWithScout.length > 0 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm">국가 임관 권유</CardTitle>
+                        <CardTitle className="text-sm">진영 임관 권유</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
                         {nationsWithScout.map((n) => (
@@ -368,16 +368,16 @@ function LobbyJoinPageContent() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>장수 정보 입력</CardTitle>
+                    <CardTitle>장교 정보 입력</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Name */}
                         <div className="space-y-1">
-                            <label className="block text-sm text-muted-foreground">장수명</label>
+                            <label className="block text-sm text-muted-foreground">장교명</label>
                             {blockCustomName ? (
                                 <div className="text-sm text-muted-foreground p-2 border border-input rounded-none bg-muted/50">
-                                    이 서버에서는 커스텀 장수명을 사용할 수 없습니다. (서버 설정에 의해 자동 배정됩니다)
+                                    이 서버에서는 커스텀 장교명을 사용할 수 없습니다. (서버 설정에 의해 자동 배정됩니다)
                                 </div>
                             ) : (
                                 <Input
@@ -385,12 +385,12 @@ function LobbyJoinPageContent() {
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     maxLength={20}
-                                    placeholder="장수 이름 입력"
+                                    placeholder="장교 이름 입력"
                                 />
                             )}
                         </div>
 
-                        {/* 전콘 사용 (legacy parity: PageJoin.vue) */}
+                        {/* 초상화 사용 (legacy parity: PageJoin.vue) */}
                         <div className="space-y-1">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
@@ -399,10 +399,10 @@ function LobbyJoinPageContent() {
                                     onChange={(e) => setUseOwnIcon(e.target.checked)}
                                     className="rounded border-gray-600"
                                 />
-                                <span className="text-sm">전콘 사용</span>
+                                <span className="text-sm">초상화 사용</span>
                             </label>
                             <p className="text-xs text-muted-foreground ml-6">
-                                계정에 등록된 프로필 이미지(전콘)를 장수 초상화로 사용합니다.
+                                계정에 등록된 프로필 이미지(초상화)를 장교 초상화로 사용합니다.
                             </p>
                         </div>
 
@@ -427,7 +427,7 @@ function LobbyJoinPageContent() {
 
                         {/* Nation — hidden in found/rise mode (건국/거병 always starts as 재야) */}
                         <div className="space-y-1">
-                            <label className="block text-sm text-muted-foreground">소속 국가</label>
+                            <label className="block text-sm text-muted-foreground">소속 진영</label>
                             <select
                                 value={nationId}
                                 onChange={(e) => setNationId(Number(e.target.value))}
@@ -449,7 +449,7 @@ function LobbyJoinPageContent() {
 
                         {/* City */}
                         <div className="space-y-1">
-                            <label className="block text-sm text-muted-foreground">시작 도시</label>
+                            <label className="block text-sm text-muted-foreground">시작 행성</label>
                             {nationId === 0 ? (
                                 (() => {
                                     const randomOnly = !!(
@@ -458,7 +458,7 @@ function LobbyJoinPageContent() {
                                     );
                                     return randomOnly ? (
                                         <div className="text-sm text-muted-foreground p-2 border border-input rounded-none bg-muted/50">
-                                            이 서버에서는 랜덤 도시 배정만 가능합니다.
+                                            이 서버에서는 랜덤 행성 배정만 가능합니다.
                                         </div>
                                     ) : (
                                         <select
@@ -481,7 +481,7 @@ function LobbyJoinPageContent() {
                                 })()
                             ) : (
                                 <div className="text-sm text-muted-foreground p-2 border border-input rounded-none bg-muted/50">
-                                    국가 소속 시 도시는 자동 배정됩니다.
+                                    진영 소속 시 행성은 자동 배정됩니다.
                                 </div>
                             )}
                         </div>
@@ -518,10 +518,10 @@ function LobbyJoinPageContent() {
                                     size="sm"
                                     onClick={() => applyPreset('strength')}
                                 >
-                                    무력형
+                                    지휘형
                                 </Button>
                                 <Button type="button" variant="outline" size="sm" onClick={() => applyPreset('intel')}>
-                                    지력형
+                                    정보형
                                 </Button>
                                 <Button
                                     type="button"
@@ -535,7 +535,7 @@ function LobbyJoinPageContent() {
 
                             {/* 랜덤 장수 프리셋 (legacy parity: quick general templates) */}
                             <div className="space-y-1">
-                                <label className="text-xs text-muted-foreground">유명 장수 프리셋</label>
+                                <label className="text-xs text-muted-foreground">유명 장교 프리셋</label>
                                 <div className="flex flex-wrap gap-2">
                                     {GENERAL_PRESETS.map((preset) => (
                                         <Button
@@ -647,7 +647,7 @@ function LobbyJoinPageContent() {
 
                                     <div className="space-y-2">
                                         <label className="block text-xs text-muted-foreground">
-                                            시작 도시 지정 (유산)
+                                            시작 행성 지정 (유산)
                                         </label>
                                         <select
                                             value={inheritCity}
@@ -673,10 +673,10 @@ function LobbyJoinPageContent() {
                                             {(
                                                 [
                                                     [0, '통솔'],
-                                                    [1, '무력'],
-                                                    [2, '지력'],
+                                                    [1, '지휘'],
+                                                    [2, '정보'],
                                                     [3, '정치'],
-                                                    [4, '매력'],
+                                                    [4, '운영'],
                                                 ] as const
                                             ).map(([idx, label]) => (
                                                 <div key={idx}>
@@ -716,7 +716,7 @@ function LobbyJoinPageContent() {
                         {/* Submit */}
                         <div className="flex gap-2">
                             <Button type="submit" disabled={submitting || remaining !== 0} className="flex-1">
-                                {submitting ? '생성중...' : '장수 생성'}
+                                {submitting ? '생성중...' : '장교 생성'}
                             </Button>
                             <Button type="button" variant="outline" onClick={() => applyPreset('balanced')}>
                                 다시 입력
@@ -734,7 +734,7 @@ export default function LobbyJoinPage() {
         <Suspense
             fallback={
                 <div className="p-4">
-                    <LoadingState message="장수 생성 정보를 불러오는 중..." />
+                    <LoadingState message="장교 생성 정보를 불러오는 중..." />
                 </div>
             }
         >

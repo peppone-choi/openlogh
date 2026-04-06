@@ -312,7 +312,7 @@ function LoginPageContent() {
         <>
             <Card className="w-full max-w-md p-8">
                 <CardHeader className="px-0 pt-0">
-                    <CardTitle className="text-center text-2xl">오픈삼국</CardTitle>
+                    <CardTitle className="text-center text-2xl">오픈은하영웅전설</CardTitle>
                 </CardHeader>
                 <CardContent className="px-0 pb-0">
                     {autoLogging && (

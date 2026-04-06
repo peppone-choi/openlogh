@@ -6,8 +6,8 @@ import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication
 @EnableScheduling
-class OpensamApplication
+class OpenloghApplication
 
 fun main(args: Array<String>) {
-    runApplication<OpensamApplication>(*args)
+    runApplication<OpenloghApplication>(*args)
 }

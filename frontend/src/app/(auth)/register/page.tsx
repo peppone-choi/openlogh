@@ -58,14 +58,14 @@ function mbStrWidth(str: string): number {
 
 /* ── Terms content ── */
 const TERMS_CONTENT = `제1조 (목적)
-본 약관은 삼국지 모의전투 HiDCHe(이하 "서비스")의 이용과 관련하여 서비스와 회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+본 약관은 은하영웅전설 모의전투 HiDCHe(이하 "서비스")의 이용과 관련하여 서비스와 회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
 
 제2조 (회원가입)
 1. 회원가입은 이용자가 본 약관에 동의한 후 회원가입 양식에 따라 회원정보를 기입하여 신청합니다.
 2. 서비스는 제1항의 회원가입 신청에 대하여 특별한 사유가 없는 한 승낙합니다.
 
 제3조 (서비스 이용)
-1. 서비스는 회원에게 웹 기반 삼국지 전략 시뮬레이션 게임을 제공합니다.
+1. 서비스는 회원에게 웹 기반 은하영웅전설 전략 시뮬레이션 게임을 제공합니다.
 2. 서비스 이용 시간은 서비스 정책에 따릅니다.
 
 제4조 (회원의 의무)
@@ -296,7 +296,7 @@ export default function RegisterPage() {
         <>
             <Card className="w-full max-w-md p-8">
                 <CardHeader className="px-0 pt-0">
-                    <CardTitle className="text-center text-2xl">오픈삼국 회원가입</CardTitle>
+                    <CardTitle className="text-center text-2xl">오픈은하영웅전설 회원가입</CardTitle>
                 </CardHeader>
                 <CardContent className="px-0 pb-0">
                     {registrationComplete && activationMessage && (

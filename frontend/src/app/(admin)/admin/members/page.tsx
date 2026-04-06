@@ -73,7 +73,7 @@ export default function AdminMembersPage() {
     }, [load]);
 
     const doAction = async (id: number, type: string) => {
-        if (type === 'kill' && !confirm('해당 장수에게 강제 사망을 입력하시겠습니까?')) {
+        if (type === 'kill' && !confirm('해당 장교에게 강제 사망을 입력하시겠습니까?')) {
             return;
         }
         try {
@@ -125,11 +125,11 @@ export default function AdminMembersPage() {
 
     return (
         <div className="space-y-4">
-            <PageHeader icon={Users} title="장수 관리" />
+            <PageHeader icon={Users} title="장교 관리" />
             <div className="relative w-64">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
-                    placeholder="장수 검색..."
+                    placeholder="장교 검색..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-8"
@@ -184,7 +184,7 @@ export default function AdminMembersPage() {
                         </TableHead>
                         <TableHead>ID</TableHead>
                         <TableHead>이름</TableHead>
-                        <TableHead>국가</TableHead>
+                        <TableHead>진영</TableHead>
                         <TableHead>병사</TableHead>
                         <TableHead>경험치</TableHead>
                         <TableHead>삭턴</TableHead>
@@ -242,7 +242,7 @@ export default function AdminMembersPage() {
                     {filtered.length === 0 && (
                         <TableRow>
                             <TableCell colSpan={10} className="text-center text-muted-foreground">
-                                장수가 없습니다.
+                                장교가 없습니다.
                             </TableCell>
                         </TableRow>
                     )}

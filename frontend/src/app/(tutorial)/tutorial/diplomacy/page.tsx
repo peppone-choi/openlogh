@@ -31,7 +31,7 @@ export default function TutorialDiplomacyPage() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b">
-                                    <th className="text-left py-2 pr-4">국가</th>
+                                    <th className="text-left py-2 pr-4">진영</th>
                                     <th className="text-left py-2 pr-4">대상</th>
                                     <th className="text-left py-2">상태</th>
                                 </tr>
@@ -67,10 +67,10 @@ export default function TutorialDiplomacyPage() {
                 </CardContent>
             </Card>
 
-            {/* 중원 정보 */}
+            {/* 은하 정보 */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">중원 정보</CardTitle>
+                    <CardTitle className="text-base">은하 정보</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     {nations.map((n) => {
@@ -87,7 +87,7 @@ export default function TutorialDiplomacyPage() {
                                     <span className="font-medium">{n.name}</span>
                                 </div>
                                 <div className="flex gap-3 text-xs text-muted-foreground">
-                                    <span>도시: {nationCities.length}</span>
+                                    <span>행성: {nationCities.length}</span>
                                     <span>장수: {nationGenerals.length}</span>
                                     <span>기술: {n.tech}</span>
                                 </div>

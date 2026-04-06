@@ -66,7 +66,7 @@ function TurnBrief({ members }: { members: General[] }) {
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-xs">
                 <div className="text-center">
-                    <div className="text-muted-foreground">총 병력</div>
+                    <div className="text-muted-foreground">총 함선</div>
                     <div className="text-blue-400 font-bold tabular-nums">{totalCrew.toLocaleString()}</div>
                 </div>
                 <div className="text-center">
@@ -90,7 +90,7 @@ function TurnBrief({ members }: { members: General[] }) {
                     </div>
                 </div>
                 <div className="text-center">
-                    <div className="text-muted-foreground">병력 부족</div>
+                    <div className="text-muted-foreground">함선 부족</div>
                     <div className={`tabular-nums font-bold ${lowCrewCount > 0 ? 'text-red-400' : ''}`}>
                         {lowCrewCount}명
                     </div>
@@ -159,7 +159,7 @@ function TroopSummary({ members }: { members: General[] }) {
     return (
         <div className="flex items-center gap-4 text-xs text-muted-foreground border-t border-gray-800 pt-2 mt-2">
             <span>
-                총 병력: <span className="text-blue-400 tabular-nums">{totalCrew.toLocaleString()}</span>
+                총 함선: <span className="text-blue-400 tabular-nums">{totalCrew.toLocaleString()}</span>
             </span>
             <span>
                 평균 훈련: <span className="tabular-nums">{avgTrain}</span>
@@ -282,19 +282,19 @@ function MemberRow({
                         <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                             <span className="text-muted-foreground">통솔</span>
                             <span className="tabular-nums">{g.leadership}</span>
-                            <span className="text-muted-foreground">무력</span>
+                            <span className="text-muted-foreground">지휘</span>
                             <span className="tabular-nums">{g.strength}</span>
-                            <span className="text-muted-foreground">지력</span>
+                            <span className="text-muted-foreground">정보</span>
                             <span className="tabular-nums">{g.intel}</span>
                             <span className="text-muted-foreground">정치</span>
                             <span className="tabular-nums">{g.politics ?? '-'}</span>
-                            <span className="text-muted-foreground">매력</span>
+                            <span className="text-muted-foreground">운영</span>
                             <span className="tabular-nums">{g.charm ?? '-'}</span>
                         </div>
                         <div className="border-t border-gray-700 pt-1 grid grid-cols-2 gap-x-4 gap-y-0.5">
-                            <span className="text-muted-foreground">병종</span>
+                            <span className="text-muted-foreground">함종</span>
                             <span>{CREW_TYPE_NAMES[g.crewType] ?? g.crewType}</span>
-                            <span className="text-muted-foreground">병력</span>
+                            <span className="text-muted-foreground">함선</span>
                             <span className="tabular-nums">{g.crew.toLocaleString()}</span>
                             <span className="text-muted-foreground">훈련</span>
                             <span className="tabular-nums">{g.train}</span>
@@ -308,7 +308,7 @@ function MemberRow({
                             <span className="tabular-nums">{g.rice?.toLocaleString() ?? '-'}</span>
                             {cityName && (
                                 <>
-                                    <span className="text-muted-foreground">도시</span>
+                                    <span className="text-muted-foreground">행성</span>
                                     <span>{cityName}</span>
                                 </>
                             )}
@@ -420,7 +420,7 @@ export default function TroopPage() {
     };
 
     const handleDisband = async (troopId: number) => {
-        if (!confirm('부대를 해산하시겠습니까?')) return;
+        if (!confirm('함대를 해산하시겠습니까?')) return;
         await troopApi.disband(troopId);
         await fetchTroops();
     };
@@ -441,7 +441,7 @@ export default function TroopPage() {
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
-    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>;
+    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 진영가 없습니다.</div>;
 
     const myTroop = troops.find(
         (t) => t.leaderGeneralId === myOfficer.id || (troopMembers.get(t.id) ?? []).some((m) => m.id === myOfficer.id)
@@ -450,7 +450,7 @@ export default function TroopPage() {
     return (
         <div className="p-4 space-y-4 max-w-3xl mx-auto">
             <div className="flex items-center justify-between">
-                <PageHeader icon={Shield} title="부대 편성" />
+                <PageHeader icon={Shield} title="함대 편성" />
                 {!myTroop && (
                     <Button
                         onClick={() => setShowCreate(!showCreate)}
@@ -458,7 +458,7 @@ export default function TroopPage() {
                         size="sm"
                     >
                         <Plus className="size-4" />
-                        {showCreate ? '취소' : '부대 창설'}
+                        {showCreate ? '취소' : '함대 창설'}
                     </Button>
                 )}
             </div>
@@ -469,13 +469,13 @@ export default function TroopPage() {
                     <CardContent className="space-y-3">
                         <div>
                             <label htmlFor="new-troop-name" className="block text-xs text-muted-foreground mb-1">
-                                부대명
+                                함대명
                             </label>
                             <Input
                                 id="new-troop-name"
                                 value={newName}
                                 onChange={(e) => setNewName(e.target.value)}
-                                placeholder="부대 이름..."
+                                placeholder="함대 이름..."
                             />
                         </div>
                         <Button onClick={handleCreate} disabled={saving || !newName.trim()}>
@@ -491,7 +491,7 @@ export default function TroopPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-sm">
                             <Swords className="size-4 text-blue-400" />
-                            현재 소속 부대: {myTroop.name}
+                            현재 소속 함대: {myTroop.name}
                         </CardTitle>
                     </CardHeader>
                 </Card>
@@ -499,7 +499,7 @@ export default function TroopPage() {
 
             {/* Troop list */}
             {troops.length === 0 ? (
-                <EmptyState icon={Shield} title="부대가 없습니다." />
+                <EmptyState icon={Shield} title="함대가 없습니다." />
             ) : (
                 troops.map((t) => {
                     const leader = generalMap.get(t.leaderGeneralId);

@@ -189,21 +189,21 @@ export default function AdminDiplomacyPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">국가 종합 지표</CardTitle>
+                    <CardTitle className="text-base">진영 종합 지표</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>국가</TableHead>
-                                    <TableHead className="text-right">장수</TableHead>
-                                    <TableHead className="text-right">도시</TableHead>
-                                    <TableHead className="text-right">병력</TableHead>
+                                    <TableHead>진영</TableHead>
+                                    <TableHead className="text-right">장교</TableHead>
+                                    <TableHead className="text-right">행성</TableHead>
+                                    <TableHead className="text-right">함선</TableHead>
                                     <TableHead className="text-right">금</TableHead>
                                     <TableHead className="text-right">쌀</TableHead>
                                     <TableHead className="text-right">기술</TableHead>
-                                    <TableHead className="text-right">국력</TableHead>
+                                    <TableHead className="text-right">군사력</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -232,7 +232,7 @@ export default function AdminDiplomacyPage() {
                                 {nations.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={8} className="text-center text-muted-foreground">
-                                            국가가 없습니다.
+                                            진영이 없습니다.
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -347,8 +347,8 @@ export default function AdminDiplomacyPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>ID</TableHead>
-                                <TableHead>국가 A</TableHead>
-                                <TableHead>국가 B</TableHead>
+                                <TableHead>진영 A</TableHead>
+                                <TableHead>진영 B</TableHead>
                                 <TableHead>상태</TableHead>
                                 <TableHead>기간</TableHead>
                             </TableRow>

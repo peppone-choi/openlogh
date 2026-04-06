@@ -25,7 +25,7 @@ export default function TutorialCreatePage() {
 
     return (
         <div className="max-w-2xl mx-auto p-4 space-y-6 pb-20">
-            <h1 className="text-xl font-bold text-center">장수 생성</h1>
+            <h1 className="text-xl font-bold text-center">장교 생성</h1>
 
             {/* 스탯 배분 */}
             <Card data-tutorial="stat-form">
@@ -34,42 +34,42 @@ export default function TutorialCreatePage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <p className="text-xs text-muted-foreground mb-4">
-                        장수의 5가지 능력치입니다. 각 능력치는 게임 내 다양한 행동에 영향을 줍니다.
+                        장교의 5가지 능력치입니다. 각 능력치는 게임 내 다양한 행동에 영향을 줍니다.
                     </p>
                     <StatBar label="통솔" value={stats.leadership} color="bg-red-500" />
-                    <StatBar label="무력" value={stats.strength} color="bg-orange-500" />
-                    <StatBar label="지력" value={stats.intel} color="bg-blue-500" />
+                    <StatBar label="지휘" value={stats.strength} color="bg-orange-500" />
+                    <StatBar label="정보" value={stats.intel} color="bg-blue-500" />
                     <StatBar label="정치" value={stats.politics} color="bg-green-500" />
-                    <StatBar label="매력" value={stats.charm} color="bg-purple-500" />
+                    <StatBar label="운영" value={stats.charm} color="bg-purple-500" />
 
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                         <div>
                             <span className="font-semibold text-red-400">통솔</span> - 전투 지휘, 징병 효율
                         </div>
                         <div>
-                            <span className="font-semibold text-orange-400">무력</span> - 전투 데미지, 일기토
+                            <span className="font-semibold text-orange-400">지휘</span> - 전투 데미지, 일기토
                         </div>
                         <div>
-                            <span className="font-semibold text-blue-400">지력</span> - 계략, 방어 판정
+                            <span className="font-semibold text-blue-400">정보</span> - 계략, 방어 판정
                         </div>
                         <div>
-                            <span className="font-semibold text-green-400">정치</span> - 내정 효율
+                            <span className="font-semibold text-green-400">정치</span> - 행성 관리 효율
                         </div>
                         <div>
-                            <span className="font-semibold text-purple-400">매력</span> - 외교, 징병 성공률
+                            <span className="font-semibold text-purple-400">운영</span> - 외교, 징병 성공률
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* 병종 선택 */}
+            {/* 함종 선택 */}
             <Card data-tutorial="crew-select">
                 <CardHeader>
-                    <CardTitle className="text-base">병종 선택</CardTitle>
+                    <CardTitle className="text-base">함종 선택</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <p className="text-xs text-muted-foreground mb-4">
-                        병종에 따라 전투 스타일이 달라집니다. 상성 관계가 있어 전략적 선택이 중요합니다.
+                        함종에 따라 전투 스타일이 달라집니다. 상성 관계가 있어 전략적 선택이 중요합니다.
                     </p>
                     <div className="grid gap-2">
                         {CREW_TYPES.map((crew) => (

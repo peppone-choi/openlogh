@@ -329,7 +329,7 @@ export default function DiplomacyPage() {
                             <CardContent className="space-y-3">
                                 <div>
                                     <label htmlFor="destNationId" className="block text-xs text-muted-foreground mb-1">
-                                        대상 국가
+                                        대상 진영
                                     </label>
                                     <select
                                         id="destNationId"
@@ -365,7 +365,7 @@ export default function DiplomacyPage() {
                                 <div>
                                     <div className="flex items-center justify-between mb-1">
                                         <label htmlFor="letterContent" className="text-xs text-muted-foreground">
-                                            공개 내용 {showDualContent ? '(모든 국가에 공개)' : '(선택)'}
+                                            공개 내용 {showDualContent ? '(모든 진영에 공개)' : '(선택)'}
                                         </label>
                                         <button
                                             type="button"

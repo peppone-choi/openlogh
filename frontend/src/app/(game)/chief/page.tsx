@@ -440,7 +440,7 @@ export default function ChiefPage() {
             await reload();
             setNationReserveResult({
                 success: true,
-                logs: ['국가 명령 예약을 저장했습니다.'],
+                logs: ['진영 명령 예약을 저장했습니다.'],
             });
             setShowNationReserveForm(false);
 
@@ -452,7 +452,7 @@ export default function ChiefPage() {
         } catch {
             setNationReserveResult({
                 success: false,
-                logs: ['국가 명령 예약 저장에 실패했습니다.'],
+                logs: ['진영 명령 예약 저장에 실패했습니다.'],
             });
         } finally {
             setReservingNation(false);
@@ -529,7 +529,7 @@ export default function ChiefPage() {
                 <TabsList>
                     <TabsTrigger value="chief">사령부</TabsTrigger>
                     <TabsTrigger value="overview">전체 턴</TabsTrigger>
-                    <TabsTrigger value="generals">소속 장수</TabsTrigger>
+                    <TabsTrigger value="generals">소속 장교</TabsTrigger>
                 </TabsList>
 
                 {/* ===== Tab 1: Chief Center (사령부) ===== */}
@@ -538,7 +538,7 @@ export default function ChiefPage() {
                     {nation && (
                         <Card>
                             <CardHeader>
-                                <CardTitle>{nation.name} 국가 자원</CardTitle>
+                                <CardTitle>{nation.name} 진영 자원</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <ResourceDisplay gold={nation.gold} rice={nation.rice} crew={totalCrew} />
@@ -548,14 +548,14 @@ export default function ChiefPage() {
 
                     <Tabs defaultValue="reservation" className="space-y-3">
                         <TabsList>
-                            <TabsTrigger value="reservation">국가 명령 예약</TabsTrigger>
+                            <TabsTrigger value="reservation">진영 명령 예약</TabsTrigger>
                             <TabsTrigger value="execute">즉시 실행</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="reservation" className="space-y-3 mt-0">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>국가 명령 예약 (12턴)</CardTitle>
+                                    <CardTitle>진영 명령 예약 (12턴)</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     {/* Toolbar */}
@@ -768,7 +768,7 @@ export default function ChiefPage() {
                         <TabsContent value="execute" className="space-y-3 mt-0">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>국가 명령</CardTitle>
+                                    <CardTitle>진영 명령</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     <div className="flex flex-wrap gap-2">
@@ -878,7 +878,7 @@ export default function ChiefPage() {
                                                 >
                                                     <span className="font-medium">{officer.name}</span>
                                                     <span className="text-muted-foreground">
-                                                        도시: {officer.cityName}
+                                                        행성: {officer.cityName}
                                                     </span>
                                                     <span className="text-muted-foreground">
                                                         상태: {officer.commandStatus}
@@ -1034,7 +1034,7 @@ export default function ChiefPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Users className="size-4" />
-                                소속 장수 (플레이어 {playerGenerals.length}명 / NPC {npcGenerals.length}명)
+                                소속 장교 (플레이어 {playerGenerals.length}명 / NPC {npcGenerals.length}명)
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -1042,11 +1042,11 @@ export default function ChiefPage() {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-gray-700 text-xs text-muted-foreground">
-                                            <th className="px-2 py-1 text-left">장수</th>
+                                            <th className="px-2 py-1 text-left">장교</th>
                                             <th className="px-2 py-1 text-left">관직</th>
-                                            <th className="px-2 py-1 text-left">도시</th>
-                                            <th className="px-2 py-1 text-right">병력</th>
-                                            <th className="px-2 py-1 text-right">병종</th>
+                                            <th className="px-2 py-1 text-left">행성</th>
+                                            <th className="px-2 py-1 text-right">함선</th>
+                                            <th className="px-2 py-1 text-right">함종</th>
                                             <th className="px-2 py-1 text-right">훈련</th>
                                             <th className="px-2 py-1 text-right">사기</th>
                                         </tr>

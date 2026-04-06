@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/c
 import { Badge } from '@/components/ui/8bit/badge';
 
 const OFFICER_LEVELS: Record<number, string> = {
-    12: '군주',
+    12: '원수',
     8: '대장군',
     5: '승상',
     1: '일반',
@@ -54,7 +54,7 @@ export default function TutorialNationPage() {
                         <span className="font-medium">{myNation.power}</span>
                     </div>
                     <div>
-                        <span className="text-muted-foreground">도시 수: </span>
+                        <span className="text-muted-foreground">행성 수: </span>
                         <span className="font-medium">{nationCities.length}</span>
                     </div>
                     <div>
@@ -64,14 +64,14 @@ export default function TutorialNationPage() {
                 </CardContent>
             </Card>
 
-            {/* 인사부 — 장수 목록 + 관직 */}
+            {/* 인사부 — 장교 목록 + 관직 */}
             <Card>
                 <CardHeader>
                     <CardTitle className="text-base">인사부 - 장수 관직</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     <p className="text-xs text-muted-foreground mb-3">
-                        장수에게 관직을 임명하면 능력치 보너스를 받을 수 있습니다.
+                        장교에게 관직을 임명하면 능력치 보너스를 받을 수 있습니다.
                     </p>
                     {nationGenerals.map((g) => (
                         <div key={g.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
@@ -92,11 +92,11 @@ export default function TutorialNationPage() {
             {/* 내무부 — 세율/정책 */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">내무부 - 국가 정책</CardTitle>
+                    <CardTitle className="text-base">내무부 - 진영 정책</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                     <p className="text-xs text-muted-foreground">
-                        군주 또는 고위 관직자는 국가 정책을 설정할 수 있습니다.
+                        원수 또는 고위 관직자는 진영 정책을 설정할 수 있습니다.
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                         <div className="p-2 rounded bg-muted/50">
@@ -114,10 +114,10 @@ export default function TutorialNationPage() {
                 </CardContent>
             </Card>
 
-            {/* 도시 목록 */}
+            {/* 행성 목록 */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">보유 도시</CardTitle>
+                    <CardTitle className="text-base">보유 행성</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     {nationCities.map((c) => (

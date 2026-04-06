@@ -33,7 +33,7 @@ function getServerPhase(w: WorldState): {
     if (meta.isLocked || meta.locked || config.locked)
         return { label: '턴 정지', color: 'text-orange-400', icon: Pause };
 
-    // isunited check (legacy: 1=천하통일, 2=정지)
+    // isunited check (legacy: 1=은하통일, 2=정지)
     const phase = meta.phase as string | undefined;
     if (phase === 'united') return { label: '통일', color: 'text-yellow-400', icon: Trophy };
     if (phase === 'paused') return { label: '정지', color: 'text-red-400', icon: Pause };
@@ -328,7 +328,7 @@ export default function LobbyPage() {
                                                 </span>
                                                 {(w.meta?.nationCount != null || w.meta?.nationCnt != null) && (
                                                     <span>
-                                                        국가: {String(w.meta?.nationCount ?? w.meta?.nationCnt)}개
+                                                        진영: {String(w.meta?.nationCount ?? w.meta?.nationCnt)}개
                                                     </span>
                                                 )}
                                                 {w.meta?.fictionMode ? (
@@ -409,10 +409,10 @@ export default function LobbyPage() {
                                     </div>
                                     <div className="space-y-1">
                                         <StatBar label="통솔" value={myOfficer.leadership} color="bg-red-500" />
-                                        <StatBar label="무력" value={myOfficer.strength} color="bg-orange-500" />
-                                        <StatBar label="지력" value={myOfficer.intel} color="bg-blue-500" />
+                                        <StatBar label="지휘" value={myOfficer.strength} color="bg-orange-500" />
+                                        <StatBar label="정보" value={myOfficer.intel} color="bg-blue-500" />
                                         <StatBar label="정치" value={myOfficer.politics} color="bg-green-500" />
-                                        <StatBar label="매력" value={myOfficer.charm} color="bg-purple-500" />
+                                        <StatBar label="운영" value={myOfficer.charm} color="bg-purple-500" />
                                     </div>
                                     <Button className="w-full" onClick={handleEnter}>
                                         <LogIn className="size-4 mr-1" />
@@ -424,7 +424,7 @@ export default function LobbyPage() {
                     ) : (
                         /* No general - dynamic action matrix based on server state */
                         <div className="space-y-4">
-                            <h2 className="text-lg font-semibold">장수 선택</h2>
+                            <h2 className="text-lg font-semibold">장교 선택</h2>
 
                             {/* Server state summary */}
                             {currentWorld && (
@@ -450,7 +450,7 @@ export default function LobbyPage() {
                             )}
 
                             <div className="grid gap-3">
-                                {/* 장수 생성 */}
+                                {/* 장교 생성 */}
                                 <Card
                                     className={`transition-colors ${
                                         actionAvailability?.canJoin
@@ -464,9 +464,9 @@ export default function LobbyPage() {
                                             <UserPlus className="size-5" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="font-medium">장수 생성</p>
+                                            <p className="font-medium">장교 생성</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {actionAvailability?.joinReason ?? '새로운 장수를 만들어 시작합니다.'}
+                                                {actionAvailability?.joinReason ?? '새로운 장교를 만들어 시작합니다.'}
                                             </p>
                                         </div>
                                         {actionAvailability?.canJoin && (
@@ -489,7 +489,7 @@ export default function LobbyPage() {
                                             <div className="flex-1">
                                                 <p className="font-medium">NPC 빙의</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    기존 NPC 장수를 인수하여 플레이합니다.
+                                                    기존 NPC 장교를 인수하여 플레이합니다.
                                                 </p>
                                             </div>
                                             <Badge variant="secondary" className="text-[10px]">
@@ -509,7 +509,7 @@ export default function LobbyPage() {
                                                 <Users className="size-5" />
                                             </div>
                                             <div className="flex-1">
-                                                <p className="font-medium">장수 선택</p>
+                                                <p className="font-medium">장교 선택</p>
                                                 <p className="text-xs text-muted-foreground">
                                                     등록된 장수 중 하나를 선택하여 시작합니다.
                                                 </p>
@@ -566,7 +566,7 @@ export default function LobbyPage() {
                 </CardHeader>
                 <CardContent className="flex justify-center gap-3">
                     <Button variant="outline" onClick={() => router.push('/account')}>
-                        비밀번호 &amp; 전콘 &amp; 탈퇴
+                        비밀번호 &amp; 초상화 &amp; 탈퇴
                     </Button>
                     <Button
                         variant="outline"

@@ -16,9 +16,9 @@ interface RecordZoneProps {
 export function RecordZone({ generalRecords, globalRecords, historyRecords }: RecordZoneProps) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <RecordColumn title="장수동향" records={globalRecords} />
+            <RecordColumn title="장교동향" records={globalRecords} />
             <RecordColumn title="개인기록" records={generalRecords} />
-            <RecordColumn title="중원정세" records={historyRecords} stripYear />
+            <RecordColumn title="은하정세" records={historyRecords} stripYear />
         </div>
     );
 }

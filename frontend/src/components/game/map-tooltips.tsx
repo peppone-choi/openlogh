@@ -73,7 +73,7 @@ export function CompactTooltip({
                 <span>{cityText}</span>
                 {isEmperorCity && (
                     <span className="ml-0.5 inline-flex items-center rounded-sm px-0.5 bg-yellow-500/80">
-                        <img src="/icons/emperor.png" alt="황제" width={12} height={12} />
+                        <img src="/icons/emperor.png" alt="원수" width={12} height={12} />
                     </span>
                 )}
             </div>
@@ -171,13 +171,13 @@ export function DetailTooltip({
                     router.push(`/city?id=${cityId}`);
                 }}
             >
-                도시 상세 보기
+                행성 상세 보기
             </button>
 
             {isVisible ? (
                 generals.length > 0 && (
                     <div className="border-t border-white/10 pt-1 mt-1">
-                        <div className="text-white/70 font-medium text-xs mb-0.5">주둔 장수 ({generals.length}명)</div>
+                        <div className="text-white/70 font-medium text-xs mb-0.5">주둔 장교 ({generals.length}명)</div>
                         <div className="max-h-32 overflow-y-auto space-y-0.5">
                             {generals.map((g) => (
                                 <div
@@ -201,7 +201,7 @@ export function DetailTooltip({
                 )
             ) : (
                 <div className="border-t border-white/10 pt-1 mt-1 text-xs text-yellow-300/80">
-                    첩보 부족: 자국 도시 또는 첩보 확보 도시만 상세 정보를 볼 수 있습니다.
+                    첩보 부족: 자국 행성 또는 첩보 확보 행성만 상세 정보를 볼 수 있습니다.
                 </div>
             )}
         </div>

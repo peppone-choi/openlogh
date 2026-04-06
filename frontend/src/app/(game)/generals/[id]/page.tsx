@@ -69,11 +69,11 @@ export default function GeneralDetailPage() {
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
-    if (error) return <ErrorState title="장수 정보를 불러오지 못했습니다." onRetry={fetchData} />;
+    if (error) return <ErrorState title="장교 정보를 불러오지 못했습니다." onRetry={fetchData} />;
     if (!general)
         return (
             <div className="p-4">
-                <EmptyState icon={User} title="장수를 찾을 수 없습니다." />
+                <EmptyState icon={User} title="장교를 찾을 수 없습니다." />
             </div>
         );
 
@@ -108,22 +108,22 @@ export default function GeneralDetailPage() {
             effective: calcInjury(general.leadership, general.injury),
         },
         {
-            label: '무력',
+            label: '지휘',
             base: general.strength,
             effective: calcInjury(general.strength, general.injury),
         },
         {
-            label: '지력',
+            label: '정보',
             base: general.intel,
             effective: calcInjury(general.intel, general.injury),
         },
         { label: '정치', base: general.politics, effective: general.politics },
-        { label: '매력', base: general.charm, effective: general.charm },
+        { label: '운영', base: general.charm, effective: general.charm },
     ];
 
     return (
         <div className="p-4 space-y-6 max-w-3xl mx-auto">
-            <PageHeader icon={User} title="장수 상세" />
+            <PageHeader icon={User} title="장교 상세" />
 
             {/* Basic info */}
             <Card>
@@ -137,7 +137,7 @@ export default function GeneralDetailPage() {
                                         className="inline-flex items-center rounded-sm px-0.5"
                                         style={{ backgroundColor: '#f0c040' }}
                                     >
-                                        <img src="/icons/emperor.png" alt="황제" width={18} height={18} />
+                                        <img src="/icons/emperor.png" alt="원수" width={18} height={18} />
                                     </span>
                                 )}
                                 <h2 className="text-lg font-bold" style={{ color: npcColor }}>
@@ -155,7 +155,7 @@ export default function GeneralDetailPage() {
                                     )}
                                 </p>
                                 <p>
-                                    도시: {city?.name ?? `#${general.cityId}`} | 연령:{' '}
+                                    행성: {city?.name ?? `#${general.cityId}`} | 연령:{' '}
                                     <span style={{ color: ageColor(general.age) }}>{general.age}세</span>
                                 </p>
                                 <p>
@@ -226,7 +226,7 @@ export default function GeneralDetailPage() {
                 <CardContent>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                         <Row
-                            label="병종"
+                            label="함종"
                             value={
                                 <span className="text-cyan-300">
                                     {CREW_TYPE_NAMES[general.crewType] ?? `${general.crewType}`}
@@ -287,7 +287,7 @@ export default function GeneralDetailPage() {
                             value={<span className="text-yellow-400">{numberWithCommas(general.gold)}</span>}
                         />
                         <Row
-                            label="군량"
+                            label="물자"
                             value={<span className="text-green-400">{numberWithCommas(general.rice)}</span>}
                         />
                         <Row label="계급" value={`Lv.${general.dedLevel ?? 0} (${general.dedication})`} />

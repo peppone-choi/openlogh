@@ -61,8 +61,8 @@ const TOURNAMENT_TYPES: {
         statKey: 'leadership',
         icon: Shield,
     },
-    { code: 2, name: '일기토', stat: '무력', statKey: 'strength', icon: Swords },
-    { code: 3, name: '설전', stat: '지력', statKey: 'intel', icon: Brain },
+    { code: 2, name: '일기토', stat: '지휘', statKey: 'strength', icon: Swords },
+    { code: 3, name: '설전', stat: '정보', statKey: 'intel', icon: Brain },
 ];
 
 const ROUND_NAMES: Record<number, string> = {
@@ -628,8 +628,8 @@ export default function TournamentPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="text-xs">장수</TableHead>
-                                        <TableHead className="text-xs">국가</TableHead>
+                                        <TableHead className="text-xs">장교</TableHead>
+                                        <TableHead className="text-xs">진영</TableHead>
                                         <TableHead className="text-xs text-right">{tournamentType.stat}</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -713,7 +713,7 @@ export default function TournamentPage() {
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead className="text-[10px] px-2 py-1 w-8">순</TableHead>
-                                                        <TableHead className="text-[10px] px-2 py-1">장수</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1">장교</TableHead>
                                                         <TableHead className="text-[10px] px-2 py-1 text-right">
                                                             {tournamentType.stat}
                                                         </TableHead>
@@ -802,7 +802,7 @@ export default function TournamentPage() {
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead className="text-[10px] px-2 py-1 w-8">순</TableHead>
-                                                        <TableHead className="text-[10px] px-2 py-1">장수</TableHead>
+                                                        <TableHead className="text-[10px] px-2 py-1">장교</TableHead>
                                                         <TableHead className="text-[10px] px-2 py-1 text-right">
                                                             {tournamentType.stat}
                                                         </TableHead>

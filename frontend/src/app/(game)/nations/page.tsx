@@ -219,11 +219,11 @@ export default function NationsPage() {
         );
 
     const columns: { key: SortKey; label: string }[] = [
-        { key: 'name', label: '국가' },
+        { key: 'name', label: '진영' },
         { key: 'capital', label: '수도' },
         { key: 'level', label: '작위' },
-        { key: 'power', label: '국력' },
-        { key: 'generalCount', label: '장수' },
+        { key: 'power', label: '군사력' },
+        { key: 'generalCount', label: '장교' },
         { key: 'cityCount', label: '속령' },
         { key: 'gold', label: '금' },
         { key: 'rice', label: '쌀' },
@@ -484,7 +484,7 @@ export default function NationsPage() {
                                                             })()}
                                                         {nationGens.length === 0 ? (
                                                             <p className="text-xs text-muted-foreground">
-                                                                소속 장수 없음
+                                                                소속 장교 없음
                                                             </p>
                                                         ) : (
                                                             <div className="overflow-x-auto">
@@ -632,7 +632,7 @@ export default function NationsPage() {
                                                         </h4>
                                                         {nationCities.length === 0 ? (
                                                             <p className="text-xs text-muted-foreground">
-                                                                소속 도시 없음
+                                                                소속 행성 없음
                                                             </p>
                                                         ) : (
                                                             <div className="flex flex-wrap gap-1 text-xs">
@@ -662,7 +662,7 @@ export default function NationsPage() {
                         {sorted.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={columns.length + 1} className="text-center text-muted-foreground">
-                                    국가가 없습니다.
+                                    진영이 없습니다.
                                 </TableCell>
                             </TableRow>
                         )}
@@ -681,7 +681,7 @@ export default function NationsPage() {
                             {/* Ronin generals */}
                             <div>
                                 <h4 className="text-sm font-semibold mb-2 text-muted-foreground">
-                                    재야 장수 ({roninGenerals.length}명)
+                                    재야 장교 ({roninGenerals.length}명)
                                 </h4>
                                 {roninGenerals.length === 0 ? (
                                     <p className="text-xs text-muted-foreground">없음</p>
@@ -692,8 +692,8 @@ export default function NationsPage() {
                                                 <tr className="border-b border-muted/50">
                                                     <th className="text-left py-1 px-1">이름</th>
                                                     <th className="text-right py-1 px-1">통솔</th>
-                                                    <th className="text-right py-1 px-1">무력</th>
-                                                    <th className="text-right py-1 px-1">지력</th>
+                                                    <th className="text-right py-1 px-1">지휘</th>
+                                                    <th className="text-right py-1 px-1">정보</th>
                                                     <th className="text-center py-1 px-1">NPC</th>
                                                 </tr>
                                             </thead>
@@ -730,7 +730,7 @@ export default function NationsPage() {
                             {/* Unowned cities */}
                             <div>
                                 <h4 className="text-sm font-semibold mb-2 text-muted-foreground">
-                                    무소속 도시 ({unownedCities.length}개)
+                                    무소속 행성 ({unownedCities.length}개)
                                 </h4>
                                 {unownedCities.length === 0 ? (
                                     <p className="text-xs text-muted-foreground">없음</p>

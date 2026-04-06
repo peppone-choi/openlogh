@@ -52,7 +52,7 @@ export function CityBasicCard({ city, region }: CityBasicCardProps) {
                     lineHeight: '1.8em',
                 }}
             >
-                {city.nationInfo.id ? `지배 국가 【 ${city.nationInfo.name} 】` : '공 백 지'}
+                {city.nationInfo.id ? `지배 진영 【 ${city.nationInfo.name} 】` : '공 백 지'}
             </div>
 
             {/* Row 3: 주민 (spans 2 cols, 1fr 5fr head) + 태수 in col 4 */}

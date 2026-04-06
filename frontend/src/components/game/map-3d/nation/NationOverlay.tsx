@@ -1,6 +1,6 @@
 'use client';
-// Design Ref: §3.4 NationOverlay — 국가 영역 색상 지형 오버레이
-// 각 도시 위치에서 반경만큼 국가 색상을 투명 원형으로 표시
+// Design Ref: §3.4 NationOverlay — 진영 영역 색상 지형 오버레이
+// 각 행성 위치에서 반경만큼 진영 색상을 투명 원형으로 표시
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import type { RenderCity } from '@/components/game/map-canvas';
@@ -12,7 +12,7 @@ interface NationOverlayProps {
   segments?: number;
 }
 
-/** 도시 레벨에 따른 영역 반지름 */
+/** 행성 레벨에 따른 영역 반지름 */
 function getInfluenceRadius(level: number): number {
   if (level >= 8) return 28;
   if (level >= 7) return 24;

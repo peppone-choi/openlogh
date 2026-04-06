@@ -353,7 +353,7 @@ export default function HallOfFamePage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-12">#</TableHead>
-                                        <TableHead>장수</TableHead>
+                                        <TableHead>장교</TableHead>
                                         <TableHead>소속</TableHead>
                                         {categoryKey === 'all' && <TableHead>분야</TableHead>}
                                         <TableHead>기록</TableHead>

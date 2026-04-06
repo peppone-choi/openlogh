@@ -83,7 +83,7 @@ const BASE_GENERAL: Omit<
     posY: 0,
 };
 
-/** 유저 장수 — 유비 (촉 군주) */
+/** 유저 장교 — 유비 (촉 원수) */
 export const MOCK_MY_GENERAL: General = {
     ...BASE_GENERAL,
     id: -1,
@@ -143,7 +143,7 @@ const MOCK_ZHUGE_LIANG: General = {
     picture: 'default',
 };
 
-/** 적국 군주 — 조조 */
+/** 적 진영 원수 — 조조 */
 const MOCK_CAO_CAO: General = {
     ...BASE_GENERAL,
     id: -4,
@@ -163,7 +163,7 @@ const MOCK_CAO_CAO: General = {
     picture: 'default',
 };
 
-/** 적국 장수 — 하후돈 */
+/** 적 진영 장교 — 하후돈 */
 const MOCK_XIAHOU_DUN: General = {
     ...BASE_GENERAL,
     id: -5,

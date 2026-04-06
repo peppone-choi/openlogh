@@ -31,7 +31,7 @@ export default function LobbySelectNpcPage() {
     const [refreshing, setRefreshing] = useState(false);
     const [selectingId, setSelectingId] = useState<number | null>(null);
 
-    // Full general list view - legacy parity from select_npc.php "장수 목록 보기"
+    // Full general list view - legacy parity from select_npc.php "장교 목록 보기"
     const [showGeneralList, setShowGeneralList] = useState(false);
     const [generalList, setGeneralList] = useState<General[]>([]);
     const [generalListLoading, setGeneralListLoading] = useState(false);
@@ -136,13 +136,13 @@ export default function LobbySelectNpcPage() {
             toast.error('토큰이 만료되었습니다. 다시 뽑아주세요.');
             return;
         }
-        if (!confirm(`${npc.name} 장수를 선택하시겠습니까?`)) return;
+        if (!confirm(`${npc.name} 장교를 선택하시겠습니까?`)) return;
 
         setSelectingId(npc.id);
         try {
             await npcTokenApi.select(currentWorld.id, token.nonce, npc.id);
             await fetchMyOfficer(currentWorld.id);
-            toast.success('NPC 장수를 선택했습니다.');
+            toast.success('NPC 장교를 선택했습니다.');
             router.replace('/lobby');
         } catch {
             toast.error('NPC 선택에 실패했습니다.');
@@ -221,11 +221,11 @@ export default function LobbySelectNpcPage() {
                                                 <span>{npc.leadership}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-muted-foreground">무력</span>
+                                                <span className="text-muted-foreground">지휘</span>
                                                 <span>{npc.strength}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-muted-foreground">지력</span>
+                                                <span className="text-muted-foreground">정보</span>
                                                 <span>{npc.intel}</span>
                                             </div>
                                             <div className="flex justify-between">
@@ -233,7 +233,7 @@ export default function LobbySelectNpcPage() {
                                                 <span>{npc.politics}</span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-muted-foreground">매력</span>
+                                                <span className="text-muted-foreground">운영</span>
                                                 <span>{npc.charm}</span>
                                             </div>
                                         </div>
@@ -309,11 +309,11 @@ export default function LobbySelectNpcPage() {
                 </>
             )}
 
-            {/* Full General List - legacy parity from select_npc.php "장수 목록 보기" */}
+            {/* Full General List - legacy parity from select_npc.php "장교 목록 보기" */}
             <div className="flex gap-2 mt-4">
                 <Button variant="outline" size="sm" onClick={handleLoadGeneralList} disabled={generalListLoading}>
                     <List className="size-4 mr-1" />
-                    {generalListLoading ? '로딩 중...' : '장수 목록 보기'}
+                    {generalListLoading ? '로딩 중...' : '장교 목록 보기'}
                 </Button>
                 {showGeneralList && (
                     <Button variant="ghost" size="sm" onClick={() => setShowGeneralList(false)}>
@@ -330,13 +330,13 @@ export default function LobbySelectNpcPage() {
                                 <th className="px-2 py-1.5 text-left">얼굴</th>
                                 <th className="px-2 py-1.5 text-left">이름</th>
                                 <th className="px-2 py-1.5 text-center">연령</th>
-                                <th className="px-2 py-1.5 text-left">국가</th>
+                                <th className="px-2 py-1.5 text-left">진영</th>
                                 <th className="px-2 py-1.5 text-center">레벨</th>
                                 <th className="px-2 py-1.5 text-center">통솔</th>
-                                <th className="px-2 py-1.5 text-center">무력</th>
-                                <th className="px-2 py-1.5 text-center">지력</th>
+                                <th className="px-2 py-1.5 text-center">지휘</th>
+                                <th className="px-2 py-1.5 text-center">정보</th>
                                 <th className="px-2 py-1.5 text-center">정치</th>
-                                <th className="px-2 py-1.5 text-center">매력</th>
+                                <th className="px-2 py-1.5 text-center">운영</th>
                                 <th className="px-2 py-1.5 text-center">경험</th>
                                 <th className="px-2 py-1.5 text-center">NPC</th>
                             </tr>

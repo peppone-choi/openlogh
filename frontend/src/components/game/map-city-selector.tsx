@@ -14,7 +14,7 @@ interface MapCitySelectorProps {
     title?: string;
 }
 
-export function MapCitySelector({ open, onOpenChange, onSelect, title = '도시 선택' }: MapCitySelectorProps) {
+export function MapCitySelector({ open, onOpenChange, onSelect, title = '행성 선택' }: MapCitySelectorProps) {
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const cities = useGameStore((s) => s.cities);
 
@@ -30,7 +30,7 @@ export function MapCitySelector({ open, onOpenChange, onSelect, title = '도시 
         <ResponsiveSheet open={open} onOpenChange={onOpenChange} title={title}>
             <div className="space-y-2">
                 {cityName && (
-                    <div className="text-xs text-muted-foreground px-2">지도에서 도시를 클릭하여 선택하세요</div>
+                    <div className="text-xs text-muted-foreground px-2">지도에서 행성을 클릭하여 선택하세요</div>
                 )}
                 <div className="overflow-auto max-h-[60vh]">
                     {currentWorld && (

@@ -54,18 +54,18 @@ const POLICY_CATEGORIES: {
     fields: PolicyField[];
 }[] = [
     {
-        label: '국가 자원 기준',
+        label: '진영 자원 기준',
         icon: DollarSign,
         fields: [
             {
                 key: 'reqNationGold',
-                label: '국가 권장 금',
+                label: '진영 권장 금',
                 step: 100,
                 hint: '이보다 많으면 포상, 적으면 몰수/헌납합니다. (긴급포상 제외)',
             },
             {
                 key: 'reqNationRice',
-                label: '국가 권장 쌀',
+                label: '진영 권장 쌀',
                 step: 100,
                 hint: '이보다 많으면 포상, 적으면 몰수/헌납합니다. (긴급포상 제외)',
             },
@@ -80,14 +80,14 @@ const POLICY_CATEGORIES: {
                 label: '유저전투장 긴급포상 금',
                 step: 100,
                 zeroHintFn: (zp) =>
-                    `0이면 보병 6회 징병 가능한 금 기준 (현재 ${zp.reqHumanWarUrgentGold?.toLocaleString() ?? '?'})`,
+                    `0이면 보병 6회 징집 가능한 금 기준 (현재 ${zp.reqHumanWarUrgentGold?.toLocaleString() ?? '?'})`,
             },
             {
                 key: 'reqHumanWarUrgentRice',
                 label: '유저전투장 긴급포상 쌀',
                 step: 100,
                 zeroHintFn: (zp) =>
-                    `0이면 기본 병종 6회 사살 가능한 쌀 기준 (현재 ${zp.reqHumanWarUrgentRice?.toLocaleString() ?? '?'})`,
+                    `0이면 기본 함종 6회 사살 가능한 쌀 기준 (현재 ${zp.reqHumanWarUrgentRice?.toLocaleString() ?? '?'})`,
             },
             {
                 key: 'reqHumanWarRecommandGold',
@@ -105,15 +105,15 @@ const POLICY_CATEGORIES: {
             },
             {
                 key: 'reqHumanDevelGold',
-                label: '유저내정장 권장 금',
+                label: '유저행성관리장 권장 금',
                 step: 100,
-                hint: '유저내정장에게 주는 금. 이보다 적으면 포상합니다.',
+                hint: '유저행성관리장에게 주는 금. 이보다 적으면 포상합니다.',
             },
             {
                 key: 'reqHumanDevelRice',
-                label: '유저내정장 권장 쌀',
+                label: '유저행성관리장 권장 쌀',
                 step: 100,
-                hint: '유저내정장에게 주는 쌀. 이보다 적으면 포상합니다.',
+                hint: '유저행성관리장에게 주는 쌀. 이보다 적으면 포상합니다.',
             },
         ],
     },
@@ -126,27 +126,27 @@ const POLICY_CATEGORIES: {
                 label: 'NPC전투장 권장 금',
                 step: 100,
                 zeroHintFn: (zp) =>
-                    `0이면 기본 병종 4회 징병비 기준 (현재 ${zp.reqNPCWarGold?.toLocaleString() ?? '?'})`,
+                    `0이면 기본 함종 4회 징집비 기준 (현재 ${zp.reqNPCWarGold?.toLocaleString() ?? '?'})`,
             },
             {
                 key: 'reqNPCWarRice',
                 label: 'NPC전투장 권장 쌀',
                 step: 100,
                 zeroHintFn: (zp) =>
-                    `0이면 기본 병종 4회 사살 가능한 쌀 기준 (현재 ${zp.reqNPCWarRice?.toLocaleString() ?? '?'})`,
+                    `0이면 기본 함종 4회 사살 가능한 쌀 기준 (현재 ${zp.reqNPCWarRice?.toLocaleString() ?? '?'})`,
             },
             {
                 key: 'reqNPCDevelGold',
-                label: 'NPC내정장 권장 금',
+                label: 'NPC행성관리장 권장 금',
                 step: 100,
                 zeroHintFn: (zp) =>
-                    `0이면 30턴 내정 가능한 금 기준 (현재 ${zp.reqNPCDevelGold?.toLocaleString() ?? '?'})`,
+                    `0이면 30턴 행성관리 가능한 금 기준 (현재 ${zp.reqNPCDevelGold?.toLocaleString() ?? '?'})`,
             },
             {
                 key: 'reqNPCDevelRice',
-                label: 'NPC내정장 권장 쌀',
+                label: 'NPC행성관리장 권장 쌀',
                 step: 100,
-                hint: 'NPC내정장에게 주는 쌀. 이보다 5배 더 많다면 헌납합니다.',
+                hint: 'NPC행성관리장에게 주는 쌀. 이보다 5배 더 많다면 헌납합니다.',
             },
         ],
     },
@@ -176,19 +176,19 @@ const POLICY_CATEGORIES: {
         fields: [
             {
                 key: 'minWarCrew',
-                label: '최소 전투 가능 병력 수',
+                label: '최소 전투 가능 함선 수',
                 step: 50,
                 hint: '이보다 적을 때에는 징병을 시도합니다.',
             },
             {
                 key: 'minNPCRecruitCityPopulation',
-                label: 'NPC 최소 징병 가능 인구 수',
+                label: 'NPC 최소 징집 가능 인구 수',
                 step: 100,
-                hint: '도시의 인구가 이보다 낮으면 NPC는 도시에서 징병하지 않고 후방 워프합니다.',
+                hint: '행성의 인구가 이보다 낮으면 NPC는 행성에서 징집하지 않고 후방 워프합니다.',
             },
             {
                 key: 'safeRecruitCityPopulationRatio',
-                label: '제자리 징병 허용 인구율(%)',
+                label: '제자리 징집 허용 인구율(%)',
                 isPercent: true,
                 step: 0.5,
                 min: 0,
@@ -226,18 +226,18 @@ const ALL_POLICY_KEYS = POLICY_CATEGORIES.flatMap((c) => c.fields.map((f) => f.k
 /* ── Priority items (will be overridden by server if available) ── */
 
 const DEFAULT_NATION_PRIORITY_ITEMS = [
-    { key: '부대전방발령', help: '부대 단위 전방 발령' },
+    { key: '부대전방발령', help: '함대 단위 전방 발령' },
     { key: '부대후방발령', help: '부대 후방 발령' },
     { key: '부대구출발령', help: '부대 구출 발령' },
-    { key: '부대유저장후방발령', help: '부대 단위 유저장 후방 발령' },
+    { key: '부대유저장후방발령', help: '함대 단위 유저장 후방 발령' },
     { key: 'NPC전방발령', help: 'NPC장 전방 발령' },
     { key: 'NPC후방발령', help: 'NPC장 후방 발령' },
-    { key: 'NPC내정발령', help: 'NPC장 내정 발령' },
+    { key: 'NPC행성관리발령', help: 'NPC장 행성관리 발령' },
     { key: 'NPC구출발령', help: 'NPC장 구출 발령' },
     { key: '유저장전방발령', help: '유저장 전방 발령' },
     { key: '유저장후방발령', help: '유저장 후방 발령' },
     { key: '유저장구출발령', help: '유저장 구출 발령' },
-    { key: '유저장내정발령', help: '유저장 내정 발령' },
+    { key: '유저장내정발령', help: '유저장 행성관리 발령' },
     { key: 'NPC긴급포상', help: 'NPC장 긴급 포상' },
     { key: '유저장긴급포상', help: '유저 전투장에게 긴급 포상' },
     { key: 'NPC포상', help: 'NPC장 포상' },
@@ -250,17 +250,17 @@ const DEFAULT_NATION_PRIORITY_ITEMS = [
 ];
 
 const DEFAULT_GENERAL_PRIORITY_ITEMS = [
-    { key: '긴급내정', help: '긴급 내정 수행' },
-    { key: '전쟁내정', help: '전쟁 중 내정 수행' },
+    { key: '긴급내정', help: '긴급 행성 관리 수행' },
+    { key: '전쟁내정', help: '전쟁 중 행성 관리 수행' },
     { key: '징병', help: '병사 충원' },
     { key: '전투준비', help: '전투 준비 (징병/훈련)' },
     { key: '출병', help: '출전하여 전투 수행' },
     { key: '전방워프', help: '전방으로 이동' },
     { key: '후방워프', help: '후방으로 이동' },
-    { key: '내정워프', help: '내정 도시로 이동' },
+    { key: '내정워프', help: '내정 행성으로 이동' },
     { key: '귀환', help: '귀환' },
-    { key: '일반내정', help: '일반 내정 수행' },
-    { key: '금쌀구매', help: '금/쌀 구매' },
+    { key: '일반내정', help: '일반 행성 관리 수행' },
+    { key: '자금물자구매', help: '금/물자 구매' },
     { key: 'NPC헌납', help: 'NPC 자원 헌납' },
     { key: '소집해제', help: '소집 해제' },
     { key: '중립', help: '중립 행동' },
@@ -269,7 +269,7 @@ const DEFAULT_GENERAL_PRIORITY_ITEMS = [
 const NPC_MODE_LABELS: Record<number, string> = {
     0: '전투형 (공격 우선)',
     1: '균형형 (기본)',
-    2: '내정형 (개발 우선)',
+    2: '행성관리형 (개발 우선)',
 };
 
 const roundToHundreds = (value: number): number => {
@@ -739,7 +739,7 @@ export default function NpcPage() {
                     [selectedNpcId]: generalOverride,
                 },
             });
-            toast.success('장수별 설정이 저장되었습니다.');
+            toast.success('장교별 설정이 저장되었습니다.');
         } catch {
             toast.error('저장에 실패했습니다.');
         } finally {
@@ -754,7 +754,7 @@ export default function NpcPage() {
         } else {
             setNationPriority(nationPriorityItems.map((i) => i.key));
         }
-        toast.info('국가턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.');
+        toast.info('진영턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.');
     };
     const handleResetGeneralPriority = () => {
         if (defaultGeneralPriority.length > 0) {
@@ -762,15 +762,15 @@ export default function NpcPage() {
         } else {
             setGeneralPriority(generalPriorityItems.map((i) => i.key));
         }
-        toast.info('장수턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.');
+        toast.info('장교턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.');
     };
     const handleRollbackNationPriority = () => {
         setNationPriority([...prevNationPriority]);
-        toast.info('국가턴 우선순위를 이전값으로 되돌렸습니다.');
+        toast.info('진영턴 우선순위를 이전값으로 되돌렸습니다.');
     };
     const handleRollbackGeneralPriority = () => {
         setGeneralPriority([...prevGeneralPriority]);
-        toast.info('장수턴 우선순위를 이전값으로 되돌렸습니다.');
+        toast.info('장교턴 우선순위를 이전값으로 되돌렸습니다.');
     };
     const handleRollbackPolicy = () => {
         setPolicy({ ...prevPolicy });
@@ -819,26 +819,26 @@ export default function NpcPage() {
 
             <Tabs defaultValue="list">
                 <TabsList>
-                    <TabsTrigger value="list">NPC 장수</TabsTrigger>
-                    <TabsTrigger value="policy">국가 정책</TabsTrigger>
+                    <TabsTrigger value="list">NPC 장교</TabsTrigger>
+                    <TabsTrigger value="policy">진영 정책</TabsTrigger>
                     <TabsTrigger value="priority">우선순위</TabsTrigger>
-                    <TabsTrigger value="override">장수별 설정</TabsTrigger>
+                    <TabsTrigger value="override">장교별 설정</TabsTrigger>
                     <TabsTrigger value="history">설정 이력</TabsTrigger>
                 </TabsList>
 
                 {/* Tab 1: NPC generals list */}
                 <TabsContent value="list" className="mt-4">
                     {npcGenerals.length === 0 ? (
-                        <EmptyState icon={Bot} title="관리 가능한 NPC 장수가 없습니다." />
+                        <EmptyState icon={Bot} title="관리 가능한 NPC 장교가 없습니다." />
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>이름</TableHead>
-                                        <TableHead>도시</TableHead>
-                                        <TableHead className="text-right">병력</TableHead>
-                                        <TableHead>병종</TableHead>
+                                        <TableHead>행성</TableHead>
+                                        <TableHead className="text-right">함선</TableHead>
+                                        <TableHead>함종</TableHead>
                                         <TableHead className="text-right">훈련</TableHead>
                                         <TableHead className="text-right">사기</TableHead>
                                         <TableHead>NPC</TableHead>
@@ -954,17 +954,17 @@ export default function NpcPage() {
                                 <CardHeader>
                                     <CardTitle className="text-sm flex items-center gap-2">
                                         <Settings className="size-4" />
-                                        부대 배치 설정
+                                        함대 배치 설정
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     <p className="text-[10px] text-muted-foreground">
-                                        전투 부대, 후방 징병 부대, 내정 부대의 JSON 설정입니다. 고급 설정이므로
+                                        전투 함대, 후방 징집 함대, 행성관리 함대의 JSON 설정입니다. 고급 설정이므로
                                         주의하세요.
                                     </p>
                                     <div className="space-y-2">
                                         <div className="space-y-1">
-                                            <p className="text-xs text-muted-foreground">전투 부대 (CombatForce)</p>
+                                            <p className="text-xs text-muted-foreground">전투 함대 (CombatForce)</p>
                                             <Input
                                                 value={JSON.stringify(combatForce)}
                                                 onChange={(e) => {
@@ -975,17 +975,17 @@ export default function NpcPage() {
                                                     }
                                                 }}
                                                 className="font-mono text-xs"
-                                                placeholder='{"부대번호":[시작도시,도착도시],...}'
+                                                placeholder='{"함대번호":[시작행성,도착행성],...}'
                                             />
                                             <p className="text-[10px] text-muted-foreground/60">
                                                 JSON: {'{'}
-                                                부대번호:[시작도시번호(아국),도착도시번호(적군)],...
+                                                함대번호:[시작행성번호(아국),도착행성번호(적군)],...
                                                 {'}'}
                                             </p>
                                         </div>
                                         <div className="space-y-1">
                                             <p className="text-xs text-muted-foreground">
-                                                후방 징병 부대 (SupportForce)
+                                                후방 징집 함대 (SupportForce)
                                             </p>
                                             <Input
                                                 value={JSON.stringify(supportForce)}
@@ -997,11 +997,11 @@ export default function NpcPage() {
                                                     }
                                                 }}
                                                 className="font-mono text-xs"
-                                                placeholder="[부대번호,...]"
+                                                placeholder="[함대번호,...]"
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-xs text-muted-foreground">내정 부대 (DevelopForce)</p>
+                                            <p className="text-xs text-muted-foreground">행성관리 함대 (DevelopForce)</p>
                                             <Input
                                                 value={JSON.stringify(developForce)}
                                                 onChange={(e) => {
@@ -1012,7 +1012,7 @@ export default function NpcPage() {
                                                     }
                                                 }}
                                                 className="font-mono text-xs"
-                                                placeholder="[부대번호,...]"
+                                                placeholder="[함대번호,...]"
                                             />
                                         </div>
                                     </div>
@@ -1048,7 +1048,7 @@ export default function NpcPage() {
                                 드래그하거나 ▲▼ 버튼으로 순서를 변경하세요.
                             </p>
                             <DraggablePriorityList
-                                title="국가턴"
+                                title="진영턴"
                                 items={nationPriorityItems}
                                 activeKeys={nationPriority}
                                 onReorder={setNationPriority}
@@ -1080,7 +1080,7 @@ export default function NpcPage() {
                                 순위가 높은 것부터 시도합니다. 아무것도 실행할 수 없으면 물자조달이나 인재탐색을 합니다.
                             </p>
                             <DraggablePriorityList
-                                title="장수턴"
+                                title="장교턴"
                                 items={generalPriorityItems}
                                 activeKeys={generalPriority}
                                 onReorder={setGeneralPriority}
@@ -1108,16 +1108,16 @@ export default function NpcPage() {
                 <TabsContent value="override" className="mt-4 space-y-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">장수별 정책 설정</CardTitle>
+                            <CardTitle className="text-sm">장교별 정책 설정</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <p className="text-xs text-muted-foreground">
-                                특정 NPC 장수에 대해 국가 기본 정책을 덮어쓸 수 있습니다. 설정하지 않은 항목은 국가 기본
+                                특정 NPC 장교에 대해 진영 기본 정책을 덮어쓸 수 있습니다. 설정하지 않은 항목은 진영 기본
                                 정책을 따릅니다.
                             </p>
                             <Select value={selectedNpcId} onValueChange={setSelectedNpcId}>
                                 <SelectTrigger size="sm" className="w-full max-w-[300px]">
-                                    <SelectValue placeholder="NPC 장수 선택..." />
+                                    <SelectValue placeholder="NPC 장교 선택..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {npcGenerals.map((g) => (
@@ -1149,7 +1149,7 @@ export default function NpcPage() {
                                         ))}
                                     </div>
                                     <Button onClick={handleSaveGeneralOverride} disabled={saving}>
-                                        {saving ? '저장 중...' : '장수별 설정 저장'}
+                                        {saving ? '저장 중...' : '장교별 설정 저장'}
                                     </Button>
                                 </>
                             )}
@@ -1206,7 +1206,7 @@ export default function NpcPage() {
                                     )}
                                     {lastSetters.nation && (
                                         <div className="text-xs text-muted-foreground">
-                                            국가 우선순위: {lastSetters.nation.setter} ({lastSetters.nation.date})
+                                            진영 우선순위: {lastSetters.nation.setter} ({lastSetters.nation.date})
                                         </div>
                                     )}
                                     {lastSetters.general && (

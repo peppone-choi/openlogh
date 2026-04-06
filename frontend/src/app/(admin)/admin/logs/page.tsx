@@ -25,8 +25,8 @@ const LOG_CATEGORIES = [
     },
     {
         key: 'domestic',
-        label: '내정',
-        patterns: ['domestic', 'build', 'develop', 'trade', '내정', '개발'],
+        label: '행성 관리',
+        patterns: ['domestic', 'build', 'develop', 'trade', '행성 관리', '개발'],
     },
     {
         key: 'diplomacy',
@@ -69,7 +69,7 @@ const categoryColor: Record<CategoryKey, string> = {
 const categoryLabel: Record<CategoryKey, string> = {
     all: '전체',
     battle: '전투',
-    domestic: '내정',
+    domestic: '행성 관리',
     diplomacy: '외교',
     system: '시스템',
 };
@@ -231,7 +231,7 @@ export default function AdminLogsPage() {
                 <Input
                     list="admin-general-list"
                     className="w-64"
-                    placeholder="장수명으로 ID 선택"
+                    placeholder="장교명으로 ID 선택"
                     onChange={(e) => {
                         const selected = generals.find((g) => `${g.name} (#${g.id})` === e.target.value);
                         if (selected) setGeneralId(String(selected.id));
@@ -372,7 +372,7 @@ export default function AdminLogsPage() {
             {!loading && searched && allLogs.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                     <ScrollText className="size-8 mx-auto mb-2 opacity-50" />
-                    <p>해당 장수의 로그가 없습니다.</p>
+                    <p>해당 장교의 로그가 없습니다.</p>
                 </div>
             )}
         </div>

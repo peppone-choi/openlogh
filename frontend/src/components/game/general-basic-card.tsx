@@ -109,7 +109,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                         {general.npc === 10 && (
                             <img
                                 src="/icons/emperor.png"
-                                alt="황제"
+                                alt="원수"
                                 width={14}
                                 height={14}
                                 className="inline-block align-middle mr-0.5"
@@ -138,13 +138,13 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     exp={(general.leadershipExp / statUpThreshold) * 100}
                 />
                 <StatCell
-                    label="무력"
+                    label="지휘"
                     value={strengthEff}
                     injuryColor={injuryInfo.color}
                     exp={(general.strengthExp / statUpThreshold) * 100}
                 />
                 <StatCell
-                    label="지력"
+                    label="정보"
                     value={intelEff}
                     injuryColor={injuryInfo.color}
                     exp={(general.intelExp / statUpThreshold) * 100}
@@ -156,7 +156,7 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     exp={(general.politicsExp / statUpThreshold) * 100}
                 />
                 <StatCell
-                    label="매력"
+                    label="운영"
                     value={charmEff}
                     injuryColor={injuryInfo.color}
                     exp={(general.charmExp / statUpThreshold) * 100}
@@ -187,8 +187,8 @@ export function GeneralBasicCard({ general, nation, turnTerm, lastExecuted }: Ge
                     }}
                 />
                 <div className="flex-1 grid grid-cols-3 gap-px bg-border/50">
-                    <KV label="군량" value={general.rice.toLocaleString()} />
-                    <KV label="병종" value={getCrewTypeName(general.crewtype)} />
+                    <KV label="물자" value={general.rice.toLocaleString()} />
+                    <KV label="함종" value={getCrewTypeName(general.crewtype)} />
                     <KV label="병사" value={general.crew.toLocaleString()} />
                     <KV label="훈련" value={String(general.train)} />
                     <KV label="사기" value={String(general.atmos)} />

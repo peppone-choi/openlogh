@@ -41,7 +41,7 @@ export function EmpirePanel({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
             <Crown className="size-4 text-yellow-500" />
-            황제 / 원수
+            원수
           </CardTitle>
         </CardHeader>
         <CardContent>

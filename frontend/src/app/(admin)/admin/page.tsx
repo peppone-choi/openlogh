@@ -259,7 +259,7 @@ export default function AdminDashboardPage() {
         const gold = Number(goldAmount) || 0;
         const rice = Number(riceAmount) || 0;
         if (gold === 0 && rice === 0) {
-            toast.error('금 또는 쌀 수량을 입력하세요.');
+            toast.error('자금 또는 물자 수량을 입력하세요.');
             return;
         }
         try {
@@ -270,7 +270,7 @@ export default function AdminDashboardPage() {
                 worldId
             );
             toast.success(
-                `금 ${gold.toLocaleString()}, 쌀 ${rice.toLocaleString()} 지급 완료 (${distributeTarget === 'all' ? '전체 장수' : '국가별'})`
+                `금 ${gold.toLocaleString()}, 쌀 ${rice.toLocaleString()} 지급 완료 (${distributeTarget === 'all' ? '전체 장교' : '진영별'})`
             );
             setGoldAmount('');
             setRiceAmount('');
@@ -535,7 +535,7 @@ export default function AdminDashboardPage() {
         if (!logMessage.trim()) return;
         try {
             await adminApi.writeLog(logMessage.trim(), worldId);
-            toast.success('중원정세 로그가 추가되었습니다.');
+            toast.success('은하정세 로그가 추가되었습니다.');
             setLogMessage('');
         } catch {
             toast.error('로그 쓰기 실패');
@@ -608,43 +608,43 @@ export default function AdminDashboardPage() {
         {
             name: 'ProcessIncome',
             label: '세금 징수',
-            description: '도시 수입 처리 (골드/쌀)',
+            description: '행성 수입 처리 (자금/물자)',
         },
         {
             name: 'ProcessSemiAnnual',
             label: '반기 처리',
-            description: '인구 변동, 기술 퇴화, 장수 수명 등',
+            description: '인구 변동, 기술 퇴화, 장교 수명 등',
         },
         {
             name: 'UpdateCitySupply',
-            label: '도시 보급',
-            description: '도시 물자 갱신',
+            label: '행성 보급',
+            description: '행성 물자 갱신',
         },
         {
             name: 'UpdateNationLevel',
-            label: '국가 등급',
-            description: '국가 등급 재계산',
+            label: '진영 등급',
+            description: '진영 등급 재계산',
         },
         {
             name: 'RandomizeCityTradeRate',
             label: '교역률 변경',
-            description: '도시 교역률 무작위 변경',
+            description: '행성 교역률 무작위 변경',
         },
         {
             name: 'RaiseInvader',
             label: '이민족 침입',
-            description: '이민족 NPC 국가 발생',
+            description: '이민족 NPC 진영 발생',
         },
-        { name: 'RaiseNPCNation', label: 'NPC 건국', description: 'NPC 국가 생성' },
+        { name: 'RaiseNPCNation', label: 'NPC 건국', description: 'NPC 진영 생성' },
         {
             name: 'RegNeutralNPC',
             label: '재야 NPC 배치',
-            description: '재야 NPC 장수를 빈 도시에 배치',
+            description: '재야 NPC 장교를 빈 행성에 배치',
         },
         {
             name: 'NoticeToHistoryLog',
-            label: '중원정세 기록',
-            description: '중원정세에 메시지 기록',
+            label: '은하정세 기록',
+            description: '은하정세에 메시지 기록',
             needsArg: 'message',
         },
         {
@@ -848,7 +848,7 @@ export default function AdminDashboardPage() {
                                         </select>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">최대 장수 수</label>
+                                        <label className="text-xs text-muted-foreground">최대 장교 수</label>
                                         <Input
                                             type="number"
                                             value={formMaxGeneral}
@@ -857,7 +857,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">최대 국가 수</label>
+                                        <label className="text-xs text-muted-foreground">최대 진영 수</label>
                                         <Input
                                             type="number"
                                             value={formMaxNation}
@@ -884,7 +884,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </div>
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">확장 장수 활성화</span>
+                                        <span className="text-xs text-muted-foreground">확장 장교 활성화</span>
                                         <input
                                             type="checkbox"
                                             checked={formExtend}
@@ -930,7 +930,7 @@ export default function AdminDashboardPage() {
                                 <p className="text-xs text-muted-foreground mb-2 font-medium">제한 설정</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">장수 생성 차단</span>
+                                        <span className="text-xs text-muted-foreground">장교 생성 차단</span>
                                         <input
                                             type="checkbox"
                                             checked={formBlockGeneralCreate}
@@ -946,7 +946,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </label>
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">징병 허용</span>
+                                        <span className="text-xs text-muted-foreground">징집 허용</span>
                                         <input
                                             type="checkbox"
                                             checked={formAllowConscript}
@@ -954,7 +954,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </label>
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">NPC 국가 스폰</span>
+                                        <span className="text-xs text-muted-foreground">NPC 진영 스폰</span>
                                         <input
                                             type="checkbox"
                                             checked={formAllowNpcNationSpawn}
@@ -970,7 +970,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </label>
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">내정 허용</span>
+                                        <span className="text-xs text-muted-foreground">행성관리 허용</span>
                                         <input
                                             type="checkbox"
                                             checked={formAllowDomestic}
@@ -1122,7 +1122,7 @@ export default function AdminDashboardPage() {
                                         </select>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">최대 장수 수</label>
+                                        <label className="text-xs text-muted-foreground">최대 장교 수</label>
                                         <Input
                                             type="number"
                                             value={formMaxGeneral}
@@ -1131,7 +1131,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">최대 국가 수</label>
+                                        <label className="text-xs text-muted-foreground">최대 진영 수</label>
                                         <Input
                                             type="number"
                                             value={formMaxNation}
@@ -1158,7 +1158,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </div>
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">확장 장수 활성화</span>
+                                        <span className="text-xs text-muted-foreground">확장 장교 활성화</span>
                                         <input
                                             type="checkbox"
                                             checked={formExtend}
@@ -1204,7 +1204,7 @@ export default function AdminDashboardPage() {
                                 <p className="text-xs text-muted-foreground mb-2 font-medium">제한 설정</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">장수 생성 차단</span>
+                                        <span className="text-xs text-muted-foreground">장교 생성 차단</span>
                                         <input
                                             type="checkbox"
                                             checked={formBlockGeneralCreate}
@@ -1220,7 +1220,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </label>
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">징병 허용</span>
+                                        <span className="text-xs text-muted-foreground">징집 허용</span>
                                         <input
                                             type="checkbox"
                                             checked={formAllowConscript}
@@ -1228,7 +1228,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </label>
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">NPC 국가 스폰</span>
+                                        <span className="text-xs text-muted-foreground">NPC 진영 스폰</span>
                                         <input
                                             type="checkbox"
                                             checked={formAllowNpcNationSpawn}
@@ -1244,7 +1244,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </label>
                                     <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                                        <span className="text-xs text-muted-foreground">내정 허용</span>
+                                        <span className="text-xs text-muted-foreground">행성관리 허용</span>
                                         <input
                                             type="checkbox"
                                             checked={formAllowDomestic}
@@ -1538,12 +1538,12 @@ export default function AdminDashboardPage() {
                                 />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-sm text-muted-foreground">중원정세 추가</label>
+                                <label className="text-sm text-muted-foreground">은하정세 추가</label>
                                 <div className="flex gap-2">
                                     <Input
                                         value={logMessage}
                                         onChange={(e) => setLogMessage(e.target.value)}
-                                        placeholder="중원정세 메시지 입력"
+                                        placeholder="은하정세 메시지 입력"
                                         onKeyDown={(e) => e.key === 'Enter' && handleWriteLog()}
                                     />
                                     <Button size="sm" variant="outline" onClick={handleWriteLog}>
@@ -1556,7 +1556,7 @@ export default function AdminDashboardPage() {
                                 <CardHeader className="py-3">
                                     <CardTitle className="flex items-center gap-2 text-sm">
                                         <Coins className="size-4 text-amber-400" />
-                                        금쌀 지급
+                                        자금물자 지급
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3 pt-0">
@@ -1593,7 +1593,7 @@ export default function AdminDashboardPage() {
                                                     onClick={() => setDistributeTarget(target)}
                                                     className={`px-3 py-1.5 text-xs transition-colors ${distributeTarget === target ? 'bg-[#141c65] text-white' : 'text-gray-400 hover:text-white'}`}
                                                 >
-                                                    {target === 'all' ? '전체 장수' : '국가별'}
+                                                    {target === 'all' ? '전체 장교' : '진영별'}
                                                 </button>
                                             ))}
                                         </div>
@@ -1657,7 +1657,7 @@ export default function AdminDashboardPage() {
                                 <h4 className="text-sm font-medium">게임 규칙</h4>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">최대 장수</label>
+                                        <label className="text-xs text-muted-foreground">최대 장교</label>
                                         <Input
                                             type="number"
                                             value={maxGeneral}
@@ -1666,7 +1666,7 @@ export default function AdminDashboardPage() {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">최대 국가</label>
+                                        <label className="text-xs text-muted-foreground">최대 진영</label>
                                         <Input
                                             type="number"
                                             value={maxNation}
@@ -1718,7 +1718,7 @@ export default function AdminDashboardPage() {
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     <div className="space-y-1">
-                                        <label className="text-xs text-muted-foreground">장수 생성</label>
+                                        <label className="text-xs text-muted-foreground">장교 생성</label>
                                         <select
                                             value={blockGeneralCreate}
                                             onChange={(e) => setBlockGeneralCreate(Number(e.target.value))}
@@ -1726,7 +1726,7 @@ export default function AdminDashboardPage() {
                                         >
                                             <option value={0}>가능</option>
                                             <option value={1}>불가</option>
-                                            <option value={2}>장수명 무작위</option>
+                                            <option value={2}>장교명 무작위</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1">
@@ -1836,7 +1836,7 @@ export default function AdminDashboardPage() {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                                     {[
                                         {
-                                            label: '내정',
+                                            label: '행성 관리',
                                             checked: allowDomestic,
                                             onChange: setAllowDomestic,
                                         },
@@ -1945,7 +1945,7 @@ export default function AdminDashboardPage() {
                             {/* NoticeToHistoryLog with message input */}
                             <div className="flex gap-2 items-end">
                                 <div className="flex-1 space-y-1">
-                                    <label className="text-xs text-muted-foreground">중원정세 기록</label>
+                                    <label className="text-xs text-muted-foreground">은하정세 기록</label>
                                     <Input
                                         value={eventLogMsg}
                                         onChange={(e) => setEventLogMsg(e.target.value)}
@@ -2257,7 +2257,7 @@ export default function AdminDashboardPage() {
                                         </Button>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        가오픈: 장수 생성/삭제, 사전 거병만 가능. 정식오픈: 모든 기능 활성화.
+                                        가오픈: 장교 생성/삭제, 사전 거병만 가능. 정식오픈: 모든 기능 활성화.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -2292,7 +2292,7 @@ export default function AdminDashboardPage() {
                                     onClick={async () => {
                                         if (
                                             !confirm(
-                                                '강제 리홀: 천통 이후 40세 이상 장수의 명예의전당 기록과 상속 포인트를 재정산합니다. 계속할까요?'
+                                                '강제 리홀: 천통 이후 40세 이상 장교의 명예의전당 기록과 상속 포인트를 재정산합니다. 계속할까요?'
                                             )
                                         )
                                             return;

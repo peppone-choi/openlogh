@@ -157,7 +157,7 @@ export default function NationBettingPage() {
 
     return (
         <div className="p-4 space-y-4 max-w-4xl mx-auto">
-            <PageHeader icon={Trophy} title="국가 베팅장" />
+            <PageHeader icon={Trophy} title="진영 베팅장" />
 
             {/* Betting Event List */}
             <Card>
@@ -177,7 +177,7 @@ export default function NationBettingPage() {
                                 setSelectedBetting(null);
                             }}
                         >
-                            [{formatYearMonth(betting.openYearMonth)}] {betting.name ?? '국가 베팅'}
+                            [{formatYearMonth(betting.openYearMonth)}] {betting.name ?? '진영 베팅'}
                             {betting.finished ? (
                                 <span className="text-muted-foreground ml-1">(종료)</span>
                             ) : (
@@ -198,12 +198,12 @@ export default function NationBettingPage() {
                             }`}
                             onClick={() => loadHistoryEvent(ev.yearMonth)}
                         >
-                            [{ev.yearMonth}] {ev.championName ?? '국가 베팅'}
+                            [{ev.yearMonth}] {ev.championName ?? '진영 베팅'}
                             <span className="text-muted-foreground ml-1">(종료)</span>
                         </button>
                     ))}
 
-                    {!isNationBetting && history.length === 0 && <EmptyState title="진행 중인 국가 베팅이 없습니다." />}
+                    {!isNationBetting && history.length === 0 && <EmptyState title="진행 중인 진영 베팅이 없습니다." />}
                 </CardContent>
             </Card>
 
@@ -215,7 +215,7 @@ export default function NationBettingPage() {
                         <CardHeader className="py-2 px-4">
                             <CardTitle className="text-sm flex items-center gap-2">
                                 <Coins className="size-4" />
-                                {activeBetting.name ?? '국가 베팅'}
+                                {activeBetting.name ?? '진영 베팅'}
                                 {activeBetting.finished && <Badge variant="secondary">종료</Badge>}
                                 {selectCnt > 1 && <Badge variant="secondary">{selectCnt}개 선택</Badge>}
                             </CardTitle>

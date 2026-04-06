@@ -64,7 +64,7 @@ export default function TutorialBattlePage() {
             {/* 전투 결과 설명 */}
             <Card>
                 <CardContent className="pt-4 text-xs text-muted-foreground space-y-2">
-                    <p>전투 결과는 장수의 통솔/무력/지력과 병종 상성에 의해 결정됩니다.</p>
+                    <p>전투 결과는 장교의 통솔/지휘/정보과 함종 상성에 의해 결정됩니다.</p>
                     <p>
                         <span className="text-red-400">창병</span>은 <span className="text-green-400">기병</span>에
                         강하고, <span className="text-green-400">기병</span>은{' '}
@@ -72,7 +72,7 @@ export default function TutorialBattlePage() {
                         <span className="text-blue-400">궁병</span>은 <span className="text-red-400">창병</span>에
                         강합니다.
                     </p>
-                    <p>도시를 점령하면 해당 도시가 아국 소속이 됩니다.</p>
+                    <p>행성을 점령하면 해당 행성이 아국 소속이 됩니다.</p>
                 </CardContent>
             </Card>
         </div>

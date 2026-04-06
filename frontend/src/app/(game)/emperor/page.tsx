@@ -107,7 +107,7 @@ export default function EmperorPage() {
             if (!text) continue;
 
             const isEmperorEvent =
-                text.includes('황제') ||
+                text.includes('원수') ||
                 text.includes('즉위') ||
                 text.includes('폐위') ||
                 text.includes('퇴위') ||
@@ -119,7 +119,7 @@ export default function EmperorPage() {
             const nationName = log.nationName ?? nationNameMatch?.[1] ?? nationNameMatch?.[0] ?? '미상';
 
             const emperorNameMatch =
-                text.match(/황제\s*([^\s,，.。]+)\s*(즉위|선양|퇴위|폐위|제위|사망)?/) ??
+                text.match(/원수\s*([^\s,，.。]+)\s*(즉위|선양|퇴위|폐위|제위|사망)?/) ??
                 text.match(/([^\s,，.。]+)\s*(?:이|가)?\s*(즉위|선양|퇴위|폐위|제위|사망)/);
             const emperorName = emperorNameMatch?.[1] ?? '미상';
 
@@ -237,7 +237,7 @@ export default function EmperorPage() {
 
     return (
         <div className="p-4 space-y-6 max-w-4xl mx-auto">
-            <PageHeader icon={Crown} title="황제 정보" />
+            <PageHeader icon={Crown} title="원수 정보" />
 
             {/* Current Emperor */}
             {emperorNation ? (
@@ -247,7 +247,7 @@ export default function EmperorPage() {
                             <Crown className="size-5 text-amber-400" />
                             <NationBadge name={emperorNation.name} color={emperorNation.color} />
                             <Badge variant="secondary">
-                                {emperorNation.meta?.imperialStatus === 'regent' ? '협천자' : '황제국'}
+                                {emperorNation.meta?.imperialStatus === 'regent' ? '협천자' : '원수국'}
                             </Badge>
                             <Button asChild size="sm" variant="outline" className="ml-auto">
                                 <Link href="/emperor/detail">자세히</Link>
@@ -256,7 +256,7 @@ export default function EmperorPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                            <StatItem label="국가 레벨" value={String(emperorNation.level)} />
+                            <StatItem label="진영 등급" value={String(emperorNation.level)} />
                             <StatItem label="기술력" value={String(emperorNation.tech)} />
                             <StatItem label="국력" value={emperorNation.power.toLocaleString()} />
                             <StatItem label="수도" value={capitalCity?.name ?? '-'} />
@@ -268,13 +268,13 @@ export default function EmperorPage() {
                                 label="쌀"
                                 value={<span className="text-green-400">{emperorNation.rice.toLocaleString()}</span>}
                             />
-                            <StatItem label="도시" value={`${nationCities.length}개`} />
-                            <StatItem label="장수" value={`${nationGenerals.length}명`} />
+                            <StatItem label="행성" value={`${nationCities.length}개`} />
+                            <StatItem label="장교" value={`${nationGenerals.length}명`} />
                         </div>
 
                         {chiefGeneral && (
                             <div className="border-t border-muted/30 pt-3">
-                                <h3 className="text-sm font-semibold mb-2">군주</h3>
+                                <h3 className="text-sm font-semibold mb-2">원수</h3>
                                 <div className="flex items-center gap-3">
                                     <GeneralPortrait
                                         picture={chiefGeneral.picture}
@@ -333,7 +333,7 @@ export default function EmperorPage() {
                                 {nationGenerals.filter((g) => g.officerLevel >= 2 && g.officerLevel <= 4).length >
                                     0 && (
                                     <div className="mb-3">
-                                        <h4 className="text-xs text-muted-foreground mb-1">도시 관직</h4>
+                                        <h4 className="text-xs text-muted-foreground mb-1">행성 관직</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             {nationGenerals
                                                 .filter((g) => g.officerLevel >= 2 && g.officerLevel <= 4)
@@ -381,7 +381,7 @@ export default function EmperorPage() {
                                 {/* General soldiers (level 1) */}
                                 <div>
                                     <h4 className="text-xs text-muted-foreground mb-1">
-                                        일반 장수 ({nationGenerals.filter((g) => g.officerLevel <= 1).length}
+                                        일반 장교 ({nationGenerals.filter((g) => g.officerLevel <= 1).length}
                                         명)
                                     </h4>
                                     <div className="flex flex-wrap gap-1">
@@ -401,7 +401,7 @@ export default function EmperorPage() {
             ) : (
                 <Card>
                     <CardContent className="py-4">
-                        <p className="text-sm text-muted-foreground text-center">아직 황제를 칭한 국가가 없습니다.</p>
+                        <p className="text-sm text-muted-foreground text-center">아직 원수를 칭한 진영이 없습니다.</p>
                     </CardContent>
                 </Card>
             )}
@@ -409,19 +409,19 @@ export default function EmperorPage() {
             {/* Nation levels overview */}
             <Card>
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-base">국가 작위 현황</CardTitle>
+                    <CardTitle className="text-base">진영 작위 현황</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>국가</TableHead>
+                                    <TableHead>진영</TableHead>
                                     <TableHead>레벨</TableHead>
                                     <TableHead>칭호</TableHead>
                                     <TableHead>성향</TableHead>
-                                    <TableHead className="text-right">국력</TableHead>
-                                    <TableHead className="text-right">장수</TableHead>
+                                    <TableHead className="text-right">군사력</TableHead>
+                                    <TableHead className="text-right">장교</TableHead>
                                     <TableHead className="text-right">속령</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -485,7 +485,7 @@ export default function EmperorPage() {
                 <CardHeader className="pb-2 cursor-pointer" onClick={() => setShowTimeline(!showTimeline)}>
                     <CardTitle className="text-base flex items-center gap-2">
                         <ScrollText className="size-4" />
-                        왕조 연표 ({dynastyTimeline.length}건)
+                        원수 연표 ({dynastyTimeline.length}건)
                         {showTimeline ? (
                             <ChevronDown className="size-4 ml-auto" />
                         ) : (
@@ -496,15 +496,15 @@ export default function EmperorPage() {
                 {showTimeline && (
                     <CardContent>
                         {emperorHistory.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">황제 재위 이력 데이터가 없습니다.</p>
+                            <p className="text-sm text-muted-foreground">원수 재위 이력 데이터가 없습니다.</p>
                         ) : (
                             <div className="max-h-[400px] overflow-y-auto">
                                 <div className="overflow-x-auto">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>국가</TableHead>
-                                                <TableHead>황제명</TableHead>
+                                                <TableHead>진영</TableHead>
+                                                <TableHead>원수명</TableHead>
                                                 <TableHead>성향</TableHead>
                                                 <TableHead>재위 기간</TableHead>
                                             </TableRow>
@@ -615,10 +615,10 @@ export default function EmperorPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>국가</TableHead>
+                                            <TableHead>진영</TableHead>
                                             <TableHead className="text-right">속령</TableHead>
-                                            <TableHead className="text-right">장수</TableHead>
-                                            <TableHead>도시</TableHead>
+                                            <TableHead className="text-right">장교</TableHead>
+                                            <TableHead>행성</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -638,7 +638,7 @@ export default function EmperorPage() {
                                 </Table>
                             </div>
                             <div className="space-y-2">
-                                <h5 className="text-xs font-semibold text-amber-400">중원 정세</h5>
+                                <h5 className="text-xs font-semibold text-amber-400">은하 정세</h5>
                                 {yearbook.globalHistory.length === 0 ? (
                                     <div className="text-xs text-muted-foreground">기록 없음</div>
                                 ) : (
@@ -650,7 +650,7 @@ export default function EmperorPage() {
                                 )}
                             </div>
                             <div className="space-y-2">
-                                <h5 className="text-xs font-semibold text-amber-400">장수 동향</h5>
+                                <h5 className="text-xs font-semibold text-amber-400">장교 동향</h5>
                                 {yearbook.globalAction.length === 0 ? (
                                     <div className="text-xs text-muted-foreground">기록 없음</div>
                                 ) : (

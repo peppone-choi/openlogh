@@ -160,25 +160,25 @@ function AccountPageContent() {
                 useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: data.url } : s.user }));
                 useOfficerStore.setState((s) => ({ myOfficer: s.myOfficer ? { ...s.myOfficer, picture: data.url } : s.myOfficer }));
             }
-            setIconMsg('전콘이 업로드되었습니다.');
+            setIconMsg('초상화가 업로드되었습니다.');
             setIconFile(null);
         } catch {
-            setIconMsg('전콘 업로드에 실패했습니다.');
+            setIconMsg('초상화 업로드에 실패했습니다.');
         } finally {
             setIconUploading(false);
         }
     };
 
     const handleIconDelete = async () => {
-        if (!confirm('전콘을 삭제하시겠습니까?')) return;
+        if (!confirm('초상화를 삭제하시겠습니까?')) return;
         try {
             await accountApi.deleteIcon();
             useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: undefined } : s.user }));
             useOfficerStore.setState((s) => ({ myOfficer: s.myOfficer ? { ...s.myOfficer, picture: '' } : s.myOfficer }));
-            setIconMsg('전콘이 삭제되었습니다.');
+            setIconMsg('초상화가 삭제되었습니다.');
             setIconPreview(null);
         } catch {
-            setIconMsg('전콘 삭제에 실패했습니다.');
+            setIconMsg('초상화 삭제에 실패했습니다.');
         }
     };
 
@@ -191,9 +191,9 @@ function AccountPageContent() {
                 useOfficerStore.setState((s) => ({ myOfficer: s.myOfficer ? { ...s.myOfficer, picture } : s.myOfficer }));
             }
             setShowIconSync(false);
-            setIconMsg('모든 서버에 전콘이 동기화되었습니다.');
+            setIconMsg('모든 서버에 초상화가 동기화되었습니다.');
         } catch {
-            setIconMsg('전콘 동기화에 실패했습니다.');
+            setIconMsg('초상화 동기화에 실패했습니다.');
         } finally {
             setIconSyncLoading(false);
         }
@@ -225,9 +225,9 @@ function AccountPageContent() {
             } as Record<string, unknown> & import('@/types').AccountSettings);
             useAuthStore.setState((s) => ({ user: s.user ? { ...s.user, picture: trimmedUrl } : s.user }));
             useOfficerStore.setState((s) => ({ myOfficer: s.myOfficer ? { ...s.myOfficer, picture: trimmedUrl } : s.myOfficer }));
-            setPictureMsg('전콘이 변경되었습니다.');
+            setPictureMsg('초상화가 변경되었습니다.');
         } catch {
-            setPictureMsg('전콘 변경에 실패했습니다.');
+            setPictureMsg('초상화 변경에 실패했습니다.');
         } finally {
             setPictureLoading(false);
         }
@@ -392,18 +392,18 @@ function AccountPageContent() {
                         </div>
                     )}
 
-                    {/* Profile Picture (전콘) */}
+                    {/* Profile Picture (초상화) */}
                     <div className="space-y-2 rounded-md border p-3">
-                        <h2 className="text-sm font-semibold text-muted-foreground">전콘 (프로필 이미지)</h2>
+                        <h2 className="text-sm font-semibold text-muted-foreground">초상화 (프로필 이미지)</h2>
                         <p className="text-xs text-muted-foreground">
-                            장수 생성 시 사용되는 프로필 이미지를 변경할 수 있습니다.
+                            장교 생성 시 사용되는 프로필 이미지를 변경할 수 있습니다.
                         </p>
                         <div className="flex items-center gap-3">
                             <div className="size-16 rounded border border-input bg-muted flex items-center justify-center text-xs text-muted-foreground overflow-hidden">
                                 {iconPreview ? (
-                                    <img src={iconPreview} alt="전콘 미리보기" className="size-full object-cover" />
+                                    <img src={iconPreview} alt="초상화 미리보기" className="size-full object-cover" />
                                 ) : user?.picture ? (
-                                    <img src={user.picture} alt="전콘" className="size-full object-cover" />
+                                    <img src={user.picture} alt="초상화" className="size-full object-cover" />
                                 ) : (
                                     '없음'
                                 )}
@@ -452,7 +452,7 @@ function AccountPageContent() {
                                 {/* Delete + Sync buttons */}
                                 <div className="flex items-center gap-2">
                                     <Button size="sm" variant="destructive" onClick={handleIconDelete}>
-                                        <Trash2 className="size-3 mr-1" /> 전콘 삭제
+                                        <Trash2 className="size-3 mr-1" /> 초상화 삭제
                                     </Button>
                                     <Button size="sm" variant="outline" onClick={() => setShowIconSync(true)}>
                                         <RefreshCw className="size-3 mr-1" /> 서버 동기화
@@ -637,7 +637,7 @@ function AccountPageContent() {
                 </CardContent>
             </Card>
 
-            {/* 전콘 서버 동기화 모달 */}
+            {/* 초상화 서버 동기화 모달 */}
             {showIconSync && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
                     <div className="relative w-full max-w-sm mx-4 rounded-lg border bg-background p-6 shadow-xl">
@@ -651,11 +651,11 @@ function AccountPageContent() {
                         <div className="space-y-4">
                             <h3 className="text-lg font-bold flex items-center gap-2">
                                 <RefreshCw className="size-5" />
-                                전콘 서버 동기화
+                                초상화 서버 동기화
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                                현재 설정된 전콘을 모든 서버의 장수에 동기화합니다. 각 서버에서 사용 중인 전콘이 모두
-                                현재 전콘으로 변경됩니다.
+                                현재 설정된 초상화를 모든 서버의 장교에 동기화합니다. 각 서버에서 사용 중인 초상화가 모두
+                                현재 초상화으로 변경됩니다.
                             </p>
                             <div className="flex gap-2">
                                 <Button className="flex-1" onClick={handleIconSync} disabled={iconSyncLoading}>
@@ -705,7 +705,7 @@ function AccountPageContent() {
                                     ⚠️ 주의: 이 작업은 되돌릴 수 없습니다!
                                 </p>
                                 <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                                    <li>모든 장수 데이터가 삭제됩니다.</li>
+                                    <li>모든 장교 데이터가 삭제됩니다.</li>
                                     <li>게임 기록 및 전적이 모두 사라집니다.</li>
                                     <li>연동된 소셜 계정이 모두 해제됩니다.</li>
                                     <li>동일 아이디로 재가입이 불가능할 수 있습니다.</li>

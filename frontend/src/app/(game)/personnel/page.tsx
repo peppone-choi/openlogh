@@ -104,7 +104,7 @@ function PermissionSelector({
                         </Badge>
                     );
                 })}
-                {candidates.length === 0 && <span className="text-xs text-muted-foreground">대상 장수 없음</span>}
+                {candidates.length === 0 && <span className="text-xs text-muted-foreground">대상 장교 없음</span>}
             </div>
             {current.length > 0 && (
                 <div className="text-xs text-muted-foreground">현재: {current.map((g) => g.name).join(', ')}</div>
@@ -334,9 +334,9 @@ export default function PersonnelPage() {
     };
 
     const getStatLabel = (level: number): string => {
-        if (level === 12 || level === 11) return '모든 장수';
-        if (level % 2 === 0) return `무력 ${chiefStatMin}+`;
-        return `지력 ${chiefStatMin}+`;
+        if (level === 12 || level === 11) return '모든 장교';
+        if (level % 2 === 0) return `지휘 ${chiefStatMin}+`;
+        return `정보 ${chiefStatMin}+`;
     };
 
     if (!currentWorld) {
@@ -346,7 +346,7 @@ export default function PersonnelPage() {
     if (loading) return <LoadingState />;
 
     if (!myOfficer) {
-        return <div className="p-4 text-muted-foreground">장수 정보가 없습니다.</div>;
+        return <div className="p-4 text-muted-foreground">장교 정보가 없습니다.</div>;
     }
 
     if (myOfficer.nationId <= 0) {
@@ -394,7 +394,7 @@ export default function PersonnelPage() {
                             className="inline-flex items-center rounded-sm px-0.5"
                             style={{ backgroundColor: '#f0c040' }}
                         >
-                            <img src="/icons/emperor.png" alt="황제" width={18} height={18} />
+                            <img src="/icons/emperor.png" alt="원수" width={18} height={18} />
                         </span>
                     </div>
                 </div>
@@ -553,19 +553,19 @@ export default function PersonnelPage() {
                         <p className="text-xs text-muted-foreground">
                             ※ <span className="text-red-400">빨간색</span>은 현재 임명중인 장수,{' '}
                             <span className="text-orange-400">노란색</span>은 다른 관직에 임명된 장수, 흰색은 일반
-                            장수를 뜻합니다.
+                            장교를 뜻합니다.
                         </p>
                     </CardContent>
                 </Card>
             )}
 
-            {/* City Officer Appointment (도시 관직 임명) */}
+            {/* City Officer Appointment (행성 관직 임명) */}
             {canManage && (
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base flex items-center gap-2 text-orange-400">
                             <UserPlus className="size-4" />
-                            도시 관직 임명
+                            행성 관직 임명
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -646,17 +646,17 @@ export default function PersonnelPage() {
                 </Card>
             )}
 
-            {/* City Officer List (도시별 관직 현황) */}
+            {/* City Officer List (행성별 관직 현황) */}
             <Card>
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-base">도시별 관직 현황</CardTitle>
+                    <CardTitle className="text-base">행성별 관직 현황</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-muted/50">
-                                    <th className="text-left py-1 px-2 w-32">도시</th>
+                                    <th className="text-left py-1 px-2 w-32">행성</th>
                                     <th className="text-left py-1 px-2">
                                         {formatOfficerLevelText(4, nationLevel, false, nationTypeCode)}
                                     </th>
@@ -767,7 +767,7 @@ export default function PersonnelPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm">대상 장수:</span>
+                            <span className="text-sm">대상 장교:</span>
                             <select
                                 className="flex-1 min-w-[200px] h-8 rounded border border-input bg-background px-2 text-sm"
                                 value={kickTarget}

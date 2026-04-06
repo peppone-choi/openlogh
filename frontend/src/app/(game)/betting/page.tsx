@@ -47,8 +47,8 @@ const TOURNAMENT_TYPES: {
         statKey: 'leadership',
         icon: Shield,
     },
-    { code: 2, name: '일기토', stat: '무력', statKey: 'strength', icon: Swords },
-    { code: 3, name: '설전', stat: '지력', statKey: 'intel', icon: Brain },
+    { code: 2, name: '일기토', stat: '지휘', statKey: 'strength', icon: Swords },
+    { code: 3, name: '설전', stat: '정보', statKey: 'intel', icon: Brain },
 ];
 
 const TOURNAMENT_RANKING_CONFIG = [
@@ -561,8 +561,8 @@ export default function BettingPage() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="text-xs">장수</TableHead>
-                                                <TableHead className="text-xs">국가</TableHead>
+                                                <TableHead className="text-xs">장교</TableHead>
+                                                <TableHead className="text-xs">진영</TableHead>
                                                 <TableHead className="text-xs text-right">
                                                     {tournamentType.stat}
                                                 </TableHead>
@@ -760,7 +760,7 @@ export default function BettingPage() {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="text-xs">장수</TableHead>
+                                                <TableHead className="text-xs">장교</TableHead>
                                                 <TableHead className="text-xs text-right">베팅 풀</TableHead>
                                                 <TableHead className="text-xs text-right">비율</TableHead>
                                                 <TableHead className="text-xs text-right">배당</TableHead>
@@ -829,14 +829,14 @@ export default function BettingPage() {
                                 <CardHeader className="py-2 px-4">
                                     <CardTitle className="text-sm flex items-center gap-2">
                                         <Users className="size-4" />
-                                        국가별 베팅 현황
+                                        진영별 베팅 현황
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="px-4 pb-3">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="text-xs">국가</TableHead>
+                                                <TableHead className="text-xs">진영</TableHead>
                                                 <TableHead className="text-xs text-right">참가 장수</TableHead>
                                                 <TableHead className="text-xs text-right">베팅 총액</TableHead>
                                             </TableRow>
@@ -1016,7 +1016,7 @@ export default function BettingPage() {
                                                 <Table>
                                                     <TableHeader>
                                                         <TableRow>
-                                                            <TableHead className="text-xs">대상 장수</TableHead>
+                                                            <TableHead className="text-xs">대상 장교</TableHead>
                                                             <TableHead className="text-xs text-right">
                                                                 베팅 풀
                                                             </TableHead>
@@ -1168,7 +1168,7 @@ export default function BettingPage() {
                         <CardHeader className="py-2 px-4">
                             <CardTitle className="text-sm flex items-center gap-2">
                                 <Trophy className="size-4 text-amber-400" />
-                                {betting.name ?? '국가 베팅'}
+                                {betting.name ?? '진영 베팅'}
                                 {betting.finished && <Badge variant="outline">종료</Badge>}
                                 {reqInheritancePoint && <Badge variant="secondary">포인트 베팅</Badge>}
                                 {selectCnt > 1 && <Badge variant="secondary">{selectCnt}개 선택</Badge>}

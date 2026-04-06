@@ -380,7 +380,7 @@ function NationCommandPanel({
         [dragFrom, filledTurns, nationId, generalId, loadData]
     );
 
-    if (loading) return <LoadingState message="국가 명령 불러오는 중..." />;
+    if (loading) return <LoadingState message="진영 명령 불러오는 중..." />;
 
     return (
         <div className="space-y-3">
@@ -514,7 +514,7 @@ function NationCommandPanel({
             {showSelector && (
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">{selectedTurn + 1}턴 국가 명령 선택</CardTitle>
+                        <CardTitle className="text-sm">{selectedTurn + 1}턴 진영 명령 선택</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
                         {categories.map((cat) => (
@@ -609,10 +609,10 @@ function CommandsPageInner() {
             <div className="flex items-center justify-between flex-wrap gap-2">
                 <PageHeader
                     icon={mode === 'nation' ? Crown : Swords}
-                    title={mode === 'nation' ? '국가 명령 예약' : '명령 예약'}
+                    title={mode === 'nation' ? '진영 명령 예약' : '명령 예약'}
                     description={
                         mode === 'nation'
-                            ? '국가 턴 명령을 예약합니다.'
+                            ? '진영 턴 명령을 예약합니다.'
                             : '30턴 예약, 다중 선택, 저장 액션을 이용해 명령을 빠르게 편성합니다.'
                     }
                 />
@@ -625,7 +625,7 @@ function CommandsPageInner() {
                             onClick={() => setMode(mode === 'nation' ? 'general' : 'nation')}
                         >
                             <Crown className="size-3.5 mr-1" />
-                            {mode === 'nation' ? '장수 명령' : '국가 명령'}
+                            {mode === 'nation' ? '장수 명령' : '진영 명령'}
                         </Button>
                     )}
                 </div>

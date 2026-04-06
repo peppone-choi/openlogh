@@ -330,7 +330,7 @@ export default function InternalAffairsPage() {
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
-    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>;
+    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 진영가 없습니다.</div>;
 
     return (
         <div className="p-4 space-y-6 max-w-3xl mx-auto">
@@ -350,7 +350,7 @@ export default function InternalAffairsPage() {
                 <TabsContent value="policy" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>국가 정책</CardTitle>
+                            <CardTitle>진영 정책</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -398,7 +398,7 @@ export default function InternalAffairsPage() {
                                     <div className="space-y-0.5">
                                         <span className="text-sm font-medium">전쟁 차단</span>
                                         <p className="text-xs text-muted-foreground">
-                                            소속 장수의 전쟁 명령을 차단합니다
+                                            소속 장교의 전쟁 명령을 차단합니다
                                         </p>
                                     </div>
                                     <Switch checked={blockWar} onCheckedChange={setBlockWar} />
@@ -406,7 +406,7 @@ export default function InternalAffairsPage() {
                                 <div className="flex items-center justify-between rounded-none border p-3">
                                     <div className="space-y-0.5">
                                         <span className="text-sm font-medium">임관 금지</span>
-                                        <p className="text-xs text-muted-foreground">타 장수의 임관을 제한합니다</p>
+                                        <p className="text-xs text-muted-foreground">타 장교의 임관을 제한합니다</p>
                                     </div>
                                     <Switch checked={blockScout} onCheckedChange={setBlockScout} />
                                 </div>
@@ -480,7 +480,7 @@ export default function InternalAffairsPage() {
                                                         />
                                                     )}
                                                     <span className="text-sm">
-                                                        {otherNation?.name ?? `국가#${otherId}`}
+                                                        {otherNation?.name ?? `진영#${otherId}`}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -501,11 +501,11 @@ export default function InternalAffairsPage() {
 
                     <Card className="mt-4">
                         <CardHeader>
-                            <CardTitle>모든 국가 목록</CardTitle>
+                            <CardTitle>모든 진영 목록</CardTitle>
                         </CardHeader>
                         <CardContent>
                             {allNations.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">국가 데이터가 없습니다.</p>
+                                <p className="text-sm text-muted-foreground">진영 데이터가 없습니다.</p>
                             ) : (
                                 <div className="space-y-2">
                                     {allNations.map((nation) => (
@@ -524,7 +524,7 @@ export default function InternalAffairsPage() {
                                                 장수 {nation.generalCount}
                                             </span>
                                             <span className="text-xs text-muted-foreground tabular-nums">
-                                                도시 {nation.cityCount}
+                                                행성 {nation.cityCount}
                                             </span>
                                         </div>
                                     ))}
@@ -546,13 +546,13 @@ export default function InternalAffairsPage() {
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 <div className="border rounded p-3 text-center">
-                                    <div className="text-[10px] text-muted-foreground">금 수입</div>
+                                    <div className="text-[10px] text-muted-foreground">자금 수입</div>
                                     <div className="text-sm font-bold text-amber-400 tabular-nums">
                                         {financeSummary.totalGoldIncome.toLocaleString()}
                                     </div>
                                 </div>
                                 <div className="border rounded p-3 text-center">
-                                    <div className="text-[10px] text-muted-foreground">쌀 수입</div>
+                                    <div className="text-[10px] text-muted-foreground">물자 수입</div>
                                     <div className="text-sm font-bold text-green-400 tabular-nums">
                                         {financeSummary.totalRiceIncome.toLocaleString()}
                                     </div>
@@ -564,7 +564,7 @@ export default function InternalAffairsPage() {
                                     </div>
                                 </div>
                                 <div className="border rounded p-3 text-center">
-                                    <div className="text-[10px] text-muted-foreground">금 순수익</div>
+                                    <div className="text-[10px] text-muted-foreground">자자금 순수익</div>
                                     <div
                                         className={`text-sm font-bold tabular-nums ${financeSummary.netGold >= 0 ? 'text-green-400' : 'text-red-400'}`}
                                     >
@@ -575,14 +575,14 @@ export default function InternalAffairsPage() {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                 <div className="rounded-none border p-3">
-                                    <div className="text-muted-foreground">금 세부</div>
+                                    <div className="text-muted-foreground">자금 세부</div>
                                     <div className="mt-1 space-y-0.5">
                                         <div>단기수입: -</div>
                                         <div>세금(추정): {financeSummary.totalGoldIncome.toLocaleString()}</div>
                                     </div>
                                 </div>
                                 <div className="rounded-none border p-3">
-                                    <div className="text-muted-foreground">쌀 세부</div>
+                                    <div className="text-muted-foreground">물자 세부</div>
                                     <div className="mt-1 space-y-0.5">
                                         <div>둔전수입: -</div>
                                         <div>세금(추정): {financeSummary.totalRiceIncome.toLocaleString()}</div>
@@ -590,7 +590,7 @@ export default function InternalAffairsPage() {
                                 </div>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                                도시 수: {myCities.length}개 / 보유금: {myNation?.gold?.toLocaleString() ?? 0} / 보유쌀:{' '}
+                                행성 수: {myCities.length}개 / 보유자금: {myNation?.gold?.toLocaleString() ?? 0} / 보유물자:{' '}
                                 {myNation?.rice?.toLocaleString() ?? 0}
                             </div>
                             <div className="text-[10px] text-muted-foreground">
@@ -603,13 +603,13 @@ export default function InternalAffairsPage() {
                 <TabsContent value="notice" className="mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>국가 공지</CardTitle>
+                            <CardTitle>진영 공지</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <RichTextEditor
                                 value={notice}
                                 onChange={setNotice}
-                                placeholder="국가 공지를 입력하세요..."
+                                placeholder="진영 공지를 입력하세요..."
                             />
                             <Button onClick={handleSaveNotice} disabled={saving}>
                                 {saving ? '저장 중...' : '공지 저장'}

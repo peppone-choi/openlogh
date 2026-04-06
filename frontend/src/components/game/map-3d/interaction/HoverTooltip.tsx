@@ -1,5 +1,5 @@
 'use client';
-// 호버 시 도시 정보 툴팁 — 단 1개의 Html DOM만 사용 (성능)
+// 호버 시 행성 정보 툴팁 — 단 1개의 Html DOM만 사용 (성능)
 import { Html } from '@react-three/drei';
 import type { RenderCity } from '@/components/game/map-canvas';
 import { toWorld3d, sampleHeight, WORLD_SCALE } from '@/lib/map-3d-utils';

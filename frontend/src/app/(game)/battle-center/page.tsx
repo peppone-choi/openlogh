@@ -184,7 +184,7 @@ export default function BattleCenterPage() {
 
     return (
         <div className="space-y-4 max-w-6xl mx-auto">
-            <PageHeader icon={Swords} title="감찰부" description="장수별 전투 기록 및 상세 정보" />
+            <PageHeader icon={Swords} title="감찰부" description="장교별 전투 기록 및 상세 정보" />
 
             {/* Navigation bar */}
             <div className="flex items-center gap-2">
@@ -278,7 +278,7 @@ export default function BattleCenterPage() {
 
                     <div className="space-y-4">
                         <LogSection
-                            title="장수 열전"
+                            title="장교 열전"
                             titleColor="text-orange-400"
                             logs={logs?.generalHistory ?? []}
                             loading={logsLoading}
@@ -310,7 +310,7 @@ export default function BattleCenterPage() {
                     )}
                 </div>
             ) : orderedGenerals.length === 0 ? (
-                <EmptyState icon={Swords} title="조회 가능한 장수가 없습니다." />
+                <EmptyState icon={Swords} title="조회 가능한 장교가 없습니다." />
             ) : null}
         </div>
     );
@@ -331,10 +331,10 @@ function ComparisonView({
 }) {
     const stats: { label: string; a: number; b: number }[] = [
         { label: '통솔', a: generalA.leadership, b: generalB.leadership },
-        { label: '무력', a: generalA.strength, b: generalB.strength },
-        { label: '지력', a: generalA.intel, b: generalB.intel },
+        { label: '지휘', a: generalA.strength, b: generalB.strength },
+        { label: '정보', a: generalA.intel, b: generalB.intel },
         { label: '정치', a: generalA.politics, b: generalB.politics },
-        { label: '매력', a: generalA.charm, b: generalB.charm },
+        { label: '운영', a: generalA.charm, b: generalB.charm },
         { label: '병사', a: generalA.crew, b: generalB.crew },
         { label: '훈련', a: generalA.train, b: generalB.train },
         { label: '사기', a: generalA.atmos, b: generalB.atmos },
@@ -439,7 +439,7 @@ function ComparisonView({
                     <div className="text-muted-foreground text-center mb-1">특기</div>
                     <div className="grid grid-cols-3 gap-2 text-center items-center">
                         <div className="text-left">{generalA.specialCode || '-'}</div>
-                        <div className="text-muted-foreground">내정특기</div>
+                        <div className="text-muted-foreground">행성관리특기</div>
                         <div className="text-right">{generalB.specialCode || '-'}</div>
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-center items-center">
@@ -465,7 +465,7 @@ function GeneralBasicCard({ general, nation }: { general: General; nation?: { na
         <Card>
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2" style={{ color: 'skyblue' }}>
-                    장수 정보
+                    장교 정보
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-xs">
@@ -483,10 +483,10 @@ function GeneralBasicCard({ general, nation }: { general: General; nation?: { na
 
                 <div className="grid grid-cols-3 gap-x-4 gap-y-1">
                     <StatRow label="통솔" value={general.leadership} exp={general.leadershipExp} />
-                    <StatRow label="무력" value={general.strength} exp={general.strengthExp} />
-                    <StatRow label="지력" value={general.intel} exp={general.intelExp} />
+                    <StatRow label="지휘" value={general.strength} exp={general.strengthExp} />
+                    <StatRow label="정보" value={general.intel} exp={general.intelExp} />
                     <StatRow label="정치" value={general.politics} />
-                    <StatRow label="매력" value={general.charm} />
+                    <StatRow label="운영" value={general.charm} />
                     <StatRow
                         label="부상"
                         value={general.injury}
@@ -513,7 +513,7 @@ function GeneralBasicCard({ general, nation }: { general: General; nation?: { na
 
                 <div className="grid grid-cols-3 gap-x-4 gap-y-1">
                     <div>
-                        <span className="text-muted-foreground">병종:</span>{' '}
+                        <span className="text-muted-foreground">함종:</span>{' '}
                         {CREW_TYPE_NAMES[general.crewType] ?? general.crewType}
                     </div>
                     <div>
@@ -610,7 +610,7 @@ function GeneralSupplementCard({ general }: { general: General }) {
                         <span className="text-muted-foreground">전투특기:</span> {general.special2Code || '-'}
                     </div>
                     <div>
-                        <span className="text-muted-foreground">내정특기:</span> {general.specialCode || '-'}
+                        <span className="text-muted-foreground">행성관리특기:</span> {general.specialCode || '-'}
                     </div>
                     <div>
                         <span className="text-muted-foreground">경험:</span> {general.experience.toLocaleString()} (Lv.

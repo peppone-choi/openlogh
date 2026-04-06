@@ -213,7 +213,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
         router.replace('/lobby');
         return null;
     }
-    // Pre-open phase: only allow /my-page (사전 거병, 장수 삭제)
+    // Pre-open phase: only allow /my-page (사전 거병, 장교 삭제)
     const opentime = config?.opentime;
     const isPreOpen = opentime ? new Date() < new Date(opentime) : false;
     if (isPreOpen && pathname !== '/my-page') {

@@ -599,7 +599,7 @@ function VoteCard({
                                 <div className="space-y-1.5">
                                     {comments.map((c) => {
                                         const author = generalMap.get(c.authorGeneralId);
-                                        const authorName = author?.name ?? `장수#${c.authorGeneralId}`;
+                                        const authorName = author?.name ?? `장교#${c.authorGeneralId}`;
                                         const dateStr = formatDeadline(c.createdAt);
                                         return (
                                             <div key={c.id} className="flex items-start gap-2 text-xs">

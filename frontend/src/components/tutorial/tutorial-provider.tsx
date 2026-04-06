@@ -75,12 +75,12 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
 
         switch (step.id) {
             case 3: {
-                // 장수 생성 완료 — myOfficer 확인
+                // 장교 생성 완료 — myOfficer 확인
                 useOfficerStore.setState({ myOfficer: MOCK_MY_GENERAL });
                 break;
             }
             case 6: {
-                // 개간 결과 — 도시 농업 수치 증가
+                // 개간 결과 — 행성 생산 수치 증가
                 const cities = useGameStore
                     .getState()
                     .cities.map((c) => (c.id === -1 ? { ...c, agri: c.agri + 100 } : c));
@@ -88,7 +88,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
                 break;
             }
             case 8: {
-                // 징병 결과 — 장수 병력 증가
+                // 징병 결과 — 장교 함선 증가
                 const generals8 = useGameStore
                     .getState()
                     .generals.map((g) => (g.id === -1 ? { ...g, crew: g.crew + 500 } : g));

@@ -46,7 +46,7 @@ export default function UnitListPanel({ factionId, onSelectUnit }: UnitListPanel
     }, {} as Record<UnitType, MilitaryUnit[]>);
 
     if (loading) {
-        return <div className="p-4 text-gray-400 text-sm">부대 목록 불러오는 중...</div>;
+        return <div className="p-4 text-gray-400 text-sm">함대 목록 불러오는 중...</div>;
     }
 
     return (
@@ -91,7 +91,7 @@ export default function UnitListPanel({ factionId, onSelectUnit }: UnitListPanel
             })}
 
             {units.length === 0 && (
-                <p className="text-gray-500 text-sm text-center">편성된 부대가 없습니다.</p>
+                <p className="text-gray-500 text-sm text-center">편성된 함대가 없습니다.</p>
             )}
         </div>
     );

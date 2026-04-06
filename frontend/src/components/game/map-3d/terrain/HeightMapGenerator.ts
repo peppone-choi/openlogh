@@ -120,13 +120,13 @@ export async function generateHeightMapFromImage(
   smoothHeightMap(heightMap, segments + 1, segments + 1);
   smoothHeightMap(heightMap, segments + 1, segments + 1);
 
-  // 3단계: 도시 주변 평탄화 (성곽 배치용)
+  // 3단계: 행성 주변 평탄화 (성곽 배치용)
   for (const city of cities) {
     const radius = city.level >= 5 ? 20 : 14;
     flattenAroundCity(heightMap, city, radius, segments);
   }
 
-  // 4단계: 도시 간 연결(도로)을 따라 약간 낮추기
+  // 4단계: 행성 간 연결(도로)을 따라 약간 낮추기
   for (const city of cities) {
     for (const connId of city.connections) {
       const target = cities.find((c) => c.id === connId);
@@ -151,7 +151,7 @@ export function generateHeightMapFallback(
 ): Float32Array {
   const REGION_BASE: Record<number, number> = {
     1: 4,   // 하북 — 평야~구릉
-    2: 3,   // 중원 — 평야
+    2: 3,   // 은하 — 평야
     3: 10,  // 서북 — 산악
     4: 9,   // 서촉 — 고원/산악
     5: 8,   // 남중 — 산악/정글
@@ -193,7 +193,7 @@ export function generateHeightMapFallback(
     }
   }
 
-  // 도시 평탄화 + 도로 + 가장자리
+  // 행성 평탄화 + 도로 + 가장자리
   for (const city of cities) {
     flattenAroundCity(heightMap, city, city.level >= 5 ? 20 : 14, segments);
   }

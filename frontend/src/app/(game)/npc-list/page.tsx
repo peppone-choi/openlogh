@@ -28,13 +28,13 @@ type SortKey =
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'name', label: '이름' },
-    { key: 'nation', label: '국가' },
-    { key: 'city', label: '도시' },
+    { key: 'nation', label: '진영' },
+    { key: 'city', label: '행성' },
     { key: 'totalStats', label: '종능' },
     { key: 'leadership', label: '통솔' },
-    { key: 'strength', label: '무력' },
-    { key: 'intel', label: '지력' },
-    { key: 'crew', label: '병력' },
+    { key: 'strength', label: '지휘' },
+    { key: 'intel', label: '정보' },
+    { key: 'crew', label: '함선' },
     { key: 'experience', label: '명성' },
     { key: 'dedication', label: '계급' },
 ];
@@ -139,7 +139,7 @@ export default function NpcListPage() {
                     onChange={(e) => setNationFilter(e.target.value)}
                     className="h-9 min-w-0 rounded-none border border-input bg-transparent px-3 py-1 text-sm"
                 >
-                    <option value="">전체 국가</option>
+                    <option value="">전체 진영</option>
                     {nations.map((n) => (
                         <option key={n.id} value={n.id}>
                             {n.name}
@@ -168,7 +168,7 @@ export default function NpcListPage() {
             </div>
 
             {npcGenerals.length === 0 ? (
-                <EmptyState icon={Bot} title="NPC 장수가 없습니다." />
+                <EmptyState icon={Bot} title="NPC 장교가 없습니다." />
             ) : (
                 <div className="overflow-x-auto">
                     <Table>
@@ -186,13 +186,13 @@ export default function NpcListPage() {
                                     className="cursor-pointer hover:text-foreground"
                                     onClick={() => handleSortChange('nation')}
                                 >
-                                    국가{arrow('nation')}
+                                    진영{arrow('nation')}
                                 </TableHead>
                                 <TableHead
                                     className="cursor-pointer hover:text-foreground"
                                     onClick={() => handleSortChange('city')}
                                 >
-                                    도시{arrow('city')}
+                                    행성{arrow('city')}
                                 </TableHead>
                                 <TableHead>성격</TableHead>
                                 <TableHead>보관횟수</TableHead>
@@ -213,21 +213,21 @@ export default function NpcListPage() {
                                     className="cursor-pointer hover:text-foreground"
                                     onClick={() => handleSortChange('strength')}
                                 >
-                                    무력{arrow('strength')}
+                                    지휘{arrow('strength')}
                                 </TableHead>
                                 <TableHead
                                     className="cursor-pointer hover:text-foreground"
                                     onClick={() => handleSortChange('intel')}
                                 >
-                                    지력{arrow('intel')}
+                                    정보{arrow('intel')}
                                 </TableHead>
                                 <TableHead
                                     className="cursor-pointer hover:text-foreground"
                                     onClick={() => handleSortChange('crew')}
                                 >
-                                    병력{arrow('crew')}
+                                    함선{arrow('crew')}
                                 </TableHead>
-                                <TableHead>병종</TableHead>
+                                <TableHead>함종</TableHead>
                                 <TableHead
                                     className="cursor-pointer hover:text-foreground"
                                     onClick={() => handleSortChange('experience')}

@@ -456,19 +456,19 @@ function UnitBuilder({
                         max={100}
                     />
                     <NumberField
-                        label="무력"
+                        label="지휘"
                         value={unit.strength}
                         onChange={(v) => set('strength', v)}
                         min={1}
                         max={100}
                     />
-                    <NumberField label="지력" value={unit.intel} onChange={(v) => set('intel', v)} min={1} max={100} />
+                    <NumberField label="정보" value={unit.intel} onChange={(v) => set('intel', v)} min={1} max={100} />
                 </div>
 
                 {/* Crew */}
                 <div className="flex flex-wrap gap-2">
                     <div className="flex items-center gap-1">
-                        <span className="text-xs text-muted-foreground w-10 text-right">병종</span>
+                        <span className="text-xs text-muted-foreground w-10 text-right">함종</span>
                         <select
                             value={unit.crewType}
                             onChange={(e) => set('crewType', Number(e.target.value))}
@@ -500,7 +500,7 @@ function UnitBuilder({
                 {/* Injury / Rice */}
                 <div className="flex flex-wrap gap-2">
                     <NumberField label="부상" value={unit.injury} onChange={(v) => set('injury', v)} min={0} max={80} />
-                    <NumberField label="군량" value={unit.rice} onChange={(v) => set('rice', v)} min={0} step={1000} />
+                    <NumberField label="물자" value={unit.rice} onChange={(v) => set('rice', v)} min={0} step={1000} />
                     <span className="text-xs text-muted-foreground self-center">
                         상태:{' '}
                         <span style={{ color: formatInjury(unit.injury).color }}>{formatInjury(unit.injury).text}</span>
@@ -912,7 +912,7 @@ export default function BattleSimulatorPage() {
                     </div>
                     {/* Nation Context Selector */}
                     <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">국가 컨텍스트:</span>
+                        <span className="text-xs text-muted-foreground">진영 컨텍스트:</span>
                         <select
                             value={nationContext ?? ''}
                             onChange={(e) => setNationContext(e.target.value ? Number(e.target.value) : null)}
@@ -927,7 +927,7 @@ export default function BattleSimulatorPage() {
                                     </option>
                                 ))}
                         </select>
-                        <span className="text-[10px] text-muted-foreground">국가 기술 등 컨텍스트 반영</span>
+                        <span className="text-[10px] text-muted-foreground">진영 기술 등 컨텍스트 반영</span>
                     </div>
                     {/* Import / Export */}
                     <div className="flex items-center gap-2">
@@ -987,7 +987,7 @@ export default function BattleSimulatorPage() {
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm flex items-center gap-2">
                                 <Building className="size-4" />
-                                방어측 도시
+                                방어측 행성
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2">
@@ -1109,13 +1109,13 @@ export default function BattleSimulatorPage() {
                     <CardContent className="space-y-3">
                         <div className="grid grid-cols-3 gap-4 text-sm">
                             <div className="space-y-1">
-                                <div className="text-xs text-muted-foreground">공격측 잔여 병력</div>
+                                <div className="text-xs text-muted-foreground">공격측 잔여 함선</div>
                                 <div className="text-lg font-bold tabular-nums">
                                     {result.attackerRemaining.toLocaleString()}
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <div className="text-xs text-muted-foreground">방어측 잔여 병력</div>
+                                <div className="text-xs text-muted-foreground">방어측 잔여 함선</div>
                                 <div className="text-lg font-bold tabular-nums">
                                     {result.defenderRemaining.toLocaleString()}
                                 </div>
@@ -1170,13 +1170,13 @@ export default function BattleSimulatorPage() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="border border-gray-700 rounded p-2 text-center">
-                                        <div className="text-[10px] text-muted-foreground">공격측 평균 잔여 병력</div>
+                                        <div className="text-[10px] text-muted-foreground">공격측 평균 잔여 함선</div>
                                         <div className="text-sm font-bold tabular-nums">
                                             {Math.round(result.repeatSummary.avgAttackerRemaining).toLocaleString()}
                                         </div>
                                     </div>
                                     <div className="border border-gray-700 rounded p-2 text-center">
-                                        <div className="text-[10px] text-muted-foreground">방어측 평균 잔여 병력</div>
+                                        <div className="text-[10px] text-muted-foreground">방어측 평균 잔여 함선</div>
                                         <div className="text-sm font-bold tabular-nums">
                                             {Math.round(result.repeatSummary.avgDefenderRemaining).toLocaleString()}
                                         </div>

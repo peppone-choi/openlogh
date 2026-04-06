@@ -23,9 +23,9 @@ type EventType = 'war' | 'diplomacy' | 'nation' | 'general' | 'city' | 'other';
 const EVENT_LABELS: Record<EventType, string> = {
     war: '전쟁',
     diplomacy: '외교',
-    nation: '국가',
+    nation: '진영',
     general: '장수',
-    city: '도시',
+    city: '행성',
     other: '기타',
 };
 
@@ -244,7 +244,7 @@ export default function HistoryPage() {
         return combined;
     }, [history, records]);
 
-    // Filter + search + history view (중원 정세 vs 장수 동향)
+    // Filter + search + history view (은하 정세 vs 장교 동향)
     const filteredEvents = useMemo(() => {
         const q = searchQuery.toLowerCase();
         return allEvents.filter((e) => {
@@ -497,7 +497,7 @@ export default function HistoryPage() {
                                     </div>
                                     <div className="pt-1 border-t border-border space-y-2">
                                         <div>
-                                            <div className="text-[11px] text-muted-foreground mb-1">중원 정세</div>
+                                            <div className="text-[11px] text-muted-foreground mb-1">은하 정세</div>
                                             {yearbook.globalHistory.length === 0 ? (
                                                 <div className="text-[11px] text-muted-foreground">기록 없음</div>
                                             ) : (
@@ -514,7 +514,7 @@ export default function HistoryPage() {
                                             )}
                                         </div>
                                         <div>
-                                            <div className="text-[11px] text-muted-foreground mb-1">장수 동향</div>
+                                            <div className="text-[11px] text-muted-foreground mb-1">장교 동향</div>
                                             {yearbook.globalAction.length === 0 ? (
                                                 <div className="text-[11px] text-muted-foreground">기록 없음</div>
                                             ) : (
@@ -536,7 +536,7 @@ export default function HistoryPage() {
                         </CardContent>
                     </Card>
 
-                    {/* History view toggle (legacy parity: 중원 정세 vs 장수 동향) */}
+                    {/* History view toggle (legacy parity: 은하 정세 vs 장교 동향) */}
                     <div className="flex gap-1.5">
                         {(['all', 'global', 'action'] as const).map((view) => (
                             <Button
@@ -545,7 +545,7 @@ export default function HistoryPage() {
                                 variant={historyView === view ? 'default' : 'outline'}
                                 onClick={() => setHistoryView(view)}
                             >
-                                {view === 'all' ? '전체' : view === 'global' ? '중원 정세' : '장수 동향'}
+                                {view === 'all' ? '전체' : view === 'global' ? '은하 정세' : '장교 동향'}
                             </Button>
                         ))}
                     </div>

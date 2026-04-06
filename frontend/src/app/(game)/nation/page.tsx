@@ -63,13 +63,13 @@ const GEN_SORTS: SortOpt<General>[] = [
     { label: '헌신순', key: 'ded', fn: (a, b) => b.dedication - a.dedication },
     { label: '경험순', key: 'exp', fn: (a, b) => b.experience - a.experience },
     { label: '통솔순', key: 'lead', fn: (a, b) => b.leadership - a.leadership },
-    { label: '무력순', key: 'str', fn: (a, b) => b.strength - a.strength },
-    { label: '지력순', key: 'int', fn: (a, b) => b.intel - a.intel },
+    { label: '지휘순', key: 'str', fn: (a, b) => b.strength - a.strength },
+    { label: '정보순', key: 'int', fn: (a, b) => b.intel - a.intel },
     { label: '정치순', key: 'pol', fn: (a, b) => b.politics - a.politics },
-    { label: '매력순', key: 'cha', fn: (a, b) => b.charm - a.charm },
+    { label: '운영순', key: 'cha', fn: (a, b) => b.charm - a.charm },
     { label: '금순', key: 'gold', fn: (a, b) => b.gold - a.gold },
     { label: '쌀순', key: 'rice', fn: (a, b) => b.rice - a.rice },
-    { label: '병력순', key: 'crew', fn: (a, b) => b.crew - a.crew },
+    { label: '함선순', key: 'crew', fn: (a, b) => b.crew - a.crew },
     { label: '훈련순', key: 'train', fn: (a, b) => b.train - a.train },
     { label: '사기순', key: 'atmos', fn: (a, b) => b.atmos - a.atmos },
     { label: 'NPC순', key: 'npc', fn: (a, b) => a.npcState - b.npcState },
@@ -80,12 +80,12 @@ const CITY_SORTS: SortOpt<City>[] = [
     { label: '이름순', key: 'name', fn: (a, b) => a.name.localeCompare(b.name) },
     { label: '레벨순', key: 'level', fn: (a, b) => b.level - a.level },
     { label: '인구순', key: 'pop', fn: (a, b) => b.pop - a.pop },
-    { label: '민심순', key: 'trust', fn: (a, b) => b.trust - a.trust },
-    { label: '농업순', key: 'agri', fn: (a, b) => b.agri - a.agri },
-    { label: '상업순', key: 'comm', fn: (a, b) => b.comm - a.comm },
+    { label: '지지도순', key: 'trust', fn: (a, b) => b.trust - a.trust },
+    { label: '생산순', key: 'agri', fn: (a, b) => b.agri - a.agri },
+    { label: '교역순', key: 'comm', fn: (a, b) => b.comm - a.comm },
     { label: '치안순', key: 'secu', fn: (a, b) => b.secu - a.secu },
     { label: '수비순', key: 'def', fn: (a, b) => b.def - a.def },
-    { label: '성벽순', key: 'wall', fn: (a, b) => b.wall - a.wall },
+    { label: '요새순', key: 'wall', fn: (a, b) => b.wall - a.wall },
     { label: '지역순', key: 'region', fn: (a, b) => a.region - b.region },
     { label: '인구최대순', key: 'popMax', fn: (a, b) => b.popMax - a.popMax },
     { label: '수비최대순', key: 'defMax', fn: (a, b) => b.defMax - a.defMax },
@@ -127,7 +127,7 @@ function NationPageContent() {
 
     useEffect(() => {
         if (!currentWorld || myOfficer) return;
-        fetchMyOfficer(currentWorld.id).catch(() => setError('장수 정보를 불러올 수 없습니다.'));
+        fetchMyOfficer(currentWorld.id).catch(() => setError('장교 정보를 불러올 수 없습니다.'));
     }, [currentWorld, myOfficer, fetchMyOfficer]);
 
     const loadNationData = useCallback(async () => {
@@ -162,7 +162,7 @@ function NationPageContent() {
                 setAllNations((res[5] as { data: Nation[] }).data);
             }
         } catch {
-            setError('국가 정보를 불러올 수 없습니다.');
+            setError('진영 정보를 불러올 수 없습니다.');
             setNationHistoryLogs([]);
         } finally {
             setLoading(false);
@@ -284,8 +284,8 @@ function NationPageContent() {
     if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
     if (loading) return <LoadingState />;
     if (error) return <div className="p-4 text-red-400">{error}</div>;
-    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>;
-    if (!nation) return <LoadingState message="국가 정보가 없습니다." />;
+    if (!myOfficer?.nationId) return <div className="p-4 text-muted-foreground">소속 진영가 없습니다.</div>;
+    if (!nation) return <LoadingState message="진영 정보가 없습니다." />;
 
     // ── Derived ──────────────────────────────────────────────────────
 
@@ -308,8 +308,8 @@ function NationPageContent() {
             <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList>
                     <TabsTrigger value="info">세력정보</TabsTrigger>
-                    <TabsTrigger value="generals">세력장수 ({generals.length})</TabsTrigger>
-                    <TabsTrigger value="cities">세력도시 ({cities.length})</TabsTrigger>
+                    <TabsTrigger value="generals">세력장교 ({generals.length})</TabsTrigger>
+                    <TabsTrigger value="cities">세력행성 ({cities.length})</TabsTrigger>
                     {isOfficer && <TabsTrigger value="admin">내무부</TabsTrigger>}
                 </TabsList>
 
@@ -431,12 +431,12 @@ function NationPageContent() {
                     </Card>
                 </TabsContent>
 
-                {/* ── Tab 2: 세력장수 ── */}
+                {/* ── Tab 2: 세력장교 ── */}
                 <TabsContent value="generals">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center justify-between">
-                                <span>세력장수 ({generals.length}명)</span>
+                                <span>세력장교 ({generals.length}명)</span>
                                 <Select value={generalSort} onValueChange={setGeneralSort}>
                                     <SelectTrigger size="sm" className="w-28">
                                         <SelectValue />
@@ -453,7 +453,7 @@ function NationPageContent() {
                         </CardHeader>
                         <CardContent>
                             {generals.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">장수가 없습니다.</p>
+                                <p className="text-sm text-muted-foreground">장교가 없습니다.</p>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <Table>
@@ -467,8 +467,8 @@ function NationPageContent() {
                                                 <TableHead className="text-center">지</TableHead>
                                                 <TableHead className="text-center">정</TableHead>
                                                 <TableHead className="text-center">매</TableHead>
-                                                <TableHead className="text-right">병력</TableHead>
-                                                <TableHead className="text-center">병종</TableHead>
+                                                <TableHead className="text-right">함선</TableHead>
+                                                <TableHead className="text-center">함종</TableHead>
                                                 <TableHead className="text-center">훈련</TableHead>
                                                 <TableHead className="text-center">사기</TableHead>
                                                 <TableHead className="text-right">금</TableHead>
@@ -560,12 +560,12 @@ function NationPageContent() {
                     </Card>
                 </TabsContent>
 
-                {/* ── Tab 3: 세력도시 ── */}
+                {/* ── Tab 3: 세력행성 ── */}
                 <TabsContent value="cities">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center justify-between">
-                                <span>세력도시 ({cities.length}개)</span>
+                                <span>세력행성 ({cities.length}개)</span>
                                 <Select value={citySort} onValueChange={setCitySort}>
                                     <SelectTrigger size="sm" className="w-32">
                                         <SelectValue />
@@ -582,7 +582,7 @@ function NationPageContent() {
                         </CardHeader>
                         <CardContent>
                             {cities.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">도시가 없습니다.</p>
+                                <p className="text-sm text-muted-foreground">행성이 없습니다.</p>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <Table>
@@ -592,12 +592,12 @@ function NationPageContent() {
                                                 <TableHead className="text-center">레벨</TableHead>
                                                 <TableHead className="text-center">지역</TableHead>
                                                 <TableHead className="text-right">인구</TableHead>
-                                                <TableHead className="text-center">민심</TableHead>
-                                                <TableHead className="text-right">농업</TableHead>
-                                                <TableHead className="text-right">상업</TableHead>
+                                                <TableHead className="text-center">지지도</TableHead>
+                                                <TableHead className="text-right">생산</TableHead>
+                                                <TableHead className="text-right">교역</TableHead>
                                                 <TableHead className="text-center">치안</TableHead>
                                                 <TableHead className="text-right">수비</TableHead>
-                                                <TableHead className="text-right">성벽</TableHead>
+                                                <TableHead className="text-right">요새</TableHead>
                                                 <TableHead className="text-center">태수</TableHead>
                                                 <TableHead className="text-center">군사</TableHead>
                                                 <TableHead className="text-center">종사</TableHead>
@@ -715,7 +715,7 @@ function NationPageContent() {
                             {/* Nation Notice with formatting */}
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>국가 공지</CardTitle>
+                                    <CardTitle>진영 공지</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     {myOfficer.officerLevel >= 5 && (
@@ -790,7 +790,7 @@ function NationPageContent() {
                                         value={editNotice}
                                         onChange={(e) => setEditNotice(e.target.value)}
                                         rows={5}
-                                        placeholder="국가 공지사항을 입력하세요... (마크다운 지원)"
+                                        placeholder="진영 공지사항을 입력하세요... (마크다운 지원)"
                                         disabled={myOfficer.officerLevel < 5}
                                         className="font-mono text-sm"
                                     />
@@ -883,8 +883,8 @@ function NationPageContent() {
                                 <CardContent>
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div className="space-y-1">
-                                            <h4 className="font-medium text-yellow-400">금 수입</h4>
-                                            <IncomeRow label="세금 (도시)" value={goldCity} />
+                                            <h4 className="font-medium text-yellow-400">자금 수입</h4>
+                                            <IncomeRow label="세금 (행성)" value={goldCity} />
                                             <IncomeRow label="단기 (전쟁)" value={goldWar} />
                                             <div className="flex justify-between font-medium border-t border-gray-600 pt-1">
                                                 <span>합계</span>
@@ -892,9 +892,9 @@ function NationPageContent() {
                                             </div>
                                         </div>
                                         <div className="space-y-1">
-                                            <h4 className="font-medium text-green-400">쌀 수입</h4>
-                                            <IncomeRow label="세곡 (농업)" value={riceCity} />
-                                            <IncomeRow label="둔전 (성벽)" value={riceWall} />
+                                            <h4 className="font-medium text-green-400">물자 수입</h4>
+                                            <IncomeRow label="세곡 (생산)" value={riceCity} />
+                                            <IncomeRow label="둔전 (요새)" value={riceWall} />
                                             <div className="flex justify-between font-medium border-t border-gray-600 pt-1">
                                                 <span>합계</span>
                                                 <span>+{totalRice.toLocaleString()}</span>
@@ -907,13 +907,13 @@ function NationPageContent() {
                                             <span className="text-red-400">-{outcome.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between font-medium">
-                                            <span>금 순수익</span>
+                                            <span>자자금 순수익</span>
                                             <span className={goldDiff >= 0 ? 'text-green-400' : 'text-red-400'}>
                                                 {fmtDiff(goldDiff)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between font-medium">
-                                            <span>쌀 순수익</span>
+                                            <span>물자 순수익</span>
                                             <span className={riceDiff >= 0 ? 'text-green-400' : 'text-red-400'}>
                                                 {fmtDiff(riceDiff)}
                                             </span>
@@ -933,7 +933,7 @@ function NationPageContent() {
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
-                                                        <TableHead>국가</TableHead>
+                                                        <TableHead>진영</TableHead>
                                                         <TableHead className="text-center">관계</TableHead>
                                                         <TableHead className="text-center">잔여기한</TableHead>
                                                     </TableRow>
@@ -1010,7 +1010,7 @@ function NationPageContent() {
                                     onClick={() => setShowNationChronicle((prev) => !prev)}
                                 >
                                     <CardTitle className="flex items-center gap-2">
-                                        국가열전 ({nationHistoryLogs.length}건)
+                                        진영열전 ({nationHistoryLogs.length}건)
                                         {showNationChronicle ? (
                                             <ChevronDown className="size-4 ml-auto" />
                                         ) : (
@@ -1021,7 +1021,7 @@ function NationPageContent() {
                                 {showNationChronicle && (
                                     <CardContent>
                                         {nationHistoryLogs.length === 0 ? (
-                                            <p className="text-sm text-muted-foreground">국가열전 기록이 없습니다.</p>
+                                            <p className="text-sm text-muted-foreground">진영열전 기록이 없습니다.</p>
                                         ) : (
                                             <div className="max-h-72 overflow-y-auto border border-gray-700 rounded">
                                                 <div className="space-y-1 p-2">
@@ -1064,7 +1064,7 @@ export default function NationPage() {
         <Suspense
             fallback={
                 <div className="p-4">
-                    <LoadingState message="국가 정보를 불러오는 중..." />
+                    <LoadingState message="진영 정보를 불러오는 중..." />
                 </div>
             }
         >

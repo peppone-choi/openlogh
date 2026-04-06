@@ -177,7 +177,7 @@ export function MapViewer({
 
     const renderTooltipFn = useCallback(
         (city: RenderCity, pos: { x: number; y: number }) => {
-            const regionName = city.region != null ? (REGION_NAMES[city.region] ?? '중원') : '';
+            const regionName = city.region != null ? (REGION_NAMES[city.region] ?? '은하') : '';
             const levelName = CITY_LEVEL_NAMES[city.level] ?? '';
             const prefix = regionName ? `【${regionName}|${levelName}】` : `【${levelName}】`;
             const stateName = city.state > 0 ? (CITY_STATE_NAMES[city.state] ?? `상태${city.state}`) : null;

@@ -3,7 +3,7 @@ import { metadata } from './layout';
 
 describe('root layout metadata', () => {
     it('has title', () => {
-        expect(metadata.title).toBe('오픈삼국');
+        expect(metadata.title).toBe('오픈은하영웅전설');
     });
 
     it('has favicon and apple-touch-icon', () => {

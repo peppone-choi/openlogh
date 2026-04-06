@@ -41,11 +41,11 @@ const ALL_COLUMNS: {
 }[] = [
     { key: 'officer', label: '관직', minOfficerLevel: 0 },
     { key: 'stats', label: '능력치', minOfficerLevel: 0 },
-    { key: 'crew', label: '병력', minOfficerLevel: 0 },
+    { key: 'crew', label: '함선', minOfficerLevel: 0 },
     { key: 'train', label: '훈련/사기', minOfficerLevel: 3 },
     { key: 'troop', label: '부대', minOfficerLevel: 0 },
     { key: 'gold', label: '자금', minOfficerLevel: 0 },
-    { key: 'rice', label: '군량', minOfficerLevel: 0 },
+    { key: 'rice', label: '물자', minOfficerLevel: 0 },
     { key: 'level', label: '레벨', minOfficerLevel: 0 },
     { key: 'dedication', label: '계급', minOfficerLevel: 0 },
     { key: 'special', label: '특기', minOfficerLevel: 0 },
@@ -107,18 +107,18 @@ export default function NationGeneralsPage() {
 
     if (!currentWorld || !myOfficer) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
-    if (error) return <ErrorState title="세력 장수 정보를 불러오지 못했습니다." onRetry={fetchData} />;
+    if (error) return <ErrorState title="세력 장교 정보를 불러오지 못했습니다." onRetry={fetchData} />;
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">
-            <PageHeader icon={Users} title="세력장수" />
+            <PageHeader icon={Users} title="세력장교" />
             {nation && (
                 <p className="text-sm text-muted-foreground">
                     <span
                         className="inline-block size-3 rounded-full mr-1 align-middle"
                         style={{ backgroundColor: nation.color }}
                     />
-                    {nation.name} 소속 장수 ({generals.length}명)
+                    {nation.name} 소속 장교 ({generals.length}명)
                 </p>
             )}
 
@@ -144,7 +144,7 @@ export default function NationGeneralsPage() {
             </div>
 
             {generals.length === 0 ? (
-                <EmptyState icon={Users} title="소속 장수가 없습니다." />
+                <EmptyState icon={Users} title="소속 장교가 없습니다." />
             ) : (
                 <div className="overflow-x-auto">
                     <Table>
@@ -176,7 +176,7 @@ export default function NationGeneralsPage() {
                                                                 <img
                                                                     src="/icons/emperor.png"
                                                                     className="relative size-4"
-                                                                    alt="황제"
+                                                                    alt="원수"
                                                                 />
                                                             </div>
                                                         )}

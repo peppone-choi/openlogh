@@ -4,8 +4,8 @@ import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 export const metadata: Metadata = {
-    title: '오픈삼국',
-    description: 'Web-based Three Kingdoms strategy game',
+    title: '오픈은하영웅전설',
+    description: 'Web-based Legend of the Galactic Heroes strategy game',
     icons: {
         icon: '/favicon.ico',
         apple: '/icons/favicon-192.png',

@@ -22,7 +22,7 @@ class MapDataService {
     private val cache = ConcurrentHashMap<String, TerrainGrid>()
 
     private val cdnBase = System.getenv("NEXT_PUBLIC_IMAGE_CDN_BASE")
-        ?: "https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-image@master/"
+        ?: "https://cdn.jsdelivr.net/gh/peppone-choi/openlogh-image@master/"
 
     private fun load(mapCode: String): TerrainGrid = cache.getOrPut(mapCode) {
         val terrainUrl = "${cdnBase}map/${mapCode}/terrain.png"

@@ -54,10 +54,10 @@ const BASE_COLUMNS: { key: SortKey; label: string }[] = [
     { key: 'nation', label: '소속' },
     { key: 'officerLevel', label: '관직' },
     { key: 'leadership', label: '통솔' },
-    { key: 'strength', label: '무력' },
-    { key: 'intel', label: '지력' },
+    { key: 'strength', label: '지휘' },
+    { key: 'intel', label: '정보' },
     { key: 'politics', label: '정치' },
-    { key: 'charm', label: '매력' },
+    { key: 'charm', label: '운영' },
     { key: 'totalStats', label: '종능' },
     { key: 'crew', label: '병사' },
     { key: 'experience', label: '레벨' },
@@ -67,7 +67,7 @@ const EXT_COLUMNS: { key: SortKey; label: string }[] = [
     { key: 'special', label: '특기' },
     { key: 'personal', label: '성격' },
     { key: 'age', label: '연령' },
-    { key: 'crewType', label: '병종' },
+    { key: 'crewType', label: '함종' },
     { key: 'train', label: '훈련' },
     { key: 'atmos', label: '사기' },
     { key: 'gold', label: '금' },
@@ -84,10 +84,10 @@ const SORT_DROPDOWN_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'experience', label: '레벨' },
     { key: 'totalStats', label: '종능' },
     { key: 'leadership', label: '통솔' },
-    { key: 'strength', label: '무력' },
-    { key: 'intel', label: '지력' },
+    { key: 'strength', label: '지휘' },
+    { key: 'intel', label: '정보' },
     { key: 'politics', label: '정치' },
-    { key: 'charm', label: '매력' },
+    { key: 'charm', label: '운영' },
     { key: 'crew', label: '병사수' },
     { key: 'train', label: '훈련' },
     { key: 'atmos', label: '사기' },
@@ -96,7 +96,7 @@ const SORT_DROPDOWN_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'age', label: '연령' },
     { key: 'officerLevel', label: '관직' },
     { key: 'nation', label: '소속' },
-    { key: 'city', label: '도시' },
+    { key: 'city', label: '행성' },
     { key: 'name', label: '이름' },
     { key: 'npcState', label: 'NPC' },
 ];
@@ -198,14 +198,14 @@ export default function GeneralsPage() {
 
     return (
         <div className="p-4 space-y-4 max-w-5xl mx-auto">
-            <PageHeader icon={Users} title="장수일람" />
+            <PageHeader icon={Users} title="장교일람" />
 
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-2">
                 <div className="relative w-48">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
-                        placeholder="장수 검색..."
+                        placeholder="장교 검색..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-8"
@@ -214,10 +214,10 @@ export default function GeneralsPage() {
 
                 <Select value={nationFilter} onValueChange={setNationFilter}>
                     <SelectTrigger className="w-32">
-                        <SelectValue placeholder="국가" />
+                        <SelectValue placeholder="진영" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">전체 국가</SelectItem>
+                        <SelectItem value="all">전체 진영</SelectItem>
                         <SelectItem value="0">재야</SelectItem>
                         {nations.map((n) => (
                             <SelectItem key={n.id} value={String(n.id)}>
@@ -315,25 +315,25 @@ export default function GeneralsPage() {
                             </div>
                         </div>
                         <div className="bg-muted/30 px-2 py-1 text-center">
-                            <span className="text-muted-foreground">전체 병력/장수</span>
+                            <span className="text-muted-foreground">전체 함선/장수</span>
                             <div className="font-medium">
                                 {crewTotal.toLocaleString()}/{effCount}
                             </div>
                         </div>
                         <div className="bg-muted/30 px-2 py-1 text-center">
-                            <span className="text-muted-foreground">훈사90 병력/장수</span>
+                            <span className="text-muted-foreground">훈사90 함선/장수</span>
                             <div className="font-medium text-green-400">
                                 {crew90.toLocaleString()}/{t90.length}
                             </div>
                         </div>
                         <div className="bg-muted/30 px-2 py-1 text-center">
-                            <span className="text-muted-foreground">훈사80 병력/장수</span>
+                            <span className="text-muted-foreground">훈사80 함선/장수</span>
                             <div className="font-medium text-yellow-400">
                                 {crew80.toLocaleString()}/{t80.length}
                             </div>
                         </div>
                         <div className="bg-muted/30 px-2 py-1 text-center">
-                            <span className="text-muted-foreground">훈사60 병력/장수</span>
+                            <span className="text-muted-foreground">훈사60 함선/장수</span>
                             <div className="font-medium text-orange-400">
                                 {crew60.toLocaleString()}/{t60.length}
                             </div>
@@ -379,7 +379,7 @@ export default function GeneralsPage() {
                                                     <img
                                                         src="/icons/emperor.png"
                                                         className="relative size-4"
-                                                        alt="황제"
+                                                        alt="원수"
                                                     />
                                                 </div>
                                             )}
@@ -452,7 +452,7 @@ export default function GeneralsPage() {
                         {sorted.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={columns.length + 1} className="text-center text-muted-foreground">
-                                    장수가 없습니다.
+                                    장교가 없습니다.
                                 </TableCell>
                             </TableRow>
                         )}

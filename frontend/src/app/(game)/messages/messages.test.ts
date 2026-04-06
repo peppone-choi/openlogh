@@ -15,7 +15,7 @@ describe('messages internal log filter', () => {
     });
 
     it('keeps normal messages', () => {
-        expect(isInternalLog({ message: '농지 개간을 하여 63 상승했습니다.' })).toBe(false);
+        expect(isInternalLog({ message: '생산 개간을 하여 63 상승했습니다.' })).toBe(false);
     });
 
     it('handles missing message field', () => {

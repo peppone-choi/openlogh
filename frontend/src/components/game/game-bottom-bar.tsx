@@ -12,7 +12,7 @@ interface GameBottomBarProps {
     onRefresh?: () => void;
 }
 
-/* ── Legacy MainControlDropdown parity: 국가 메뉴 items ── */
+/* ── Legacy MainControlDropdown parity: 진영 메뉴 items ── */
 type NavRequire = 'nation' | 'secret';
 interface NavItem {
     href: string;
@@ -30,7 +30,7 @@ function isNpcModeEnabled(config: Record<string, unknown> | null | undefined): b
 const NATION_MENU: NavItem[] = [
     { href: '/board', label: '회의실', require: 'nation' },
     { href: '/board?secret=true', label: '기밀실', require: 'secret' },
-    { href: '/troop', label: '부대편성', require: 'nation' },
+    { href: '/troop', label: '함대편성', require: 'nation' },
     { href: '/diplomacy', label: '외교부', require: 'secret' },
     { href: '/personnel', label: '인사부', require: 'nation' },
     { href: '/internal-affairs', label: '내무부', require: 'secret' },
@@ -39,10 +39,10 @@ const NATION_MENU: NavItem[] = [
     { href: '/spy', label: '암행부', require: 'secret' },
     { href: '/tournament', label: '토너먼트' },
     { href: '/nation', label: '세력정보', require: 'nation' },
-    { href: '/nation-cities', label: '세력도시', require: 'nation' },
-    { href: '/nation-generals', label: '세력장수', require: 'nation' },
-    { href: '/global-diplomacy', label: '중원정보' },
-    { href: '/city', label: '현재도시' },
+    { href: '/nation-cities', label: '세력행성', require: 'nation' },
+    { href: '/nation-generals', label: '세력장교', require: 'nation' },
+    { href: '/global-diplomacy', label: '은하정보' },
+    { href: '/city', label: '현재행성' },
     { href: '/battle', label: '감찰부', require: 'secret' },
     { href: '/inherit', label: '유산관리' },
     { href: '/my-page', label: '내정보&설정' },
@@ -54,10 +54,10 @@ const NATION_MENU: NavItem[] = [
 const GLOBAL_MENU: NavItem[] = [
     { href: '/nation-betting', label: '천통국 베팅' },
     { href: '/nations', label: '세력일람' },
-    { href: '/generals', label: '장수일람' },
+    { href: '/generals', label: '장교일람' },
     { href: '/best-generals', label: '명장일람' },
     { href: '/hall-of-fame', label: '명예의전당' },
-    { href: '/emperor', label: '왕조일람' },
+    { href: '/emperor', label: '원수일람' },
     { href: '/history', label: '연감' },
     { href: '/battle-simulator', label: '전투 시뮬레이터' },
     { href: '/traffic', label: '접속량정보' },
@@ -76,13 +76,13 @@ interface QuickNavItem {
 }
 
 const QUICK_NAV: QuickNavItem[] = [
-    { key: 'header-nation', label: '국가 정보', header: true },
+    { key: 'header-nation', label: '진영 정보', header: true },
     { key: 'divider-nation', label: '', divider: true },
     { key: 'notice', label: '방침', selector: '.nationNotice' },
     { key: 'commands', label: '명령', selector: '.reservedCommandZone' },
-    { key: 'nation', label: '국가', selector: '.nationInfo' },
-    { key: 'general', label: '장수', selector: '.generalInfo' },
-    { key: 'city', label: '도시', selector: '.cityInfo' },
+    { key: 'nation', label: '진영', selector: '.nationInfo' },
+    { key: 'general', label: '장교', selector: '.generalInfo' },
+    { key: 'city', label: '행성', selector: '.cityInfo' },
     { key: 'header-record', label: '동향 정보', header: true },
     { key: 'divider-record', label: '', divider: true },
     { key: 'map', label: '지도', selector: '.mapView' },
@@ -93,7 +93,7 @@ const QUICK_NAV: QuickNavItem[] = [
     { key: 'header-message', label: '메시지', header: true },
     { key: 'divider-message-2', label: '', divider: true },
     { key: 'public-talk', label: '전체', selector: '.PublicTalk' },
-    { key: 'national-talk', label: '국가', selector: '.NationalTalk' },
+    { key: 'national-talk', label: '진영', selector: '.NationalTalk' },
     { key: 'private-talk', label: '개인', selector: '.PrivateTalk' },
     { key: 'diplomacy-talk', label: '외교', selector: '.DiplomacyTalk' },
     { key: 'lobby', label: '로비로', lobby: true },
@@ -117,7 +117,7 @@ interface TabConfig {
 const TABS: TabConfig[] = [
     { id: 'home', label: '홈', icon: Home, href: '/' },
     { id: 'map', label: '지도', icon: MapIcon, href: '/map' },
-    { id: 'nation', label: '국가', icon: Castle, href: '/nation' },
+    { id: 'nation', label: '진영', icon: Castle, href: '/nation' },
     { id: 'info', label: '정보', icon: ScrollText, href: '/generals' },
     { id: 'more', label: '더보기', icon: MoreHorizontal },
 ];
@@ -301,7 +301,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
                                             {/* Nation Menu Section */}
                                             <div className="mb-4">
                                                 <h3 className="text-xs font-bold text-muted-foreground mb-2 px-1">
-                                                    국가 메뉴
+                                                    진영 메뉴
                                                 </h3>
                                                 <div className="grid grid-cols-3 gap-1">
                                                     {filteredNation.map((item) => (

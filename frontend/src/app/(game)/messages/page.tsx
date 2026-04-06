@@ -300,8 +300,8 @@ export default function MessagesPage() {
                                     className="h-9 w-full min-w-0 rounded-none border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
                                 >
                                     <option value="public">공개 (전체)</option>
-                                    <option value="general">장수</option>
-                                    <option value="nation">국가</option>
+                                    <option value="general">장교</option>
+                                    <option value="nation">진영</option>
                                 </select>
                             </div>
                             <div>
@@ -318,7 +318,7 @@ export default function MessagesPage() {
                                     {recipientType === 'general' && <option value="PRIVATE">사적 서신</option>}
                                     {recipientType === 'nation' && (
                                         <>
-                                            <option value="NATIONAL">국가 서신</option>
+                                            <option value="NATIONAL">진영 서신</option>
                                             <option value="DIPLOMACY" disabled={!canUseDiplomacy}>
                                                 외교 서신 {!canUseDiplomacy ? '(관직 4 이상)' : ''}
                                             </option>
@@ -330,7 +330,7 @@ export default function MessagesPage() {
                         {recipientType === 'general' && (
                             <div>
                                 <label htmlFor="dest-general" className="block text-xs text-muted-foreground mb-1">
-                                    받는 장수
+                                    받는 장교
                                 </label>
                                 <select
                                     id="dest-general"
@@ -363,13 +363,13 @@ export default function MessagesPage() {
                         )}
                         {recipientType === 'public' && (
                             <div className="text-xs text-muted-foreground p-2 bg-zinc-900/50 rounded">
-                                전체 장수에게 공개되는 서신입니다.
+                                전체 장교에게 공개되는 서신입니다.
                             </div>
                         )}
                         {recipientType === 'nation' && mailboxType === 'DIPLOMACY' && (
                             <div>
                                 <label htmlFor="dest-nation" className="block text-xs text-muted-foreground mb-1">
-                                    받는 국가
+                                    받는 진영
                                 </label>
                                 <select
                                     id="dest-nation"
@@ -390,7 +390,7 @@ export default function MessagesPage() {
                         )}
                         {recipientType === 'nation' && mailboxType === 'NATIONAL' && (
                             <div className="text-xs text-muted-foreground p-2 bg-zinc-900/50 rounded">
-                                자국 소속 장수에게만 전달되는 서신입니다.
+                                자국 소속 장교에게만 전달되는 서신입니다.
                             </div>
                         )}
                         <div>
@@ -436,7 +436,7 @@ export default function MessagesPage() {
                         )}
                     </TabsTrigger>
                     <TabsTrigger value="national">
-                        국가 서신
+                        진영 서신
                         {unreadCountByTab.national > 0 && (
                             <Badge className="ml-1 bg-amber-600 text-black hover:bg-amber-500">
                                 {unreadCountByTab.national}
@@ -498,7 +498,7 @@ export default function MessagesPage() {
                                             <span className="font-medium text-foreground">
                                                 {senderName ??
                                                     (m.payload.sender as string) ??
-                                                    `${m.mailboxType === 'NATIONAL' || m.mailboxType === 'DIPLOMACY' ? '국가' : '장수'}#${m.srcId ?? '시스템'}`}
+                                                    `${m.mailboxType === 'NATIONAL' || m.mailboxType === 'DIPLOMACY' ? '진영' : '장교'}#${m.srcId ?? '시스템'}`}
                                             </span>
                                             <span>{new Date(m.sentAt).toLocaleString('ko-KR')}</span>
                                             {typeof m.meta.readAt !== 'string' && (

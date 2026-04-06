@@ -553,7 +553,7 @@ export function MapCanvas({
                             onShowNamesChange(!showNames);
                         }}
                     >
-                        {showNames ? '도시명 표기 끄기' : '도시명 표기 켜기'}
+                        {showNames ? '행성명 표기 끄기' : '행성명 표기 켜기'}
                     </button>
                 )}
             </div>

@@ -42,7 +42,7 @@ export default function GlobalDiplomacyPage() {
 
     return (
         <div className="mx-auto max-w-4xl space-y-0">
-            <PageHeader icon={Globe} title="중원정보" />
+            <PageHeader icon={Globe} title="은하정보" />
             <div className="legacy-page-wrap">
                 <GlobalDiplomacyOverview
                     worldId={currentWorld.id}

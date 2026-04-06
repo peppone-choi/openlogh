@@ -42,7 +42,7 @@ export default function AdminSelectPoolPage() {
 
     const handleCreate = async () => {
         if (!uniqueName.trim() || !generalName.trim()) {
-            toast.error('고유명과 장수명을 입력하세요.');
+            toast.error('고유명과 장교명을 입력하세요.');
             return;
         }
         setCreating(true);
@@ -96,7 +96,7 @@ export default function AdminSelectPoolPage() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>장수 풀 관리</CardTitle>
+                    <CardTitle>장교 풀 관리</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-7 gap-2 items-end mb-4">
@@ -109,7 +109,7 @@ export default function AdminSelectPoolPage() {
                             />
                         </div>
                         <div>
-                            <label className="text-xs text-muted-foreground">장수명</label>
+                            <label className="text-xs text-muted-foreground">장교명</label>
                             <Input
                                 value={generalName}
                                 onChange={(e) => setGeneralName(e.target.value)}
@@ -121,11 +121,11 @@ export default function AdminSelectPoolPage() {
                             <Input type="number" value={leadership} onChange={(e) => setLeadership(+e.target.value)} />
                         </div>
                         <div>
-                            <label className="text-xs text-muted-foreground">무력</label>
+                            <label className="text-xs text-muted-foreground">지휘</label>
                             <Input type="number" value={strength} onChange={(e) => setStrength(+e.target.value)} />
                         </div>
                         <div>
-                            <label className="text-xs text-muted-foreground">지력</label>
+                            <label className="text-xs text-muted-foreground">정보</label>
                             <Input type="number" value={intel} onChange={(e) => setIntel(+e.target.value)} />
                         </div>
                         <div>
@@ -134,7 +134,7 @@ export default function AdminSelectPoolPage() {
                         </div>
                         <div className="flex gap-1">
                             <div className="flex-1">
-                                <label className="text-xs text-muted-foreground">매력</label>
+                                <label className="text-xs text-muted-foreground">운영</label>
                                 <Input type="number" value={charm} onChange={(e) => setCharm(+e.target.value)} />
                             </div>
                             <Button onClick={handleCreate} disabled={creating} size="icon" className="mt-4 shrink-0">
@@ -154,7 +154,7 @@ export default function AdminSelectPoolPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>고유명</TableHead>
-                                    <TableHead>장수명</TableHead>
+                                    <TableHead>장교명</TableHead>
                                     <TableHead className="text-center">통</TableHead>
                                     <TableHead className="text-center">무</TableHead>
                                     <TableHead className="text-center">지</TableHead>
