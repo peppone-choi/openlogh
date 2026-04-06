@@ -23,6 +23,8 @@ data class CommandTableEntry(
     val reason: String? = null,
     val durationSeconds: Int = 300,
     val commandPointCost: Int = 1,
+    /** "PCP" or "MCP" - indicates which CP pool this command draws from. */
+    val poolType: String = "PCP",
 )
 
 data class RepeatRequest(val count: Int)

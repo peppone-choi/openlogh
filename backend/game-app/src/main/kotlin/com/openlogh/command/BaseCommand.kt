@@ -7,6 +7,7 @@ import com.openlogh.entity.Planet
 import com.openlogh.entity.Officer
 import com.openlogh.entity.Faction
 import com.openlogh.entity.Fleet
+import com.openlogh.model.StatCategory
 import com.openlogh.util.JosaUtil
 import kotlin.random.Random
 
@@ -40,6 +41,9 @@ abstract class BaseCommand(
 
     abstract fun getCost(): CommandCost
     open fun getCommandPointCost(): Int = 1
+
+    /** Which CP pool this command draws from. Override in subclasses to change. */
+    open fun getCommandPoolType(): StatCategory = StatCategory.PCP
     abstract fun getPreReqTurn(): Int
     abstract fun getPostReqTurn(): Int
     abstract suspend fun run(rng: Random): CommandResult
