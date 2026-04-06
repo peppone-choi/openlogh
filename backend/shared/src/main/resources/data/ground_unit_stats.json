@@ -1,0 +1,102 @@
+{
+  "factions": {
+    "empire": {
+      "factionNameKo": "은하제국",
+      "units": [
+        {
+          "typeId": "light_infantry",
+          "nameKo": "경장육전병",
+          "nameEn": "Light Infantry",
+          "trainingCost": 60,
+          "groundAttack": 10,
+          "groundDefense": 10
+        },
+        {
+          "typeId": "imperial_guard",
+          "nameKo": "근위병",
+          "nameEn": "Imperial Guard",
+          "trainingCost": 300,
+          "groundAttack": 20,
+          "groundDefense": 20
+        },
+        {
+          "typeId": "armored_grenadier",
+          "nameKo": "장갑유탄병",
+          "nameEn": "Armored Grenadier",
+          "trainingCost": 180,
+          "groundAttack": 20,
+          "groundDefense": 20
+        },
+        {
+          "typeId": "grenadier_instructor",
+          "nameKo": "유탄병교도",
+          "nameEn": "Grenadier Instructor",
+          "trainingCost": 900,
+          "groundAttack": 30,
+          "groundDefense": 30
+        },
+        {
+          "typeId": "armored_soldier",
+          "nameKo": "장갑병",
+          "nameEn": "Armored Soldier",
+          "trainingCost": 240,
+          "groundAttack": 50,
+          "groundDefense": 50
+        },
+        {
+          "typeId": "fleet_crew",
+          "nameKo": "함대승조원",
+          "nameEn": "Fleet Crew",
+          "trainingCost": 120,
+          "groundAttack": 0,
+          "groundDefense": 0
+        }
+      ]
+    },
+    "alliance": {
+      "factionNameKo": "자유행성동맹",
+      "units": [
+        {
+          "typeId": "light_infantry",
+          "nameKo": "경장육전병",
+          "nameEn": "Light Infantry",
+          "trainingCost": 60,
+          "groundAttack": 10,
+          "groundDefense": 10
+        },
+        {
+          "typeId": "armored_grenadier",
+          "nameKo": "장갑유탄병",
+          "nameEn": "Armored Grenadier",
+          "trainingCost": 180,
+          "groundAttack": 20,
+          "groundDefense": 20
+        },
+        {
+          "typeId": "rosen_ritter",
+          "nameKo": "장미의기사",
+          "nameEn": "Rosen Ritter",
+          "trainingCost": 900,
+          "groundAttack": 30,
+          "groundDefense": 30
+        },
+        {
+          "typeId": "armored_soldier",
+          "nameKo": "장갑병",
+          "nameEn": "Armored Soldier",
+          "trainingCost": 240,
+          "groundAttack": 50,
+          "groundDefense": 50
+        },
+        {
+          "typeId": "fleet_crew",
+          "nameKo": "함대승조원",
+          "nameEn": "Fleet Crew",
+          "trainingCost": 120,
+          "groundAttack": 0,
+          "groundDefense": 0
+        }
+      ]
+    }
+  }
+}

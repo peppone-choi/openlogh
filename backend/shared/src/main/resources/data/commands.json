@@ -1,0 +1,791 @@
+{
+  "commands": {
+    "operations": {
+      "nameKo": "작전커맨드",
+      "nameEn": "Operations",
+      "cpType": "MCP",
+      "commands": [
+        {
+          "id": "warp_navigation",
+          "nameKo": "워프항행",
+          "nameEn": "Warp Navigation",
+          "cpCost": 40,
+          "cpCostNote": "variable",
+          "waitTime": 0,
+          "waitTimeNote": "variable",
+          "duration": 0,
+          "description": "함대를 워프 항행시킨다"
+        },
+        {
+          "id": "fuel_resupply",
+          "nameKo": "연료보급",
+          "nameEn": "Fuel Resupply",
+          "cpCost": 160,
+          "waitTime": 8,
+          "duration": 48,
+          "durationNote": "48~960 (variable)",
+          "description": "함대에 연료를 보급한다"
+        },
+        {
+          "id": "intra_system_navigation",
+          "nameKo": "성계내항행",
+          "nameEn": "Intra-system Navigation",
+          "cpCost": 160,
+          "waitTime": 8,
+          "duration": 0,
+          "description": "성계 내에서 이동한다"
+        },
+        {
+          "id": "maintain_discipline",
+          "nameKo": "군기유지",
+          "nameEn": "Maintain Discipline",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "부대의 군기를 유지한다"
+        },
+        {
+          "id": "flight_training",
+          "nameKo": "항공훈련",
+          "nameEn": "Flight Training",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "항공 전투 훈련을 실시한다"
+        },
+        {
+          "id": "ground_combat_training",
+          "nameKo": "육전훈련",
+          "nameEn": "Ground Combat Training",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "육전 전투 훈련을 실시한다"
+        },
+        {
+          "id": "space_combat_training",
+          "nameKo": "공전훈련",
+          "nameEn": "Space Combat Training",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "공전 전투 훈련을 실시한다"
+        },
+        {
+          "id": "ground_tactics_training",
+          "nameKo": "육전전술훈련",
+          "nameEn": "Ground Tactics Training",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "육전 전술 훈련을 실시한다"
+        },
+        {
+          "id": "space_tactics_training",
+          "nameKo": "공전전술훈련",
+          "nameEn": "Space Tactics Training",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "공전 전술 훈련을 실시한다"
+        },
+        {
+          "id": "alert_sortie",
+          "nameKo": "경계출동",
+          "nameEn": "Alert Sortie",
+          "cpCost": 160,
+          "waitTime": 24,
+          "duration": 0,
+          "description": "경계 태세로 출동한다"
+        },
+        {
+          "id": "armed_suppression",
+          "nameKo": "무력진압",
+          "nameEn": "Armed Suppression",
+          "cpCost": 160,
+          "waitTime": 24,
+          "duration": 0,
+          "description": "무력으로 진압한다"
+        },
+        {
+          "id": "split_march",
+          "nameKo": "분열행진",
+          "nameEn": "Split March",
+          "cpCost": 160,
+          "waitTime": 24,
+          "duration": 0,
+          "description": "부대를 분열하여 행진한다"
+        },
+        {
+          "id": "requisition",
+          "nameKo": "징발",
+          "nameEn": "Requisition",
+          "cpCost": 160,
+          "waitTime": 24,
+          "duration": 0,
+          "description": "물자를 징발한다"
+        },
+        {
+          "id": "special_security",
+          "nameKo": "특별경비",
+          "nameEn": "Special Security",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 24,
+          "description": "특별 경비를 실시한다"
+        },
+        {
+          "id": "ground_force_deploy",
+          "nameKo": "육전대출격",
+          "nameEn": "Ground Force Deploy",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "육전대를 출격시킨다"
+        },
+        {
+          "id": "ground_force_withdraw",
+          "nameKo": "육전대철수",
+          "nameEn": "Ground Force Withdraw",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "육전대를 철수시킨다"
+        }
+      ]
+    },
+    "personal": {
+      "nameKo": "개인커맨드",
+      "nameEn": "Personal",
+      "cpType": "PCP",
+      "commands": [
+        {
+          "id": "long_range_move",
+          "nameKo": "원거리이동",
+          "nameEn": "Long Range Move",
+          "cpCost": 10,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "원거리로 이동한다"
+        },
+        {
+          "id": "short_range_move",
+          "nameKo": "근거리이동",
+          "nameEn": "Short Range Move",
+          "cpCost": 5,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "근거리로 이동한다"
+        },
+        {
+          "id": "retirement",
+          "nameKo": "퇴역",
+          "nameEn": "Retirement",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "군에서 퇴역한다"
+        },
+        {
+          "id": "enlist",
+          "nameKo": "지원",
+          "nameEn": "Enlist",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "진영에 지원한다"
+        },
+        {
+          "id": "defection",
+          "nameKo": "망명",
+          "nameEn": "Defection",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "다른 진영으로 망명한다"
+        },
+        {
+          "id": "audience",
+          "nameKo": "회견",
+          "nameEn": "Audience",
+          "cpCost": 10,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "다른 장교와 회견한다"
+        },
+        {
+          "id": "attend_lecture",
+          "nameKo": "수강",
+          "nameEn": "Attend Lecture",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "restriction": "사관학교",
+          "description": "사관학교에서 수강한다"
+        },
+        {
+          "id": "weapons_drill",
+          "nameKo": "병기연습",
+          "nameEn": "Weapons Drill",
+          "cpCost": 10,
+          "waitTime": 0,
+          "duration": 0,
+          "restriction": "사관학교",
+          "description": "사관학교에서 병기 연습을 한다"
+        },
+        {
+          "id": "objection",
+          "nameKo": "반의",
+          "nameEn": "Objection",
+          "cpCost": 640,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "상관의 명령에 반의한다"
+        },
+        {
+          "id": "conspiracy",
+          "nameKo": "모의",
+          "nameEn": "Conspiracy",
+          "cpCost": 640,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "모의를 꾸민다"
+        },
+        {
+          "id": "persuasion",
+          "nameKo": "설득",
+          "nameEn": "Persuasion",
+          "cpCost": 640,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "상대를 설득한다"
+        },
+        {
+          "id": "rebellion",
+          "nameKo": "반란",
+          "nameEn": "Rebellion",
+          "cpCost": 640,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "반란을 일으킨다"
+        },
+        {
+          "id": "participate",
+          "nameKo": "참가",
+          "nameEn": "Participate",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "이벤트에 참가한다"
+        },
+        {
+          "id": "fund_injection",
+          "nameKo": "자금투입",
+          "nameEn": "Fund Injection",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "개인 자금을 투입한다"
+        },
+        {
+          "id": "flagship_purchase",
+          "nameKo": "기함구매",
+          "nameEn": "Flagship Purchase",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "기함을 구매한다"
+        }
+      ]
+    },
+    "command": {
+      "nameKo": "지휘커맨드",
+      "nameEn": "Command",
+      "cpType": "MCP",
+      "commands": [
+        {
+          "id": "operation_plan",
+          "nameKo": "작전계획",
+          "nameEn": "Operation Plan",
+          "cpCost": 10,
+          "cpCostNote": "10~1280 (variable by scale)",
+          "waitTime": 0,
+          "duration": 0,
+          "description": "작전을 계획한다"
+        },
+        {
+          "id": "operation_cancel",
+          "nameKo": "작전철회",
+          "nameEn": "Operation Cancel",
+          "cpCost": 5,
+          "cpCostNote": "5~320 (variable by scale)",
+          "waitTime": 0,
+          "duration": 0,
+          "description": "작전을 철회한다"
+        },
+        {
+          "id": "assignment",
+          "nameKo": "발령",
+          "nameEn": "Assignment",
+          "cpCost": 1,
+          "cpCostNote": "1~320 (variable by rank)",
+          "waitTime": 0,
+          "duration": 0,
+          "description": "장교에게 직책을 발령한다"
+        },
+        {
+          "id": "form_fleet",
+          "nameKo": "부대결성",
+          "nameEn": "Form Fleet",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "부대를 결성한다"
+        },
+        {
+          "id": "disband_fleet",
+          "nameKo": "부대해산",
+          "nameEn": "Disband Fleet",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "부대를 해산한다"
+        },
+        {
+          "id": "give_lecture",
+          "nameKo": "강의",
+          "nameEn": "Give Lecture",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "restriction": "사관학교",
+          "description": "사관학교에서 강의한다"
+        },
+        {
+          "id": "transport_plan",
+          "nameKo": "수송계획",
+          "nameEn": "Transport Plan",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "수송 계획을 세운다"
+        },
+        {
+          "id": "transport_cancel",
+          "nameKo": "수송중지",
+          "nameEn": "Transport Cancel",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "수송을 중지한다"
+        }
+      ]
+    },
+    "logistics": {
+      "nameKo": "병참커맨드",
+      "nameEn": "Logistics",
+      "cpType": "MCP",
+      "commands": [
+        {
+          "id": "full_repair",
+          "nameKo": "완전수리",
+          "nameEn": "Full Repair",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "함선을 완전 수리한다"
+        },
+        {
+          "id": "full_resupply",
+          "nameKo": "완전보급",
+          "nameEn": "Full Resupply",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "함선에 완전 보급한다"
+        },
+        {
+          "id": "reorganize",
+          "nameKo": "재편성",
+          "nameEn": "Reorganize",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "부대를 재편성한다"
+        },
+        {
+          "id": "reinforce",
+          "nameKo": "보충",
+          "nameEn": "Reinforce",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "병력을 보충한다"
+        },
+        {
+          "id": "transfer_goods",
+          "nameKo": "반출입",
+          "nameEn": "Transfer Goods",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "물자를 반출입한다"
+        },
+        {
+          "id": "allocate",
+          "nameKo": "할당",
+          "nameEn": "Allocate",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "자원을 할당한다"
+        }
+      ]
+    },
+    "personnel": {
+      "nameKo": "인사커맨드",
+      "nameEn": "Personnel",
+      "cpType": "PCP",
+      "commands": [
+        {
+          "id": "promote",
+          "nameKo": "승진",
+          "nameEn": "Promote",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "장교를 승진시킨다"
+        },
+        {
+          "id": "field_promote",
+          "nameKo": "발탁",
+          "nameEn": "Field Promote",
+          "cpCost": 640,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "장교를 발탁한다"
+        },
+        {
+          "id": "demote",
+          "nameKo": "강등",
+          "nameEn": "Demote",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "장교를 강등시킨다"
+        },
+        {
+          "id": "grant_title",
+          "nameKo": "서작",
+          "nameEn": "Grant Title",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "작위를 수여한다"
+        },
+        {
+          "id": "award_decoration",
+          "nameKo": "서훈",
+          "nameEn": "Award Decoration",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "훈장을 수여한다"
+        },
+        {
+          "id": "appoint",
+          "nameKo": "임명",
+          "nameEn": "Appoint",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "직책에 임명한다"
+        },
+        {
+          "id": "dismiss",
+          "nameKo": "파면",
+          "nameEn": "Dismiss",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "직책에서 파면한다"
+        },
+        {
+          "id": "resign",
+          "nameKo": "사임",
+          "nameEn": "Resign",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "직책에서 사임한다"
+        },
+        {
+          "id": "grant_fief",
+          "nameKo": "봉토수여",
+          "nameEn": "Grant Fief",
+          "cpCost": 640,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "봉토를 수여한다"
+        },
+        {
+          "id": "reclaim_fief",
+          "nameKo": "봉토직할",
+          "nameEn": "Reclaim Fief",
+          "cpCost": 640,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "봉토를 직할로 회수한다"
+        }
+      ]
+    },
+    "politics": {
+      "nameKo": "정치커맨드",
+      "nameEn": "Politics",
+      "cpType": "PCP",
+      "commands": [
+        {
+          "id": "banquet",
+          "nameKo": "야회",
+          "nameEn": "Banquet",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "야회를 개최한다"
+        },
+        {
+          "id": "hunt",
+          "nameKo": "수렵",
+          "nameEn": "Hunt",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "수렵을 실시한다"
+        },
+        {
+          "id": "conference",
+          "nameKo": "회담",
+          "nameEn": "Conference",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "회담을 진행한다"
+        },
+        {
+          "id": "address",
+          "nameKo": "담화",
+          "nameEn": "Address",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "담화를 발표한다"
+        },
+        {
+          "id": "speech",
+          "nameKo": "연설",
+          "nameEn": "Speech",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "연설을 한다"
+        },
+        {
+          "id": "national_goal",
+          "nameKo": "국가목표",
+          "nameEn": "National Goal",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "국가 목표를 설정한다"
+        },
+        {
+          "id": "tax_rate_change",
+          "nameKo": "납입률변경",
+          "nameEn": "Tax Rate Change",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "납입률을 변경한다"
+        },
+        {
+          "id": "tariff_rate_change",
+          "nameKo": "관세율변경",
+          "nameEn": "Tariff Rate Change",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "관세율을 변경한다"
+        },
+        {
+          "id": "distribution",
+          "nameKo": "분배",
+          "nameEn": "Distribution",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "자원을 분배한다"
+        },
+        {
+          "id": "execution",
+          "nameKo": "처단",
+          "nameEn": "Execution",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "반역자를 처단한다"
+        },
+        {
+          "id": "diplomacy",
+          "nameKo": "외교",
+          "nameEn": "Diplomacy",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "외교 활동을 한다"
+        },
+        {
+          "id": "governance_goal",
+          "nameKo": "통치목표",
+          "nameEn": "Governance Goal",
+          "cpCost": 80,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "통치 목표를 설정한다"
+        }
+      ]
+    },
+    "intelligence": {
+      "nameKo": "첩보커맨드",
+      "nameEn": "Intelligence",
+      "cpType": "MCP",
+      "commands": [
+        {
+          "id": "general_search",
+          "nameKo": "일제수색",
+          "nameEn": "General Search",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "일제 수색을 실시한다"
+        },
+        {
+          "id": "arrest_authorization",
+          "nameKo": "체포허가",
+          "nameEn": "Arrest Authorization",
+          "cpCost": 800,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "체포를 허가한다"
+        },
+        {
+          "id": "execution_order",
+          "nameKo": "집행명령",
+          "nameEn": "Execution Order",
+          "cpCost": 800,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "집행 명령을 내린다"
+        },
+        {
+          "id": "arrest_order",
+          "nameKo": "체포명령",
+          "nameEn": "Arrest Order",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "체포 명령을 내린다"
+        },
+        {
+          "id": "inspection",
+          "nameKo": "사열",
+          "nameEn": "Inspection",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "사열을 실시한다"
+        },
+        {
+          "id": "raid",
+          "nameKo": "습격",
+          "nameEn": "Raid",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "습격을 실시한다"
+        },
+        {
+          "id": "surveillance",
+          "nameKo": "감시",
+          "nameEn": "Surveillance",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "감시를 실시한다"
+        },
+        {
+          "id": "infiltration_op",
+          "nameKo": "잠입공작",
+          "nameEn": "Infiltration Operation",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "잠입 공작을 실시한다"
+        },
+        {
+          "id": "escape_op",
+          "nameKo": "탈출공작",
+          "nameEn": "Escape Operation",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "탈출 공작을 실시한다"
+        },
+        {
+          "id": "intelligence_op",
+          "nameKo": "정보공작",
+          "nameEn": "Intelligence Operation",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "정보 공작을 실시한다"
+        },
+        {
+          "id": "sabotage_op",
+          "nameKo": "파괴공작",
+          "nameEn": "Sabotage Operation",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "파괴 공작을 실시한다"
+        },
+        {
+          "id": "agitation_op",
+          "nameKo": "선동공작",
+          "nameEn": "Agitation Operation",
+          "cpCost": 160,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "선동 공작을 실시한다"
+        },
+        {
+          "id": "incursion_op",
+          "nameKo": "침입공작",
+          "nameEn": "Incursion Operation",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "침입 공작을 실시한다"
+        },
+        {
+          "id": "return_op",
+          "nameKo": "귀환공작",
+          "nameEn": "Return Operation",
+          "cpCost": 320,
+          "waitTime": 0,
+          "duration": 0,
+          "description": "귀환 공작을 실시한다"
+        }
+      ]
+    }
+  }
+}
