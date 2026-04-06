@@ -39,7 +39,7 @@ class PlanetServiceTest {
                     commerce = 1,
                     security = 1,
                     defence = 1,
-                    fortress = 1,
+                    wall = 1,
                     x = 0,
                     y = 0,
                     connections = emptyList(),

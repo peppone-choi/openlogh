@@ -138,7 +138,7 @@ class AdminServiceTest {
                 startYear = 190,
                 locked = true,
                 turnTerm = 10,
-                distribute = ResourceDistributionRequest(funds = 50, supplies = 75, target = "all"),
+                distribute = ResourceDistributionRequest(gold = 50, rice = 75, target = "all"),
                 auctionSync = true,
                 auctionCloseMinutes = 45,
                 opentime = "2026-04-01T00:00:00Z",
@@ -186,7 +186,7 @@ class AdminServiceTest {
         val result = service.timeControl(
             1L,
             TimeControlRequest(
-                distribute = ResourceDistributionRequest(funds = 10, supplies = 10, target = "invalid"),
+                distribute = ResourceDistributionRequest(gold = 10, rice = 10, target = "invalid"),
             )
         )
 

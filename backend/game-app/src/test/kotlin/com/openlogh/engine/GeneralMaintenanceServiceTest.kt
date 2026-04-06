@@ -5,7 +5,7 @@ import com.openlogh.entity.Diplomacy
 import com.openlogh.entity.Officer
 import com.openlogh.entity.Faction
 import com.openlogh.entity.FactionTurn
-import com.openlogh.entity.OldGeneral
+import com.openlogh.entity.OldOfficer
 import com.openlogh.entity.Fleet
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.PlanetRepository
@@ -59,7 +59,7 @@ class GeneralMaintenanceServiceTest {
         historyService = mock(HistoryService::class.java)
 
         `when`(fleetRepository.findById(anyLong())).thenReturn(Optional.empty())
-        `when`(oldOfficerRepository.findBySessionIdAndOfficerId(anyString(), anyLong())).thenReturn(null)
+        `when`(oldOfficerRepository.findByServerIdAndOfficerNo(anyString(), anyLong())).thenReturn(null)
         `when`(officerAccessLogRepository.findByOfficerId(anyLong())).thenReturn(emptyList())
 
         service = OfficerMaintenanceService(
@@ -296,7 +296,7 @@ class GeneralMaintenanceServiceTest {
         val troop = Fleet(
             id = 10,
             sessionId = 1,
-            leaderGeneralId = 1,
+            leaderOfficerId = 1,
             factionId = 1,
             name = "중군",
         )

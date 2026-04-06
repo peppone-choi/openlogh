@@ -65,15 +65,15 @@ class FieldBattleTriggerTest {
         @Deprecated("Use getReferenceById") override fun getOne(id: Long): Officer = getReferenceById(id)
         override fun <S : Officer> findOne(example: Example<S>): Optional<S> = Optional.empty()
         override fun findBySessionId(sessionId: Long): List<Officer> = store.values.filter { it.sessionId == sessionId }
-        override fun findByNationId(factionId: Long): List<Officer> = store.values.filter { it.factionId == factionId }
-        override fun findByCityId(planetId: Long): List<Officer> = store.values.filter { it.planetId == planetId }
+        override fun findByFactionId(factionId: Long): List<Officer> = store.values.filter { it.factionId == factionId }
+        override fun findByPlanetId(planetId: Long): List<Officer> = store.values.filter { it.planetId == planetId }
         override fun findByUserId(userId: Long): List<Officer> = emptyList()
         override fun findBySessionIdAndUserId(sessionId: Long, userId: Long): List<Officer> = emptyList()
-        override fun findBySessionIdAndCityIdIn(sessionId: Long, planetIds: List<Long>): List<Officer> = emptyList()
+        override fun findBySessionIdAndPlanetIdIn(sessionId: Long, planetIds: List<Long>): List<Officer> = emptyList()
         override fun findBySessionIdAndCommandEndTimeBefore(sessionId: Long, time: OffsetDateTime): List<Officer> = emptyList()
-        override fun findByTroopId(fleetId: Long): List<Officer> = emptyList()
-        override fun findBySessionIdAndNationId(sessionId: Long, factionId: Long): List<Officer> = emptyList()
-        override fun findByNameAndWorldId(name: String, sessionId: Long): Officer? = null
+        override fun findByFleetId(fleetId: Long): List<Officer> = emptyList()
+        override fun findBySessionIdAndFactionId(sessionId: Long, factionId: Long): List<Officer> = emptyList()
+        override fun findByNameAndSessionId(name: String, sessionId: Long): Officer? = null
         override fun getAverageStats(sessionId: Long, factionId: Long) = com.openlogh.repository.OfficerAverageStats()
     }
 
@@ -109,7 +109,7 @@ class FieldBattleTriggerTest {
         @Deprecated("Use getReferenceById") override fun getOne(id: Long): Planet = getReferenceById(id)
         override fun <S : Planet> findOne(example: Example<S>): Optional<S> = Optional.empty()
         override fun findBySessionId(sessionId: Long): List<Planet> = emptyList()
-        override fun findByNationId(factionId: Long): List<Planet> = emptyList()
+        override fun findByFactionId(factionId: Long): List<Planet> = emptyList()
     }
 
     private class StubMessageRepository : MessageRepository {

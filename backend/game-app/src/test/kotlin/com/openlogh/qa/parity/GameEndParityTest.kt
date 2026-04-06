@@ -164,10 +164,10 @@ class GameEndParityTest {
         `when`(gameHistoryRepository.findByServerId(anyString())).thenReturn(null)
         `when`(gameHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(gameHistoryRepository.count()).thenReturn(0)
-        `when`(oldFactionRepository.findBySessionIdAndFactionId(anyString(), anyLong())).thenReturn(null)
+        `when`(oldFactionRepository.findByServerIdAndFaction(anyString(), anyLong())).thenReturn(null)
         `when`(oldFactionRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(oldFactionRepository.findByServerId(anyString())).thenReturn(emptyList())
-        `when`(oldOfficerRepository.findBySessionIdAndOfficerId(anyString(), anyLong())).thenReturn(null)
+        `when`(oldOfficerRepository.findByServerIdAndOfficerNo(anyString(), anyLong())).thenReturn(null)
         `when`(oldOfficerRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(sovereignRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(hallOfFameRepository.findByServerIdAndTypeAndOfficerNo(anyString(), anyString(), anyLong()))

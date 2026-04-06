@@ -138,14 +138,14 @@ class EconomyIntegrationParityTest {
         orbitalDefense: Int = 500, orbitalDefenseMax: Int = 1000,
         fortress: Int = 500, fortressMax: Int = 1000,
         approval: Float = 80f, supplyState: Short = 1,
-        level: Short = 5, dead: Int = 0, trade: Int = 100,
+        level: Short = 5, dead: Int = 0, tradeRoute: Int = 100,
     ): Planet = Planet(
         id = id, sessionId = 1, name = "city$id", mapPlanetId = id.toInt(),
         factionId = factionId, population = population, populationMax = populationMax,
         production = production, productionMax = productionMax, commerce = commerce, commerceMax = commerceMax,
         security = security, securityMax = securityMax, orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax,
         fortress = fortress, fortressMax = fortressMax, approval = approval,
-        supplyState = supplyState, level = level, dead = dead, trade = trade,
+        supplyState = supplyState, level = level, dead = dead, tradeRoute = tradeRoute,
     )
 
     private fun nation(
@@ -194,15 +194,15 @@ class EconomyIntegrationParityTest {
             val c1 = city(id = 1, population = 8000, populationMax = 10000, production = 500, productionMax = 1000,
                 commerce = 400, commerceMax = 1000, security = 600, securityMax = 1000,
                 orbitalDefense = 300, orbitalDefenseMax = 1000, fortress = 500, fortressMax = 1000,
-                approval = 70f, trade = 100, level = 5)
+                approval = 70f, tradeRoute = 100, level = 5)
             val c2 = city(id = 2, population = 5000, populationMax = 10000, production = 500, productionMax = 1000,
                 commerce = 400, commerceMax = 1000, security = 600, securityMax = 1000,
                 orbitalDefense = 300, orbitalDefenseMax = 1000, fortress = 500, fortressMax = 1000,
-                approval = 70f, trade = 100, level = 5)
+                approval = 70f, tradeRoute = 100, level = 5)
             val c3 = city(id = 3, population = 2000, populationMax = 10000, production = 500, productionMax = 1000,
                 commerce = 400, commerceMax = 1000, security = 600, securityMax = 1000,
                 orbitalDefense = 300, orbitalDefenseMax = 1000, fortress = 500, fortressMax = 1000,
-                approval = 70f, trade = 100, level = 5)
+                approval = 70f, tradeRoute = 100, level = 5)
             val n = nation(id = 1, funds = 10000, supplies = 20000, level = 3, rateTmp = 15,
                 capitalPlanetId = 1)
             val g1 = general(id = 1, dedication = 50, planetId = 1)
@@ -375,7 +375,7 @@ class EconomyIntegrationParityTest {
         @Test
         fun `24-turn simulation with disaster processing does not crash`() {
             val c1 = city(id = 1, population = 8000, populationMax = 10000, security = 600, securityMax = 1000,
-                approval = 70f, trade = 100, level = 5)
+                approval = 70f, tradeRoute = 100, level = 5)
             val n = nation(id = 1, funds = 10000, supplies = 20000, level = 3, rateTmp = 15)
             val g1 = general(id = 1, dedication = 100)
             seed(listOf(c1), listOf(n), listOf(g1))

@@ -127,14 +127,14 @@ class EconomyEventParityTest {
         orbitalDefense: Int = 500, orbitalDefenseMax: Int = 1000,
         fortress: Int = 500, fortressMax: Int = 1000,
         approval: Float = 80f, supplyState: Short = 1,
-        level: Short = 5, dead: Int = 0, trade: Int = 100,
+        level: Short = 5, dead: Int = 0, tradeRoute: Int = 100,
     ): Planet = Planet(
         id = id, sessionId = 1, name = "city$id", mapPlanetId = id.toInt(),
         factionId = factionId, population = population, populationMax = populationMax,
         production = production, productionMax = productionMax, commerce = commerce, commerceMax = commerceMax,
         security = security, securityMax = securityMax, orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax,
         fortress = fortress, fortressMax = fortressMax, approval = approval,
-        supplyState = supplyState, level = level, dead = dead, trade = trade,
+        supplyState = supplyState, level = level, dead = dead, tradeRoute = tradeRoute,
     )
 
     private fun nation(
@@ -691,7 +691,7 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Level 3 city trade rate never changes (prob = 0)")
         fun `level 3 no change`() {
-            val c = city(level = 3, trade = 100)
+            val c = city(level = 3, tradeRoute = 100)
             val n = nation()
             val g = general()
             seed(listOf(c), listOf(n), listOf(g))
@@ -704,7 +704,7 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Non-qualifying city trade resets to 100")
         fun `non-qualifying city trade resets`() {
-            val c = city(level = 2, trade = 105)  // level 2 has prob=0, trade should reset
+            val c = city(level = 2, tradeRoute = 105)  // level 2 has prob=0, trade should reset
             val n = nation()
             val g = general()
             seed(listOf(c), listOf(n), listOf(g))
@@ -717,7 +717,7 @@ class EconomyEventParityTest {
         @Test
         @DisplayName("Level 8 cities always get randomized (prob = 1.0), range [95, 105]")
         fun `level 8 always randomized in range`() {
-            val cityList = (1..20L).map { city(id = it, level = 8, trade = 100) }
+            val cityList = (1..20L).map { city(id = it, level = 8, tradeRoute = 100) }
             val n = nation()
             val g = general()
             seed(cityList, listOf(n), listOf(g))
@@ -1104,12 +1104,12 @@ class EconomyEventParityTest {
         fun `level 4 partial chance`() {
             // Run 100 iterations with different seeds and count how many get randomized
             // Level 4: prob=0.2, so roughly 20% should change from default
-            val c = city(level = 4, trade = 100)
+            val c = city(level = 4, tradeRoute = 100)
             val n = nation()
             val g = general()
             var changedCount = 0
             for (yr in 200..299) {
-                seed(listOf(city(level = 4, trade = 100)), listOf(nation()), listOf(general()))
+                seed(listOf(city(level = 4, tradeRoute = 100)), listOf(nation()), listOf(general()))
                 service.randomizeCityTradeRate(world(year = yr.toShort(), month = 5))
                 val trade = cities[1L]!!.tradeRoute
                 if (trade != 100) changedCount++
@@ -1126,8 +1126,8 @@ class EconomyEventParityTest {
         @DisplayName("Trade rate null behavior: non-qualifying cities get default 100")
         fun `non qualifying city trade default`() {
             // PHP sets trade = null for non-qualifying. Kotlin should handle this
-            // as trade = 100 (default/no market) or similar.
-            val c = city(level = 1, trade = 105)
+            // as tradeRoute = 100 (default/no market) or similar.
+            val c = city(level = 1, tradeRoute = 105)
             seed(listOf(c), listOf(nation()), listOf(general()))
 
             service.randomizeCityTradeRate(world())

@@ -37,10 +37,10 @@ class GameEventServiceTest {
     fun `CommandEvent toPayload includes officerId and commandEventType`() {
         val event = CommandEvent(
             source = service,
-            sessionId = 1L,
+            worldId = 1L,
             year = 200,
             month = 6,
-            officerId = 42L,
+            generalId = 42L,
             commandEventType = "reserved",
         )
 
@@ -74,7 +74,7 @@ class GameEventServiceTest {
     @Test
     fun `onGameEvent with CommandEvent calls broadcastCommand`() {
         val history = WorldHistory(
-            sessionId = 1L,
+            worldId = 1L,
             year = 200,
             month = 6,
             eventType = "command",
@@ -85,10 +85,10 @@ class GameEventServiceTest {
 
         val event = CommandEvent(
             source = service,
-            sessionId = 1L,
+            worldId = 1L,
             year = 200,
             month = 6,
-            officerId = 42L,
+            generalId = 42L,
             commandEventType = "consumed",
         )
 

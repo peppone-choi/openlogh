@@ -2897,7 +2897,7 @@ class GeneralAITest {
 
         val ctx = buildAiContext(world, general, city, nation, listOf(general))
         val conscriptionRate = ai.chooseTexRate(ctx, listOf(city))
-        assertEquals(25, rate, "Well-developed cities should yield conscriptionRate =25 per PHP")
+        assertEquals(25, conscriptionRate, "Well-developed cities should yield conscriptionRate =25 per PHP")
     }
 
     @Test
@@ -2912,7 +2912,7 @@ class GeneralAITest {
 
         val ctx = buildAiContext(world, general, city, nation, listOf(general))
         val conscriptionRate = ai.chooseTexRate(ctx, listOf(city))
-        assertEquals(10, rate, "Low-developed cities should yield conscriptionRate =10 per PHP")
+        assertEquals(10, conscriptionRate, "Low-developed cities should yield conscriptionRate =10 per PHP")
     }
 
     @Test

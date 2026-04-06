@@ -128,14 +128,14 @@ class EconomyFormulaParityTest {
         orbitalDefense: Int = 500, orbitalDefenseMax: Int = 1000,
         fortress: Int = 500, fortressMax: Int = 1000,
         approval: Float = 80f, supplyState: Short = 1,
-        level: Short = 5, dead: Int = 0, trade: Int = 100,
+        level: Short = 5, dead: Int = 0, tradeRoute: Int = 100,
     ): Planet = Planet(
         id = id, sessionId = 1, name = "city$id", mapPlanetId = id.toInt(),
         factionId = factionId, population = population, populationMax = populationMax,
         production = production, productionMax = productionMax, commerce = commerce, commerceMax = commerceMax,
         security = security, securityMax = securityMax, orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax,
         fortress = fortress, fortressMax = fortressMax, approval = approval,
-        supplyState = supplyState, level = level, dead = dead, trade = trade,
+        supplyState = supplyState, level = level, dead = dead, tradeRoute = tradeRoute,
     )
 
     private fun nation(

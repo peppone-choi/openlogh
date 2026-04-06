@@ -59,7 +59,7 @@ class RecordServiceTest {
             .thenReturn(saved)
 
         val result = service.saveRecord(
-            sessionId = 1L,
+            worldId = 1L,
             recordType = RecordService.GENERAL_ACTION,
             srcId = 5L,
             destId = 10L,
@@ -82,7 +82,7 @@ class RecordServiceTest {
     ): Record {
         return Record(
             id = id,
-            sessionId = sessionId,
+            worldId = sessionId,
             recordType = recordType,
             srcId = srcId,
             destId = destId,

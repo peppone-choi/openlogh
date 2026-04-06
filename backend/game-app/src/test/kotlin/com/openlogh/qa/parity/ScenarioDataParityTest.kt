@@ -81,7 +81,7 @@ class ScenarioDataParityTest {
                     val leadership = toInt(row[5])
                     val command = toInt(row[6])
                     val intelligence = toInt(row[7])
-                    result.putIfAbsent(name, Triple(leadership, strength, intel))
+                    result.putIfAbsent(name, Triple(leadership, command, intelligence))
                 }
             }
             return result

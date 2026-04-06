@@ -78,7 +78,7 @@ class GeneralCivilCommandTest {
         approval: Float = 80f,
         supplyState: Short = 1,
         frontState: Short = 0,
-        trade: Int = 100,
+        tradeRoute: Int = 100,
     ): Planet {
         return Planet(
             id = 1,
@@ -422,7 +422,7 @@ class GeneralCivilCommandTest {
     fun `군량매매 should pass constraints when buying rice with gold`() {
         val arg = mapOf<String, Any>("buyRice" to true, "amount" to 500)
         val cmd = che_군량매매(createTestGeneral(funds = 1000, supplies = 1000), createTestEnv(), arg)
-        cmd.city = createTestCity(trade = 100)
+        cmd.city = createTestCity(tradeRoute = 100)
 
         val condition = cmd.checkFullCondition()
         assertTrue(condition is ConstraintResult.Pass)
@@ -432,7 +432,7 @@ class GeneralCivilCommandTest {
     fun `군량매매 should fail constraints when buying rice without gold`() {
         val arg = mapOf<String, Any>("buyRice" to true, "amount" to 500)
         val cmd = che_군량매매(createTestGeneral(funds = 0, supplies = 1000), createTestEnv(), arg)
-        cmd.city = createTestCity(trade = 100)
+        cmd.city = createTestCity(tradeRoute = 100)
 
         val condition = cmd.checkFullCondition()
         assertTrue(condition is ConstraintResult.Fail)
@@ -442,7 +442,7 @@ class GeneralCivilCommandTest {
     fun `군량매매 should run and include tax plus stat changes`() {
         val arg = mapOf<String, Any>("buyRice" to true, "amount" to 500)
         val cmd = che_군량매매(createTestGeneral(funds = 1000, supplies = 1000, leadership = 70, command = 60, intelligence = 80), createTestEnv(), arg)
-        cmd.city = createTestCity(trade = 100)
+        cmd.city = createTestCity(tradeRoute = 100)
 
         val result = runBlocking { cmd.run(fixedRng) }
 
@@ -460,7 +460,7 @@ class GeneralCivilCommandTest {
     fun `군량매매 should round small amount up to 100 unit trade`() {
         val arg = mapOf<String, Any>("buyRice" to true, "amount" to 55)
         val cmd = che_군량매매(createTestGeneral(funds = 1000, supplies = 1000), createTestEnv(), arg)
-        cmd.city = createTestCity(trade = 100)
+        cmd.city = createTestCity(tradeRoute = 100)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build("trade_rounding_seed")) }
 
@@ -889,7 +889,7 @@ class GeneralCivilCommandTest {
     fun `parity 군량매매 golden value regression matches expected`() {
         val arg = mapOf<String, Any>("buyRice" to true, "amount" to 500)
         val cmd = che_군량매매(createTestGeneral(funds = 1000, supplies = 1000, leadership = 70, command = 60, intelligence = 80), createTestEnv(), arg)
-        cmd.city = createTestCity(trade = 100)
+        cmd.city = createTestCity(tradeRoute = 100)
 
         val result = runBlocking { cmd.run(LiteHashDRBG.build(GOLDEN_SEED)) }
         assertTrue(result.success)

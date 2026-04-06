@@ -73,8 +73,8 @@ class FrontInfoServiceTest {
     )
 
     private fun buildUser() = AppUser(id = 10, loginId = "tester", displayName = "테스터", passwordHash = "pw")
-    private fun buildNation() = Faction(id = 7, sessionId = 1, name = "세력", factionRank = 1)
-    private fun buildCity() = Planet(id = 5, sessionId = 1, name = "도시", factionId = 7, level = 5)
+    private fun buildNation() = Faction(id = 7, worldId = 1, name = "세력", factionRank = 1)
+    private fun buildCity() = Planet(id = 5, worldId = 1, name = "도시", factionId = 7, level = 5)
 
     private fun stubCommon(world: SessionState, user: AppUser, nation: Faction, city: Planet, general: Officer) {
         `when`(sessionStateRepository.findById(1)).thenReturn(Optional.of(world))
@@ -98,12 +98,12 @@ class FrontInfoServiceTest {
         val nation = buildNation()
         val city = buildCity()
         val general = Officer(
-            id = 11, sessionId = 1, userId = 10, factionId = 7, planetId = 5,
+            id = 11, worldId = 1, userId = 10, factionId = 7, planetId = 5,
             name = "장수", shipClass = 3, turnTime = OffsetDateTime.now(),
         )
         stubCommon(world, user, nation, city, general)
 
-        val response = service.getFrontInfo(sessionId = 1, loginId = "tester", lastRecordId = null, lastHistoryId = null)
+        val response = service.getFrontInfo(worldId = 1, loginId = "tester", lastRecordId = null, lastHistoryId = null)
 
         assertNotNull(response.general)
         assertEquals("3", response.general!!.crewtype)
@@ -116,7 +116,7 @@ class FrontInfoServiceTest {
         val nation = buildNation()
         val city = buildCity()
         val general = Officer(
-            id = 11, sessionId = 1, userId = 10, factionId = 7, planetId = 5,
+            id = 11, worldId = 1, userId = 10, factionId = 7, planetId = 5,
             name = "장수", shipClass = 3, turnTime = OffsetDateTime.now(),
         ).apply {
             flagshipCode = "che_무기_15_의천검"
@@ -129,7 +129,7 @@ class FrontInfoServiceTest {
         }
         stubCommon(world, user, nation, city, general)
 
-        val response = service.getFrontInfo(sessionId = 1, loginId = "tester", lastRecordId = null, lastHistoryId = null)
+        val response = service.getFrontInfo(worldId = 1, loginId = "tester", lastRecordId = null, lastHistoryId = null)
 
         assertNotNull(response.general)
         val g = response.general!!

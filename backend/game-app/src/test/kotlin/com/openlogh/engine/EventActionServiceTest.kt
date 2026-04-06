@@ -97,7 +97,7 @@ class EventActionServiceTest {
         level: Short = 2,
         scoutLevel: Short = 0,
         funds: Int = 10000,
-    ): Faction = Faction(id = id, sessionId = sessionId, name = name, level = level, scoutLevel = scoutLevel, funds = funds)
+    ): Faction = Faction(id = id, sessionId = sessionId, name = name, factionRank = level, scoutLevel = scoutLevel, funds = funds)
 
     private fun createCity(
         id: Long = 1L,
@@ -111,7 +111,7 @@ class EventActionServiceTest {
         orbitalDefense: Int = 500, orbitalDefenseMax: Int = 1000,
         fortress: Int = 500, fortressMax: Int = 1000,
         approval: Float = 80f,
-        trade: Int = 100,
+        tradeRoute: Int = 100,
         officerSet: Int = 0,
         dead: Int = 0,
     ): Planet = Planet(
@@ -119,7 +119,7 @@ class EventActionServiceTest {
         population = population, populationMax = populationMax, production = production, productionMax = productionMax,
         commerce = commerce, commerceMax = commerceMax, security = security, securityMax = securityMax,
         orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax, fortress = fortress, fortressMax = fortressMax,
-        approval = approval.toInt(), trade = trade, officerSet = officerSet, dead = dead,
+        approval = approval.toInt(), tradeRoute = tradeRoute, officerSet = officerSet, dead = dead,
     )
 
     // ─── AddGlobalBetray ───────────────────────────────────────────────────
@@ -249,8 +249,8 @@ class EventActionServiceTest {
 
         @Test
         fun `applies percentage expression to city trade`() {
-            // PHP: trade = 100 (absolute value)
-            val city = createCity(trade = 95)
+            // PHP: tradeRoute = 100 (absolute value)
+            val city = createCity(tradeRoute = 95)
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
 
@@ -444,7 +444,7 @@ class EventActionServiceTest {
             // PHP: nation not found → delete event
             `when`(factionRepository.findById(anyLong())).thenReturn(java.util.Optional.empty())
 
-            service.autoDeleteInvader(createWorld(), factionId = 99L, currentEventId = 42L)
+            service.autoDeleteInvader(createWorld(), nationId = 99L, currentEventId = 42L)
 
             verify(eventRepository).deleteById(42L)
         }
@@ -456,7 +456,7 @@ class EventActionServiceTest {
             `when`(factionRepository.findById(anyLong())).thenReturn(java.util.Optional.of(nation))
             `when`(officerRepository.findByFactionId(anyLong())).thenReturn(emptyList())
 
-            service.autoDeleteInvader(createWorld(), factionId = 1L, currentEventId = 5L)
+            service.autoDeleteInvader(createWorld(), nationId = 1L, currentEventId = 5L)
 
             verify(eventRepository, never()).deleteById(anyLong())
         }

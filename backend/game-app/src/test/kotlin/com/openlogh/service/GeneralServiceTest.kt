@@ -242,10 +242,10 @@ class OfficerServiceTest {
             BuildPoolGeneralRequest(
                 name = "풀장수",
                 leadership = 70,
-                command = 70,
-                intelligence = 70,
+                strength = 70,
+                intel = 70,
                 politics = 70,
-                administration = 70,
+                charm = 70,
                 personality = "che_왕좌",
             ),
         )

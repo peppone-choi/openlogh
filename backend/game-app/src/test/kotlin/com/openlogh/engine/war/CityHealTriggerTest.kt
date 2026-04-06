@@ -38,10 +38,10 @@ class CityHealTriggerTest {
 
     private fun makeEnv(officerId: Long = 1): TriggerEnv {
         return TriggerEnv(
-            sessionId = 1,
+            worldId = 1,
             year = 200,
             month = 1,
-            officerId = officerId,
+            generalId = officerId,
         )
     }
 

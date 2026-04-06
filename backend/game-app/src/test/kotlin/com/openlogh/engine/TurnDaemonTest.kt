@@ -34,6 +34,7 @@ class TurnDaemonTest {
             turnService,
             turnCoordinator,
             realtimeService,
+            mock(TickEngine::class.java),
             "test-sha",
             false,
             sessionStateRepository,
@@ -64,7 +65,7 @@ class TurnDaemonTest {
         daemon.tick()
 
         verify(turnService).processWorld(world)
-        verify(turnCoordinator, never()).processWorld(anyNonNull())
+        verify(turnCoordinator, never()).processSession(anyNonNull())
         verify(realtimeService, never()).processCompletedCommands(anyNonNull())
     }
 
@@ -78,7 +79,7 @@ class TurnDaemonTest {
         verify(realtimeService).processCompletedCommands(world)
         verify(realtimeService).regenerateCommandPoints(world)
         verify(turnService, never()).processWorld(anyNonNull())
-        verify(turnCoordinator, never()).processWorld(anyNonNull())
+        verify(turnCoordinator, never()).processSession(anyNonNull())
     }
 
     @Test
@@ -90,6 +91,7 @@ class TurnDaemonTest {
             turnService,
             turnCoordinator,
             realtimeService,
+            mock(TickEngine::class.java),
             "test-sha",
             true,
             sessionStateRepository,

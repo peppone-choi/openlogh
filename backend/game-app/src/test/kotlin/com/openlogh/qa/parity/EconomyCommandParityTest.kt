@@ -69,7 +69,7 @@ class EconomyCommandParityTest {
          * Test uses Kotlin default (0.03) — golden values computed accordingly.
          */
         @Test
-        fun `buy rice - gold to rice with trade=100 exchangeFee=0_03`() {
+        fun `buy rice - gold to rice with tradeRoute = 100 exchangeFee=0_03`() {
             // amount=1000, tradeRate=1.0, exchangeFee=0.03
             // sellAmount = min(1000*1.0, 5000) = 1000
             // tax = 1000 * 0.03 = 30
@@ -78,7 +78,7 @@ class EconomyCommandParityTest {
             // totalSell = 1000 + 30 = 1030
             // goldDelta = -1030, riceDelta = +1000, nationTax = 30
             val gen = createGeneral(funds = 5000, supplies = 1000)
-            val city = createCity(trade = 100)
+            val city = createCity(tradeRoute = 100)
             val arg = mapOf<String, Any>("buyRice" to true, "amount" to 1000)
             val cmd = che_군량매매(gen, createEnv(), arg)
             cmd.city = city
@@ -92,7 +92,7 @@ class EconomyCommandParityTest {
         }
 
         @Test
-        fun `sell rice - rice to gold with trade=100 exchangeFee=0_03`() {
+        fun `sell rice - rice to gold with tradeRoute = 100 exchangeFee=0_03`() {
             // amount=1000, tradeRate=1.0
             // sellAmount = min(1000, 5000) = 1000
             // buyAmount = 1000 * 1.0 = 1000
@@ -100,7 +100,7 @@ class EconomyCommandParityTest {
             // buyAmount -= tax => 970
             // goldDelta = +970, riceDelta = -1000
             val gen = createGeneral(funds = 1000, supplies = 5000)
-            val city = createCity(trade = 100)
+            val city = createCity(tradeRoute = 100)
             val arg = mapOf<String, Any>("buyRice" to false, "amount" to 1000)
             val cmd = che_군량매매(gen, createEnv(), arg)
             cmd.city = city
@@ -114,7 +114,7 @@ class EconomyCommandParityTest {
         }
 
         @Test
-        fun `buy rice with trade=80 produces proportionally less rice`() {
+        fun `buy rice with tradeRoute = 80 produces proportionally less rice`() {
             // tradeRate = 80/100 = 0.8
             // sellAmount = min(1000*0.8, 5000) = 800
             // tax = 800 * 0.03 = 24
@@ -123,7 +123,7 @@ class EconomyCommandParityTest {
             // totalSell = 800 + 24 = 824
             // goldDelta = -824, riceDelta = +1000
             val gen = createGeneral(funds = 5000, supplies = 1000)
-            val city = createCity(trade = 80)
+            val city = createCity(tradeRoute = 80)
             val arg = mapOf<String, Any>("buyRice" to true, "amount" to 1000)
             val cmd = che_군량매매(gen, createEnv(), arg)
             cmd.city = city
@@ -137,7 +137,7 @@ class EconomyCommandParityTest {
         }
 
         @Test
-        fun `sell rice with trade=120 produces more gold`() {
+        fun `sell rice with tradeRoute = 120 produces more gold`() {
             // tradeRate = 120/100 = 1.2
             // sellAmount = min(1000, 5000) = 1000
             // buyAmount = 1000 * 1.2 = 1200
@@ -145,7 +145,7 @@ class EconomyCommandParityTest {
             // buyAmount -= tax => 1164
             // goldDelta = +1164, riceDelta = -1000
             val gen = createGeneral(funds = 1000, supplies = 5000)
-            val city = createCity(trade = 120)
+            val city = createCity(tradeRoute = 120)
             val arg = mapOf<String, Any>("buyRice" to false, "amount" to 1000)
             val cmd = che_군량매매(gen, createEnv(), arg)
             cmd.city = city
@@ -169,7 +169,7 @@ class EconomyCommandParityTest {
             // buyAmount = 485.436 / 1.0 = 485.436... -> rounded to 485
             // totalSell = 485.436 + 14.563 = 500 -> rounded to 500
             val gen = createGeneral(funds = 500, supplies = 100)
-            val city = createCity(trade = 100)
+            val city = createCity(tradeRoute = 100)
             val arg = mapOf<String, Any>("buyRice" to true, "amount" to 10000)
             val cmd = che_군량매매(gen, createEnv(), arg)
             cmd.city = city
@@ -186,7 +186,7 @@ class EconomyCommandParityTest {
         @Test
         fun `trade grants exp=30 ded=50 and one random stat exp`() {
             val gen = createGeneral(funds = 5000, supplies = 5000)
-            val city = createCity(trade = 100)
+            val city = createCity(tradeRoute = 100)
             val arg = mapOf<String, Any>("buyRice" to true, "amount" to 1000)
             val cmd = che_군량매매(gen, createEnv(), arg)
             cmd.city = city
@@ -784,7 +784,7 @@ class EconomyCommandParityTest {
         fortressMax: Int = 1000,
         approval: Float = 80f,
         level: Short = 5,
-        trade: Int = 100,
+        tradeRoute: Int = 100,
         frontState: Short = 0,
     ): Planet = Planet(
         id = id,

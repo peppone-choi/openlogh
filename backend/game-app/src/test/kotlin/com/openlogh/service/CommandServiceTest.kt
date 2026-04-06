@@ -244,7 +244,7 @@ class CommandServiceTest {
 
     private fun createGeneral(officerLevel: Short = 0): Officer = Officer(
         id = 1,
-        sessionId = 1,
+        worldId = 1,
         name = "장수",
         factionId = 1,
         planetId = 1,
@@ -255,7 +255,7 @@ class CommandServiceTest {
     private fun queue(general: Officer, actions: List<String>): List<OfficerTurn> {
         return actions.mapIndexed { idx, action ->
             OfficerTurn(
-                sessionId = general.sessionId,
+                worldId = general.sessionId,
                 officerId = general.id,
                 turnIdx = idx.toShort(),
                 actionCode = action,
@@ -267,7 +267,7 @@ class CommandServiceTest {
     private fun nationQueue(general: Officer, actions: List<String>): List<com.openlogh.entity.FactionTurn> {
         return actions.mapIndexed { idx, action ->
             com.openlogh.entity.FactionTurn(
-                sessionId = general.sessionId,
+                worldId = general.sessionId,
                 factionId = general.factionId,
                 officerLevel = general.officerLevel,
                 turnIdx = idx.toShort(),
