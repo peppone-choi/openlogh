@@ -283,6 +283,93 @@ class WarehouseService(
         )
     }
 
+    // ===== Transfer (창고이동): Planet <-> Fleet Warehouse =====
+
+    /**
+     * 행성창고 → 부대창고 이동 (창고이동 커맨드 또는 직접 API 호출용).
+     * 보유량 초과 요청은 보유량만큼 이동 (예외 미발생).
+     */
+    @Transactional
+    fun transferToFleet(
+        sessionId: Long,
+        planetId: Long,
+        fleetId: Long,
+        request: TransferRequest,
+    ): TransferResult {
+        val pw = getOrCreatePlanetWarehouse(sessionId, planetId)
+        val fw = getOrCreateFleetWarehouse(sessionId, fleetId)
+        val transferred = mutableListOf<String>()
+
+        // Ships
+        for ((classStr, amount) in request.ships) {
+            val shipClass = runCatching { ShipClassType.valueOf(classStr) }.getOrNull() ?: continue
+            val actual = pw.removeShips(shipClass, amount)
+            if (actual > 0) { fw.addShips(shipClass, actual); transferred.add("${shipClass.name} ${actual}유닛") }
+        }
+        // Crew
+        for ((profStr, amount) in request.crew) {
+            val prof = runCatching { CrewProficiency.valueOf(profStr) }.getOrNull() ?: continue
+            val actual = pw.removeCrew(prof, amount)
+            if (actual > 0) { fw.addCrew(prof, actual); transferred.add("${prof.name} 승조원 ${actual}") }
+        }
+        // Supplies
+        if (request.supplies > 0) {
+            val actual = request.supplies.coerceAtMost(pw.supplies)
+            pw.supplies -= actual; fw.supplies += actual
+            if (actual > 0) transferred.add("물자 $actual")
+        }
+        // Missiles
+        if (request.missiles > 0) {
+            val actual = request.missiles.coerceAtMost(pw.missiles)
+            pw.missiles -= actual; fw.missiles += actual
+            if (actual > 0) transferred.add("미사일 $actual")
+        }
+
+        pw.touch(); fw.touch()
+        savePlanetWarehouse(pw); saveFleetWarehouse(fw)
+        return TransferResult(true, transferred)
+    }
+
+    /**
+     * 부대창고 → 행성창고 반납.
+     */
+    @Transactional
+    fun returnToPlanet(
+        sessionId: Long,
+        fleetId: Long,
+        planetId: Long,
+        request: TransferRequest,
+    ): TransferResult {
+        val fw = getOrCreateFleetWarehouse(sessionId, fleetId)
+        val pw = getOrCreatePlanetWarehouse(sessionId, planetId)
+        val transferred = mutableListOf<String>()
+
+        for ((classStr, amount) in request.ships) {
+            val shipClass = runCatching { ShipClassType.valueOf(classStr) }.getOrNull() ?: continue
+            val actual = fw.removeShips(shipClass, amount)
+            if (actual > 0) { pw.addShips(shipClass, actual); transferred.add("${shipClass.name} ${actual}유닛") }
+        }
+        for ((profStr, amount) in request.crew) {
+            val prof = runCatching { CrewProficiency.valueOf(profStr) }.getOrNull() ?: continue
+            val actual = fw.removeCrew(prof, amount)
+            if (actual > 0) { pw.addCrew(prof, actual); transferred.add("${prof.name} 승조원 ${actual}") }
+        }
+        if (request.supplies > 0) {
+            val actual = request.supplies.coerceAtMost(fw.supplies)
+            fw.supplies -= actual; pw.supplies += actual
+            if (actual > 0) transferred.add("물자 $actual")
+        }
+        if (request.missiles > 0) {
+            val actual = request.missiles.coerceAtMost(fw.missiles)
+            fw.missiles -= actual; pw.missiles += actual
+            if (actual > 0) transferred.add("미사일 $actual")
+        }
+
+        fw.touch(); pw.touch()
+        saveFleetWarehouse(fw); savePlanetWarehouse(pw)
+        return TransferResult(true, transferred)
+    }
+
     fun savePlanetWarehouse(pw: PlanetWarehouse): PlanetWarehouse {
         pw.touch()
         return planetWarehouseRepository.save(pw)
@@ -297,4 +384,16 @@ class WarehouseService(
 data class AllocationResult(
     val success: Boolean,
     val message: String,
+)
+
+data class TransferRequest(
+    val ships: Map<String, Int> = emptyMap(),
+    val crew: Map<String, Int> = emptyMap(),
+    val supplies: Int = 0,
+    val missiles: Int = 0,
+)
+
+data class TransferResult(
+    val success: Boolean,
+    val transferred: List<String>,
 )

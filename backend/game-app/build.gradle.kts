@@ -80,6 +80,10 @@ sourceSets {
                 // Phase 03-03+ future plan: FortressGunSystem 4-type full spec not yet integrated in engine
                 "com/openlogh/engine/tactical/FortressGunSystemTest.kt",
                 // Phase 03-04: GroundBattleEngineTest implemented — exclusion removed
+                // Phase 04-01: Gin7EconomyService stub — implementation deferred to 04-01
+                "com/openlogh/engine/Gin7EconomyServiceTest.kt",
+                // Phase 04-02: TickEngine wiring — tacticalBattleService param added in 04-02
+                "com/openlogh/engine/TickEngineTest.kt",
             )
         }
     }
