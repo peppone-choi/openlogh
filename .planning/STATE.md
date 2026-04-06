@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-legacy-removal-ship-unit-foundation/01-05-PLAN.md
-last_updated: "2026-04-06T13:53:35.019Z"
+status: verifying
+stopped_at: Completed 02-gin7-command-system/02-01-PLAN.md
+last_updated: "2026-04-06T14:25:23.519Z"
 last_activity: 2026-04-06
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 5
-  total_plans: 31
-  completed_plans: 28
+  total_plans: 38
+  completed_plans: 29
   percent: 77
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 
 Phase: 1 of 7 (레거시 제거 + 함종 유닛 기반)
 Plan: 5 of 5 in current phase
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-06
 
 Progress: [████████░░] 77%
@@ -56,6 +56,7 @@ Progress: [████████░░] 77%
 | Phase 01-legacy-removal-ship-unit-foundation P03 | 8 | 1 tasks | 2 files |
 | Phase 01-legacy-removal-ship-unit-foundation P04 | 8 | 2 tasks | 3 files |
 | Phase 01-legacy-removal-ship-unit-foundation P05 | 12 | 2 tasks | 9 files |
+| Phase 02-gin7-command-system P01 | 12 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ Progress: [████████░░] 77%
 - [Phase 01]: ShipUnit shipClass/shipSubtype stored as String enum names for schema evolution flexibility
 - [Phase 01-legacy-removal-ship-unit-foundation]: ShipStatRegistry parses nested JSON (shipClasses[].subtypes[]) into flat subtype key map via buildSubtypeKey()
 - [Phase 01-legacy-removal-ship-unit-foundation]: officerLevel >= 5 authority bypass fully removed (0 occurrences) — PositionCard-only authority from Plan 05 onwards
+- [Phase 02-gin7-command-system]: Gin7StubCommand uses single cpType: StatCategory constructor param rather than two separate subclasses — simpler, less duplication
+- [Phase 02-gin7-command-system]: 대기 registered as registerPcpStub — ensures ALWAYS_ALLOWED fallback works even if registry lookup is called
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T13:53:35.010Z
-Stopped at: Completed 01-legacy-removal-ship-unit-foundation/01-05-PLAN.md
+Last session: 2026-04-06T14:25:23.512Z
+Stopped at: Completed 02-gin7-command-system/02-01-PLAN.md
 Resume file: None

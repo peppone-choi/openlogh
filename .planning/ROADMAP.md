@@ -47,7 +47,7 @@ Plans:
 **Plans**: 7 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — PositionCardRegistry gin7 매핑 교체 + Gin7CommandRegistry MCP/PCP 분리
+- [x] 02-01-PLAN.md — PositionCardRegistry gin7 매핑 교체 + Gin7CommandRegistry MCP/PCP 분리
 - [ ] 02-02-PLAN.md — 작전커맨드 16종 + 병참커맨드 6종 구현체
 - [ ] 02-03-PLAN.md — 개인커맨드 15종 + 인사커맨드 10종 구현체
 - [ ] 02-04-PLAN.md — 정치커맨드 12종 + 첩보커맨드 14종 구현체
@@ -122,7 +122,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. 레거시 제거 + 함종 유닛 기반 | 8/8 | Complete   | 2026-04-06 |
-| 2. gin7 81종 커맨드 시스템 | 0/7 | Not started | - |
+| 2. gin7 81종 커맨드 시스템 | 1/7 | In Progress|  |
 | 3. 실시간 전술전 엔진 | 0/TBD | Not started | - |
 | 4. 경제 시스템 | 0/TBD | Not started | - |
 | 5. AI 시스템 | 0/TBD | Not started | - |

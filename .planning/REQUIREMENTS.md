@@ -25,8 +25,8 @@
 
 ### 커맨드 시스템 (CMD)
 
-- [ ] **CMD-01**: 작전커맨드 16종 구현 (워프항행~육전대철수)
-- [ ] **CMD-02**: 개인커맨드 15종 구현 (원거리이동~기함구매)
+- [x] **CMD-01**: 작전커맨드 16종 구현 (워프항행~육전대철수)
+- [x] **CMD-02**: 개인커맨드 15종 구현 (원거리이동~기함구매)
 - [ ] **CMD-03**: 지휘커맨드 8종 구현 (작전계획~수송중지)
 - [ ] **CMD-04**: 병참커맨드 6종 구현 (완전수리~할당)
 - [ ] **CMD-05**: 인사커맨드 10종 구현 (승진~봉토직할)
@@ -126,8 +126,8 @@
 | SHIP-04 | Phase 1 | Complete |
 | SHIP-05 | Phase 1 | Complete |
 | SHIP-06 | Phase 1 | Complete |
-| CMD-01 | Phase 2 | Pending |
-| CMD-02 | Phase 2 | Pending |
+| CMD-01 | Phase 2 | Complete |
+| CMD-02 | Phase 2 | Complete |
 | CMD-03 | Phase 2 | Pending |
 | CMD-04 | Phase 2 | Pending |
 | CMD-05 | Phase 2 | Pending |
