@@ -1,5 +1,6 @@
 package com.openlogh.controller
 
+import com.openlogh.service.ChatCommandService
 import com.openlogh.service.ChatScope
 import com.openlogh.service.ChatService
 import org.springframework.http.ResponseEntity
@@ -16,20 +17,31 @@ data class ChatMessageRequest(
     val officerId: Long,
     val content: String,
     val scope: String = "GLOBAL",
+    val targetOfficerId: Long? = null,
 )
 
 /**
  * WebSocket controller for real-time chat.
+ * Supports chat commands: /명함교환, /캐릭터정보취득
  */
 @Controller
 class ChatWebSocketController(
     private val chatService: ChatService,
+    private val chatCommandService: ChatCommandService,
 ) {
     @MessageMapping("/chat/{sessionId}/send")
     fun handleChatMessage(
         @DestinationVariable sessionId: Long,
         @Payload request: ChatMessageRequest,
     ) {
+        // Check if this is a chat command
+        if (chatCommandService.isChatCommand(request.content)) {
+            chatCommandService.executeCommand(
+                sessionId, request.officerId, request.content, request.targetOfficerId
+            )
+            return
+        }
+
         val scope = try {
             ChatScope.valueOf(request.scope.uppercase())
         } catch (e: IllegalArgumentException) {
