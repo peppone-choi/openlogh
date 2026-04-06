@@ -38,6 +38,7 @@ class TickEngineTest {
             mock(TacticalBattleService::class.java),
             mock(Gin7EconomyService::class.java),
             mock(ShipyardProductionService::class.java),
+            mock(FleetSortieCostService::class.java),
         )
 
         // stub save to return the argument

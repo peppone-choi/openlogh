@@ -37,6 +37,7 @@ class TickEngine(
     private val tacticalBattleService: TacticalBattleService,
     private val gin7EconomyService: Gin7EconomyService,
     private val shipyardProductionService: ShipyardProductionService,
+    private val fleetSortieCostService: FleetSortieCostService,
 ) {
     private val logger = LoggerFactory.getLogger(TickEngine::class.java)
 
@@ -79,7 +80,16 @@ class TickEngine(
             }
         }
 
-        // 8. Persist state
+        // 8. 함대 출격비용: 매 SORTIE_COST_INTERVAL_TICKS(1 게임일)마다 진영 자금 차감
+        if (world.tickCount % FleetSortieCostService.SORTIE_COST_INTERVAL_TICKS == 0L) {
+            try {
+                fleetSortieCostService.processSortieCost(world.id.toLong())
+            } catch (e: Exception) {
+                logger.warn("Fleet sortie cost error for world {}: {}", world.id, e.message)
+            }
+        }
+
+        // 9. Persist state
         sessionStateRepository.save(world)
 
         // 9. Broadcast tick state to clients every TICK_BROADCAST_INTERVAL ticks
