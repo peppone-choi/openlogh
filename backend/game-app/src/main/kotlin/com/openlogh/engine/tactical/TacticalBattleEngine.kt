@@ -5,6 +5,7 @@ import com.openlogh.model.Formation
 import com.openlogh.model.InjuryEvent
 import com.openlogh.model.TacticalWeaponType
 import com.openlogh.model.UnitStance
+import com.openlogh.service.ShipStatRegistry
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -155,6 +156,7 @@ class TacticalBattleEngine(
     private val missileSystem: MissileWeaponSystem = MissileWeaponSystem(),
     private val fortressGunSystem: FortressGunSystem = FortressGunSystem(),
     private val detectionService: DetectionService = DetectionService(),
+    private val shipStatRegistry: ShipStatRegistry? = null,
 ) {
 
     companion object {
@@ -402,11 +404,19 @@ class TacticalBattleEngine(
         // gin7 rule: 태세별 attackModifier 적용
         val stanceAttack = unit.stance.attackModifier
 
+        // Resolve per-subtype base damage from ShipStatRegistry (fallback to hardcoded constants)
+        val subtypeStat = if (!unit.shipSubtype.isNullOrBlank()) {
+            shipStatRegistry?.getShipStat(unit.shipSubtype, "empire")
+                ?: shipStatRegistry?.getShipStat(unit.shipSubtype, "alliance")
+        } else null
+        val beamBaseDamage = subtypeStat?.beamPower?.takeIf { it > 0 }?.toDouble() ?: BEAM_BASE_DAMAGE
+        val gunBaseDamage  = subtypeStat?.gunPower?.takeIf { it > 0 }?.toDouble()  ?: GUN_BASE_DAMAGE
+
         // BEAM damage — gin7 rule: 최대사거리 70% 지점에서 최대 위력, 너무 가깝거나 멀면 선형 감소
         if (unit.energy.beam > 0 && dist <= BEAM_RANGE) {
             val optimalDist = BEAM_RANGE * 0.7
             val distFactor = (1.0 - abs(dist - optimalDist) / optimalDist).coerceAtLeast(0.0)
-            val beamDmg = (BEAM_BASE_DAMAGE * unit.energy.beamMultiplier() * attackStatModifier
+            val beamDmg = (beamBaseDamage * unit.energy.beamMultiplier() * attackStatModifier
                 * formationAttack * stanceAttack * moraleModifier * trainingModifier * distFactor)
             val sensorAccuracy = unit.energy.sensorMultiplier()
             val hitChance = (0.6 + sensorAccuracy * 0.3).coerceAtMost(0.95)
@@ -417,7 +427,7 @@ class TacticalBattleEngine(
 
         // GUN damage
         if (unit.energy.gun > 0 && dist <= GUN_RANGE) {
-            val gunDmg = (GUN_BASE_DAMAGE * unit.energy.gunMultiplier() * attackStatModifier
+            val gunDmg = (gunBaseDamage * unit.energy.gunMultiplier() * attackStatModifier
                 * formationAttack * stanceAttack * moraleModifier * trainingModifier)
             val sensorAccuracy = unit.energy.sensorMultiplier()
             val hitChance = (0.5 + sensorAccuracy * 0.3).coerceAtMost(0.90)

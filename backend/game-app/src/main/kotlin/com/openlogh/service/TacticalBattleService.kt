@@ -31,9 +31,10 @@ class TacticalBattleService(
     private val battleTriggerService: BattleTriggerService,
     private val gameEventService: GameEventService,
     private val messagingTemplate: SimpMessagingTemplate,
+    private val shipStatRegistry: ShipStatRegistry,
 ) {
     private val log = LoggerFactory.getLogger(TacticalBattleService::class.java)
-    private val engine = TacticalBattleEngine()
+    private val engine = TacticalBattleEngine(shipStatRegistry = shipStatRegistry)
     private val planetConquestService = PlanetConquestService()
 
     /** In-memory active battle states keyed by battleId */

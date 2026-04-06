@@ -7,6 +7,7 @@ import com.openlogh.service.EmpirePoliticsService
 import com.openlogh.service.FezzanEndingService
 import com.openlogh.service.FezzanService
 import com.openlogh.service.GameEventService
+import com.openlogh.service.TacticalBattleService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service
  *   3. Regenerate command points (every 300 ticks = 5 real minutes)
  *   4. Trigger monthly pipeline on month boundary crossing (every 108,000 ticks = 30 real hours)
  *   5. Persist updated world state
+ *   6. Process active tactical battles (every tick)
  */
 @Service
 class TickEngine(
@@ -30,6 +32,7 @@ class TickEngine(
     private val fezzanService: FezzanService,
     private val fezzanAiService: FezzanAiService,
     private val fezzanEndingService: FezzanEndingService,
+    private val tacticalBattleService: TacticalBattleService,
 ) {
     private val logger = LoggerFactory.getLogger(TickEngine::class.java)
 
@@ -60,10 +63,13 @@ class TickEngine(
         // 5. Political processing
         processPolitics(world)
 
-        // 6. Persist state
+        // 6. Process active tactical battles
+        tacticalBattleService.processSessionBattles(world.id.toLong())
+
+        // 7. Persist state
         sessionStateRepository.save(world)
 
-        // 7. Broadcast tick state to clients every TICK_BROADCAST_INTERVAL ticks
+        // 8. Broadcast tick state to clients every TICK_BROADCAST_INTERVAL ticks
         if (world.tickCount % GameTimeConstants.TICK_BROADCAST_INTERVAL == 0L) {
             gameEventService.broadcastTickState(world)
         }
