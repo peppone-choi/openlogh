@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 04-04-PLAN.md
-last_updated: "2026-04-06T03:38:15.374Z"
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-04-06T03:50:12.929Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 12
   completed_phases: 2
-  total_plans: 15
-  completed_plans: 14
+  total_plans: 19
+  completed_plans: 15
   percent: 25
 ---
 
@@ -66,6 +66,7 @@ Progress: [███░░░░░░░] 25%
 | Phase 04 P03 | 2min | 2 tasks | 6 files |
 | Phase 04 P02 | 4min | 2 tasks | 4 files |
 | Phase 04 P04 | 4min | 3 tasks | 5 files |
+| Phase 05 P01 | 2min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,7 @@ Recent decisions affecting current work:
 - [Phase 04]: Legacy officerLevel >= 5 fallback kept for faction commands during card migration
 - [Phase 04]: Cooldown storage converted from turn-index Int to OffsetDateTime ISO strings with backward compat
 - [Phase 04]: commandGroup field optional on CommandTableEntry for backward compat with category-based grouping
+- [Phase 05]: UnitType stored as VARCHAR in DB, mapped to enum via helper for flexibility
 
 ### Pending Todos
 
@@ -106,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T03:38:15.368Z
-Stopped at: Completed 04-04-PLAN.md
+Last session: 2026-04-06T03:50:12.923Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
