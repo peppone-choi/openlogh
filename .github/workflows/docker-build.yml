@@ -128,10 +128,12 @@ jobs:
                   username: ${{ secrets.SSH_USERNAME }}
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   script: |
-                      if [ ! -d ~/openlogh-deploy ]; then
+                      if [ ! -d ~/openlogh-deploy/.git ]; then
+                        rm -rf ~/openlogh-deploy
                         git clone https://github.com/peppone-choi/openlogh-deploy.git ~/openlogh-deploy
                       fi
                       cd ~/openlogh-deploy
                       git pull origin main
+                      docker compose down --remove-orphans || true
                       docker compose pull
                       docker compose up -d
