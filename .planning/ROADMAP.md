@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Galaxy Map & Planet Model** - 80 star systems, route network, territory zones, fortress systems, galaxy map UI (completed 2026-04-06)
 - [x] **Phase 7: Rank, Merit & Personnel** - 11-tier rank ladder, merit points, promotion/demotion, appointment authority (completed 2026-04-05)
 - [x] **Phase 8: Scenario & Character System** - 10 scenarios, custom character creation, original character selection, scenario events (completed 2026-04-06)
-- [ ] **Phase 9: Strategic Commands** - Operation planning, logistics, production, supply chain commands
+- [x] **Phase 9: Strategic Commands** - Operation planning, logistics, production, supply chain commands (completed 2026-04-06)
 - [x] **Phase 10: Tactical Combat (RTS)** - WebSocket real-time fleet battle, energy allocation, formations, fortress guns (completed 2026-04-06)
 - [ ] **Phase 11: Faction Politics & Diplomacy** - Empire autocracy, Alliance democracy, Fezzan NPC systems, coups, elections
 - [ ] **Phase 12: Communication & Session Lifecycle** - Mail, chat, victory conditions, session restart, rankings
@@ -181,8 +181,14 @@ Plans:
   3. Military strategic commands (deploy fleet, recall, assemble, occupy) move units on the galaxy map with real-time travel
   4. Intelligence commands (espionage, reconnaissance, communication jamming) provide information or disrupt enemy operations
   5. The strategic command UI shows available commands filtered by position card, costs, cooldowns, and execution progress
-**Plans**: TBD
+**Plans:** 4/4 plans complete
 **UI hint**: yes
+
+Plans:
+- [x] 09-01-PLAN.md — Operation planning (작전수립), warp navigation (워프항행/장거리워프), operation directive (작전지시)
+- [x] 09-02-PLAN.md — Logistics (물자배분/함선보급/함대재편/생산감독), budget allocation (예산편성)
+- [x] 09-03-PLAN.md — Intelligence (정찰/통신방해), occupation (점거)
+- [x] 09-04-PLAN.md — Frontend compatibility verification (dynamic category rendering)
 
 ### Phase 10: Tactical Combat (RTS)
 **Goal**: Fleet engagements resolve in real-time via WebSocket with energy allocation, formations, and fortress guns
@@ -243,7 +249,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 6. Galaxy Map & Planet Model | 4/4 | Complete   | 2026-04-06 |
 | 7. Rank, Merit & Personnel | 3/3 | Complete   | 2026-04-05 |
 | 8. Scenario & Character System | 3/3 | Complete   | 2026-04-06 |
-| 9. Strategic Commands | 0/TBD | Not started | - |
+| 9. Strategic Commands | 4/4 | Complete   | 2026-04-06 |
 | 10. Tactical Combat (RTS) | 4/4 | Complete   | 2026-04-06 |
 | 11. Faction Politics & Diplomacy | 0/TBD | Not started | - |
 | 12. Communication, NPC AI & Session Lifecycle | 0/TBD | Not started | - |

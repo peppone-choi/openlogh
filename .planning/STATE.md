@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed Phase 10 Tactical Combat (RTS)
-last_updated: "2026-04-06T05:28:00Z"
+stopped_at: Completed Phase 9 Strategic Commands
+last_updated: "2026-04-06T05:31:00Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 12
-  completed_phases: 6
-  total_plans: 30
-  completed_plans: 29
-  percent: 50
+  completed_phases: 7
+  total_plans: 34
+  completed_plans: 33
+  percent: 58
 ---
 
 # Project State
@@ -21,11 +21,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** gin7의 핵심 "조직 시뮬레이션" — 직무권한카드 기반 커맨드 시스템으로 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 10 - Tactical Combat / RTS (complete)
+**Current focus:** Phase 9 - Strategic Commands (complete)
 
 ## Current Position
 
-Phase: 10 of 12 (Tactical Combat / RTS)
+Phase: 9 of 12 (Strategic Commands)
 Plan: 4 of 4 in current phase
 Status: Phase complete
 Last activity: 2026-04-06
@@ -78,6 +78,10 @@ Progress: [█████░░░░░] 50%
 | Phase 10 P02 | 3min | 2 tasks | 2 files |
 | Phase 10 P03 | 3min | 2 tasks | 4 files |
 | Phase 10 P04 | 3min | 2 tasks | 8 files |
+| Phase 09 P01 | 4min | 2 tasks | 9 files |
+| Phase 09 P02 | 4min | 2 tasks | 10 files |
+| Phase 09 P03 | 3min | 2 tasks | 8 files |
+| Phase 09 P04 | 1min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -114,6 +118,9 @@ Recent decisions affecting current work:
 - [Phase 06]: StarSystemExtra as inner data class of MapService; bidirectional routes deduplicated in API
 - [Phase 06]: Galaxy map uses uniform coordinate scaling with React Konva 2D canvas
 - [Phase 06]: Star system initialization placed after nation assignment in ScenarioService.initializeWorld for correct faction mapping
+- [Phase 09]: 12 gin7 strategic commands added: warp navigation (mobility-based duration), logistics (supply/resupply/reorg), intelligence (stat-based success), occupation (attack vs defense comparison)
+- [Phase 09]: Frontend command panel dynamically renders categories from backend - no UI changes needed for new commands
+- [Phase 09]: New command categories added: 병참 (logistics), 재정 (finance) for better organization
 - [Phase 10]: Active battle states stored in ConcurrentHashMap for fast tick processing, DB persistence every 10 ticks
 - [Phase 10]: SVG-based battle map instead of React Konva to avoid extra dependency
 - [Phase 10]: Fortress gun fires in line-of-fire hitting ALL units including friendlies (gin7 faithful)
