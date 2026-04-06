@@ -19,27 +19,12 @@ import { Button } from '@/components/ui/8bit/button';
 import { toast } from 'sonner';
 import { formatLog } from '@/lib/formatLog';
 
-/** Format tournament type number to display text */
-function formatTournamentType(type?: number | null): string {
-    if (type === undefined || type === null) return '토너먼트';
-    const types: Record<number, string> = {
-        0: '통솔 토너먼트',
-        1: '일기토 토너먼트',
-        2: '설전 토너먼트',
-    };
-    return types[type] ?? '토너먼트';
-}
-
-/** Format autorun mode */
-function formatAutorunMode(mode?: number): string {
-    if (mode === undefined) return '일반';
-    const modes: Record<number, string> = {
-        0: '불가',
-        1: '가능',
-        2: '자동',
-    };
-    return modes[mode] ?? '일반';
-}
+/** LOGH faction color mapping */
+const FACTION_COLORS: Record<string, string> = {
+    empire: '#c9a84c',
+    alliance: '#1e4a8a',
+    fezzan: '#2d6a30',
+};
 
 export function GameDashboard() {
     const { currentWorld } = useWorldStore();
@@ -54,10 +39,10 @@ export function GameDashboard() {
     const [mobileTab, setMobileTab] = useState<'map' | 'commands' | 'status' | 'world'>('map');
 
     const mobileTabs = [
-        { key: 'map', label: '지도', icon: MapIcon },
-        { key: 'commands', label: '명령', icon: Swords },
-        { key: 'status', label: '상태', icon: User },
-        { key: 'world', label: '동향', icon: ScrollText },
+        { key: 'map', label: 'Galaxy', icon: MapIcon },
+        { key: 'commands', label: 'Commands', icon: Swords },
+        { key: 'status', label: 'Status', icon: User },
+        { key: 'world', label: 'Intel', icon: ScrollText },
     ] as const;
 
     const isTabActive = (tab: string) => mobileTab === tab;
@@ -75,18 +60,16 @@ export function GameDashboard() {
             const { data } = await frontApi.getInfo(currentWorld.id, lastRecordIdRef.current, lastHistoryIdRef.current);
             setFrontInfo(data);
 
-            // Sync live year/month from API back to world store so layout header stays current
             if (data.global) {
                 updateWorldTime(data.global.year, data.global.month);
             }
 
-            // Track lastVoteState for vote notification
             if (data.global?.lastVote) {
                 try {
                     const prevVoteState = localStorage.getItem('openlogh:lastVoteState');
                     const curVoteId = String(data.global.lastVote.id ?? '');
                     if (prevVoteState !== curVoteId && curVoteId) {
-                        toast.info('새로운 설문이 진행중입니다!', { duration: 5000 });
+                        toast.info('A new survey is in progress!', { duration: 5000 });
                     }
                     if (curVoteId) localStorage.setItem('openlogh:lastVoteState', curVoteId);
                 } catch {
@@ -150,7 +133,6 @@ export function GameDashboard() {
         };
     }, [currentWorld, debouncedReload]);
 
-    // Compute user / NPC gen counts from genCount array
     const genCounts = useMemo(() => {
         if (!frontInfo?.global.genCount) return { user: 0, npc: 0 };
         let user = 0;
@@ -162,130 +144,55 @@ export function GameDashboard() {
         return { user, npc };
     }, [frontInfo?.global.genCount]);
 
-    if (!currentWorld) return <LoadingState message="월드를 불러오는 중..." />;
+    if (!currentWorld) return <LoadingState message="Loading session..." />;
     if (loading) return <LoadingState />;
 
     const global = frontInfo?.global;
     const mapCode = (currentWorld.config as Record<string, string>)?.mapCode ?? 'che';
 
     return (
-        <div id="container">
-            {/* ===== GameInfo header (legacy GameInfo.vue parity) ===== */}
+        <div id="container" className="bg-[#0a0e1a] text-gray-200">
+            {/* ===== Session Info Header ===== */}
             {global && (
                 <>
-                    {/* Mobile compact summary line */}
-                    <div className="lg:hidden text-center text-xs py-1.5 bg-card/50 border-y border-border">
-                        {global.scenarioText} | {global.year}년 {global.month}월 | 접속{' '}
-                        {(global.onlineUserCnt ?? 0).toLocaleString()}명
+                    {/* Mobile compact summary */}
+                    <div className="lg:hidden text-center text-xs py-1.5 bg-[#0f1429]/80 border-y border-[#1a2040]">
+                        <span className="text-[#00d4ff]">{global.scenarioText}</span> | UC {global.year}.{global.month} | Online{' '}
+                        {(global.onlineUserCnt ?? 0).toLocaleString()}
                     </div>
                     {/* Desktop full header */}
-                    <h3 className="hidden lg:block text-center font-bold py-1 text-sm">
-                        {global.scenarioText}{' '}
-                        {global.serverCnt > 0 && <span className="text-muted-foreground">{global.serverCnt}기</span>}
-                    </h3>
-                    <div className="hidden lg:grid grid-cols-4 md:grid-cols-12 text-center text-[11px] border-t border-b border-gray-600 bg-[#111]">
-                        <div
-                            className="col-span-4 md:col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1"
-                            style={{ color: 'cyan' }}
-                        >
-                            {global.scenarioText}
-                        </div>
-                        <div
-                            className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
-                            style={{ color: 'cyan' }}
-                        >
-                            NPC 수, 상성: {global.extendedGeneral ? '확장' : '표준'}{' '}
-                            {global.isFiction ? '가상' : '사실'}
-                        </div>
-                        <div
-                            className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
-                            style={{ color: 'cyan' }}
-                        >
-                            NPC선택: {['불가능', '가능', '선택 생성'][global.npcMode] ?? '불가능'}
-                        </div>
-                        <div
-                            className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
-                            style={{ color: 'cyan' }}
-                        >
-                            토너먼트: 경기당 {Math.max(1, Math.round((global.turnTerm * 5) / 20))}분
-                        </div>
-                        <div
-                            className="col-span-2 md:col-span-4 lg:col-span-2 border-b border-gray-600 py-1"
-                            style={{ color: 'cyan' }}
-                        >
-                            기타 설정: {formatAutorunMode(global.autorunUser)}
-                        </div>
-
-                        <div className="col-span-4 md:col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1">
-                            현재: {global.year}년 {global.month}월 ({global.turnTerm}분 턴 서버)
-                        </div>
-                        <div className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1">
-                            접속자: {(global.onlineUserCnt ?? 0).toLocaleString()}명
-                        </div>
-                        <div className="col-span-2 md:col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1">
-                            턴당 갱신횟수: {global.apiLimit?.toLocaleString()}회
-                        </div>
-                        <div className="col-span-4 md:col-span-8 lg:col-span-4 border-b border-gray-600 py-1">
-                            등록 장수: 유저 {genCounts.user.toLocaleString()} /{' '}
-                            {(global.generalCntLimit ?? Infinity).toLocaleString()} +{' '}
-                            <span style={{ color: 'cyan' }}>NPC {genCounts.npc.toLocaleString()} 명</span>
-                        </div>
-
-                        <div className="col-span-4 md:col-span-8 lg:col-span-4 border-b border-gray-600 py-1">
-                            참가: {global.joinMode || '자유'} | 개발비용: {global.develCost ?? 0}
-                        </div>
-
-                        <div className="col-span-4 md:col-span-6 lg:col-span-4 border-r border-gray-600 py-1">
-                            {global.isTournamentActive ? (
-                                <span style={{ color: 'cyan' }}>
-                                    ↑{formatTournamentType(global.tournamentType)} 진행중
-                                    {global.tournamentTime ? ` ${global.tournamentTime.substring(5, 16)}` : ''}↑
-                                </span>
-                            ) : (
-                                <span style={{ color: 'magenta' }}>현재 토너먼트 경기 없음</span>
-                            )}
-                        </div>
-                        <div
-                            className="col-span-2 md:col-span-6 lg:col-span-2 border-r border-gray-600 py-1"
-                            style={{ color: global.isLocked ? 'magenta' : 'cyan' }}
-                        >
-                            동작 시각: {global.lastExecuted?.substring(5) ?? '-'}
-                        </div>
-                        <div className="col-span-2 md:col-span-6 lg:col-span-2 border-r border-gray-600 py-1">
-                            {global.auctionCount ? (
-                                <span style={{ color: 'cyan' }}>
-                                    <a href="/auction" className="underline">
-                                        {global.auctionCount}건 거래 진행중
-                                    </a>
-                                </span>
-                            ) : (
-                                <span style={{ color: 'magenta' }}>진행중인 거래 없음</span>
-                            )}
-                        </div>
-                        <div className="col-span-4 md:col-span-6 lg:col-span-4 py-1">
-                            {global.lastVote ? (
-                                <span style={{ color: 'cyan' }}>
-                                    <a href="/vote" className="underline">
-                                        설문 진행 중: <span>{global.lastVote?.title ?? ''}</span>
-                                    </a>
-                                </span>
-                            ) : (
-                                <span style={{ color: 'magenta' }}>진행중인 설문 없음</span>
-                            )}
+                    <div className="hidden lg:block">
+                        <h3 className="text-center font-bold py-1.5 text-sm bg-[#0f1429] border-b border-[#1a2040]">
+                            <span className="text-[#00d4ff] tracking-wider">{global.scenarioText}</span>
+                            {global.serverCnt > 0 && <span className="text-gray-500 ml-2">[{global.serverCnt} sessions]</span>}
+                        </h3>
+                        <div className="grid grid-cols-12 text-center text-[11px] border-b border-[#1a2040] bg-[#0a0e1a]">
+                            <div className="col-span-4 border-r border-[#1a2040] py-1.5 text-[#00d4ff]">
+                                UC {global.year}.{global.month}
+                            </div>
+                            <div className="col-span-2 border-r border-[#1a2040] py-1.5">
+                                Online: {(global.onlineUserCnt ?? 0).toLocaleString()}
+                            </div>
+                            <div className="col-span-3 border-r border-[#1a2040] py-1.5">
+                                Officers: {genCounts.user.toLocaleString()} + <span className="text-[#00d4ff]">NPC {genCounts.npc.toLocaleString()}</span>
+                            </div>
+                            <div className="col-span-3 py-1.5 text-gray-400">
+                                Last tick: {global.lastExecuted?.substring(5) ?? '-'}
+                            </div>
                         </div>
                     </div>
                 </>
             )}
 
-            {/* ===== Online nations bar ===== */}
+            {/* ===== Active Factions Bar ===== */}
             {global && (
-                <div className="border-t border-gray-600 px-2 py-1 text-xs overflow-x-auto whitespace-nowrap lg:whitespace-normal lg:overflow-visible scrollbar-hide">
-                    접속중인 국가:{' '}
+                <div className="border-b border-[#1a2040] px-2 py-1.5 text-xs overflow-x-auto whitespace-nowrap lg:whitespace-normal lg:overflow-visible scrollbar-hide bg-[#0f1429]/50">
+                    <span className="text-gray-400 mr-2">Active Factions:</span>
                     {global.onlineNations.map((n) => (
-                        <span key={n.id} className="mr-2">
+                        <span key={n.id} className="mr-3">
                             <span
-                                className="inline-block size-2 rounded-full mr-0.5"
-                                style={{ backgroundColor: n.color }}
+                                className="inline-block size-2 rounded-full mr-1"
+                                style={{ backgroundColor: n.color, boxShadow: `0 0 4px ${n.color}` }}
                             />
                             {n.name}({n.genCount})
                         </span>
@@ -293,35 +200,35 @@ export function GameDashboard() {
                 </div>
             )}
 
-            {/* ===== Online users bar ===== */}
+            {/* ===== Online Officers ===== */}
             {frontInfo?.nation && (
-                <div className="border-t border-gray-600 px-2 py-1 text-xs">
-                    【 접속자 】 {frontInfo.nation.onlineGen}
+                <div className="border-b border-[#1a2040] px-2 py-1 text-xs bg-[#0a0e1a]">
+                    <span className="text-[#00d4ff]">Online:</span> {frontInfo.nation.onlineGen}
                 </div>
             )}
 
-            {/* ===== Nation notice ===== */}
-            <div className="border-t border-gray-600 py-1">
-                <div className="px-2 text-xs font-bold">【 국가방침 】</div>
+            {/* ===== Faction Notice ===== */}
+            <div className="border-b border-[#1a2040] py-1 bg-[#0f1429]/30">
+                <div className="px-2 text-xs font-bold text-[#c9a84c]">Faction Directive</div>
                 {frontInfo?.nation?.notice && (
                     <div
-                        className="px-2 text-xs break-all"
+                        className="px-2 text-xs break-all text-gray-300"
                         dangerouslySetInnerHTML={{ __html: frontInfo.nation.notice.msg }}
                     />
                 )}
             </div>
 
-            {/* ===== Desktop Refresh Button ===== */}
-            <div className="hidden lg:flex justify-end border-t border-gray-600 px-2 py-1.5">
-                <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-1">
+            {/* ===== Desktop Refresh ===== */}
+            <div className="hidden lg:flex justify-end border-b border-[#1a2040] px-2 py-1.5">
+                <Button onClick={handleRefresh} variant="outline" size="sm" className="gap-1 border-[#1a2040] text-[#00d4ff] hover:bg-[#1a2040]">
                     <RefreshCw className="h-3.5 w-3.5" />
-                    갱신
+                    Refresh
                 </Button>
             </div>
 
             {/* ===== Mobile Tabs ===== */}
             <div
-                className="lg:hidden flex gap-1 p-1 border-t border-b border-border bg-card/50"
+                className="lg:hidden flex gap-1 p-1 border-b border-[#1a2040] bg-[#0f1429]/50"
                 data-tutorial="mobile-tabs"
             >
                 {mobileTabs.map((tab) => {
@@ -330,10 +237,10 @@ export function GameDashboard() {
                         <button
                             key={tab.key}
                             type="button"
-                            className={`flex-1 py-2 text-xs font-bold text-center rounded-full transition-all duration-150 flex items-center justify-center gap-1 ${
+                            className={`flex-1 py-2 text-xs font-bold text-center rounded transition-all duration-150 flex items-center justify-center gap-1 ${
                                 mobileTab === tab.key
-                                    ? 'bg-gradient-to-r from-primary/80 to-primary text-white shadow-md shadow-primary/20'
-                                    : 'bg-card border border-border text-muted-foreground'
+                                    ? 'bg-[#1a2040] text-[#00d4ff] border border-[#00d4ff]/30'
+                                    : 'bg-[#0a0e1a] border border-[#1a2040] text-gray-400'
                             }`}
                             onClick={() => setMobileTab(tab.key)}
                         >
@@ -376,47 +283,47 @@ export function GameDashboard() {
                 </div>
             </div>
 
-            {/* ===== Record zone (legacy parity: 동향 + 개인 side by side, 정세 full) ===== */}
+            {/* ===== Record Zone ===== */}
             {frontInfo && (
                 <div className={`grid grid-cols-1 lg:grid-cols-2 ${isTabActive('world') ? '' : 'max-lg:hidden'}`}>
                     <div>
-                        <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-secondary/10 text-secondary tracking-wide">
-                            장수 동향
+                        <div className="text-center border-t border-b border-[#1a2040] text-xs font-semibold py-1 bg-[#1a2040]/50 text-[#00d4ff] tracking-wide">
+                            Officer Activity
                         </div>
                         {frontInfo.recentRecord.global.length === 0 ? (
-                            <div className="px-2 py-1 text-xs text-gray-400">기록 없음</div>
+                            <div className="px-2 py-1 text-xs text-gray-500">No records</div>
                         ) : (
                             frontInfo.recentRecord.global.slice(0, 15).map((r) => (
-                                <div key={r.id} className="border-b border-gray-600/30 px-2 py-0.5 text-xs">
-                                    <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
+                                <div key={r.id} className="border-b border-[#1a2040]/50 px-2 py-0.5 text-xs">
+                                    <span className="text-gray-500">[{r.date}]</span> {formatLog(r.message)}
                                 </div>
                             ))
                         )}
                     </div>
                     <div>
-                        <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-secondary/10 text-secondary tracking-wide">
-                            개인 기록
+                        <div className="text-center border-t border-b border-[#1a2040] text-xs font-semibold py-1 bg-[#1a2040]/50 text-[#00d4ff] tracking-wide">
+                            Personal Log
                         </div>
                         {frontInfo.recentRecord.general.length === 0 ? (
-                            <div className="px-2 py-1 text-xs text-gray-400">기록 없음</div>
+                            <div className="px-2 py-1 text-xs text-gray-500">No records</div>
                         ) : (
                             frontInfo.recentRecord.general.slice(0, 15).map((r) => (
-                                <div key={r.id} className="border-b border-gray-600/30 px-2 py-0.5 text-xs">
-                                    <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
+                                <div key={r.id} className="border-b border-[#1a2040]/50 px-2 py-0.5 text-xs">
+                                    <span className="text-gray-500">[{r.date}]</span> {formatLog(r.message)}
                                 </div>
                             ))
                         )}
                     </div>
                     <div className="col-span-1 lg:col-span-2">
-                        <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-primary/10 text-primary tracking-wide">
-                            중원 정세
+                        <div className="text-center border-t border-b border-[#1a2040] text-xs font-semibold py-1 bg-[#c9a84c]/10 text-[#c9a84c] tracking-wide">
+                            Galaxy News
                         </div>
                         {frontInfo.recentRecord.history.length === 0 ? (
-                            <div className="px-2 py-1 text-xs text-gray-400">기록 없음</div>
+                            <div className="px-2 py-1 text-xs text-gray-500">No records</div>
                         ) : (
                             frontInfo.recentRecord.history.slice(0, 15).map((r) => (
-                                <div key={r.id} className="border-b border-gray-600/30 px-2 py-0.5 text-xs">
-                                    {r.date && <span className="text-gray-400">[{r.date}]</span>} {formatLog(r.message)}
+                                <div key={r.id} className="border-b border-[#1a2040]/50 px-2 py-0.5 text-xs">
+                                    {r.date && <span className="text-gray-500">[{r.date}]</span>} {formatLog(r.message)}
                                 </div>
                             ))
                         )}
@@ -424,11 +331,11 @@ export function GameDashboard() {
                 </div>
             )}
 
-            {/* ===== Nation Power Summary ===== */}
+            {/* ===== Faction Power Summary ===== */}
             {global && global.onlineNations.length > 0 && (
                 <div className={`${isTabActive('world') ? '' : 'max-lg:hidden'}`}>
-                    <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-game-gold/10 text-game-gold tracking-wide">
-                        세력 현황
+                    <div className="text-center border-t border-b border-[#1a2040] text-xs font-semibold py-1 bg-[#c9a84c]/10 text-[#c9a84c] tracking-wide">
+                        Faction Power
                     </div>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 p-1">
                         {global.onlineNations
@@ -436,12 +343,12 @@ export function GameDashboard() {
                             .map((n) => (
                                 <div
                                     key={n.id}
-                                    className="rounded-none px-2.5 py-2 flex items-center gap-2 transition-colors hover:bg-accent/50"
-                                    style={{ borderLeft: `3px solid ${n.color}` }}
+                                    className="rounded px-2.5 py-2 flex items-center gap-2 transition-colors hover:bg-[#1a2040]/50"
+                                    style={{ borderLeft: `3px solid ${n.color}`, boxShadow: `inset 2px 0 8px -4px ${n.color}` }}
                                 >
                                     <div className="min-w-0 flex-1">
                                         <p className="text-xs font-medium truncate">{n.name}</p>
-                                        <p className="text-[10px] text-muted-foreground">장수 {n.genCount}명</p>
+                                        <p className="text-[10px] text-gray-500">Officers: {n.genCount}</p>
                                     </div>
                                 </div>
                             ))}
@@ -449,80 +356,44 @@ export function GameDashboard() {
                 </div>
             )}
 
-            {/* ===== General Status Summary ===== */}
+            {/* ===== Officer Status Summary ===== */}
             {frontInfo?.general && (
                 <div className={`${isTabActive('status') ? '' : 'max-lg:hidden'}`}>
-                    <div className="text-center border-t border-b border-border text-xs font-semibold py-1 bg-primary/10 text-primary tracking-wide">
-                        내 장수 요약
+                    <div className="text-center border-t border-b border-[#1a2040] text-xs font-semibold py-1 bg-[#00d4ff]/10 text-[#00d4ff] tracking-wide">
+                        My Officer Summary
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 text-center text-xs border-b border-gray-600">
-                        <div className="border-r border-gray-600/50 py-1">
-                            <span className="text-muted-foreground">전투</span>{' '}
-                            <span className="text-cyan-400">
-                                {frontInfo.general.warnum}전 {frontInfo.general.killnum}승 {frontInfo.general.deathnum}
-                                패
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 text-center text-xs border-b border-[#1a2040]">
+                        <div className="border-r border-[#1a2040]/50 py-1">
+                            <span className="text-gray-500">Battles</span>{' '}
+                            <span className="text-[#00d4ff]">
+                                {frontInfo.general.warnum}W {frontInfo.general.killnum}V {frontInfo.general.deathnum}D
                             </span>
                         </div>
-                        <div className="border-r border-gray-600/50 py-1">
-                            <span className="text-muted-foreground">살상</span>{' '}
+                        <div className="border-r border-[#1a2040]/50 py-1">
+                            <span className="text-gray-500">Kills</span>{' '}
                             <span className="text-orange-400">{frontInfo.general.killcrew.toLocaleString()}</span>
                         </div>
-                        <div className="border-r border-gray-600/50 py-1">
-                            <span className="text-muted-foreground">피살</span>{' '}
+                        <div className="border-r border-[#1a2040]/50 py-1">
+                            <span className="text-gray-500">Losses</span>{' '}
                             <span className="text-red-400">{frontInfo.general.deathcrew.toLocaleString()}</span>
                         </div>
-                        <div className="border-r border-gray-600/50 py-1">
-                            <span className="text-muted-foreground">계략</span>{' '}
+                        <div className="border-r border-[#1a2040]/50 py-1">
+                            <span className="text-gray-500">Intel Ops</span>{' '}
                             <span className="text-purple-400">{frontInfo.general.firenum}</span>
                         </div>
-                        <div className="border-r border-gray-600/50 py-1">
-                            <span className="text-muted-foreground">부상</span>{' '}
+                        <div className="border-r border-[#1a2040]/50 py-1">
+                            <span className="text-gray-500">Injury</span>{' '}
                             <span className={frontInfo.general.injury > 0 ? 'text-red-400' : 'text-green-400'}>
                                 {frontInfo.general.injury}%
                             </span>
                         </div>
-                        <div className="border-r border-gray-600/50 py-1">
-                            <span className="text-muted-foreground">명성</span>{' '}
+                        <div className="border-r border-[#1a2040]/50 py-1">
+                            <span className="text-gray-500">Honor</span>{' '}
                             <span className="text-yellow-400">{frontInfo.general.honorText}</span>
                         </div>
                         <div className="py-1">
-                            <span className="text-muted-foreground">봉급</span>{' '}
-                            <span className="text-game-gold">{frontInfo.general.bill}금</span>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-5 text-center text-xs border-b border-gray-600">
-                        <div className="border-r border-gray-600/50 py-1 lg:border-b-0 border-b border-gray-600/30">
-                            <span className="text-muted-foreground">숙련</span>{' '}
-                            <span className="text-cyan-300">
-                                보{frontInfo.general.dex1} 궁{frontInfo.general.dex2} 기{frontInfo.general.dex3} 공
-                                {frontInfo.general.dex4} 수{frontInfo.general.dex5}
-                            </span>
-                        </div>
-                        <div className="border-r border-gray-600/50 py-1 lg:col-span-2 lg:border-b-0 border-b border-gray-600/30">
-                            <span className="text-muted-foreground">특기</span>{' '}
-                            <span className="text-green-300">
-                                {frontInfo.general.personal || '-'} / {frontInfo.general.specialDomestic || '-'} /{' '}
-                                {frontInfo.general.specialWar || '-'}
-                            </span>
-                        </div>
-                        <div className="border-r border-gray-600/50 py-1 lg:border-b-0 border-b border-gray-600/30">
-                            <span className="text-muted-foreground">아이템</span>{' '}
-                            <span className="text-yellow-300">
-                                {[
-                                    frontInfo.general.weapon,
-                                    frontInfo.general.book,
-                                    frontInfo.general.horse,
-                                    frontInfo.general.item,
-                                ]
-                                    .filter(Boolean)
-                                    .join(', ') || '없음'}
-                            </span>
-                        </div>
-                        <div className="py-1">
-                            <span className="text-muted-foreground">경험/공헌</span>{' '}
-                            <span>
-                                {frontInfo.general.explevel}/{frontInfo.general.dedlevel}
-                            </span>
+                            <span className="text-gray-500">Salary</span>{' '}
+                            <span className="text-[#c9a84c]">{frontInfo.general.bill}</span>
                         </div>
                     </div>
                 </div>
@@ -533,137 +404,50 @@ export function GameDashboard() {
                 <div className={`text-center py-1 ${isTabActive('world') ? '' : 'max-lg:hidden'}`}>
                     <button
                         type="button"
-                        className="text-[10px] text-gray-500 hover:text-gray-300"
+                        className="text-[10px] text-gray-600 hover:text-gray-400"
                         onClick={() => setShowVersionModal(true)}
                     >
-                        버전 정보
+                        Session Info
                     </button>
                 </div>
             )}
             {showVersionModal && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
                     onClick={() => setShowVersionModal(false)}
                 >
                     <div
-                        className="bg-[#222] border border-gray-600 rounded-none p-4 max-w-sm w-full mx-4 space-y-2"
+                        className="bg-[#0f1429] border border-[#1a2040] rounded p-4 max-w-sm w-full mx-4 space-y-2"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h3 className="text-sm font-bold text-center">버전 정보</h3>
-                        <div className="text-xs space-y-1">
-                            <p>
-                                <span className="text-muted-foreground">시나리오:</span> {global?.scenarioText}
-                            </p>
-                            <p>
-                                <span className="text-muted-foreground">서버:</span> {currentWorld?.name}
-                            </p>
-                            <p>
-                                <span className="text-muted-foreground">턴 주기:</span> {global?.turnTerm}분
-                            </p>
-                            <p>
-                                <span className="text-muted-foreground">게임 시간:</span> {global?.year}년{' '}
-                                {global?.month}월
-                            </p>
-                            <p>
-                                <span className="text-muted-foreground">최종 실행:</span> {global?.lastExecuted ?? '-'}
-                            </p>
-                            <p>
-                                <span className="text-muted-foreground">확장 장수:</span>{' '}
-                                {global?.extendedGeneral ? '활성' : '비활성'}
-                            </p>
-                            <p>
-                                <span className="text-muted-foreground">가상/사실:</span>{' '}
-                                {global?.isFiction ? '가상' : '사실'}
-                            </p>
-                            <p>
-                                <span className="text-muted-foreground">NPC 모드:</span>{' '}
-                                {['불가', '가능', '선택생성'][global?.npcMode ?? 0]}
-                            </p>
-                            <p>
-                                <span className="text-muted-foreground">장수 제한:</span>{' '}
-                                {global?.generalCntLimit?.toLocaleString() ?? '무제한'}
-                            </p>
+                        <h3 className="text-sm font-bold text-center text-[#00d4ff]">Session Info</h3>
+                        <div className="text-xs space-y-1 text-gray-300">
+                            <p><span className="text-gray-500">Scenario:</span> {global?.scenarioText}</p>
+                            <p><span className="text-gray-500">Server:</span> {currentWorld?.name}</p>
+                            <p><span className="text-gray-500">Game Time:</span> UC {global?.year}.{global?.month}</p>
+                            <p><span className="text-gray-500">Last Tick:</span> {global?.lastExecuted ?? '-'}</p>
+                            <p><span className="text-gray-500">Extended Officers:</span> {global?.extendedGeneral ? 'ON' : 'OFF'}</p>
+                            <p><span className="text-gray-500">NPC Mode:</span> {['Disabled', 'Enabled', 'Create'][global?.npcMode ?? 0]}</p>
+                            <p><span className="text-gray-500">Officer Limit:</span> {global?.generalCntLimit?.toLocaleString() ?? 'Unlimited'}</p>
                         </div>
                         <div className="flex justify-center pt-2">
-                            <Button size="sm" variant="outline" onClick={() => setShowVersionModal(false)}>
-                                닫기
+                            <Button size="sm" variant="outline" onClick={() => setShowVersionModal(false)} className="border-[#1a2040] text-[#00d4ff]">
+                                Close
                             </Button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ===== Responsive grid styles for ingameBoard ===== */}
             <style jsx>{`
                 #container {
                     width: 100%;
                     max-width: 100%;
                     margin: 0 auto;
                 }
-
-                .ingameBoard {
-                    grid-template-columns: 1fr;
-                }
-                .actionPlate {
-                    order: -1;
-                }
-                .reservedCommandZone {
-                    order: 0;
-                }
-                .generalCommandToolbar {
-                    order: 1;
-                }
-                .nationInfo {
-                    order: 2;
-                }
-                .generalInfo {
-                    order: 3;
-                }
-                .cityInfo {
-                    order: 4;
-                }
-                .mapView {
-                    order: 5;
-                }
                 @media (min-width: 1024px) {
                     #container {
                         max-width: 1000px;
-                    }
-
-                    .ingameBoard {
-                        grid-template-columns: 500px 200px 300px;
-                    }
-                    .mapView {
-                        grid-column: 1 / 3;
-                        grid-row: 1;
-                        order: unset;
-                    }
-                    .reservedCommandZone {
-                        grid-column: 3;
-                        grid-row: 1 / 3;
-                        order: unset;
-                    }
-                    .cityInfo {
-                        grid-column: 1 / 3;
-                        grid-row: 2 / 4;
-                        order: unset;
-                    }
-                    .actionPlate {
-                        grid-column: 3;
-                        grid-row: 3;
-                        order: unset;
-                    }
-                    .generalCommandToolbar {
-                        grid-column: 1 / 4;
-                        order: unset;
-                    }
-                    .nationInfo {
-                        grid-column: 1;
-                        order: unset;
-                    }
-                    .generalInfo {
-                        grid-column: 2 / 4;
-                        order: unset;
                     }
                 }
             `}</style>

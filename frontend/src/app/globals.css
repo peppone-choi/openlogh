@@ -99,6 +99,15 @@
     --game-green: #10b981;
     --game-purple: #8b5cf6;
     --game-cyan: #06b6d4;
+
+    /* LOGH faction colors */
+    --logh-empire: #c9a84c;
+    --logh-alliance: #1e4a8a;
+    --logh-fezzan: #2d6a30;
+    --logh-accent: #00d4ff;
+    --logh-space-bg: #0a0e1a;
+    --logh-panel-bg: #0f1429;
+    --logh-border: #1a2040;
 }
 
 .dark {

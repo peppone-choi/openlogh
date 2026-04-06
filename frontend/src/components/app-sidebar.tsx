@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation';
 import {
     Home,
     Swords,
-    Building2,
-    Castle,
+    Globe,
+    Shield,
     User,
     Map as MapIcon,
     ScrollText,
@@ -35,88 +35,88 @@ import { useWorldStore } from '@/stores/worldStore';
 
 const navItems = [
     {
-        title: '홈',
+        title: 'Bridge',
         url: '/',
         icon: Home,
     },
     {
-        title: '도시',
+        title: 'Star System',
         url: '/city',
-        icon: Building2,
+        icon: Globe,
     },
     {
-        title: '국가',
-        icon: Castle,
+        title: 'Faction',
+        icon: Shield,
         requireNation: true,
         items: [
-            { title: '세력정보', url: '/nation' },
-            { title: '세력장수', url: '/nation-generals' },
-            { title: '세력도시', url: '/nation-cities' },
-            { title: '부대편성', url: '/troop' },
-            { title: '외교부', url: '/diplomacy', requireSecret: true as const },
-            { title: '인사부', url: '/personnel' },
-            { title: '내무부', url: '/internal-affairs', requireSecret: true as const },
-            { title: '사령부', url: '/chief', requireSecret: true as const },
-            { title: 'NPC정책', url: '/npc-control', requireSecret: true as const },
-            { title: '암행부', url: '/spy', requireSecret: true as const },
-            { title: '감찰부', url: '/battle', requireSecret: true as const },
+            { title: 'Faction Info', url: '/nation' },
+            { title: 'Officers', url: '/nation-generals' },
+            { title: 'Planets', url: '/nation-cities' },
+            { title: 'Fleet Org', url: '/troop' },
+            { title: 'Diplomacy', url: '/diplomacy', requireSecret: true as const },
+            { title: 'Personnel', url: '/personnel' },
+            { title: 'Administration', url: '/internal-affairs', requireSecret: true as const },
+            { title: 'Command HQ', url: '/chief', requireSecret: true as const },
+            { title: 'NPC Policy', url: '/npc-control', requireSecret: true as const },
+            { title: 'Intelligence', url: '/spy', requireSecret: true as const },
+            { title: 'Military Review', url: '/battle', requireSecret: true as const },
         ],
     },
     {
-        title: '내정보',
+        title: 'My Officer',
         icon: User,
         items: [
-            { title: '내정보&설정', url: '/my-page' },
-            { title: '내장수', url: '/general' },
-            { title: '유산관리', url: '/inherit' },
+            { title: 'Profile & Settings', url: '/my-page' },
+            { title: 'Officer Detail', url: '/general' },
+            { title: 'Legacy', url: '/inherit' },
         ],
     },
     {
-        title: '중원',
+        title: 'Galaxy',
         icon: MapIcon,
         items: [
-            { title: '중원정보', url: '/global-diplomacy' },
-            { title: '세력일람', url: '/nations' },
-            { title: '장수일람', url: '/generals' },
-            { title: '명장일람', url: '/best-generals' },
-            { title: 'NPC일람', url: '/npc-list', requireNpcMode: true as const },
+            { title: 'Galaxy Overview', url: '/global-diplomacy' },
+            { title: 'All Factions', url: '/nations' },
+            { title: 'All Officers', url: '/generals' },
+            { title: 'Distinguished Officers', url: '/best-generals' },
+            { title: 'NPC Roster', url: '/npc-list', requireNpcMode: true as const },
         ],
     },
     {
-        title: '기록',
+        title: 'Records',
         icon: ScrollText,
         items: [
-            { title: '연감', url: '/history' },
-            { title: '명예의전당', url: '/hall-of-fame' },
-            { title: '왕조일람', url: '/emperor' },
+            { title: 'Chronicle', url: '/history' },
+            { title: 'Hall of Fame', url: '/hall-of-fame' },
+            { title: 'Sovereigns', url: '/emperor' },
         ],
     },
     {
-        title: '소통',
+        title: 'Comms',
         icon: MessageSquare,
         items: [
-            { title: '회의실', url: '/board', requireNation: true as const },
-            { title: '기밀실', url: '/board?secret=true', requireSecret: true as const },
-            { title: '메시지', url: '/messages' },
+            { title: 'War Room', url: '/board', requireNation: true as const },
+            { title: 'Classified', url: '/board?secret=true', requireSecret: true as const },
+            { title: 'Messages', url: '/messages' },
         ],
     },
     {
-        title: '부가',
+        title: 'Services',
         icon: Gamepad2,
         items: [
-            { title: '토너먼트', url: '/tournament' },
-            { title: '경매장', url: '/auction' },
-            { title: '베팅장', url: '/betting' },
-            { title: '천통국베팅', url: '/nation-betting' },
-            { title: '전투시뮬', url: '/battle-simulator' },
+            { title: 'Tournament', url: '/tournament' },
+            { title: 'Auction', url: '/auction' },
+            { title: 'Betting', url: '/betting' },
+            { title: 'Faction Betting', url: '/nation-betting' },
+            { title: 'Battle Sim', url: '/battle-simulator' },
         ],
     },
     {
-        title: '설정',
+        title: 'System',
         icon: Settings,
         items: [
-            { title: '서버정보', url: '/traffic' },
-            { title: '설문조사', url: '/vote' },
+            { title: 'Server Info', url: '/traffic' },
+            { title: 'Survey', url: '/vote' },
         ],
     },
 ];
@@ -162,7 +162,9 @@ export function AppSidebar() {
     return (
         <Sidebar collapsible="icon">
             <SidebarHeader>
-                <div className="group-data-[collapsible=icon]:hidden px-2 py-1 font-bold text-base">오픈삼국</div>
+                <div className="group-data-[collapsible=icon]:hidden px-2 py-1 font-bold text-base tracking-wider text-[#00d4ff]">
+                    OPEN LOGH
+                </div>
             </SidebarHeader>
 
             <SidebarContent>
@@ -216,7 +218,7 @@ export function AppSidebar() {
 
             <SidebarFooter>
                 <div className="group-data-[collapsible=icon]:hidden p-2 text-xs text-muted-foreground">
-                    {myOfficer?.name || '장수 없음'}
+                    {myOfficer?.name || 'No officer'}
                 </div>
             </SidebarFooter>
         </Sidebar>
