@@ -60,6 +60,10 @@ interface MessageRepository : JpaRepository<Message, Long> {
         @Param("year") year: Int,
     ): List<Message>
 
+    fun findBySrcIdAndMailboxType(srcId: Long, mailboxType: String): List<Message>
+    fun findByDestIdAndMailboxType(destId: Long, mailboxType: String): List<Message>
+    fun countByDestIdAndMailboxType(destId: Long, mailboxType: String): Long
+
     @Query(
         """
         SELECT m FROM Message m

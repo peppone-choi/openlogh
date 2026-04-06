@@ -27,6 +27,8 @@ class MessageService(
         const val MAILBOX_DIPLOMACY = "DIPLOMACY"
         private const val DEFAULT_TYPED_PAGE_SIZE = 30
         private const val MAX_PAGE_SIZE = 100
+        /** Maximum messages per mailbox per recipient */
+        const val MAILBOX_CAP = 120
     }
 
     fun getMessages(generalId: Long, sinceId: Long? = null, limit: Int? = null): List<Message> {
@@ -471,5 +473,42 @@ class MessageService(
     private fun applyLimit(messages: List<Message>, limit: Int?): List<Message> {
         val normalizedLimit = (limit ?: DEFAULT_TYPED_PAGE_SIZE).coerceIn(1, MAX_PAGE_SIZE)
         return messages.take(normalizedLimit)
+    }
+
+    /**
+     * Get mailbox counts by type for an officer.
+     */
+    fun getMailboxCounts(generalId: Long): Map<String, Long> {
+        val officer = officerRepository.findById(generalId).orElse(null) ?: return emptyMap()
+        val privateCnt = messageRepository.countByDestIdAndMailboxType(generalId, MAILBOX_PRIVATE)
+        val nationalCnt = if (officer.factionId != 0L) {
+            messageRepository.countByDestIdAndMailboxType(officer.factionId, MAILBOX_NATIONAL)
+        } else 0L
+        val diplomacyCnt = if (officer.factionId != 0L && officer.officerLevel >= 4) {
+            messageRepository.countByDestIdAndMailboxType(officer.factionId, MAILBOX_DIPLOMACY)
+        } else 0L
+
+        return mapOf(
+            "private" to privateCnt,
+            "national" to nationalCnt,
+            "diplomacy" to diplomacyCnt,
+            "privateMax" to MAILBOX_CAP.toLong(),
+        )
+    }
+
+    /**
+     * Enforce mailbox cap: when at MAILBOX_CAP, delete the oldest message.
+     */
+    @Transactional
+    fun enforceMailboxCap(destId: Long, mailboxType: String) {
+        val count = messageRepository.countByDestIdAndMailboxType(destId, mailboxType)
+        if (count >= MAILBOX_CAP) {
+            val messages = messageRepository.findByDestIdAndMailboxTypeOrderBySentAtDesc(destId, mailboxType)
+            if (messages.size >= MAILBOX_CAP) {
+                // Delete oldest messages beyond the cap
+                val toDelete = messages.drop(MAILBOX_CAP - 1)
+                messageRepository.deleteAll(toDelete)
+            }
+        }
     }
 }
