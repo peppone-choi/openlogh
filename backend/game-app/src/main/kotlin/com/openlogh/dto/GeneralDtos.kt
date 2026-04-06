@@ -6,11 +6,22 @@ data class CreateGeneralRequest(
     val name: String? = null,
     val cityId: Long? = null,
     val nationId: Long? = 0,
+    // Legacy 5-stat fields (backward compatible)
     val leadership: Short = 50,
     val strength: Short = 50,
     val intel: Short = 50,
     val politics: Short = 50,
     val charm: Short = 50,
+    // LOGH 8-stat fields (used when statMode == "8stat")
+    val statMode: String? = null, // "8stat" for LOGH, null for legacy 5-stat
+    val command: Short? = null,
+    val intelligence: Short? = null,
+    val administration: Short? = null,
+    val mobility: Short? = null,
+    val attack: Short? = null,
+    val defense: Short? = null,
+    // Origin for LOGH characters (empire: noble/knight/commoner/exile, alliance: citizen/exile)
+    val origin: String? = null,
     val crewType: Short = 0,
     val personality: String? = "Random",
     val pic: Boolean? = null,
@@ -19,6 +30,8 @@ data class CreateGeneralRequest(
     val inheritTurntimeZone: Int? = null,
     val inheritCity: Long? = null,
     val inheritBonusStat: List<Int>? = null,
+    // Original character selection (select from scenario pool)
+    val selectPoolId: Long? = null,
 )
 
 data class SelectNpcRequest(val generalId: Long)

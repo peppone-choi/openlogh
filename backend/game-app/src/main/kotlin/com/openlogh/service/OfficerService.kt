@@ -33,6 +33,11 @@ class OfficerService(
         private const val JOIN_STAT_TOTAL = 350
         private const val STAT_MIN = 10
         private const val STAT_MAX = 100
+        // LOGH 8-stat system constants
+        private const val LOGH_JOIN_STAT_TOTAL = 400
+        private const val LOGH_STAT_MIN = 20
+        private const val LOGH_STAT_MAX = 95
+        private const val LOGH_STAT_COUNT = 8
 
         private val LEGACY_PERSONALITY_CODES = listOf(
             "che_안전", "che_유지", "che_재간", "che_출세", "che_할거",
@@ -99,7 +104,12 @@ class OfficerService(
         }
 
         ensureCreateAllowed(world, worldId, userId)
-        validateFiveStats(request.leadership, request.strength, request.intel, request.politics, request.charm)
+        val isEightStat = request.statMode == "8stat"
+        if (isEightStat) {
+            validateEightStats(request)
+        } else {
+            validateFiveStats(request.leadership, request.strength, request.intel, request.politics, request.charm)
+        }
 
         val prePurchasedSpecial = user.meta["inheritSpecificSpecialWar"] as? String
         val prePurchasedCity = (user.meta["inheritCity"] as? Number)?.toLong()
@@ -158,53 +168,114 @@ class OfficerService(
         )
         applyJoinInheritCost(user, pointsToSpend)
 
-        val bonusStat = inheritBonusStat ?: randomBornBonus(rng, request.leadership.toInt(), request.strength.toInt(), request.intel.toInt(), request.politics.toInt(), request.charm.toInt())
         val relYear = (world.currentYear.toInt() - getStartYear(world)).coerceAtLeast(0)
-        val age = (20 + bonusStat.sum() * 2 - rng.nextInt(0, 2)).toShort()
-        val specAge = calcSpecAge(age.toInt(), relYear)
-        val spec2Age = if (inheritSpecial != null) age else calcWarSpecAge(age.toInt(), relYear)
+        val useOwnIcon = request.useOwnIcon ?: request.pic ?: false
+        val (picture, imageServer) = resolvePicture(user, useOwnIcon)
         val experience = faction?.let {
             val initialNationGenLimit = (world.config["initialNationGenLimit"] as? Number)?.toInt()
                 ?: gameConstService.getInt("initialNationGenLimit")
             if (it.officerCount < initialNationGenLimit) 700 else 100
         } ?: calcStartingExperience(allGenerals, relYear)
-        val useOwnIcon = request.useOwnIcon ?: request.pic ?: false
-        val (picture, imageServer) = resolvePicture(user, useOwnIcon)
 
-        val saved = officerRepository.save(
-            Officer(
-                sessionId = worldId,
-                userId = userId,
-                name = name,
-                planetId = finalCityId,
-                factionId = nationId,
-                affinity = rng.nextInt(1, 151).toShort(),
-                picture = picture,
-                imageServer = imageServer,
-                leadership = (request.leadership + bonusStat[0]).toShort(),
-                command = (request.strength + bonusStat[1]).toShort(),
-                intelligence = (request.intel + bonusStat[2]).toShort(),
-                politics = (request.politics + bonusStat[3]).toShort(),
-                administration = (request.charm + bonusStat[4]).toShort(),
-                experience = experience,
-                officerLevel = if (nationId > 0L) 1 else 0,
-                officerPlanet = 0,
-                permission = "normal",
-                funds = gameConstService.getInt("defaultGold"), supplies = gameConstService.getInt("defaultRice"),
-                shipClass = request.crewType,
-                ownerName = user.displayName,
-                turnTime = createInitialTurnTime(world, rng, request.inheritTurntimeZone),
-                killTurn = resolveKillTurn(world).toShort(),
-                age = age,
-                startAge = age,
-                betray = if (relYear >= 4) 2 else 0,
-                personalCode = normalizePersonalityCode(request.personality, rng),
-                specialCode = "None",
-                specAge = specAge,
-                special2Code = inheritSpecial ?: "None",
-                spec2Age = spec2Age,
-            ),
-        )
+        val saved = if (isEightStat) {
+            // LOGH 8-stat character creation
+            val age = (20 - rng.nextInt(0, 2)).toShort()
+            val specAge = calcSpecAge(age.toInt(), relYear)
+            val spec2Age = if (inheritSpecial != null) age else calcWarSpecAge(age.toInt(), relYear)
+
+            // Validate origin if provided
+            val origin = request.origin
+            if (origin != null && faction != null) {
+                val factionType = faction.factionType.removePrefix("logh_").removePrefix("che_")
+                val validOrigins = VALID_ORIGINS[factionType]
+                if (validOrigins != null && origin !in validOrigins) {
+                    throw IllegalArgumentException("해당 진영에서 선택할 수 없는 출신입니다. (가능: ${validOrigins.joinToString()})")
+                }
+            }
+
+            val meta = mutableMapOf<String, Any>()
+            if (origin != null) meta["origin"] = origin
+
+            officerRepository.save(
+                Officer(
+                    sessionId = worldId,
+                    userId = userId,
+                    name = name,
+                    planetId = finalCityId,
+                    factionId = nationId,
+                    affinity = rng.nextInt(1, 151).toShort(),
+                    picture = picture,
+                    imageServer = imageServer,
+                    leadership = request.leadership,
+                    command = request.command ?: 50,
+                    intelligence = request.intelligence ?: 50,
+                    politics = request.politics,
+                    administration = request.administration ?: 50,
+                    mobility = request.mobility ?: 50,
+                    attack = request.attack ?: 50,
+                    defense = request.defense ?: 50,
+                    experience = experience,
+                    officerLevel = if (nationId > 0L) 1 else 0, // Start at sub-lieutenant (rank 0 -> officerLevel 1)
+                    officerPlanet = 0,
+                    permission = "normal",
+                    funds = gameConstService.getInt("defaultGold"), supplies = gameConstService.getInt("defaultRice"),
+                    shipClass = request.crewType,
+                    ownerName = user.displayName,
+                    turnTime = createInitialTurnTime(world, rng, request.inheritTurntimeZone),
+                    killTurn = resolveKillTurn(world).toShort(),
+                    age = age,
+                    startAge = age,
+                    betray = if (relYear >= 4) 2 else 0,
+                    personalCode = normalizePersonalityCode(request.personality, rng),
+                    specialCode = "None",
+                    specAge = specAge,
+                    special2Code = inheritSpecial ?: "None",
+                    spec2Age = spec2Age,
+                    meta = meta,
+                ),
+            )
+        } else {
+            // Legacy 5-stat character creation
+            val bonusStat = inheritBonusStat ?: randomBornBonus(rng, request.leadership.toInt(), request.strength.toInt(), request.intel.toInt(), request.politics.toInt(), request.charm.toInt())
+            val age = (20 + bonusStat.sum() * 2 - rng.nextInt(0, 2)).toShort()
+            val specAge = calcSpecAge(age.toInt(), relYear)
+            val spec2Age = if (inheritSpecial != null) age else calcWarSpecAge(age.toInt(), relYear)
+
+            officerRepository.save(
+                Officer(
+                    sessionId = worldId,
+                    userId = userId,
+                    name = name,
+                    planetId = finalCityId,
+                    factionId = nationId,
+                    affinity = rng.nextInt(1, 151).toShort(),
+                    picture = picture,
+                    imageServer = imageServer,
+                    leadership = (request.leadership + bonusStat[0]).toShort(),
+                    command = (request.strength + bonusStat[1]).toShort(),
+                    intelligence = (request.intel + bonusStat[2]).toShort(),
+                    politics = (request.politics + bonusStat[3]).toShort(),
+                    administration = (request.charm + bonusStat[4]).toShort(),
+                    experience = experience,
+                    officerLevel = if (nationId > 0L) 1 else 0,
+                    officerPlanet = 0,
+                    permission = "normal",
+                    funds = gameConstService.getInt("defaultGold"), supplies = gameConstService.getInt("defaultRice"),
+                    shipClass = request.crewType,
+                    ownerName = user.displayName,
+                    turnTime = createInitialTurnTime(world, rng, request.inheritTurntimeZone),
+                    killTurn = resolveKillTurn(world).toShort(),
+                    age = age,
+                    startAge = age,
+                    betray = if (relYear >= 4) 2 else 0,
+                    personalCode = normalizePersonalityCode(request.personality, rng),
+                    specialCode = "None",
+                    specAge = specAge,
+                    special2Code = inheritSpecial ?: "None",
+                    spec2Age = spec2Age,
+                ),
+            )
+        }
 
         if (nameBlocked) {
             saved.name = generateObfuscatedName(saved.id, world)
@@ -397,6 +468,31 @@ class OfficerService(
             throw IllegalArgumentException("능력치 합계가 ${JOIN_STAT_TOTAL}이어야 합니다.")
         }
     }
+
+    private fun validateEightStats(request: CreateGeneralRequest) {
+        val values = listOf(
+            request.leadership.toInt(),
+            request.command?.toInt() ?: throw IllegalArgumentException("command 스탯이 필요합니다."),
+            request.intelligence?.toInt() ?: throw IllegalArgumentException("intelligence 스탯이 필요합니다."),
+            request.politics.toInt(),
+            request.administration?.toInt() ?: throw IllegalArgumentException("administration 스탯이 필요합니다."),
+            request.mobility?.toInt() ?: throw IllegalArgumentException("mobility 스탯이 필요합니다."),
+            request.attack?.toInt() ?: throw IllegalArgumentException("attack 스탯이 필요합니다."),
+            request.defense?.toInt() ?: throw IllegalArgumentException("defense 스탯이 필요합니다."),
+        )
+        if (values.any { it < LOGH_STAT_MIN || it > LOGH_STAT_MAX }) {
+            throw IllegalArgumentException("능력치는 ${LOGH_STAT_MIN}~${LOGH_STAT_MAX} 사이여야 합니다.")
+        }
+        if (values.sum() != LOGH_JOIN_STAT_TOTAL) {
+            throw IllegalArgumentException("능력치 합계가 ${LOGH_JOIN_STAT_TOTAL}이어야 합니다. (현재: ${values.sum()})")
+        }
+    }
+
+    /** Valid origin values per faction type */
+    private val VALID_ORIGINS = mapOf(
+        "empire" to setOf("noble", "knight", "commoner", "exile"),
+        "alliance" to setOf("citizen", "exile"),
+    )
 
     private fun normalizeInheritBonusStat(raw: List<Int>?): List<Int>? {
         if (raw == null) return null
