@@ -280,6 +280,15 @@ class Officer(
     @Column(columnDefinition = "jsonb", nullable = false)
     var penalty: MutableMap<String, Any> = mutableMapOf(),
 
+    @Column(name = "merit_points", nullable = false)
+    var meritPoints: Int = 0,
+
+    @Column(name = "evaluation_points", nullable = false)
+    var evaluationPoints: Int = 0,
+
+    @Column(name = "fame_points", nullable = false)
+    var famePoints: Int = 0,
+
     @Column(name = "created_at", nullable = false)
     var createdAt: OffsetDateTime = OffsetDateTime.now(),
 
