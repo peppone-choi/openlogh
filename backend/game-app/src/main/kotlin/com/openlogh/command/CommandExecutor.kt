@@ -16,9 +16,12 @@ import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.engine.modifier.ModifierService
+import com.openlogh.model.PositionCardRegistry
 import com.openlogh.service.MapService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
+import java.time.Duration
 import kotlin.random.Random
 
 @Service
@@ -76,6 +79,17 @@ class CommandExecutor @Autowired constructor(
         nation: Faction? = null,
         rng: Random = Random.Default
     ): CommandResult {
+        // Position card authority check (bypass for always-allowed commands)
+        if (actionCode !in ALWAYS_ALLOWED_COMMANDS) {
+            val officerCards = general.getPositionCardEnums()
+            if (!PositionCardRegistry.canExecute(officerCards, actionCode)) {
+                return CommandResult(
+                    success = false,
+                    logs = listOf("<R>${actionCode}</>을(를) 실행할 수 없습니다. - 해당 직무권한카드가 없습니다.")
+                )
+            }
+        }
+
         var effectiveArg = arg
         var effectiveNation = nation
         val schema = commandRegistry.getOfficerSchema(actionCode)
@@ -165,6 +179,20 @@ class CommandExecutor @Autowired constructor(
         nation: Faction? = null,
         rng: Random = Random.Default
     ): CommandResult {
+        // Position card authority check (bypass for always-allowed commands)
+        if (actionCode !in ALWAYS_ALLOWED_COMMANDS) {
+            val officerCards = general.getPositionCardEnums()
+            if (!PositionCardRegistry.canExecute(officerCards, actionCode)) {
+                // Legacy fallback: officerLevel >= 5 still grants access during migration
+                if (general.officerLevel < 5) {
+                    return CommandResult(
+                        success = false,
+                        logs = listOf("<R>${actionCode}</>을(를) 실행할 수 없습니다. - 해당 직무권한카드가 없습니다.")
+                    )
+                }
+            }
+        }
+
         var effectiveArg = arg
         val schema = commandRegistry.getFactionSchema(actionCode)
         if (schema != ArgSchema.NONE && !effectiveArg.isNullOrEmpty()) {
@@ -242,19 +270,37 @@ class CommandExecutor @Autowired constructor(
         command.destPlanetOfficers?.forEach { ports.putOfficer(it.toSnapshot()) }
     }
 
-    private fun toTurnIndex(env: CommandEnv): Int {
-        return env.year * 12 + env.month
+    private fun parseStringMap(raw: Any?): MutableMap<String, String> {
+        if (raw !is Map<*, *>) return mutableMapOf()
+        val result = mutableMapOf<String, String>()
+        raw.forEach { (k, v) ->
+            if (k is String && v != null) {
+                result[k] = v.toString()
+            }
+        }
+        return result
+    }
+
+    private fun parseOffsetDateTimeOrNull(value: String): OffsetDateTime? {
+        return try {
+            OffsetDateTime.parse(value)
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun checkGeneralCooldown(actionCode: String, general: Officer, env: CommandEnv): CommandResult? {
-        val nextExecuteMap = parseIntMap(general.meta[GENERAL_NEXT_EXECUTE_KEY])
-        val blockedUntil = nextExecuteMap[actionCode] ?: return null
-        val nowTurn = toTurnIndex(env)
-        if (nowTurn < blockedUntil) {
-            val remain = blockedUntil - nowTurn
+        val cooldownMap = parseStringMap(general.meta[GENERAL_NEXT_EXECUTE_KEY])
+        val blockedUntilStr = cooldownMap[actionCode] ?: return null
+        val now = OffsetDateTime.now()
+        val blockedUntil = parseOffsetDateTimeOrNull(blockedUntilStr)
+        // Legacy int format: treat as expired (allow execution)
+            ?: return null
+        if (now.isBefore(blockedUntil)) {
+            val remainSeconds = Duration.between(now, blockedUntil).seconds
             return CommandResult(
                 success = false,
-                logs = listOf("<R>$actionCode</>을(를) 실패하여 휴식합니다. - 쿨다운 중 (${remain}턴 남음)"),
+                logs = listOf("<R>$actionCode</>을(를) 실패하여 휴식합니다. - 쿨다운 중 (${remainSeconds}초 남음)"),
             )
         }
         return null
@@ -262,9 +308,10 @@ class CommandExecutor @Autowired constructor(
 
     private fun applyGeneralCooldown(actionCode: String, postReqTurn: Int, general: Officer, env: CommandEnv) {
         if (postReqTurn <= 0) return
-        val map = parseIntMap(general.meta[GENERAL_NEXT_EXECUTE_KEY])
-        map[actionCode] = toTurnIndex(env) + postReqTurn
-        general.meta[GENERAL_NEXT_EXECUTE_KEY] = mapToMetaValueMap(map)
+        val cooldownMap = parseStringMap(general.meta[GENERAL_NEXT_EXECUTE_KEY])
+        val cooldownEnd = OffsetDateTime.now().plusSeconds(postReqTurn.toLong() * COOLDOWN_BASE_SECONDS)
+        cooldownMap[actionCode] = cooldownEnd.toString()
+        general.meta[GENERAL_NEXT_EXECUTE_KEY] = cooldownMap.toMutableMap<String, Any>()
     }
 
     private fun checkNationCooldown(
@@ -275,14 +322,16 @@ class CommandExecutor @Autowired constructor(
     ): CommandResult? {
         if (nation == null) return null
         val key = nationCooldownKey(general.officerLevel)
-        val nextExecuteMap = parseIntMap(nation.meta[key])
-        val blockedUntil = nextExecuteMap[actionCode] ?: return null
-        val nowTurn = toTurnIndex(env)
-        if (nowTurn < blockedUntil) {
-            val remain = blockedUntil - nowTurn
+        val cooldownMap = parseStringMap(nation.meta[key])
+        val blockedUntilStr = cooldownMap[actionCode] ?: return null
+        val now = OffsetDateTime.now()
+        val blockedUntil = parseOffsetDateTimeOrNull(blockedUntilStr)
+            ?: return null // Legacy int format: treat as expired
+        if (now.isBefore(blockedUntil)) {
+            val remainSeconds = Duration.between(now, blockedUntil).seconds
             return CommandResult(
                 success = false,
-                logs = listOf("<R>$actionCode</> 실패 - 쿨다운 중 (${remain}턴 남음)"),
+                logs = listOf("<R>$actionCode</> 실패 - 쿨다운 중 (${remainSeconds}초 남음)"),
             )
         }
         return null
@@ -297,9 +346,10 @@ class CommandExecutor @Autowired constructor(
     ) {
         if (nation == null || postReqTurn <= 0) return
         val key = nationCooldownKey(general.officerLevel)
-        val map = parseIntMap(nation.meta[key])
-        map[actionCode] = toTurnIndex(env) + postReqTurn
-        nation.meta[key] = mapToMetaValueMap(map)
+        val cooldownMap = parseStringMap(nation.meta[key])
+        val cooldownEnd = OffsetDateTime.now().plusSeconds(postReqTurn.toLong() * COOLDOWN_BASE_SECONDS)
+        cooldownMap[actionCode] = cooldownEnd.toString()
+        nation.meta[key] = cooldownMap.toMutableMap<String, Any>()
     }
 
     private fun getNationLastTurn(nation: Faction, officerLevel: Short): LastTurn {
@@ -645,20 +695,6 @@ class CommandExecutor @Autowired constructor(
         return null
     }
 
-    private fun parseIntMap(raw: Any?): MutableMap<String, Int> {
-        if (raw !is Map<*, *>) return mutableMapOf()
-        val result = mutableMapOf<String, Int>()
-        raw.forEach { (k, v) ->
-            if (k is String) {
-                val num = (v as? Number)?.toInt()
-                if (num != null) {
-                    result[k] = num
-                }
-            }
-        }
-        return result
-    }
-
     private fun readStringAnyMap(raw: Any?): Map<String, Any> {
         if (raw !is Map<*, *>) return emptyMap()
         val result = mutableMapOf<String, Any>()
@@ -670,14 +706,12 @@ class CommandExecutor @Autowired constructor(
         return result
     }
 
-    private fun mapToMetaValueMap(values: Map<String, Int>): MutableMap<String, Any> {
-        val result = mutableMapOf<String, Any>()
-        values.forEach { (key, value) -> result[key] = value }
-        return result
-    }
-
     companion object {
         private const val GENERAL_NEXT_EXECUTE_KEY = "next_execute"
+        /** Base cooldown period in seconds per postReqTurn unit (5 minutes). */
+        private const val COOLDOWN_BASE_SECONDS = 300L
+        /** Commands that bypass position card authority checks. */
+        private val ALWAYS_ALLOWED_COMMANDS = setOf("휴식", "Nation휴식", "NPC능동", "CR건국", "CR맹훈련")
 
         private val NATION_COLORS = listOf(
             "#FF0000", "#800000", "#A0522D", "#FF6347", "#FFA500",
