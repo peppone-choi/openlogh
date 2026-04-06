@@ -53,6 +53,13 @@ class SessionState(
     @Column(columnDefinition = "jsonb", nullable = false)
     var meta: MutableMap<String, Any> = mutableMapOf(),
 
+    @Column(nullable = false)
+    var status: String = "ACTIVE",
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "victory_result", columnDefinition = "jsonb")
+    var victoryResult: MutableMap<String, Any>? = null,
+
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime = OffsetDateTime.now(),
 )
