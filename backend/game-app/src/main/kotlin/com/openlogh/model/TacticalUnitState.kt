@@ -25,6 +25,7 @@ data class TacticalUnitState(
     val maxShips: Int = 0,
     val training: Int = 0,
     val morale: Int = 0,
+    val supplies: Int = 0,
 
     // Officer stats
     val leadership: Int = 0,
@@ -38,9 +39,14 @@ data class TacticalUnitState(
     val energy: Map<String, Int> = EnergyAllocation.toMap(EnergyAllocation.BALANCED),
     val formation: String = Formation.MIXED.name,
 
+    // Unit stance (태세 4종)
+    val stance: String = UnitStance.NAVIGATION.name,
+    val stanceChangeTicksRemaining: Int = 0,
+
     // Command range (expands over time based on command stat)
     val commandRange: Double = 0.0,
     val commandRangeMax: Double = 100.0,
+    val commandRangeExpansionRate: Double = 1.0,
 
     // Status flags
     val isAlive: Boolean = true,
@@ -50,7 +56,31 @@ data class TacticalUnitState(
     // Unit type info
     val unitType: String = "FLEET",
     val shipClass: Int = 0,
+    val shipSubtypeCode: Int? = null,
+
+    // Weapon cooldowns: weapon type name -> ticks remaining
+    val weaponCooldowns: Map<String, Int> = emptyMap(),
+
+    // Active debuffs: debuff type -> ticks remaining
+    val debuffs: Map<String, Int> = emptyMap(),
+
+    // Detection capability
+    val detectionBaseRange: Double = 5.0,
+    val detectionBasePrecision: Double = 0.5,
+    val detectionEvasionRating: Double = 0.2,
+
+    // Injury state
+    val injurySeverity: Int = 0,
+    val returnPlanetId: Long? = null,
 ) {
     fun getEnergyAllocation(): EnergyAllocation = EnergyAllocation.fromMap(energy)
     fun getFormation(): Formation = Formation.fromString(formation)
+    fun getStance(): UnitStance = UnitStance.fromString(stance)
+    fun getShipSubtype(): ShipSubtype? = shipSubtypeCode?.let { ShipSubtype.fromCode(it) }
+    fun getDetectionCapability(): DetectionCapability = DetectionCapability(
+        baseRange = detectionBaseRange,
+        basePrecision = detectionBasePrecision,
+        evasionRating = detectionEvasionRating,
+        isStopped = velX == 0.0 && velY == 0.0,
+    )
 }
