@@ -8,81 +8,53 @@ package com.openlogh.model
 object PositionCardRegistry {
 
     /**
-     * Maps every command action code to its CommandGroup.
-     * All 93 existing commands (55 officer + 38 faction) are covered.
+     * Maps every gin7 command action code to its CommandGroup.
+     * gin7 81종 커맨드: 작전(16) + 개인(15) + 지휘(8) + 병참(6) + 인사(10) + 정치(12) + 첩보(14) = 81종
+     * "대기"는 ALWAYS_ALLOWED_COMMANDS에 있으므로 여기서 제외 (매핑 없으면 허용 로직 유지).
      */
     private val commandGroupMap: Map<String, CommandGroup> = buildMap {
-        // === PERSONAL group (22) ===
-        // Individual actions always available via PERSONAL card
+        // === OPERATIONS group (작전커맨드, MCP, 16종) ===
         for (code in listOf(
-            "휴식", "요양", "단련", "숙련전환", "견문", "은퇴",
-            "장비매매", "군량매매", "내정특기초기화", "전투특기초기화",
-            "이동", "강행", "귀환", "접경귀환", "방랑", "좌표이동",
-            "임관", "랜덤임관", "장수대상임관", "등용수락",
-            "건국", "무작위건국",
+            "워프항행", "연료보급", "성계내항행", "군기유지", "항공훈련", "육전훈련",
+            "공전훈련", "육전전술훈련", "공전전술훈련", "경계출동", "무력진압",
+            "분열행진", "징발", "특별경비", "육전대출격", "육전대철수",
+        )) { put(code, CommandGroup.OPERATIONS) }
+
+        // === PERSONAL group (개인커맨드, PCP, 15종) ===
+        for (code in listOf(
+            "원거리이동", "근거리이동", "퇴역", "지원", "망명", "회견", "수강",
+            "병기연습", "반의", "모의", "설득", "반란", "참가", "자금투입", "기함구매",
         )) { put(code, CommandGroup.PERSONAL) }
 
-        // NPC/CR special commands - always allowed (PERSONAL)
-        for (code in listOf("NPC능동", "CR건국", "CR맹훈련")) {
-            put(code, CommandGroup.PERSONAL)
-        }
-
-        // Nation rest - always allowed (PERSONAL)
-        put("Nation휴식", CommandGroup.PERSONAL)
-
-        // === OPERATIONS group (9) ===
-        // Fleet/unit tactical operations via CAPTAIN card
-        for (code in listOf("출병", "집합", "전투태세", "요격", "순찰", "작전수립", "워프항행", "장거리워프", "점거")) {
-            put(code, CommandGroup.OPERATIONS)
-        }
-
-        // === COMMAND group (13) ===
-        // Military strategy, rebellion, strategic maneuvers
+        // === COMMAND group (지휘커맨드, MCP, 8종) ===
         for (code in listOf(
-            "모반시도", "거병", "선양", "해산",
-            "급습", "수몰", "허보", "초토화",
-            "필사즉생", "이호경식", "피장파장", "의병모집",
-            "작전지시",
+            "작전계획", "작전철회", "발령", "부대결성", "부대해산", "강의",
+            "수송계획", "수송중지",
         )) { put(code, CommandGroup.COMMAND) }
 
-        // === LOGISTICS group (23) ===
-        // Infrastructure, resource management, military supply
+        // === LOGISTICS group (병참커맨드, MCP, 6종) ===
         for (code in listOf(
-            "농지개간", "상업투자", "치안강화", "수비강화", "성벽보수",
-            "정착장려", "주민선정", "기술연구",
-            "모병", "징병", "훈련", "사기진작", "소집해제",
-            "물자조달", "헌납", "물자원조",
-            "증축", "감축", "백성동원",
-            "물자배분", "함선보급", "함대재편", "생산감독",
+            "완전수리", "완전보급", "재편성", "보충", "반출입", "할당",
         )) { put(code, CommandGroup.LOGISTICS) }
 
-        // === PERSONNEL group (7) ===
-        // Hiring, promotion, personnel management
+        // === PERSONNEL group (인사커맨드, PCP, 10종) ===
         for (code in listOf(
-            "등용", "인재탐색", "증여", "발령", "포상", "몰수", "부대탈퇴지시",
+            "승진", "발탁", "강등", "서작", "서훈", "임명", "파면", "사임",
+            "봉토수여", "봉토직할",
         )) { put(code, CommandGroup.PERSONNEL) }
 
-        // === POLITICS group (28) ===
-        // Diplomacy, governance, faction-level decisions
+        // === POLITICS group (정치커맨드, PCP, 12종) ===
         for (code in listOf(
-            "하야", "선전포고", "종전제의", "종전수락",
-            "불가침제의", "불가침수락", "불가침파기제의", "불가침파기수락",
-            "칭제", "천자맞이", "선양요구", "신속", "독립선언",
-            "천도", "국기변경", "국호변경", "무작위수도이전", "인구이동",
-            "예산편성",
+            "야회", "수렵", "회담", "담화", "연설", "국가목표", "납입률변경",
+            "관세율변경", "분배", "처단", "외교", "통치목표",
         )) { put(code, CommandGroup.POLITICS) }
 
-        // Research commands -> POLITICS
+        // === INTELLIGENCE group (첩보커맨드, MCP, 14종) ===
         for (code in listOf(
-            "극병연구", "대검병연구", "무희연구", "산저병연구",
-            "상병연구", "원융노병연구", "음귀병연구", "화륜차연구", "화시병연구",
-        )) { put(code, CommandGroup.POLITICS) }
-
-        // === INTELLIGENCE group (7) ===
-        // Espionage, sabotage, arson, reconnaissance
-        for (code in listOf("첩보", "선동", "탈취", "파괴", "화계", "정찰", "통신방해")) {
-            put(code, CommandGroup.INTELLIGENCE)
-        }
+            "일제수색", "체포허가", "집행명령", "체포명령", "사열", "습격",
+            "감시", "잠입공작", "탈출공작", "정보공작", "파괴공작", "선동공작",
+            "침입공작", "귀환공작",
+        )) { put(code, CommandGroup.INTELLIGENCE) }
     }
 
     /** Reverse index: CommandGroup -> set of action codes */
