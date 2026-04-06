@@ -83,6 +83,7 @@ import type {
     FormationCaps,
     CrewSlotRole,
     UnitType,
+    ScenarioDetailResponse,
 } from '@/types';
 
 // World API
@@ -552,6 +553,9 @@ export const trafficApi = {
 // Scenario API
 export const scenarioApi = {
     list: () => api.get<Scenario[]>('/scenarios'),
+    listLogh: () => api.get<Scenario[]>('/scenarios/logh'),
+    detail: (code: string) => api.get<ScenarioDetailResponse>(`/scenarios/${code}`),
+    selectPool: (worldId: number) => api.get<SelectPoolEntry[]>(`/worlds/${worldId}/select-pool`),
 };
 
 // Map API

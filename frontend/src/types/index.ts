@@ -543,6 +543,48 @@ export interface Scenario {
     code: string;
     title: string;
     startYear: number;
+    mapName?: string;
+    factionCount?: number;
+    description?: string;
+    formableFleets?: Record<string, number[]>;
+    battleLocation?: string;
+}
+
+export interface ScenarioFactionInfo {
+    name: string;
+    color: string;
+    description: string;
+    systemCount: number;
+}
+
+export interface ScenarioCharacterInfo {
+    name: string;
+    factionName: string;
+    factionIndex: number;
+}
+
+export interface ScenarioDetailResponse {
+    scenario: Scenario;
+    factions: ScenarioFactionInfo[];
+    originalCharacters: ScenarioCharacterInfo[];
+}
+
+// Character creation (LOGH 8-stat)
+export interface CreateCharacterRequest {
+    name: string;
+    nationId: number;
+    statMode: '8stat';
+    leadership: number;
+    command: number;
+    intelligence: number;
+    politics: number;
+    administration: number;
+    mobility: number;
+    attack: number;
+    defense: number;
+    origin?: string;
+    personality?: string;
+    selectPoolId?: number;
 }
 
 // Map
