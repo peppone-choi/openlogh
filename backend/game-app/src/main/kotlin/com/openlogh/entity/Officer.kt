@@ -232,8 +232,21 @@ class Officer(
     @Column(name = "tournament_state", nullable = false)
     var tournamentState: Short = 0,
 
+    /** @deprecated Use pcp/mcp instead. Kept for backward compatibility. */
     @Column(name = "command_points", nullable = false)
     var commandPoints: Int = 10,
+
+    @Column(nullable = false)
+    var pcp: Int = 5,
+
+    @Column(nullable = false)
+    var mcp: Int = 5,
+
+    @Column(name = "pcp_max", nullable = false)
+    var pcpMax: Int = 5,
+
+    @Column(name = "mcp_max", nullable = false)
+    var mcpMax: Int = 5,
 
     @Column(name = "command_end_time")
     var commandEndTime: OffsetDateTime? = null,
