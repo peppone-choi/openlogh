@@ -1,262 +1,115 @@
-# Roadmap: Open LOGH (오픈 은하영웅전설)
+# Roadmap: Open LOGH v2.0 — gin7 게임 로직 전면 재작성
 
 ## Overview
 
-Open LOGH transforms the OpenSamguk (Three Kingdoms) web game engine into a faithful recreation of gin7 (Legend of the Galactic Heroes VII). The journey begins by converting the existing 5-stat entity model to gin7's 8-stat system with LOGH domain naming, then builds the real-time tick engine that replaces turn-based processing. From there, each phase delivers a complete game subsystem in dependency order: command points, position cards, organizational structure, galaxy map, rank/personnel, scenarios, strategic commands, tactical combat, faction politics, communications, victory conditions, and a purpose-built LOGH frontend. NPC AI and balancing run as the final phase once all systems are testable together. Frontend work is interleaved throughout -- each backend system phase includes its corresponding UI requirements.
+삼국지 기반 게임 로직을 gin7 매뉴얼 기준으로 전면 재작성한다. 레거시 제거와 함종 기반 유닛 시스템 확립(Phase 1)에서 시작해, 직무권한카드 기반 81종 커맨드 시스템(Phase 2), 실시간 전술전 엔진(Phase 3), 경제 시스템(Phase 4), AI 시스템(Phase 5), 프론트엔드 전면 재작성(Phase 6), 시나리오 데이터 및 밸런싱(Phase 7) 순으로 진행한다. 각 페이즈는 다음 페이즈의 전제조건이며, Phase 4는 Phase 3과 병렬 진행 가능하다.
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
-
-Decimal phases appear between their surrounding integers in numeric order.
-
-- [ ] **Phase 1: Entity Model Foundation** - Convert 5-stat to 8-stat system, rename entities to LOGH domain, DB migrations V28+
-- [ ] **Phase 2: Real-time Tick Engine** - Replace turn-based processing with 1-second server tick at 24x game speed
-- [ ] **Phase 3: Command Point System** - Implement dual PCP/MCP pools with independent recovery and cross-use penalty
-- [x] **Phase 4: Position Card & Command Authority** - 77 position cards, command groups, authority gating, suggestion system (completed 2026-04-06)
-- [ ] **Phase 5: Organization & Fleet Structure** - 6 unit types with crew slots, population-military linkage
-- [x] **Phase 6: Galaxy Map & Planet Model** - 80 star systems, route network, territory zones, fortress systems, galaxy map UI (completed 2026-04-06)
-- [x] **Phase 7: Rank, Merit & Personnel** - 11-tier rank ladder, merit points, promotion/demotion, appointment authority (completed 2026-04-05)
-- [x] **Phase 8: Scenario & Character System** - 10 scenarios, custom character creation, original character selection, scenario events (completed 2026-04-06)
-- [x] **Phase 9: Strategic Commands** - Operation planning, logistics, production, supply chain commands (completed 2026-04-06)
-- [x] **Phase 10: Tactical Combat (RTS)** - WebSocket real-time fleet battle, energy allocation, formations, fortress guns (completed 2026-04-06)
-- [x] **Phase 11: Faction Politics & Diplomacy** - Empire autocracy, Alliance democracy, Fezzan NPC systems, coups, elections (completed 2026-04-06)
-- [ ] **Phase 12: Communication & Session Lifecycle** - Mail, chat, victory conditions, session restart, rankings
+- [ ] **Phase 1: 레거시 제거 + 함종 유닛 기반** - 삼국지 잔재 완전 제거 및 gin7 ShipUnit 엔티티 수립
+- [ ] **Phase 2: gin7 81종 커맨드 시스템** - 직무권한카드 기반 커맨드 전면 재구현
+- [ ] **Phase 3: 실시간 전술전 엔진** - 에너지/무기/진형/색적/요새포/지상전 구현
+- [ ] **Phase 4: 경제 시스템** - 행성자원/조병창/세율/차관 경제 루프 구현
+- [ ] **Phase 5: AI 시스템** - 성격 기반 NPC AI 및 진영 AI 구현
+- [ ] **Phase 6: 프론트엔드 통합** - 은하맵/전술전 UI/전략게임 화면 전면 재작성
+- [ ] **Phase 7: 시나리오 데이터 + 밸런싱** - 10개 시나리오 데이터 및 균형 조정
 
 ## Phase Details
 
-### Phase 1: Entity Model Foundation
-**Goal**: All game entities use LOGH domain terminology with the gin7 8-stat system, and the database schema reflects the new model
+### Phase 1: 레거시 제거 + 함종 유닛 기반
+**Goal**: 삼국지 게임 로직이 완전히 제거되고 gin7 함종/유닛 엔티티가 전투와 커맨드의 기반으로 작동한다
 **Depends on**: Nothing (first phase)
-**Requirements**: CHAR-01, CHAR-02, CHAR-03
+**Requirements**: LEGACY-01, LEGACY-02, LEGACY-03, LEGACY-04, LEGACY-05, LEGACY-06, SHIP-01, SHIP-02, SHIP-03, SHIP-04, SHIP-05, SHIP-06
 **Success Criteria** (what must be TRUE):
-  1. Officer entity has 8 stats (leadership, command, intelligence, politics, administration, mobility, attack, defense) and the old 5-stat fields are removed
-  2. Stats are grouped into PCP-relevant (politics, administration, intelligence) and MCP-relevant (leadership, command, mobility, attack, defense) at the model level
-  3. Rank field supports 11 tiers (0-10) with separate Empire/Alliance title resolution
-  4. All entity names in code and DB use LOGH domain terms (Officer, Planet, Faction, Fleet, SessionState) per the CLAUDE.md mapping table
-  5. Flyway migrations V28+ apply cleanly on the existing schema, and the game-app boots without errors
-**Plans:** 8 plans
+  1. CommandRegistry에 삼국지 커맨드가 0개 존재한다 (gin7 stub 81종으로 대체됨)
+  2. ShipUnit 엔티티가 DB에 존재하며 11함종 × 서브타입 스탯이 ship_stats JSON에서 로드된다
+  3. 기함/육전대 유닛이 Fleet에 연결 가능하며 승조원 수련도 4단계가 적용된다
+  4. 삼국지 병종 상성 및 수치비교 전투 로직이 코드베이스에 존재하지 않는다
+  5. `grep -r "officerLevel >= 5"` 결과가 0이거나 stub 대체가 완료된 상태이다
+**Plans**: TBD
 
-Plans:
-- [x] 01-01-PLAN.md — V28 Flyway migration (table/column/index renames + new stat columns)
-- [x] 01-02-PLAN.md — OfficerStat enum (PCP/MCP grouping) + RankTitle resolver (11-tier)
-- [x] 01-03-PLAN.md — Core entity renames (General->Officer, City->Planet, Nation->Faction, Troop->Fleet, Emperor->Sovereign, WorldState->SessionState)
-- [x] 01-04-PLAN.md — Gateway SessionState + auxiliary entity renames (turns, flags, old records, logs)
-- [x] 01-05-PLAN.md — CQRS snapshot layer update (InMemoryWorldState, SnapshotEntityMapper, Loader, Persister, Ports)
-- [x] 01-06-PLAN.md — Repository + Service layer renames
-- [x] 01-07-PLAN.md — Command system (93 commands), war engine, turn engine, DTOs, controllers
-- [x] 01-08-PLAN.md — Frontend types, API client, stores, components, pages
-
-### Phase 2: Real-time Tick Engine
-**Goal**: The game world advances in real-time at 24x speed with 1-second server ticks instead of turn-based processing
+### Phase 2: gin7 81종 커맨드 시스템
+**Goal**: 직무권한카드 기반 81종 gin7 커맨드가 실시간 실행 파이프라인을 통해 동작하며 삼국지 권한 우회가 완전히 제거된다
 **Depends on**: Phase 1
-**Requirements**: ENG-01, ENG-02, ENG-03, ENG-04
+**Requirements**: CMD-01, CMD-02, CMD-03, CMD-04, CMD-05, CMD-06, CMD-07, CMD-08, CMD-09
 **Success Criteria** (what must be TRUE):
-  1. Server processes one tick per second, advancing game time by 24 seconds per tick
-  2. 30 real-time hours equals exactly 1 game month, and the calendar advances accordingly
-  3. Command points regenerate every 5 real-time minutes (7,200 game-seconds)
-  4. Commands execute with real-time duration waits (not instant turn resolution) and players see countdown timers
-  5. Multiple concurrent players in the same session experience consistent game time progression
-**Plans:** 2/3 plans executed
+  1. 플레이어가 직무권한카드를 통해서만 해당 커맨드 그룹에 접근할 수 있다 (officerLevel >= 5 우회 0건)
+  2. 커맨드 실행 시 CP 차감 → 대기시간 → 실행 → WebSocket 결과 브로드캐스트 흐름이 동작한다
+  3. 7개 커맨드 그룹(작전/개인/지휘/병참/인사/정치/첩보) 81종이 모두 CommandRegistry에 등록된다
+  4. 계급이 낮은 장교가 상급자에게 제안(제안커맨드)을 발행하고 승인/거부가 처리된다
+**Plans**: TBD
+**Research flag**: Phase 2 planning 전 `/gsd:research-phase` 권장 — 7개 그룹 × 커맨드별 구현 설계 필요
 
-Plans:
-- [x] 02-01-PLAN.md — Flyway V30 migration + GameTimeConstants + SessionState entity update
-- [ ] 02-02-PLAN.md — TickEngine core with TDD (tick advancement, month boundary, CP regen gating)
-- [x] 02-03-PLAN.md — WebSocket tick broadcast + command duration integration
-
-### Phase 3: Command Point System
-**Goal**: Players spend PCP and MCP to execute commands, with independent pools, recovery, and cross-use at double cost
-**Depends on**: Phase 2
-**Requirements**: CMD-02, CMD-03
+### Phase 3: 실시간 전술전 엔진
+**Goal**: 에너지 배분, 무기 시스템, 진형, 커맨드레인지서클, 색적, 요새포, 지상전을 포함한 gin7 전술전이 실시간으로 동작한다
+**Depends on**: Phase 1, Phase 2 (일부 전술 커맨드는 CMD 시스템 필요)
+**Requirements**: BATTLE-01, BATTLE-02, BATTLE-03, BATTLE-04, BATTLE-05, BATTLE-06, BATTLE-07, BATTLE-08, BATTLE-09, BATTLE-10, BATTLE-11, BATTLE-12
 **Success Criteria** (what must be TRUE):
-  1. Each officer has separate PCP (political) and MCP (military) pools that display correctly in the UI
-  2. PCP and MCP recover independently every 5 real-time minutes, each to their respective maximum
-  3. A player can use PCP for military commands (or MCP for political commands) at exactly 2x the normal cost
-  4. Command execution correctly deducts from the appropriate pool, and insufficient points prevent execution with a clear error message
-  5. CP pool sizes scale with rank (higher rank = larger pool)
+  1. 같은 그리드에 적아 유닛이 공존하면 전투가 자동 개시되고, 종료 조건 달성 시 정상 종료된다
+  2. BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR 6채널 에너지 슬라이더 합계가 100을 유지하며 WebSocket으로 실시간 반영된다
+  3. 빔/건/미사일(물자소비) 무기가 사거리/위력/보정에 따라 피해를 계산하고 88 서브타입 스탯이 적용된다
+  4. 커맨드레인지서클이 tick 경과에 따라 확대되고 명령 발령 시 0으로 리셋된다
+  5. 육전대 강하 후 지상전이 시작되며 6종 행성 점령 방식(항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동)이 각기 다른 결과를 낸다
+**Plans**: TBD
+**UI hint**: yes
+**Research flag**: Phase 3 planning 전 지상전 지형 규칙 및 5단계 전술전 구조 gin7 매뉴얼 검증 권장
+
+### Phase 4: 경제 시스템
+**Goal**: 행성 자원 생산, 조병창 자동생산, 세율/납입, 창고 이동, 페잔 차관이 TickEngine의 월별 파이프라인을 통해 순환된다
+**Depends on**: Phase 2 (커맨드 시스템으로 경제 커맨드 실행)
+**Requirements**: ECON-01, ECON-02, ECON-03, ECON-04, ECON-05, ECON-06
+**Success Criteria** (what must be TRUE):
+  1. TickEngine.runMonthlyPipeline()이 Gin7EconomyService를 호출하여 90일 주기 세수가 진영 자금에 반영된다
+  2. 행성 조병창이 tick마다 자동으로 함선/지상유닛을 생산하며 플레이어 조작 없이 지속된다
+  3. 행성창고와 부대창고 간 자원 이동이 가능하다
+  4. 페잔 차관 이후 미상환 시 페잔 엔딩 조건이 트리거된다
+**Plans**: TBD
+
+### Phase 5: AI 시스템
+**Goal**: 오프라인 플레이어와 NPC가 gin7 81종 커맨드 시스템을 통해 성격 기반으로 행동하며, 진영 AI가 예산/인사/작전을 자율 처리한다
+**Depends on**: Phase 2 (AI는 동일한 커맨드 파이프라인 사용)
+**Requirements**: AI-01, AI-02, AI-03, AI-04
+**Success Criteria** (what must be TRUE):
+  1. 오프라인 상태의 플레이어 캐릭터가 해당 플레이어의 스탯과 성격 가중치에 따라 커맨드를 자동 실행한다
+  2. 진영 AI가 예산 배분과 인사 처리를 자율적으로 수행하며 NPC 진영이 독립적으로 행동 가능하다
+  3. 쿠데타 조건이 감지되면 시나리오 이벤트 AI가 내전 트리거를 발동한다
+  4. NPC AI가 1 tick당 1 그룹 처리(슬롯 기반 스케줄링)로 O(n) 성능 문제 없이 동작한다
+**Plans**: TBD
+
+### Phase 6: 프론트엔드 통합
+**Goal**: 은하영웅전설 세계관의 전략 게임 화면, 전술전 UI, 은하맵이 삼국지 잔재 없이 한국어로 완성되며 WebSocket 구독이 모든 백엔드 시스템에 연결된다
+**Depends on**: Phase 1, Phase 2, Phase 3 (UI가 의존하는 백엔드 시스템)
+**Requirements**: FE-01, FE-02, FE-03, FE-04, FE-05, FE-06, FE-07, FE-08
+**Success Criteria** (what must be TRUE):
+  1. 은하맵에서 도트스타일 성계 아이콘과 진영 색상 5단계 음영이 표시되며 함대 위치와 이동 범위가 하이라이트된다
+  2. 전술전 화면이 상단 3D 접근전 뷰(React Three Fiber)와 하단 2D 전술맵(React Konva)으로 분할되며 에너지 슬라이더가 실시간 동작한다
+  3. 전략 게임 화면에서 직무권한카드 탭 → 커맨드 목록 → CP 표시 → 실행 흐름이 완전히 동작한다
+  4. city/nation/troop 등 삼국지 용어와 컴포넌트가 코드베이스에 0건 존재한다
+  5. 진영별 정치 UI(제국 쿠데타/귀족, 동맹 의회/선거, 페잔 차관/정보)가 동작한다
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 4: Position Card & Command Authority
-**Goal**: Officers hold position cards that gate which commands they can execute, enabling the organizational simulation core
-**Depends on**: Phase 3
-**Requirements**: CMD-01, CMD-04, CMD-05
+### Phase 7: 시나리오 데이터 + 밸런싱
+**Goal**: 10개 시나리오의 초기 데이터가 완비되고, 플레이테스트 기반 밸런스 조정이 적용되어 실제 플레이 가능한 게임이 완성된다
+**Depends on**: Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, Phase 6
+**Requirements**: SCEN-01, SCEN-02, SCEN-03, TEST-01, TEST-02, TEST-03, TEST-04
 **Success Criteria** (what must be TRUE):
-  1. All 77 position cards are defined with their associated command groups, and an officer's available commands change when their position card changes
-  2. An officer without a required position card cannot execute restricted commands (authority gating works)
-  3. Commands have real-time cooldowns (not turn-gated) that count down visibly to the player
-  4. A lower-rank officer can submit a suggestion/proposal to a superior, and the superior can approve or reject it
-  5. The command panel UI shows only commands available to the player's current position card
-**Plans:** 4/4 plans complete
-
-Plans:
-- [x] 04-01-PLAN.md — PositionCard enum (77 cards), CommandGroup enum (7 groups), PositionCardRegistry, Flyway V32, Officer entity update
-- [x] 04-02-PLAN.md — Authority gating in CommandExecutor, real-time cooldowns (OffsetDateTime), command table filtering
-- [x] 04-03-PLAN.md — Proposal entity + Flyway V33, ProposalService (submit/approve/reject), ProposalController REST endpoints
-- [x] 04-04-PLAN.md — Frontend command panel (card-filtered, grouped by command group), proposal panel UI, command store
-
-### Phase 5: Organization & Fleet Structure
-**Goal**: Military units are organized into 6 distinct types with correct crew slots and population-based formation limits
-**Depends on**: Phase 4
-**Requirements**: ORG-01, ORG-02, ORG-03, ORG-04, ORG-05, ORG-06
-**Success Criteria** (what must be TRUE):
-  1. Fleet (60 units, 10 crew), Patrol (3 units, 3 crew), Transport (23 units, 3 crew), Ground (6 units, 1 crew), Garrison (10 infantry, 1 crew), and Solo (1 flagship) unit types all function correctly
-  2. Crew slot assignments work: fleet commander, vice-commander, chief of staff, 6 staff officers, and adjutant for fleets; reduced slots for other unit types
-  3. Population of 1 billion enables formation of 1 fleet or transport fleet, and 6 patrols or ground forces
-  4. Losing a high-population planet reduces the formation cap, and excess units cannot be newly formed until population recovers
-  5. The unit management UI displays unit composition, crew roster, and ship counts per unit type
-**Plans:** 1/4 plans executed
-**UI hint**: yes
-
-Plans:
-- [x] 05-01-PLAN.md — Flyway V34 migration, UnitType/CrewSlotRole enums, Fleet entity update, UnitCrew entity, CQRS snapshots
-- [x] 05-02-PLAN.md — FormationCapService (population linkage), UnitCrewService, FleetService update, REST API
-- [x] 05-03-PLAN.md — Frontend unit types, API client, UnitListPanel/UnitDetailPanel/CrewRosterPanel/FormationCapBar UI
-- [x] 05-04-PLAN.md — CQRS layer wiring for UnitCrew + integration verification checkpoint
-
-### Phase 6: Galaxy Map & Planet Model
-**Goal**: Players navigate and manage 80 star systems connected by routes, with territory visualization and fortress mechanics
-**Depends on**: Phase 5
-**Requirements**: GAL-01, GAL-02, GAL-03, GAL-04
-**Success Criteria** (what must be TRUE):
-  1. All 80 star systems from docs/star_systems.json are loaded with correct positions, and route connections are navigable
-  2. The galaxy map UI clearly shows Empire (blue), Alliance (green), and Fezzan (yellow) territory zones with current ownership
-  3. Fleet movement follows route connections with travel time based on distance and engine speed
-  4. Iserlohn and Geiersburg display as fortress systems with special defense values, garrison slots, and fortress gun capabilities
-  5. Planet detail view shows all resource fields (population, production, commerce, security, approval, orbital defense, fortress, trade route)
-**Plans:** 4/4 plans complete
-**UI hint**: yes
-
-Plans:
-- [x] 06-01-PLAN.md — logh.json map data (80 systems), StarSystem/StarRoute entities, FortressType enum, Flyway V35 migration
-- [x] 06-02-PLAN.md — StarSystemService, MapService LOGH support, StarSystemController REST API, DTOs
-- [x] 06-03-PLAN.md — Frontend galaxy types, API client, Zustand store, GalaxyMap UI (React Konva), fortress indicators
-- [x] 06-04-PLAN.md — Galaxy page route, ScenarioService integration, visual verification checkpoint
-
-### Phase 7: Rank, Merit & Personnel
-**Goal**: Officers progress through an 11-tier rank ladder via merit points, with rank determining authority, CP pools, and appointment eligibility
-**Depends on**: Phase 6
-**Requirements**: CHAR-04, CHAR-07
-**Success Criteria** (what must be TRUE):
-  1. New players start at sub-lieutenant (rank 0) and can be promoted through all 11 tiers up to Reichsmarschall/Fleet Admiral
-  2. Merit points accumulate from combat, command execution, and mission success, and are visible to the player
-  3. Promotion occurs when merit threshold is met and a superior (or system for top ranks) approves; demotion occurs on sufficient demerit
-  4. Rank determines maximum CP pool size, eligible position cards, and appointable subordinate positions
-  5. The personnel management UI shows rank, merit progress, promotion eligibility, and chain of command
-**Plans:** 3/3 plans complete
-**UI hint**: yes
-
-Plans:
-- [x] 07-01-PLAN.md — V36 Flyway migration (merit/evaluation/fame points), Officer entity update, RankHeadcount config
-- [x] 07-02-PLAN.md — RankLadderService, PersonnelService, PersonnelController, PersonnelDtos
-- [x] 07-03-PLAN.md — Frontend types, API client, personnelStore, RankBadge, PersonnelPanel
-
-### Phase 8: Scenario & Character System
-**Goal**: Players select from 10 historical scenarios and create or choose characters to begin gameplay
-**Depends on**: Phase 7
-**Requirements**: CHAR-05, CHAR-06, SCN-01, SCN-02, SCN-03
-**Success Criteria** (what must be TRUE):
-  1. All 10 scenarios (UC795.9 through UC799.4) are selectable at world creation, each with correct initial star system ownership and fleet dispositions
-  2. Players can create a custom character by allocating points across the 8 stats, choosing a faction, and starting at sub-lieutenant
-  3. Players can select an available original character (per scenario roster), inheriting that character's stats and starting position
-  4. Scenario-specific events fire at the correct game time (coups, civil wars, special battles) matching the scenarios_detail.md specifications
-  5. The scenario selection UI shows scenario description, timeline, faction balance, and available original characters
-**Plans:** 3/3 plans complete
-**UI hint**: yes
-
-Plans:
-- [x] 08-01 — 10 LOGH scenario JSON files + ScenarioService 8-stat parsing + ScenarioEventService
-- [x] 08-02 — 8-stat custom character creation (CreateGeneralRequest, OfficerService, origin system)
-- [x] 08-03 — Frontend scenario selection UI, character creation UI, scenarioStore
-
-### Phase 9: Strategic Commands
-**Goal**: Officers can execute the full range of strategic commands for territory management, logistics, production, and military operations
-**Depends on**: Phase 8
-**Requirements**: TAC-05
-**Success Criteria** (what must be TRUE):
-  1. Domestic commands (develop production, invest commerce, strengthen security, conscript, train) affect planet stats over time with visible progress
-  2. Logistics commands move supplies and ships between planets via transport fleets along valid routes
-  3. Military strategic commands (deploy fleet, recall, assemble, occupy) move units on the galaxy map with real-time travel
-  4. Intelligence commands (espionage, reconnaissance, communication jamming) provide information or disrupt enemy operations
-  5. The strategic command UI shows available commands filtered by position card, costs, cooldowns, and execution progress
-**Plans:** 4/4 plans complete
-**UI hint**: yes
-
-Plans:
-- [x] 09-01-PLAN.md — Operation planning (작전수립), warp navigation (워프항행/장거리워프), operation directive (작전지시)
-- [x] 09-02-PLAN.md — Logistics (물자배분/함선보급/함대재편/생산감독), budget allocation (예산편성)
-- [x] 09-03-PLAN.md — Intelligence (정찰/통신방해), occupation (점거)
-- [x] 09-04-PLAN.md — Frontend compatibility verification (dynamic category rendering)
-
-### Phase 10: Tactical Combat (RTS)
-**Goal**: Fleet engagements resolve in real-time via WebSocket with energy allocation, formations, and fortress guns
-**Depends on**: Phase 9
-**Requirements**: TAC-01, TAC-02, TAC-03, TAC-04
-**Success Criteria** (what must be TRUE):
-  1. When fleets meet on the same route or system, a real-time battle instance starts and all participants receive WebSocket battle events
-  2. Commanders can allocate energy across 6 systems (BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR) and changes take effect within 1-2 ticks
-  3. Fleet formation selection (wedge, by-class, mixed, three-column) visibly affects combat performance (attack/defense/speed modifiers)
-  4. Fortress guns (Thor Hammer at Iserlohn, Geiersburg Haken) fire at fleets within range, dealing massive damage with appropriate cooldown
-  5. The tactical battle UI shows fleet positions, damage in real-time, energy allocation controls, formation selector, and battle outcome resolution
-**Plans:** 4/4 plans complete
-**UI hint**: yes
-
-Plans:
-- [x] 10-01-PLAN.md — EnergyAllocation, Formation, BattlePhase models, TacticalBattle entity, V37 migration
-- [x] 10-02-PLAN.md — TacticalBattleEngine (tick-based RTS), BattleTriggerService, fortress gun line-of-fire
-- [x] 10-03-PLAN.md — TacticalBattleService, WebSocket controller, REST API, DTO classes
-- [x] 10-04-PLAN.md — Frontend tactical page, BattleMap SVG, EnergyPanel, FormationSelector, BattleStatus
-
-### Phase 11: Faction Politics & Diplomacy
-**Goal**: Each faction operates under its unique political system with coups, elections, loans, and inter-faction diplomacy
-**Depends on**: Phase 10
-**Requirements**: FAC-01, FAC-02, FAC-03, FAC-04
-**Success Criteria** (what must be TRUE):
-  1. Empire faction has autocratic governance: the sovereign appoints/dismisses officers, nobility hierarchy affects authority, and coup mechanics can trigger regime change
-  2. Alliance faction has democratic governance: supreme council elections occur periodically, council votes affect policy, and political maneuvering matters
-  3. Fezzan operates as NPC faction: offers loans to both factions, trades intelligence, maintains neutrality until story events trigger intervention
-  4. Fezzan debt mechanics work: factions can take loans, failure to repay triggers escalating penalties up to Fezzan ending (Fezzan domination)
-  5. The faction politics UI shows governance structure, current leadership, political status, and available political actions per faction type
-**Plans:** 5 plans
-**UI hint**: yes
-
-Plans:
-- [x] 11-01-PLAN.md — Empire politics: NobilityRank enum (5 levels), CoupPhase enum, CoupEvent entity, Flyway V38 (coup_event, council_seat, fezzan_loan, election tables)
-- [x] 11-02-PLAN.md — Alliance politics: CouncilSeatCode enum (11 seats), ElectionType enum, CouncilSeat/Election entities, AlliancePoliticsService, EmpirePoliticsService (coup state machine)
-- [x] 11-03-PLAN.md — Fezzan NPC: FezzanLoan entity, IntelligenceType enum, FezzanService (loans/intel/trade), FezzanAiService (tick AI), FezzanEndingService
-- [x] 11-04-PLAN.md — REST API: FactionPoliticsController (15 endpoints), DTOs, TickEngine integration, GameEventService political broadcasts
-- [x] 11-05-PLAN.md — Frontend: politics types, politicsApi, politicsStore, EmpirePanel/AlliancePanel/FezzanPanel, politics page route
-
-### Phase 12: Communication, NPC AI & Session Lifecycle
-**Goal**: Players communicate in-game, NPC officers act autonomously with personality, and sessions have clear victory/end conditions
-**Depends on**: Phase 11
-**Requirements**: NPC-01, NPC-02, NPC-03, VIC-01, VIC-02, VIC-03, VIC-04
-**Success Criteria** (what must be TRUE):
-  1. NPC officers make decisions based on personality traits (aggressive/cautious/political/etc.) that produce observably different behavior patterns
-  2. When a player goes offline, their character continues acting via NPC AI with behavior consistent with the player's historical patterns
-  3. Victory triggers correctly: capital capture ends the game, reducing enemy to 3 or fewer systems ends the game, and time limit (UC801.7.27) triggers population comparison
-  4. Session end produces a 4-tier evaluation (decisive/limited/local/defeat) with rankings for all participants
-  5. A completed session can be restarted with a new scenario selection, preserving player accounts but resetting game state
+  1. 10개 시나리오 모두 인물 배치, 함대 편성, 행성 상태 초기값이 DB에 적재되어 게임 시작이 가능하다
+  2. LOGH 원작 캐릭터(라인하르트, 양웬리 등)의 8스탯/성격/계급/직무카드가 gin7 매뉴얼 기준으로 입력된다
+  3. 커스텀 캐릭터 생성 시 8스탯 배분과 진영 선택이 가능하다
+  4. 88 서브타입 전투 시뮬레이션, CP 비용/대기시간, 경제 순환이 밸런스 검증 통과 상태이다
 **Plans**: TBD
 
 ## Progress
 
-**Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
+**Execution Order:** 1 → 2 → 3 → 4 (Phase 3과 병렬 가능) → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Entity Model Foundation | 0/8 | Planning complete | - |
-| 2. Real-time Tick Engine | 2/3 | In Progress|  |
-| 3. Command Point System | 0/TBD | Not started | - |
-| 4. Position Card & Command Authority | 4/4 | Complete   | 2026-04-06 |
-| 5. Organization & Fleet Structure | 1/4 | In Progress|  |
-| 6. Galaxy Map & Planet Model | 4/4 | Complete   | 2026-04-06 |
-| 7. Rank, Merit & Personnel | 3/3 | Complete   | 2026-04-05 |
-| 8. Scenario & Character System | 3/3 | Complete   | 2026-04-06 |
-| 9. Strategic Commands | 4/4 | Complete   | 2026-04-06 |
-| 10. Tactical Combat (RTS) | 4/4 | Complete   | 2026-04-06 |
-| 11. Faction Politics & Diplomacy | 5/5 | Complete | 2026-04-06 |
-| 12. Communication, NPC AI & Session Lifecycle | 1/6 | In Progress|  |
+| 1. 레거시 제거 + 함종 유닛 기반 | 0/TBD | Not started | - |
+| 2. gin7 81종 커맨드 시스템 | 0/TBD | Not started | - |
+| 3. 실시간 전술전 엔진 | 0/TBD | Not started | - |
+| 4. 경제 시스템 | 0/TBD | Not started | - |
+| 5. AI 시스템 | 0/TBD | Not started | - |
+| 6. 프론트엔드 통합 | 0/TBD | Not started | - |
+| 7. 시나리오 데이터 + 밸런싱 | 0/TBD | Not started | - |

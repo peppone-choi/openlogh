@@ -114,13 +114,70 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (To be filled by roadmapper) | | |
+| LEGACY-01 | Phase 1 | Pending |
+| LEGACY-02 | Phase 1 | Pending |
+| LEGACY-03 | Phase 1 | Pending |
+| LEGACY-04 | Phase 1 | Pending |
+| LEGACY-05 | Phase 1 | Pending |
+| LEGACY-06 | Phase 1 | Pending |
+| SHIP-01 | Phase 1 | Pending |
+| SHIP-02 | Phase 1 | Pending |
+| SHIP-03 | Phase 1 | Pending |
+| SHIP-04 | Phase 1 | Pending |
+| SHIP-05 | Phase 1 | Pending |
+| SHIP-06 | Phase 1 | Pending |
+| CMD-01 | Phase 2 | Pending |
+| CMD-02 | Phase 2 | Pending |
+| CMD-03 | Phase 2 | Pending |
+| CMD-04 | Phase 2 | Pending |
+| CMD-05 | Phase 2 | Pending |
+| CMD-06 | Phase 2 | Pending |
+| CMD-07 | Phase 2 | Pending |
+| CMD-08 | Phase 2 | Pending |
+| CMD-09 | Phase 2 | Pending |
+| BATTLE-01 | Phase 3 | Pending |
+| BATTLE-02 | Phase 3 | Pending |
+| BATTLE-03 | Phase 3 | Pending |
+| BATTLE-04 | Phase 3 | Pending |
+| BATTLE-05 | Phase 3 | Pending |
+| BATTLE-06 | Phase 3 | Pending |
+| BATTLE-07 | Phase 3 | Pending |
+| BATTLE-08 | Phase 3 | Pending |
+| BATTLE-09 | Phase 3 | Pending |
+| BATTLE-10 | Phase 3 | Pending |
+| BATTLE-11 | Phase 3 | Pending |
+| BATTLE-12 | Phase 3 | Pending |
+| ECON-01 | Phase 4 | Pending |
+| ECON-02 | Phase 4 | Pending |
+| ECON-03 | Phase 4 | Pending |
+| ECON-04 | Phase 4 | Pending |
+| ECON-05 | Phase 4 | Pending |
+| ECON-06 | Phase 4 | Pending |
+| AI-01 | Phase 5 | Pending |
+| AI-02 | Phase 5 | Pending |
+| AI-03 | Phase 5 | Pending |
+| AI-04 | Phase 5 | Pending |
+| FE-01 | Phase 6 | Pending |
+| FE-02 | Phase 6 | Pending |
+| FE-03 | Phase 6 | Pending |
+| FE-04 | Phase 6 | Pending |
+| FE-05 | Phase 6 | Pending |
+| FE-06 | Phase 6 | Pending |
+| FE-07 | Phase 6 | Pending |
+| FE-08 | Phase 6 | Pending |
+| SCEN-01 | Phase 7 | Pending |
+| SCEN-02 | Phase 7 | Pending |
+| SCEN-03 | Phase 7 | Pending |
+| TEST-01 | Phase 7 | Pending |
+| TEST-02 | Phase 7 | Pending |
+| TEST-03 | Phase 7 | Pending |
+| TEST-04 | Phase 7 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 51 total
-- Mapped to phases: 0
-- Unmapped: 51
+- Mapped to phases: 51
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after initial definition*
+*Last updated: 2026-04-06 — traceability filled by roadmapper*
