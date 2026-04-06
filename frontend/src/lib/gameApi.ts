@@ -79,6 +79,10 @@ import type {
     Proposal,
     EligibleApprover,
     SubmitProposalRequest,
+    MilitaryUnit,
+    FormationCaps,
+    CrewSlotRole,
+    UnitType,
 } from '@/types';
 
 // World API
@@ -893,6 +897,28 @@ export const adminEventApi = {
             ...(args ? { args } : {}),
             ...(worldId != null ? { worldId } : {}),
         }),
+};
+
+// Unit API (Phase 5 — Organization & Fleet Structure)
+export const unitApi = {
+    listByFaction: (factionId: number) =>
+        api.get<MilitaryUnit[]>(`/factions/${factionId}/units`),
+    getFormationCaps: (factionId: number) =>
+        api.get<FormationCaps>(`/factions/${factionId}/formation-caps`),
+    create: (data: {
+        sessionId: number;
+        commanderOfficerId: number;
+        factionId: number;
+        name: string;
+        unitType: UnitType;
+        planetId?: number;
+    }) => api.post<MilitaryUnit>('/units', data),
+    getCrew: (unitId: number) =>
+        api.get<import('@/types').CrewMember[]>(`/units/${unitId}/crew`),
+    assignCrew: (unitId: number, officerId: number, slotRole: CrewSlotRole) =>
+        api.post<void>(`/units/${unitId}/crew`, { officerId, slotRole }),
+    removeCrew: (unitId: number, officerId: number) =>
+        api.delete<void>(`/units/${unitId}/crew/${officerId}`),
 };
 
 // ──────────────────────────────────────────────────────────────────────

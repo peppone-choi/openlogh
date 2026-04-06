@@ -1488,3 +1488,66 @@ export type MarketBuySuppliesResponse = MarketBuyRiceResponse;
 
 /** MarketSellSuppliesResponse (was MarketSellRiceResponse) */
 export type MarketSellSuppliesResponse = MarketSellRiceResponse;
+
+// ──────────────────────────────────────────────────────────────────────
+// Unit System (Phase 5 — Organization & Fleet Structure)
+// ──────────────────────────────────────────────────────────────────────
+
+export type UnitType = 'FLEET' | 'PATROL' | 'TRANSPORT' | 'GROUND' | 'GARRISON' | 'SOLO';
+
+export type CrewSlotRole = 'COMMANDER' | 'VICE_COMMANDER' | 'CHIEF_OF_STAFF' |
+    'STAFF_OFFICER_1' | 'STAFF_OFFICER_2' | 'STAFF_OFFICER_3' |
+    'STAFF_OFFICER_4' | 'STAFF_OFFICER_5' | 'STAFF_OFFICER_6' | 'ADJUTANT';
+
+export interface MilitaryUnit {
+    id: number;
+    sessionId: number;
+    leaderOfficerId: number;
+    factionId: number;
+    name: string;
+    unitType: UnitType;
+    maxUnits: number;
+    currentUnits: number;
+    maxCrew: number;
+    planetId: number | null;
+    createdAt: string;
+    crew: CrewMember[];
+}
+
+export interface CrewMember {
+    officerId: number;
+    officerName: string;
+    slotRole: CrewSlotRole;
+}
+
+export interface FormationCapEntry {
+    current: number;
+    max: number;
+    available: number;
+}
+
+export interface FormationCaps {
+    caps: Record<string, FormationCapEntry>;
+}
+
+export const UNIT_TYPE_INFO: Record<UnitType, { nameKo: string; nameEn: string; maxUnits: number; maxShips: number; maxCrew: number }> = {
+    FLEET: { nameKo: '함대', nameEn: 'Fleet', maxUnits: 60, maxShips: 18000, maxCrew: 10 },
+    PATROL: { nameKo: '순찰대', nameEn: 'Patrol', maxUnits: 3, maxShips: 900, maxCrew: 3 },
+    TRANSPORT: { nameKo: '수송함대', nameEn: 'Transport Fleet', maxUnits: 23, maxShips: 6900, maxCrew: 3 },
+    GROUND: { nameKo: '지상부대', nameEn: 'Ground Force', maxUnits: 6, maxShips: 1800, maxCrew: 1 },
+    GARRISON: { nameKo: '행성수비대', nameEn: 'Garrison', maxUnits: 10, maxShips: 0, maxCrew: 1 },
+    SOLO: { nameKo: '단독함', nameEn: 'Solo', maxUnits: 0, maxShips: 1, maxCrew: 0 },
+};
+
+export const CREW_SLOT_INFO: Record<CrewSlotRole, { nameKo: string; nameEn: string }> = {
+    COMMANDER: { nameKo: '사령관', nameEn: 'Commander' },
+    VICE_COMMANDER: { nameKo: '부사령관', nameEn: 'Vice Commander' },
+    CHIEF_OF_STAFF: { nameKo: '참모장', nameEn: 'Chief of Staff' },
+    STAFF_OFFICER_1: { nameKo: '참모1', nameEn: 'Staff Officer 1' },
+    STAFF_OFFICER_2: { nameKo: '참모2', nameEn: 'Staff Officer 2' },
+    STAFF_OFFICER_3: { nameKo: '참모3', nameEn: 'Staff Officer 3' },
+    STAFF_OFFICER_4: { nameKo: '참모4', nameEn: 'Staff Officer 4' },
+    STAFF_OFFICER_5: { nameKo: '참모5', nameEn: 'Staff Officer 5' },
+    STAFF_OFFICER_6: { nameKo: '참모6', nameEn: 'Staff Officer 6' },
+    ADJUTANT: { nameKo: '부관', nameEn: 'Adjutant' },
+};
