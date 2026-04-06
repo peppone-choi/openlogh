@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-legacy-removal-ship-unit-foundation/01-04-PLAN.md
-last_updated: "2026-04-06T13:46:41.005Z"
+stopped_at: Completed 01-legacy-removal-ship-unit-foundation/01-05-PLAN.md
+last_updated: "2026-04-06T13:53:35.019Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 31
-  completed_plans: 27
+  completed_plans: 28
   percent: 77
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 1 of 7 (레거시 제거 + 함종 유닛 기반)
-Plan: 4 of 5 in current phase
+Plan: 5 of 5 in current phase
 Status: Ready to execute
 Last activity: 2026-04-06
 
@@ -55,6 +55,7 @@ Progress: [████████░░] 77%
 | Phase 01-legacy-removal-ship-unit-foundation P02 | 25 | 2 tasks | 25 files |
 | Phase 01-legacy-removal-ship-unit-foundation P03 | 8 | 1 tasks | 2 files |
 | Phase 01-legacy-removal-ship-unit-foundation P04 | 8 | 2 tasks | 3 files |
+| Phase 01-legacy-removal-ship-unit-foundation P05 | 12 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Progress: [████████░░] 77%
 - [Phase 01-legacy-removal-ship-unit-foundation]: EconomyService: keep updateCitySupply/processDisasterOrBoom/randomizeCityTradeRate/processYearlyStatistics active — gin7-compatible, not legacy income logic
 - [Phase 01-legacy-removal-ship-unit-foundation]: NationTypeModifiers: che_* types replaced with gin7 empire/alliance/fezzan/rebel stubs — modifier bodies deferred to Phase 4
 - [Phase 01]: ShipUnit shipClass/shipSubtype stored as String enum names for schema evolution flexibility
+- [Phase 01-legacy-removal-ship-unit-foundation]: ShipStatRegistry parses nested JSON (shipClasses[].subtypes[]) into flat subtype key map via buildSubtypeKey()
+- [Phase 01-legacy-removal-ship-unit-foundation]: officerLevel >= 5 authority bypass fully removed (0 occurrences) — PositionCard-only authority from Plan 05 onwards
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T13:46:40.997Z
-Stopped at: Completed 01-legacy-removal-ship-unit-foundation/01-04-PLAN.md
+Last session: 2026-04-06T13:53:35.010Z
+Stopped at: Completed 01-legacy-removal-ship-unit-foundation/01-05-PLAN.md
 Resume file: None

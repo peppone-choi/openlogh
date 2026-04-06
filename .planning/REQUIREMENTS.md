@@ -19,9 +19,9 @@
 - [x] **SHIP-01**: 11함종 × I~VIII 서브타입 함정 유닛 구현 (ship_stats JSON 기반, 300척 단위)
 - [x] **SHIP-02**: 진영별 함종 차이 구현 (제국: 고속전함/뇌격정모함, 동맹: 타격순항함)
 - [x] **SHIP-03**: 기함 유닛 구현 (고유명 기함 + 범용기함, 계급별 결정)
-- [ ] **SHIP-04**: 육전대 유닛 구현 (장갑병/장갑유탄병/경장육전병, ground_unit_stats.json 기반)
-- [ ] **SHIP-05**: 함정 유닛 상세 스탯 구현 (장갑/실드/무기/속도/승무원/물자적재량)
-- [ ] **SHIP-06**: 승조원 수련도 시스템 (엘리트/베테란/노멀/그린 4단계)
+- [x] **SHIP-04**: 육전대 유닛 구현 (장갑병/장갑유탄병/경장육전병, ground_unit_stats.json 기반)
+- [x] **SHIP-05**: 함정 유닛 상세 스탯 구현 (장갑/실드/무기/속도/승무원/물자적재량)
+- [x] **SHIP-06**: 승조원 수련도 시스템 (엘리트/베테란/노멀/그린 4단계)
 
 ### 커맨드 시스템 (CMD)
 
@@ -123,9 +123,9 @@
 | SHIP-01 | Phase 1 | Complete |
 | SHIP-02 | Phase 1 | Complete |
 | SHIP-03 | Phase 1 | Complete |
-| SHIP-04 | Phase 1 | Pending |
-| SHIP-05 | Phase 1 | Pending |
-| SHIP-06 | Phase 1 | Pending |
+| SHIP-04 | Phase 1 | Complete |
+| SHIP-05 | Phase 1 | Complete |
+| SHIP-06 | Phase 1 | Complete |
 | CMD-01 | Phase 2 | Pending |
 | CMD-02 | Phase 2 | Pending |
 | CMD-03 | Phase 2 | Pending |
