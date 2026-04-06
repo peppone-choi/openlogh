@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v2.0
+milestone_name: milestone
+status: executing
+stopped_at: Completed 01-legacy-removal-ship-unit-foundation/01-02-PLAN.md
+last_updated: "2026-04-06T13:33:41.073Z"
+last_activity: 2026-04-06
+progress:
+  total_phases: 7
+  completed_phases: 4
+  total_plans: 31
+  completed_plans: 25
+  percent: 77
+---
+
 # Project State
 
 ## Project Reference
@@ -10,15 +26,16 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 ## Current Position
 
 Phase: 1 of 7 (레거시 제거 + 함종 유닛 기반)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-04-06 — Roadmap v2.0 created (7 phases, 51 requirements mapped)
+Plan: 2 of 5 in current phase
+Status: Ready to execute
+Last activity: 2026-04-06
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████████░░] 77%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: -
 - Total execution time: 0 hours
@@ -30,10 +47,12 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: none yet
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-legacy-removal-ship-unit-foundation P02 | 25 | 2 tasks | 25 files |
 
 ## Accumulated Context
 
@@ -45,6 +64,10 @@ Progress: [░░░░░░░░░░] 0%
 - [Research]: `TickEngine.runMonthlyPipeline()` disconnected (TODO at line 126-136) — wire as first task of Phase 4
 - [Research]: Two battle engines coexist (BattleEngine.kt + TacticalBattleEngine.kt) — plan deletion list at Phase 1 start
 - [Research]: ShipUnit subtype stats hardcoded in TacticalBattleEngine — fix in Phase 1 with ShipUnit entity
+- [01-01]: Gin7CommandRegistry extends CommandRegistry (not interface) — preserves CommandExecutor type injection without constructor changes
+- [01-01]: ALWAYS_ALLOWED_COMMANDS = setOf("대기") — replaces 삼국지 휴식/NPC능동/CR건국/CR맹훈련
+- [01-01]: ArgSchemas.kt legacy entries left as dead data — Phase 2 will replace with gin7 schemas
+- [Phase 01]: 삼국지 BattleEngine/WarUnit* 19개 파일 삭제, gin7 TacticalBattleEngine 보존, BattleTrigger stub 유지(ItemModifiers 의존성), Phase 3에서 gin7 전투 엔진으로 대체 예정
 
 ### Pending Todos
 
@@ -58,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06
-Stopped at: ROADMAP.md written, STATE.md initialized, REQUIREMENTS.md traceability pending
+Last session: 2026-04-06T13:33:41.065Z
+Stopped at: Completed 01-legacy-removal-ship-unit-foundation/01-02-PLAN.md
 Resume file: None
