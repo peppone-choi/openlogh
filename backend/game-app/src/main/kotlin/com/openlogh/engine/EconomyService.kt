@@ -8,8 +8,6 @@ import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
 import com.openlogh.engine.turn.cqrs.port.WorldWritePort
-import com.openlogh.engine.modifier.IncomeContext
-import com.openlogh.engine.modifier.NationTypeModifiers
 import com.openlogh.entity.Message
 import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.OfficerRepository
@@ -22,8 +20,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import kotlin.math.ceil
-import kotlin.math.pow
 import kotlin.math.round
 import kotlin.math.sqrt
 
@@ -33,8 +29,8 @@ class EconomyService @Autowired constructor(
     private val officerRepository: OfficerRepository,
     private val messageRepository: MessageRepository,
     private val mapService: MapService,
-    private val historyService: HistoryService,
-    private val inheritanceService: InheritanceService,
+    @Suppress("unused") private val historyService: HistoryService,
+    @Suppress("unused") private val inheritanceService: InheritanceService,
 ) {
     constructor(
         planetRepository: PlanetRepository,
@@ -60,11 +56,6 @@ class EconomyService @Autowired constructor(
     private val log = LoggerFactory.getLogger(javaClass)
 
     companion object {
-        private const val BASE_GOLD = 0
-        private const val BASE_RICE = 2000
-        private const val BASE_POP_INCREASE = 5000
-        private const val MAX_DED_LEVEL = 30
-
         private val NATION_LEVEL_THRESHOLDS = intArrayOf(0, 1, 2, 4, 6, 9, 12, 16, 20, 25)
 
         private val NATION_LEVEL_NAME = arrayOf(
@@ -81,290 +72,34 @@ class EconomyService @Autowired constructor(
         val body: String,
     )
 
+    /**
+     * TODO Phase 4: gin7 Gin7EconomyService로 대체 예정.
+     * 삼국지 농업/상업 기반 경제 로직 제거됨.
+     * 현재 stub — 아무 처리도 하지 않음.
+     */
     @Transactional
     fun processMonthly(world: SessionState) {
-        preUpdateMonthly(world)
-        postUpdateMonthly(world)
+        // TODO Phase 4: gin7EconomyService.processMonthly(world)
     }
 
+    /**
+     * TODO Phase 4: gin7 Gin7EconomyService로 대체 예정.
+     * 삼국지 수입(agri/comm) 계산 로직 제거됨.
+     * 현재 stub — 아무 처리도 하지 않음.
+     */
     @Transactional
     fun preUpdateMonthly(world: SessionState) {
-        val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allPlanets().map { it.toEntity() }
-        val nations = ports.allFactions().map { it.toEntity() }
-        val generals = ports.allOfficers().map { it.toEntity() }
-
-        processIncome(world, nations, cities, generals)
-        processWarIncome(nations, cities)
-
-        saveCities(ports, cities)
-        saveNations(ports, nations)
-        saveGenerals(ports, generals)
+        // TODO Phase 4: gin7EconomyService.preUpdateMonthly(world)
     }
 
+    /**
+     * TODO Phase 4: gin7 Gin7EconomyService로 대체 예정.
+     * 삼국지 반기 처리(semi-annual) 및 국가레벨 갱신 로직 제거됨.
+     * 현재 stub — 아무 처리도 하지 않음.
+     */
     @Transactional
     fun postUpdateMonthly(world: SessionState) {
-        val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allPlanets().map { it.toEntity() }
-        val nations = ports.allFactions().map { it.toEntity() }
-        val generals = ports.allOfficers().map { it.toEntity() }
-
-        if (world.currentMonth.toInt() == 1 || world.currentMonth.toInt() == 7) {
-            processSemiAnnual(world, nations, cities, generals)
-        }
-
-        updateCitySupply(world, nations, cities, generals)
-        updateNationLevel(world, nations, cities, generals)
-
-        saveCities(ports, cities)
-        saveNations(ports, nations)
-        saveGenerals(ports, generals)
-    }
-
-    // ── Phase A1: processIncome (legacy formula) ──
-
-    // resourceType: "gold" = gold only, "rice" = rice only, null/"all" = both (legacy: gold spring, rice autumn)
-    private fun processIncome(world: SessionState, nations: List<Faction>, cities: List<Planet>, generals: List<Officer>, resourceType: String = "all") {
-        val citiesByNation = cities.groupBy { it.factionId }
-        val generalsByNation = generals
-            .filter { it.npcState.toInt() != 5 && it.npcState != SovereignConstants.NPC_STATE_EMPEROR }
-            .groupBy { it.factionId }
-
-        // Count officers (officer_level 2-4) per city who are in their assigned city
-        val officerCountByCity = generals
-            .filter { it.officerLevel in 2..4 && it.planetId == it.officerPlanet.toLong() }
-            .groupBy { it.planetId }
-            .mapValues { it.value.size }
-
-        for (nation in nations) {
-            val nationCities = citiesByNation[nation.id] ?: continue
-            val nationGenerals = generalsByNation[nation.id] ?: emptyList()
-            val taxRate = nation.conscriptionRateTmp.toDouble()
-            val nationLevel = nation.factionRank.toInt().coerceAtLeast(1)
-
-            // Get nation type modifier (applied per-city, legacy parity: onCalcNationalIncome per city)
-            val nationTypeMod = NationTypeModifiers.get(nation.factionType)
-            val baseIncomeCtx = if (nationTypeMod != null) nationTypeMod.onCalcIncome(IncomeContext()) else IncomeContext()
-
-            // Calculate city-level income with per-city modifier (H1)
-            var totalGoldIncome = 0.0
-            var totalRiceIncome = 0.0
-
-            for (city in nationCities) {
-                if (city.supplyState.toInt() == 0) continue
-                val officerCnt = officerCountByCity[city.id] ?: 0
-                val isCapital = city.id == nation.capitalPlanetId
-
-                if (resourceType != "rice") {
-                    totalGoldIncome += calcCityGoldIncome(city, officerCnt, isCapital, nationLevel, baseIncomeCtx.goldMultiplier)
-                }
-                if (resourceType != "gold") {
-                    totalRiceIncome += calcCityRiceIncome(city, officerCnt, isCapital, nationLevel, baseIncomeCtx.riceMultiplier)
-                    totalRiceIncome += calcCityWallIncome(city, officerCnt, isCapital, nationLevel, baseIncomeCtx.riceMultiplier)
-                }
-            }
-
-            // Apply tax rate multiplier
-            val goldIncome = (totalGoldIncome * taxRate / 20).toInt()
-            val riceIncome = (totalRiceIncome * taxRate / 20).toInt()
-
-            // Add income to nation treasury
-            if (resourceType != "rice") nation.funds += goldIncome
-            if (resourceType != "gold") nation.supplies += riceIncome
-
-            // Calculate bill/salary
-            val totalBill = nationGenerals.sumOf { getBill(it.dedication) }
-            val goldOutcome = (nation.taxRate.toDouble() / 100 * totalBill).toInt()
-            val riceOutcome = (nation.taxRate.toDouble() / 100 * totalBill).toInt()
-
-            // Pay salaries (gold)
-            val goldRatio = if (totalBill == 0) 0.0
-            else if (nation.funds < BASE_GOLD) 0.0
-            else if (nation.funds - BASE_GOLD < goldOutcome) {
-                val realOutcome = nation.funds - BASE_GOLD
-                nation.funds = BASE_GOLD
-                realOutcome.toDouble() / totalBill
-            } else {
-                nation.funds -= goldOutcome
-                goldOutcome.toDouble() / totalBill
-            }
-
-            // Pay salaries (rice)
-            val riceRatio = if (totalBill == 0) 0.0
-            else if (nation.supplies < BASE_RICE) 0.0
-            else if (nation.supplies - BASE_RICE < riceOutcome) {
-                val realOutcome = nation.supplies - BASE_RICE
-                nation.supplies = BASE_RICE
-                realOutcome.toDouble() / totalBill
-            } else {
-                nation.supplies -= riceOutcome
-                riceOutcome.toDouble() / totalBill
-            }
-
-            // Distribute salary to each general
-            for (general in nationGenerals) {
-                val bill = getBill(general.dedication)
-                general.funds += (bill * goldRatio).toInt()
-                general.supplies += (bill * riceRatio).toInt()
-            }
-        }
-    }
-
-    private fun calcCityGoldIncome(city: Planet, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
-        if (city.commerceMax == 0) return 0.0
-        val trustRatio = city.approval / 200.0 + 0.5
-        var income = city.population.toDouble() * city.commerce / city.commerceMax * trustRatio / 30
-        income *= 1 + city.security.toDouble() / city.securityMax.coerceAtLeast(1) / 10
-        income *= 1.05.pow(officerCnt)
-        if (isCapital) {
-            income *= 1 + 1.0 / 3 / nationLevel
-        }
-        return income * multiplier
-    }
-
-    private fun calcCityRiceIncome(city: Planet, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
-        if (city.productionMax == 0) return 0.0
-        val trustRatio = city.approval / 200.0 + 0.5
-        var income = city.population.toDouble() * city.production / city.productionMax * trustRatio / 30
-        income *= 1 + city.security.toDouble() / city.securityMax.coerceAtLeast(1) / 10
-        income *= 1.05.pow(officerCnt)
-        if (isCapital) {
-            income *= 1 + 1.0 / 3 / nationLevel
-        }
-        return income * multiplier
-    }
-
-    private fun calcCityWallIncome(city: Planet, officerCnt: Int, isCapital: Boolean, nationLevel: Int, multiplier: Double = 1.0): Double {
-        if (city.fortressMax == 0) return 0.0
-        var income = city.orbitalDefense.toDouble() * city.fortress / city.fortressMax / 3
-        income *= 1 + city.security.toDouble() / city.securityMax.coerceAtLeast(1) / 10
-        income *= 1.05.pow(officerCnt)
-        if (isCapital) {
-            income *= 1 + 1.0 / 3 / nationLevel
-        }
-        return income * multiplier
-    }
-
-    private fun getDedLevel(dedication: Int): Int {
-        return ceil(sqrt(dedication.toDouble()) / 10).toInt().coerceIn(0, MAX_DED_LEVEL)
-    }
-
-    private fun getBill(dedication: Int): Int {
-        return getDedLevel(dedication) * 200 + 400
-    }
-
-    private fun processWarIncome(nations: List<Faction>, cities: List<Planet>) {
-        val nationMap = nations.associateBy { it.id }
-
-        for (city in cities) {
-            if (city.dead > 0) {
-                val nation = nationMap[city.factionId] ?: continue
-                nation.funds += (city.dead / 10)
-                val popGain = (city.dead * 0.2).toInt().coerceAtMost((city.populationMax - city.population).coerceAtLeast(0))
-                city.population += popGain
-                city.dead = 0
-            }
-        }
-    }
-
-    // ── Phase A2: processSemiAnnual (legacy formula) ──
-
-    private fun processSemiAnnual(world: SessionState, nations: List<Faction>, cities: List<Planet>, generals: List<Officer>) {
-        // 1. Reset dead and apply 0.99 decay to ALL cities unconditionally
-        // Legacy ProcessSemiAnnual.php:75-82: decay is applied to ALL cities first,
-        // then popIncrease() applies growth ONLY to supplied nation cities.
-        // Neutral cities additionally get trust reset to 50.
-        val citiesByNation = cities.filter { it.factionId != 0L }.groupBy { it.factionId }
-
-        for (city in cities) {
-            city.dead = 0
-            // 0.99 decay on ALL cities (legacy parity: ProcessSemiAnnual.php:75-82)
-            city.production = (city.production * 0.99).toInt()
-            city.commerce = (city.commerce * 0.99).toInt()
-            city.security = (city.security * 0.99).toInt()
-            city.orbitalDefense = (city.orbitalDefense * 0.99).toInt()
-            city.fortress = (city.fortress * 0.99).toInt()
-            if (city.factionId == 0L) {
-                // Neutral city: trust reset to 50 (legacy func_time_event.php:43)
-                city.approval = 50F
-            }
-        }
-
-        // 2. Population and infrastructure growth per nation (supplied cities only)
-        val nationMap = nations.associateBy { it.id }
-
-        for ((nationId, nationCities) in citiesByNation) {
-            val nation = nationMap[nationId] ?: continue
-            val taxRate = nation.conscriptionRateTmp.toDouble()
-
-            val popRatio = (30 - taxRate) / 200
-            val genericRatio = (20 - taxRate) / 200
-
-            // Nation type pop growth modifier
-            val nationTypeMod = NationTypeModifiers.get(nation.factionType)
-            var incomeCtx = IncomeContext()
-            if (nationTypeMod != null) {
-                incomeCtx = nationTypeMod.onCalcIncome(incomeCtx)
-            }
-
-            for (city in nationCities) {
-                if (city.supplyState.toInt() != 1) continue
-
-                // Population growth (with nation type modifier)
-                val rawPopGrowth = if (popRatio >= 0) {
-                    BASE_POP_INCREASE + (city.population * (1 + popRatio * (1 + city.security.toDouble() / city.securityMax.coerceAtLeast(1) / 10))).toInt()
-                } else {
-                    BASE_POP_INCREASE + (city.population * (1 + popRatio * (1 - city.security.toDouble() / city.securityMax.coerceAtLeast(1) / 10))).toInt()
-                }
-                val popDelta = rawPopGrowth - city.population
-                val popGrowth = city.population + (popDelta * incomeCtx.popGrowthMultiplier).toInt()
-                city.population = popGrowth.coerceAtMost(city.populationMax)
-
-                // Infrastructure growth
-                city.production = (city.production * (1 + genericRatio)).toInt().coerceAtMost(city.productionMax)
-                city.commerce = (city.commerce * (1 + genericRatio)).toInt().coerceAtMost(city.commerceMax)
-                city.security = (city.security * (1 + genericRatio)).toInt().coerceAtMost(city.securityMax)
-                city.orbitalDefense = (city.orbitalDefense * (1 + genericRatio)).toInt().coerceAtMost(city.orbitalDefenseMax)
-                city.fortress = (city.fortress * (1 + genericRatio)).toInt().coerceAtMost(city.fortressMax)
-
-                // Trust adjustment
-                city.approval = (city.approval + (20 - taxRate).toFloat()).coerceIn(0F, 100F)
-            }
-        }
-
-        // 4. General maintenance: resource decay
-        for (general in generals) {
-            // Gold: > 10000 → 3%, > 1000 → 1%
-            if (general.funds > 10000) {
-                general.funds = (general.funds * 0.97).toInt()
-            } else if (general.funds > 1000) {
-                general.funds = (general.funds * 0.99).toInt()
-            }
-            // Rice: > 10000 → 3%, > 1000 → 1%
-            if (general.supplies > 10000) {
-                general.supplies = (general.supplies * 0.97).toInt()
-            } else if (general.supplies > 1000) {
-                general.supplies = (general.supplies * 0.99).toInt()
-            }
-        }
-
-        // 5. Nation maintenance: resource decay
-        for (nation in nations) {
-            // Gold: > 100000 → 5%, > 10000 → 3%, > 1000 → 1%
-            nation.funds = when {
-                nation.funds > 100000 -> (nation.funds * 0.95).toInt()
-                nation.funds > 10000 -> (nation.funds * 0.97).toInt()
-                nation.funds > 1000 -> (nation.funds * 0.99).toInt()
-                else -> nation.funds
-            }
-            // Rice
-            nation.supplies = when {
-                nation.supplies > 100000 -> (nation.supplies * 0.95).toInt()
-                nation.supplies > 10000 -> (nation.supplies * 0.97).toInt()
-                nation.supplies > 1000 -> (nation.supplies * 0.99).toInt()
-                else -> nation.supplies
-            }
-        }
+        // TODO Phase 4: gin7EconomyService.postUpdateMonthly(world)
     }
 
     /**
@@ -384,48 +119,35 @@ class EconomyService @Autowired constructor(
 
     /**
      * Public entry point for event-driven income processing.
+     * TODO Phase 4: wire to gin7 income calculation.
      */
     @Transactional
     fun processIncomeEvent(world: SessionState) {
-        val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allPlanets().map { it.toEntity() }
-        val nations = ports.allFactions().map { it.toEntity() }
-        val generals = ports.allOfficers().map { it.toEntity() }
-        processIncome(world, nations, cities, generals)
-        saveCities(ports, cities)
-        saveNations(ports, nations)
-        saveGenerals(ports, generals)
+        // TODO Phase 4: gin7EconomyService.processIncomeEvent(world)
+        log.debug("[World {}] processIncomeEvent: stub (Phase 4 pending)", world.id)
     }
 
     /**
      * Public entry point for event-driven semi-annual processing.
+     * TODO Phase 4: wire to gin7 semi-annual processing.
      */
     @Transactional
     fun processSemiAnnualEvent(world: SessionState) {
-        val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allPlanets().map { it.toEntity() }
-        val nations = ports.allFactions().map { it.toEntity() }
-        val generals = ports.allOfficers().map { it.toEntity() }
-        processSemiAnnual(world, nations, cities, generals)
-        saveCities(ports, cities)
-        saveNations(ports, nations)
-        saveGenerals(ports, generals)
+        // TODO Phase 4: gin7EconomyService.processSemiAnnualEvent(world)
+        log.debug("[World {}] processSemiAnnualEvent: stub (Phase 4 pending)", world.id)
     }
 
     /**
      * Public entry point for event-driven nation level update.
+     * TODO Phase 4: wire to gin7 faction rank calculation.
      */
     @Transactional
     fun updateNationLevelEvent(world: SessionState) {
-        val ports = worldPortFactory.create(world.id.toLong())
-        val cities = ports.allPlanets().map { it.toEntity() }
-        val nations = ports.allFactions().map { it.toEntity() }
-        val generals = ports.allOfficers().map { it.toEntity() }
-        updateNationLevel(world, nations, cities, generals)
-        saveNations(ports, nations)
+        // TODO Phase 4: gin7EconomyService.updateNationLevelEvent(world)
+        log.debug("[World {}] updateNationLevelEvent: stub (Phase 4 pending)", world.id)
     }
 
-    // ── Phase A2: updateCitySupply (+ trust < 30 neutral conversion) ──
+    // ── Supply state calculation (map-connectivity based — gin7 compatible) ──
 
     private fun updateCitySupply(world: SessionState, nations: List<Faction>, cities: List<Planet>, generals: List<Officer>) {
         val mapCode = (world.config["mapCode"] as? String) ?: "che"
@@ -518,81 +240,8 @@ class EconomyService @Autowired constructor(
         }
     }
 
-    // ── Phase A2: updateNationLevel (legacy thresholds + rewards) ──
-
-    private fun updateNationLevel(world: SessionState, nations: List<Faction>, cities: List<Planet>, generals: List<Officer>) {
-        val citiesByNation = cities.groupBy { it.factionId }
-        val generalsByNation = generals
-            .filter { it.npcState.toInt() != 5 && it.npcState != SovereignConstants.NPC_STATE_EMPEROR }
-            .groupBy { it.factionId }
-
-        for (nation in nations) {
-            val nationCities = citiesByNation[nation.id] ?: continue
-            val highCities = nationCities.count { it.level >= 4 }
-
-            // Find highest level matching threshold
-            var newLevel = 0
-            for (level in NATION_LEVEL_THRESHOLDS.indices) {
-                if (highCities >= NATION_LEVEL_THRESHOLDS[level]) {
-                    newLevel = level
-                }
-            }
-
-            if (newLevel > nation.factionRank.toInt()) {
-                val oldLevel = nation.factionRank.toInt()
-                nation.factionRank = newLevel.coerceIn(0, 9).toShort()
-                nation.funds += newLevel * 1000
-                nation.supplies += newLevel * 1000
-
-                // Legacy parity: log 【작위】 history for nation level-up
-                val factionName = nation.name
-                val lordName = generalsByNation[nation.id]
-                    ?.firstOrNull { it.officerLevel.toInt() == 20 }?.name ?: "군주"
-                val oldLevelText = getNationLevelName(oldLevel)
-                val newLevelText = getNationLevelName(newLevel)
-
-                val globalMsg = when (newLevel) {
-                    9 -> "【작위】 ${factionName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립되었습니다."
-                    8 -> "【작위】 ${factionName}의 ${lordName}이(가) ${newLevelText}로 책봉되었습니다."
-                    in 3..7 -> "【작위】 ${factionName}의 ${lordName}이(가) ${newLevelText}로 임명되었습니다."
-                    2 -> "【작위】 ${lordName}이(가) 독립하여 ${factionName}(이)라는 ${newLevelText}로 나섰습니다."
-                    else -> "【작위】 ${factionName}의 ${lordName}이(가) ${newLevelText}로 승격되었습니다."
-                }
-                val nationMsg = when (newLevel) {
-                    9 -> "${factionName} $oldLevelText ${lordName}이(가) ${newLevelText}로 옹립"
-                    8 -> "${factionName}의 ${lordName}이(가) ${newLevelText}로 책봉"
-                    in 3..7 -> "${factionName}의 ${lordName}이(가) ${newLevelText}로 임명됨"
-                    2 -> "${lordName}이(가) 독립하여 ${factionName}(이)라는 ${newLevelText}로 나서다"
-                    else -> "${factionName}의 ${lordName}이(가) ${newLevelText}로 승격됨"
-                }
-
-                historyService.logWorldHistory(
-                    worldId = world.id.toLong(),
-                    message = globalMsg,
-                    year = world.currentYear.toInt(),
-                    month = world.currentMonth.toInt(),
-                )
-                historyService.logNationHistory(
-                    worldId = world.id.toLong(),
-                    nationId = nation.id,
-                    message = nationMsg,
-                    year = world.currentYear.toInt(),
-                    month = world.currentMonth.toInt(),
-                )
-
-                log.info("Nation {} leveled up to {} ({}) (reward: gold={}, supplies = {})",
-                    nation.name, newLevel, newLevelText, newLevel * 1000, newLevel * 1000)
-
-                for (general in generalsByNation[nation.id].orEmpty()) {
-                    inheritanceService.accruePoints(general, "unifier", 1)
-                }
-            }
-        }
-    }
-
     /**
-     * 연초 통계: 국가 국력(power)·장수수(gennum) 갱신 및 연감 기록.
-     * legacy checkStatistic() + postUpdateMonthly() 패러티.
+     * 연초 통계: 국가 국력(power)·장수수(gennum) 갱신.
      * TurnService에서 매년 1월에 호출.
      *
      * 국력 = (자원/100 + 기술 + 도시파워 + 장수능력 + 숙련/1000 + 경험공헌/100) / 10
@@ -623,7 +272,8 @@ class EconomyService @Autowired constructor(
             // 기술
             val tech = nation.techLevel.toDouble()
 
-            // 도시파워: sum(pop) * sum(pop+agri+comm+secu+wall+def) / sum(popMax+agriMax+commMax+secuMax+wallMax+defMax) / 100
+            // 도시파워: sum(pop) * sum(pop+production+commerce+security+fortress+orbitalDefense)
+            //           / sum(popMax+productionMax+commerceMax+securityMax+fortressMax+orbitalDefenseMax) / 100
             val suppliedCities = nationCities.filter { it.supplyState.toInt() == 1 }
             val cityPower = if (suppliedCities.isNotEmpty()) {
                 val popSum = suppliedCities.sumOf { it.population.toLong() }
@@ -632,14 +282,14 @@ class EconomyService @Autowired constructor(
                 if (maxSum > 0) (popSum * valueSum).toDouble() / maxSum / 100.0 else 0.0
             } else 0.0
 
-            // 장수능력: (npcMul * leaderCore * 2 + (sqrt(intel*str)*2 + lead/2)/2) 합
+            // 장수능력
             val statPower = nationGenerals.sumOf { g ->
                 val lead = g.leadership.toDouble()
                 val str = g.command.toDouble()
                 val intel = g.intelligence.toDouble()
                 val npcMul = if (g.npcState < 2) 1.2 else 1.0
                 val leaderCore = if (lead >= 40) lead else 0.0
-                npcMul * leaderCore * 2 + (kotlin.math.sqrt(intel * str) * 2 + lead / 2) / 2
+                npcMul * leaderCore * 2 + (sqrt(intel * str) * 2 + lead / 2) / 2
             }
 
             // 숙련: sum(dex1..dex5) / 1000
@@ -729,31 +379,31 @@ class EconomyService @Autowired constructor(
 
         val disasterEntries = mapOf(
             1 to listOf(
-                DisasterOrBoomEntry(4, "【재난】", "역병이 발생하여 도시가 황폐해지고 있습니다."),
-                DisasterOrBoomEntry(5, "【재난】", "지진으로 피해가 속출하고 있습니다."),
-                DisasterOrBoomEntry(3, "【재난】", "추위가 풀리지 않아 얼어죽는 백성들이 늘어나고 있습니다."),
-                DisasterOrBoomEntry(9, "【재난】", "황건적이 출현해 도시를 습격하고 있습니다."),
+                DisasterOrBoomEntry(4, "【재난】", "역병이 발생하여 행성이 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "항성 폭풍으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(3, "【재난】", "에너지 부족으로 주민들이 고통받고 있습니다."),
+                DisasterOrBoomEntry(9, "【재난】", "반란군이 출현해 행성을 습격하고 있습니다."),
             ),
             4 to listOf(
-                DisasterOrBoomEntry(7, "【재난】", "홍수로 인해 피해가 급증하고 있습니다."),
-                DisasterOrBoomEntry(5, "【재난】", "지진으로 피해가 속출하고 있습니다."),
-                DisasterOrBoomEntry(6, "【재난】", "태풍으로 인해 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(7, "【재난】", "우주 방사선으로 인해 피해가 급증하고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "항성 폭풍으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(6, "【재난】", "소행성 충돌로 인해 피해가 속출하고 있습니다."),
             ),
             7 to listOf(
-                DisasterOrBoomEntry(8, "【재난】", "메뚜기 떼가 발생하여 도시가 황폐해지고 있습니다."),
-                DisasterOrBoomEntry(5, "【재난】", "지진으로 피해가 속출하고 있습니다."),
-                DisasterOrBoomEntry(8, "【재난】", "흉년이 들어 굶어죽는 백성들이 늘어나고 있습니다."),
+                DisasterOrBoomEntry(8, "【재난】", "자원 고갈로 인해 행성이 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "항성 폭풍으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(8, "【재난】", "흉작으로 굶어죽는 주민들이 늘어나고 있습니다."),
             ),
             10 to listOf(
-                DisasterOrBoomEntry(3, "【재난】", "혹한으로 도시가 황폐해지고 있습니다."),
-                DisasterOrBoomEntry(5, "【재난】", "지진으로 피해가 속출하고 있습니다."),
-                DisasterOrBoomEntry(3, "【재난】", "눈이 많이 쌓여 도시가 황폐해지고 있습니다."),
-                DisasterOrBoomEntry(9, "【재난】", "황건적이 출현해 도시를 습격하고 있습니다."),
+                DisasterOrBoomEntry(3, "【재난】", "혹한 행성 환경으로 행성이 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "항성 폭풍으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(3, "【재난】", "함대 봉쇄로 인해 행성이 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(9, "【재난】", "반란군이 출현해 행성을 습격하고 있습니다."),
             ),
         )
         val boomEntries = mapOf(
-            4 to DisasterOrBoomEntry(2, "【호황】", "호황으로 도시가 번창하고 있습니다."),
-            7 to DisasterOrBoomEntry(1, "【풍작】", "풍작으로 도시가 번창하고 있습니다."),
+            4 to DisasterOrBoomEntry(2, "【호황】", "호황으로 행성이 번창하고 있습니다."),
+            7 to DisasterOrBoomEntry(1, "【풍작】", "풍년으로 행성이 번창하고 있습니다."),
         )
 
         if (isGood) {
