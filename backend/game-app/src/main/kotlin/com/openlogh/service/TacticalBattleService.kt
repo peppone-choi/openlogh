@@ -6,6 +6,7 @@ import com.openlogh.entity.TacticalBattle
 import com.openlogh.model.BattlePhase
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
+import com.openlogh.model.UnitStance
 import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.TacticalBattleRepository
@@ -78,14 +79,34 @@ class TacticalBattleService(
     /**
      * Process one tick for all active battles in a session.
      * Called by the game tick engine.
+     * Also checks for new battles via BattleTriggerService and auto-registers them.
      */
     fun processSessionBattles(sessionId: Long) {
+        // 1. 새 전투 감지 및 등록
+        val newBattles = battleTriggerService.checkForBattles(sessionId)
+        newBattles.forEach { registerNewBattle(it) }
+
+        // 2. 기존 활성 전투 틱 처리
         val activeBattleIds = tacticalBattleRepository.findBySessionIdAndPhase(sessionId, BattlePhase.ACTIVE.name)
             .map { it.id }
 
         for (battleId in activeBattleIds) {
             processBattleTick(battleId)
         }
+    }
+
+    /**
+     * Register a newly detected battle (from BattleTriggerService) into active in-memory state.
+     */
+    fun registerNewBattle(battle: TacticalBattle) {
+        val state = battleTriggerService.buildInitialState(battle)
+        activeBattles[battle.id] = state
+
+        battle.phase = BattlePhase.ACTIVE.name
+        tacticalBattleRepository.save(battle)
+
+        broadcastBattleState(battle.sessionId, state, battle)
+        log.info("New battle {} auto-registered from trigger at star system {}", battle.id, battle.starSystemId)
     }
 
     /**
@@ -147,6 +168,27 @@ class TacticalBattleService(
         unit.ticksSinceLastOrder = 0
 
         log.debug("Officer {} set formation to {} in battle {}", officerId, formation.name, battleId)
+    }
+
+    /**
+     * Set stance for a unit in battle.
+     * gin7 rule: 태세 변경은 10틱(ticksSinceStanceChange >= 10) 쿨다운 필요.
+     */
+    fun setStance(battleId: Long, officerId: Long, stance: UnitStance) {
+        val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
+        val unit = state.units.find { it.officerId == officerId && it.isAlive }
+            ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
+
+        require(unit.ticksSinceStanceChange >= 10) {
+            "태세 변경 쿨다운 중 (현재 ${unit.ticksSinceStanceChange}틱, 10틱 필요)"
+        }
+
+        unit.stance = stance
+        unit.ticksSinceStanceChange = 0
+        unit.commandRange = 0.0
+        unit.ticksSinceLastOrder = 0
+
+        log.debug("Officer {} changed stance to {} in battle {}", officerId, stance.name, battleId)
     }
 
     /**
@@ -280,6 +322,7 @@ class TacticalBattleService(
             battleId = battle.id,
             tickCount = state.tickCount,
             phase = battle.phase,
+            currentPhase = state.currentPhase,
             units = state.units.map { toUnitDto(it) },
             events = state.tickEvents.map { BattleTickEventDto(it.type, it.sourceUnitId, it.targetUnitId, it.value, it.detail) },
             result = battle.result,

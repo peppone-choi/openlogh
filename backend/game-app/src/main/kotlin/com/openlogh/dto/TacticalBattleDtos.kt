@@ -58,6 +58,7 @@ data class BattleTickBroadcast(
     val battleId: Long,
     val tickCount: Int,
     val phase: String,
+    val currentPhase: String = "MOVEMENT",
     val units: List<TacticalUnitDto>,
     val events: List<BattleTickEventDto>,
     val result: String? = null,
