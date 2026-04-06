@@ -1,8 +1,8 @@
 'use client';
 
-import { Group, Circle, Text } from 'react-konva';
+import { Group, Circle, Rect, Text } from 'react-konva';
 import type { StarSystem } from '@/types/galaxy';
-import { getFactionColor, getFactionGradient, isFortress } from '@/types/galaxy';
+import { getFactionColor, isFortress } from '@/types/galaxy';
 import { FortressIndicator } from './FortressIndicator';
 
 interface StarSystemNodeProps {
@@ -13,24 +13,60 @@ interface StarSystemNodeProps {
     onHover: (hovering: boolean) => void;
 }
 
-/** Determine node radius based on system level; capitals are larger */
-function getStarRadius(level: number): number {
-    switch (level) {
-        case 4:
-            return 6;
-        case 5:
-            return 8;
-        case 6:
-            return 10;
-        case 7:
-            return 12;
-        case 8:
-            return 14;
+/** Pixel-art style color steps: highlight → base → shadow */
+function getDotPalette(faction: string) {
+    switch (faction) {
+        case 'empire':
+            return {
+                highlight: '#a0b4ff',
+                light: '#7088e0',
+                base: '#5a6ee0',
+                dark: '#3a4ab0',
+                shadow: '#252e70',
+            };
+        case 'alliance':
+            return {
+                highlight: '#ffa0b0',
+                light: '#e08090',
+                base: '#d06878',
+                dark: '#a04858',
+                shadow: '#602838',
+            };
+        case 'fezzan':
+            return {
+                highlight: '#d0d0d8',
+                light: '#b0b0b8',
+                base: '#9898a0',
+                dark: '#686870',
+                shadow: '#404048',
+            };
         default:
-            return 8;
+            return {
+                highlight: '#c0c0c8',
+                light: '#a0a0a8',
+                base: '#808088',
+                dark: '#585860',
+                shadow: '#303038',
+            };
     }
 }
 
+function getStarRadius(level: number): number {
+    switch (level) {
+        case 4: return 5;
+        case 5: return 6;
+        case 6: return 7;
+        case 7: return 8;
+        case 8: return 9;
+        default: return 6;
+    }
+}
+
+/**
+ * Pixel-art dot style star system node.
+ * Uses concentric circles with stepped colors instead of smooth gradients.
+ * Highlight top-left, shadow bottom-right.
+ */
 export function StarSystemNode({
     system,
     isSelected,
@@ -38,22 +74,13 @@ export function StarSystemNode({
     onSelect,
     onHover,
 }: StarSystemNodeProps) {
-    const radius = getStarRadius(system.level);
+    const r = getStarRadius(system.level);
+    const palette = getDotPalette(system.region);
     const baseColor = getFactionColor(system.region);
-    const gradient = getFactionGradient(system.region);
     const hasFortress = isFortress(system);
 
-    // Glossy orb: radial gradient from bright inner to darker outer
-    const gradientStartPoint = { x: -radius * 0.3, y: -radius * 0.3 };
-    const gradientEndPoint = { x: 0, y: 0 };
-    const gradientColorStops: (string | number)[] = [
-        0,
-        gradient.inner,
-        0.6,
-        baseColor,
-        1,
-        gradient.outer,
-    ];
+    const labelText = system.nameEn;
+    const labelWidth = Math.max(labelText.length * 6 + 8, 50);
 
     // Selection / hover ring
     let strokeColor: string | undefined;
@@ -63,15 +90,8 @@ export function StarSystemNode({
         strokeWidth = 2;
     } else if (isHovered) {
         strokeColor = '#cccccc';
-        strokeWidth = 1.5;
+        strokeWidth = 1;
     }
-
-    // Glow intensity
-    const glowBlur = isSelected ? 18 : isHovered ? 12 : 6;
-    const glowOpacity = isSelected ? 0.8 : isHovered ? 0.6 : 0.35;
-
-    const labelText = system.nameEn;
-    const labelWidth = Math.max(labelText.length * 7 + 12, 60);
 
     return (
         <Group
@@ -82,61 +102,96 @@ export function StarSystemNode({
             onMouseEnter={() => onHover(true)}
             onMouseLeave={() => onHover(false)}
         >
-            {/* Fortress hexagon indicator behind node */}
+            {/* Fortress indicator behind node */}
             {hasFortress && (
-                <FortressIndicator
-                    x={0}
-                    y={0}
-                    fortressType={system.fortressType}
-                />
+                <FortressIndicator x={0} y={0} fortressType={system.fortressType} />
             )}
 
-            {/* Outer glow */}
+            {/* Outer glow (subtle) */}
             <Circle
-                radius={radius + 4}
+                radius={r + 3}
                 fill={baseColor}
-                opacity={glowOpacity * 0.4}
-                shadowColor={baseColor}
-                shadowBlur={glowBlur}
-                shadowOpacity={glowOpacity}
+                opacity={isSelected ? 0.3 : isHovered ? 0.2 : 0.1}
                 listening={false}
                 perfectDrawEnabled={false}
             />
 
-            {/* Main glossy orb */}
+            {/* Shadow layer (bottom-right offset) — darkest ring */}
             <Circle
-                radius={radius}
-                fillRadialGradientStartPoint={gradientStartPoint}
-                fillRadialGradientEndPoint={gradientEndPoint}
-                fillRadialGradientStartRadius={0}
-                fillRadialGradientEndRadius={radius}
-                fillRadialGradientColorStops={gradientColorStops}
+                x={1}
+                y={1}
+                radius={r}
+                fill={palette.shadow}
+                listening={false}
+                perfectDrawEnabled={false}
+            />
+
+            {/* Base sphere — main color */}
+            <Circle
+                radius={r}
+                fill={palette.base}
                 stroke={strokeColor}
                 strokeWidth={strokeWidth}
-                shadowColor={baseColor}
-                shadowBlur={glowBlur}
-                shadowOpacity={glowOpacity}
             />
 
-            {/* Specular highlight (small bright spot top-left) */}
+            {/* Dark crescent (bottom-right) — 3/4 circle effect */}
             <Circle
-                x={-radius * 0.25}
-                y={-radius * 0.25}
-                radius={radius * 0.35}
-                fill="#ffffff"
-                opacity={0.25}
+                x={r * 0.15}
+                y={r * 0.15}
+                radius={r * 0.85}
+                fill={palette.dark}
                 listening={false}
                 perfectDrawEnabled={false}
             />
 
-            {/* System name label */}
+            {/* Mid tone — center */}
+            <Circle
+                radius={r * 0.75}
+                fill={palette.base}
+                listening={false}
+                perfectDrawEnabled={false}
+            />
+
+            {/* Light area (top-left) */}
+            <Circle
+                x={-r * 0.15}
+                y={-r * 0.15}
+                radius={r * 0.55}
+                fill={palette.light}
+                listening={false}
+                perfectDrawEnabled={false}
+            />
+
+            {/* Highlight dot (top-left specular) — brightest pixel */}
+            <Circle
+                x={-r * 0.3}
+                y={-r * 0.3}
+                radius={r * 0.25}
+                fill={palette.highlight}
+                listening={false}
+                perfectDrawEnabled={false}
+            />
+
+            {/* Tiny white specular peak */}
+            <Rect
+                x={-r * 0.4 - 1}
+                y={-r * 0.4 - 1}
+                width={2}
+                height={2}
+                fill="#ffffff"
+                opacity={0.6}
+                listening={false}
+                perfectDrawEnabled={false}
+            />
+
+            {/* System name label — DungGeunMo pixel font */}
             <Text
                 text={labelText}
-                fontSize={10}
-                fontFamily="'Segoe UI', Arial, sans-serif"
-                fill="#dddddd"
+                fontSize={9}
+                fontFamily="'DungGeunMo', 'Press Start 2P', monospace"
+                fill="#cccccc"
                 align="center"
-                y={radius + 5}
+                y={r + 4}
                 x={-labelWidth / 2}
                 width={labelWidth}
                 listening={false}

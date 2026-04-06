@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Circle } from 'react-konva';
+import { Rect } from 'react-konva';
 
 interface StarFieldProps {
     width: number;
@@ -24,7 +24,7 @@ function mulberry32(seed: number) {
 interface StarPoint {
     x: number;
     y: number;
-    radius: number;
+    size: number;
     opacity: number;
 }
 
@@ -46,8 +46,8 @@ export function StarField({ width, height, count = 300, seed = 42 }: StarFieldPr
             result.push({
                 x: originX + rng() * extentX,
                 y: originY + rng() * extentY,
-                radius: 0.3 + rng() * 1.2,
-                opacity: 0.15 + rng() * 0.55,
+                size: rng() > 0.85 ? 2 : 1,
+                opacity: 0.2 + rng() * 0.5,
             });
         }
         return result;
@@ -56,11 +56,12 @@ export function StarField({ width, height, count = 300, seed = 42 }: StarFieldPr
     return (
         <>
             {stars.map((star, i) => (
-                <Circle
+                <Rect
                     key={i}
-                    x={star.x}
-                    y={star.y}
-                    radius={star.radius}
+                    x={Math.floor(star.x)}
+                    y={Math.floor(star.y)}
+                    width={star.size}
+                    height={star.size}
                     fill="#ffffff"
                     opacity={star.opacity}
                     listening={false}

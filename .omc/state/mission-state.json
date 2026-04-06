@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-06T10:36:30.195Z",
+  "updatedAt": "2026-04-06T10:53:18.075Z",
   "missions": [
     {
       "id": "session:02f73c0e-d893-4bd9-897e-9dad606485a0:none",
@@ -103,15 +103,15 @@
       "name": "none",
       "objective": "Session mission",
       "createdAt": "2026-04-05T06:43:06.903Z",
-      "updatedAt": "2026-04-06T10:36:30.195Z",
-      "status": "running",
+      "updatedAt": "2026-04-06T10:53:18.075Z",
+      "status": "done",
       "workerCount": 16,
       "taskCounts": {
         "total": 16,
         "pending": 0,
         "blocked": 0,
-        "inProgress": 1,
-        "completed": 15,
+        "inProgress": 0,
+        "completed": 16,
         "failed": 0
       },
       "agents": [
@@ -123,7 +123,7 @@
           "currentStep": null,
           "latestUpdate": "completed",
           "completedSummary": null,
-          "updatedAt": "2026-04-06T04:49:04.206Z"
+          "updatedAt": "2026-04-06T10:52:22.366Z"
         },
         {
           "name": "gsd-codebase-mapper:a81c272",
@@ -269,11 +269,11 @@
           "name": "gsd-executor:ad84b7f",
           "role": "gsd-executor",
           "ownership": "ad84b7f66ff35527a",
-          "status": "running",
+          "status": "done",
           "currentStep": null,
-          "latestUpdate": null,
+          "latestUpdate": "completed",
           "completedSummary": null,
-          "updatedAt": "2026-04-06T10:36:30.195Z"
+          "updatedAt": "2026-04-06T10:53:18.075Z"
         }
       ],
       "timeline": [
@@ -300,6 +300,22 @@
           "agent": "gsd-executor:ad84b7f",
           "detail": "started gsd-executor:ad84b7f",
           "sourceKey": "session-start:ad84b7f66ff35527a"
+        },
+        {
+          "id": "session-stop:add774d884caa816d:2026-04-06T10:52:22.366Z",
+          "at": "2026-04-06T10:52:22.366Z",
+          "kind": "completion",
+          "agent": "gsd-codebase-mapper:a62ff1b",
+          "detail": "completed",
+          "sourceKey": "session-stop:add774d884caa816d"
+        },
+        {
+          "id": "session-stop:ad84b7f66ff35527a:2026-04-06T10:53:18.075Z",
+          "at": "2026-04-06T10:53:18.075Z",
+          "kind": "completion",
+          "agent": "gsd-executor:ad84b7f",
+          "detail": "completed",
+          "sourceKey": "session-stop:ad84b7f66ff35527a"
         }
       ]
     }
