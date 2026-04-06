@@ -32,8 +32,8 @@
 - [x] **CMD-05**: 인사커맨드 10종 구현 (승진~봉토직할)
 - [x] **CMD-06**: 정치커맨드 12종 구현 (야회~통치목표)
 - [x] **CMD-07**: 첩보커맨드 14종 구현 (일제수색~귀환공작)
-- [ ] **CMD-08**: 실시간 커맨드 실행 파이프라인 (CP차감→대기시간→실행→결과)
-- [ ] **CMD-09**: 직무권한카드 기반 커맨드 게이팅 (commands.json 연동)
+- [x] **CMD-08**: 실시간 커맨드 실행 파이프라인 (CP차감→대기시간→실행→결과)
+- [x] **CMD-09**: 직무권한카드 기반 커맨드 게이팅 (commands.json 연동)
 
 ### 전술전 엔진 (BATTLE)
 
@@ -43,7 +43,7 @@
 - [ ] **BATTLE-04**: 진형 시스템 구현 (방추/함종별/혼성/삼열, 공격/방어/속도 보정)
 - [ ] **BATTLE-05**: 커맨드레인지서클 구현 (시간경과 확대, 발령시 0 리셋, 지휘스탯 확대율)
 - [ ] **BATTLE-06**: 색적 시스템 구현 (SENSOR 배분 기반, 거리/유닛종별 정밀도)
-- [ ] **BATTLE-07**: 요새포 시스템 구현 (토르해머/가이에스하켄, 사선 통과 명중, 아군 피격)
+- [x] **BATTLE-07**: 요새포 시스템 구현 (토르해머/가이에스하켄, 사선 통과 명중, 아군 피격)
 - [ ] **BATTLE-08**: 지상전 구현 (육전대 강하, 지상전 박스 30유닛 제한, 행성타입별)
 - [ ] **BATTLE-09**: 행성/요새 점령 처리 (항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동)
 - [ ] **BATTLE-10**: 태세 시스템 (항행/정박/주류/전투 4종, 각각 공격/색적/사기 보정)
@@ -133,15 +133,15 @@
 | CMD-05 | Phase 2 | Complete |
 | CMD-06 | Phase 2 | Complete |
 | CMD-07 | Phase 2 | Complete |
-| CMD-08 | Phase 2 | Pending |
-| CMD-09 | Phase 2 | Pending |
+| CMD-08 | Phase 2 | Complete |
+| CMD-09 | Phase 2 | Complete |
 | BATTLE-01 | Phase 3 | Pending |
 | BATTLE-02 | Phase 3 | Pending |
 | BATTLE-03 | Phase 3 | Pending |
 | BATTLE-04 | Phase 3 | Pending |
 | BATTLE-05 | Phase 3 | Pending |
 | BATTLE-06 | Phase 3 | Pending |
-| BATTLE-07 | Phase 3 | Pending |
+| BATTLE-07 | Phase 3 | Complete |
 | BATTLE-08 | Phase 3 | Pending |
 | BATTLE-09 | Phase 3 | Pending |
 | BATTLE-10 | Phase 3 | Pending |

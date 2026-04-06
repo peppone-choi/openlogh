@@ -68,9 +68,9 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — TacticalUnit 확장 + 태세/에너지 WebSocket 채널 + 자동 전투 개시
+- [x] 03-01-PLAN.md — TacticalUnit 확장 + 태세/에너지 WebSocket 채널 + 자동 전투 개시
 - [ ] 03-02-PLAN.md — 미사일/전투정 무기 시스템 + BEAM 사거리 곡선 + 색적 DetectionService
-- [ ] 03-03-PLAN.md — 요새포 4종 FortressGunSystem + 전투 REST API + 퇴각/공격대상 채널
+- [x] 03-03-PLAN.md — 요새포 4종 FortressGunSystem + 전투 REST API + 퇴각/공격대상 채널
 - [ ] 03-04-PLAN.md — 지상전 박스(30유닛 제한) + 행성 점령 6종 PlanetConquestService
 - [ ] 03-05-PLAN.md — 기함 격침→부상→귀환성 워프 + 전술 커맨드 11종 + 통합 테스트
 **UI hint**: yes
@@ -129,7 +129,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. 레거시 제거 + 함종 유닛 기반 | 8/8 | Complete   | 2026-04-06 |
 | 2. gin7 81종 커맨드 시스템 | 6/7 | In Progress|  |
-| 3. 실시간 전술전 엔진 | 0/TBD | Not started | - |
+| 3. 실시간 전술전 엔진 | 2/5 | In Progress|  |
 | 4. 경제 시스템 | 0/TBD | Not started | - |
 | 5. AI 시스템 | 0/TBD | Not started | - |
 | 6. 프론트엔드 통합 | 0/TBD | Not started | - |
