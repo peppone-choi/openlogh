@@ -16,6 +16,7 @@ interface OfficerRepository : JpaRepository<Officer, Long> {
     fun findBySessionIdAndCommandEndTimeBefore(sessionId: Long, time: OffsetDateTime): List<Officer>
     fun findByFleetId(fleetId: Long): List<Officer>
     fun findBySessionIdAndFactionId(sessionId: Long, factionId: Long): List<Officer>
+    fun findBySessionIdAndPlanetId(sessionId: Long, planetId: Long): List<Officer>
     fun findByNameAndSessionId(name: String, sessionId: Long): Officer?
 
     /**
