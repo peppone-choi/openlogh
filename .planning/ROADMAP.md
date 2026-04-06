@@ -113,7 +113,7 @@ Plans:
 Plans:
 - [x] 05-01-PLAN.md — Flyway V34 migration, UnitType/CrewSlotRole enums, Fleet entity update, UnitCrew entity, CQRS snapshots
 - [ ] 05-02-PLAN.md — FormationCapService (population linkage), UnitCrewService, FleetService update, REST API
-- [ ] 05-03-PLAN.md — Frontend unit types, API client, UnitListPanel/UnitDetailPanel/CrewRosterPanel/FormationCapBar UI
+- [x] 05-03-PLAN.md — Frontend unit types, API client, UnitListPanel/UnitDetailPanel/CrewRosterPanel/FormationCapBar UI
 - [ ] 05-04-PLAN.md — CQRS layer wiring for UnitCrew + integration verification checkpoint
 
 ### Phase 6: Galaxy Map & Planet Model
