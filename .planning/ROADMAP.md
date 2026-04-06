@@ -107,8 +107,14 @@ Plans:
   3. Population of 1 billion enables formation of 1 fleet or transport fleet, and 6 patrols or ground forces
   4. Losing a high-population planet reduces the formation cap, and excess units cannot be newly formed until population recovers
   5. The unit management UI displays unit composition, crew roster, and ship counts per unit type
-**Plans**: TBD
+**Plans:** 4 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 05-01-PLAN.md — Flyway V34 migration, UnitType/CrewSlotRole enums, Fleet entity update, UnitCrew entity, CQRS snapshots
+- [ ] 05-02-PLAN.md — FormationCapService (population linkage), UnitCrewService, FleetService update, REST API
+- [ ] 05-03-PLAN.md — Frontend unit types, API client, UnitListPanel/UnitDetailPanel/CrewRosterPanel/FormationCapBar UI
+- [ ] 05-04-PLAN.md — CQRS layer wiring for UnitCrew + integration verification checkpoint
 
 ### Phase 6: Galaxy Map & Planet Model
 **Goal**: Players navigate and manage 80 star systems connected by routes, with territory visualization and fortress mechanics
@@ -211,7 +217,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 2. Real-time Tick Engine | 2/3 | In Progress|  |
 | 3. Command Point System | 0/TBD | Not started | - |
 | 4. Position Card & Command Authority | 4/4 | Complete   | 2026-04-06 |
-| 5. Organization & Fleet Structure | 0/TBD | Not started | - |
+| 5. Organization & Fleet Structure | 0/4 | Planning complete | - |
 | 6. Galaxy Map & Planet Model | 0/TBD | Not started | - |
 | 7. Rank, Merit & Personnel | 0/TBD | Not started | - |
 | 8. Scenario & Character System | 0/TBD | Not started | - |
