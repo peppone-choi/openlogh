@@ -1,0 +1,417 @@
+package com.openlogh.engine.tactical
+
+import com.openlogh.model.EnergyAllocation
+import com.openlogh.model.Formation
+import kotlin.math.*
+import kotlin.random.Random
+
+/**
+ * Runtime unit state within a tactical battle tick loop.
+ */
+data class TacticalUnit(
+    val fleetId: Long,
+    val officerId: Long,
+    val officerName: String,
+    val factionId: Long,
+    val side: BattleSide,
+
+    // Position on 2D tactical grid (0..1000)
+    var posX: Double = 0.0,
+    var posY: Double = 0.0,
+
+    // Velocity (units per tick)
+    var velX: Double = 0.0,
+    var velY: Double = 0.0,
+
+    // Combat stats
+    var hp: Int = 0,
+    var maxHp: Int = 0,
+    var ships: Int = 0,
+    var maxShips: Int = 0,
+    var training: Int = 50,
+    var morale: Int = 50,
+
+    // Officer stats (8-stat system)
+    var leadership: Int = 50,
+    var command: Int = 50,
+    var intelligence: Int = 50,
+    var mobility: Int = 50,
+    var attack: Int = 50,
+    var defense: Int = 50,
+
+    // Energy allocation
+    var energy: EnergyAllocation = EnergyAllocation.BALANCED,
+
+    // Formation
+    var formation: Formation = Formation.MIXED,
+
+    // Command range: expands based on command stat, resets on new order
+    var commandRange: Double = 0.0,
+    var commandRangeMax: Double = 100.0,
+    var ticksSinceLastOrder: Int = 0,
+
+    // Status
+    var isAlive: Boolean = true,
+    var isRetreating: Boolean = false,
+    var retreatProgress: Double = 0.0,
+
+    // Unit type info
+    var unitType: String = "FLEET",
+    var shipClass: Int = 0,
+)
+
+enum class BattleSide { ATTACKER, DEFENDER }
+
+data class BattleOutcome(
+    val winner: BattleSide?,
+    val reason: String,
+)
+
+/**
+ * Full state of an active tactical battle.
+ */
+data class TacticalBattleState(
+    val battleId: Long,
+    val starSystemId: Long,
+    val units: MutableList<TacticalUnit>,
+    var tickCount: Int = 0,
+    val battleBoundsX: Double = 1000.0,
+    val battleBoundsY: Double = 600.0,
+
+    // Fortress gun state
+    var fortressGunLastFired: Int = -9999,
+    var fortressGunPower: Int = 0,
+    var fortressGunRange: Int = 0,
+    var fortressGunCooldown: Int = 0,
+    var fortressFactionId: Long = 0,
+
+    // Tick events for broadcasting
+    val tickEvents: MutableList<BattleTickEvent> = mutableListOf(),
+)
+
+data class BattleTickEvent(
+    val type: String,  // "damage", "destroy", "retreat", "fortress_fire", "formation_change"
+    val sourceUnitId: Long = 0,
+    val targetUnitId: Long = 0,
+    val value: Int = 0,
+    val detail: String = "",
+)
+
+/**
+ * Core tactical battle engine. Processes one tick at a time.
+ *
+ * Based on gin7 manual Chapter 4:
+ * - BEAM/GUN weapons with energy-based damage
+ * - Shield absorption
+ * - Command range expansion
+ * - Formation modifiers
+ * - Fortress gun line-of-fire
+ */
+class TacticalBattleEngine {
+
+    companion object {
+        const val BEAM_BASE_DAMAGE = 30.0
+        const val GUN_BASE_DAMAGE = 40.0
+        const val BEAM_RANGE = 200.0       // mid-close range
+        const val GUN_RANGE = 150.0        // mid-close range
+        const val BASE_SPEED = 3.0         // base movement per tick
+        const val COMMAND_RANGE_GROWTH_RATE = 0.5  // per tick, scaled by command stat
+        const val RETREAT_SPEED = 0.02     // progress per tick when retreating
+        const val MORALE_DAMAGE_THRESHOLD = 20  // below this, combat effectiveness drops
+    }
+
+    /**
+     * Process a single battle tick. Returns updated state.
+     */
+    fun processTick(state: TacticalBattleState, rng: Random = Random): TacticalBattleState {
+        state.tickEvents.clear()
+        state.tickCount++
+
+        val aliveUnits = state.units.filter { it.isAlive }
+
+        // 1. Update command range for all units
+        for (unit in aliveUnits) {
+            updateCommandRange(unit)
+        }
+
+        // 2. Process movement
+        for (unit in aliveUnits) {
+            if (unit.isRetreating) {
+                processRetreat(unit, state)
+            } else {
+                processMovement(unit, state, aliveUnits)
+            }
+        }
+
+        // 3. Process combat (weapons fire)
+        for (unit in aliveUnits.filter { !it.isRetreating }) {
+            processCombat(unit, state, aliveUnits, rng)
+        }
+
+        // 4. Process fortress gun
+        if (state.fortressGunPower > 0) {
+            processFortressGun(state, rng)
+        }
+
+        // 5. Remove destroyed units
+        for (unit in state.units) {
+            if (unit.hp <= 0 && unit.isAlive) {
+                unit.isAlive = false
+                unit.ships = 0
+                state.tickEvents.add(BattleTickEvent("destroy", targetUnitId = unit.fleetId, detail = "${unit.officerName} 함대 궤멸"))
+            }
+        }
+
+        // 6. Morale effects
+        for (unit in aliveUnits.filter { it.isAlive }) {
+            updateMorale(unit, state)
+        }
+
+        return state
+    }
+
+    /**
+     * Check if the battle has ended.
+     */
+    fun checkBattleEnd(state: TacticalBattleState): BattleOutcome? {
+        val aliveAttackers = state.units.filter { it.isAlive && it.side == BattleSide.ATTACKER && !it.isRetreating }
+        val aliveDefenders = state.units.filter { it.isAlive && it.side == BattleSide.DEFENDER && !it.isRetreating }
+
+        if (aliveAttackers.isEmpty() && aliveDefenders.isEmpty()) {
+            return BattleOutcome(null, "양군 전멸")
+        }
+        if (aliveAttackers.isEmpty()) {
+            return BattleOutcome(BattleSide.DEFENDER, "공격 함대 전멸/퇴각")
+        }
+        if (aliveDefenders.isEmpty()) {
+            return BattleOutcome(BattleSide.ATTACKER, "방어 함대 전멸/퇴각")
+        }
+
+        // Maximum battle duration: 600 ticks (10 minutes at 1 tick/sec)
+        if (state.tickCount >= 600) {
+            val attackerHpRatio = aliveAttackers.sumOf { it.hp }.toDouble() / aliveAttackers.sumOf { it.maxHp }.coerceAtLeast(1)
+            val defenderHpRatio = aliveDefenders.sumOf { it.hp }.toDouble() / aliveDefenders.sumOf { it.maxHp }.coerceAtLeast(1)
+            return if (attackerHpRatio > defenderHpRatio) {
+                BattleOutcome(BattleSide.ATTACKER, "시간 초과 - 공격측 우세")
+            } else if (defenderHpRatio > attackerHpRatio) {
+                BattleOutcome(BattleSide.DEFENDER, "시간 초과 - 방어측 우세")
+            } else {
+                BattleOutcome(null, "시간 초과 - 무승부")
+            }
+        }
+
+        return null
+    }
+
+    // ── Private helpers ──
+
+    private fun updateCommandRange(unit: TacticalUnit) {
+        unit.ticksSinceLastOrder++
+        val growthRate = COMMAND_RANGE_GROWTH_RATE * (unit.command / 50.0)
+        unit.commandRange = (unit.commandRange + growthRate).coerceAtMost(unit.commandRangeMax)
+    }
+
+    private fun processMovement(unit: TacticalUnit, state: TacticalBattleState, allUnits: List<TacticalUnit>) {
+        val speed = BASE_SPEED * unit.energy.speedMultiplier() * unit.formation.speedModifier * (unit.mobility / 50.0)
+
+        // Find closest enemy
+        val enemies = allUnits.filter { it.side != unit.side && it.isAlive && !it.isRetreating }
+        val closestEnemy = enemies.minByOrNull { distance(unit, it) } ?: return
+
+        val dist = distance(unit, closestEnemy)
+        val optimalRange = BEAM_RANGE * 0.8  // try to stay at optimal weapon range
+
+        if (dist > optimalRange) {
+            // Move toward enemy
+            val dx = closestEnemy.posX - unit.posX
+            val dy = closestEnemy.posY - unit.posY
+            val norm = sqrt(dx * dx + dy * dy).coerceAtLeast(1.0)
+            unit.velX = dx / norm * speed
+            unit.velY = dy / norm * speed
+        } else if (dist < optimalRange * 0.5) {
+            // Too close, back off slightly
+            val dx = unit.posX - closestEnemy.posX
+            val dy = unit.posY - closestEnemy.posY
+            val norm = sqrt(dx * dx + dy * dy).coerceAtLeast(1.0)
+            unit.velX = dx / norm * speed * 0.5
+            unit.velY = dy / norm * speed * 0.5
+        } else {
+            // At good range, slow down
+            unit.velX *= 0.5
+            unit.velY *= 0.5
+        }
+
+        unit.posX = (unit.posX + unit.velX).coerceIn(0.0, state.battleBoundsX)
+        unit.posY = (unit.posY + unit.velY).coerceIn(0.0, state.battleBoundsY)
+    }
+
+    private fun processRetreat(unit: TacticalUnit, state: TacticalBattleState) {
+        val warpSpeed = RETREAT_SPEED * unit.energy.warpReadiness()
+        unit.retreatProgress += warpSpeed
+
+        // Move toward edge
+        val edgeX = if (unit.side == BattleSide.ATTACKER) 0.0 else state.battleBoundsX
+        val dx = edgeX - unit.posX
+        val norm = abs(dx).coerceAtLeast(1.0)
+        unit.posX += (dx / norm) * BASE_SPEED * 2
+
+        if (unit.retreatProgress >= 1.0) {
+            unit.isAlive = false  // successfully retreated
+            state.tickEvents.add(BattleTickEvent("retreat", sourceUnitId = unit.fleetId, detail = "${unit.officerName} 퇴각 완료"))
+        }
+    }
+
+    private fun processCombat(unit: TacticalUnit, state: TacticalBattleState, allUnits: List<TacticalUnit>, rng: Random) {
+        val enemies = allUnits.filter { it.side != unit.side && it.isAlive && !it.isRetreating }
+        if (enemies.isEmpty()) return
+
+        // Target: closest enemy within range
+        val target = enemies.filter { distance(unit, it) <= BEAM_RANGE }
+            .minByOrNull { distance(unit, it) }
+            ?: return
+
+        val dist = distance(unit, target)
+
+        // Combat effectiveness factors
+        val moraleModifier = if (unit.morale < MORALE_DAMAGE_THRESHOLD) 0.5 else (unit.morale / 100.0).coerceIn(0.3, 1.2)
+        val trainingModifier = (unit.training / 100.0).coerceIn(0.3, 1.2)
+        val attackStatModifier = unit.attack / 50.0
+        val formationAttack = unit.formation.attackModifier
+
+        // BEAM damage
+        if (unit.energy.beam > 0 && dist <= BEAM_RANGE) {
+            val beamDmg = (BEAM_BASE_DAMAGE * unit.energy.beamMultiplier() * attackStatModifier
+                * formationAttack * moraleModifier * trainingModifier)
+            val sensorAccuracy = unit.energy.sensorMultiplier()
+            val hitChance = (0.6 + sensorAccuracy * 0.3).coerceAtMost(0.95)
+            if (rng.nextDouble() < hitChance) {
+                applyDamage(target, beamDmg.toInt(), state, unit, "BEAM")
+            }
+        }
+
+        // GUN damage
+        if (unit.energy.gun > 0 && dist <= GUN_RANGE) {
+            val gunDmg = (GUN_BASE_DAMAGE * unit.energy.gunMultiplier() * attackStatModifier
+                * formationAttack * moraleModifier * trainingModifier)
+            val sensorAccuracy = unit.energy.sensorMultiplier()
+            val hitChance = (0.5 + sensorAccuracy * 0.3).coerceAtMost(0.90)
+            if (rng.nextDouble() < hitChance) {
+                applyDamage(target, gunDmg.toInt(), state, unit, "GUN")
+            }
+        }
+    }
+
+    private fun applyDamage(target: TacticalUnit, rawDamage: Int, state: TacticalBattleState, source: TacticalUnit, weaponType: String) {
+        // Apply shield absorption
+        val shieldAbsorb = target.energy.shieldAbsorption()
+        val formationDefense = target.formation.defenseModifier
+        val defenseStatModifier = target.defense / 50.0
+        val absorbed = (rawDamage * shieldAbsorb * formationDefense * defenseStatModifier).toInt()
+        val finalDamage = (rawDamage - absorbed).coerceAtLeast(1)
+
+        target.hp -= finalDamage
+        // Calculate ship losses proportional to HP loss
+        val shipLoss = (finalDamage.toDouble() / target.maxHp.coerceAtLeast(1) * target.maxShips).toInt().coerceAtLeast(0)
+        target.ships = (target.ships - shipLoss).coerceAtLeast(0)
+
+        state.tickEvents.add(BattleTickEvent(
+            "damage", sourceUnitId = source.fleetId, targetUnitId = target.fleetId,
+            value = finalDamage, detail = "$weaponType ${source.officerName}→${target.officerName}"
+        ))
+    }
+
+    private fun processFortressGun(state: TacticalBattleState, rng: Random) {
+        if (state.tickCount - state.fortressGunLastFired < state.fortressGunCooldown) return
+
+        // Fortress gun fires at enemies of the fortress faction
+        val enemies = state.units.filter {
+            it.isAlive && it.factionId != state.fortressFactionId && !it.isRetreating
+        }
+        if (enemies.isEmpty()) return
+
+        // Target the largest enemy fleet
+        val target = enemies.maxByOrNull { it.ships } ?: return
+
+        // Line of fire: hits ALL units in the path (including friendlies!)
+        val unitsInPath = calculateLineOfFire(
+            state, gunPosX = state.battleBoundsX / 2, gunPosY = 0.0,
+            targetX = target.posX, targetY = target.posY, range = state.fortressGunRange.toDouble() * 100
+        )
+
+        for (hitUnit in unitsInPath) {
+            val damage = state.fortressGunPower / unitsInPath.size  // damage split across hits
+            hitUnit.hp -= damage
+            val shipLoss = (damage.toDouble() / hitUnit.maxHp.coerceAtLeast(1) * hitUnit.maxShips).toInt()
+            hitUnit.ships = (hitUnit.ships - shipLoss).coerceAtLeast(0)
+            state.tickEvents.add(BattleTickEvent(
+                "fortress_fire", targetUnitId = hitUnit.fleetId, value = damage,
+                detail = "요새포 → ${hitUnit.officerName}" + if (hitUnit.factionId == state.fortressFactionId) " (아군 피해!)" else ""
+            ))
+        }
+
+        state.fortressGunLastFired = state.tickCount
+        state.tickEvents.add(BattleTickEvent("fortress_fire", detail = "요새포 발사"))
+    }
+
+    /**
+     * Calculate units in the line of fire from gun position to target.
+     * gin7: fortress guns hit ALL units in their path, including friendlies.
+     */
+    private fun calculateLineOfFire(
+        state: TacticalBattleState,
+        gunPosX: Double, gunPosY: Double,
+        targetX: Double, targetY: Double,
+        range: Double,
+        lineWidth: Double = 30.0,
+    ): List<TacticalUnit> {
+        val dx = targetX - gunPosX
+        val dy = targetY - gunPosY
+        val lineLength = sqrt(dx * dx + dy * dy).coerceAtLeast(1.0)
+
+        return state.units.filter { unit ->
+            if (!unit.isAlive || unit.isRetreating) return@filter false
+            val dist = distanceToLine(unit.posX, unit.posY, gunPosX, gunPosY, targetX, targetY)
+            val projDist = projectOnLine(unit.posX, unit.posY, gunPosX, gunPosY, targetX, targetY)
+            dist <= lineWidth && projDist >= 0 && projDist <= range.coerceAtMost(lineLength)
+        }
+    }
+
+    private fun updateMorale(unit: TacticalUnit, state: TacticalBattleState) {
+        // Morale drops when HP is low
+        val hpRatio = unit.hp.toDouble() / unit.maxHp.coerceAtLeast(1)
+        if (hpRatio < 0.3) {
+            unit.morale = (unit.morale - 1).coerceAtLeast(0)
+        }
+        // Morale boost from leadership
+        if (unit.leadership > 70 && unit.morale < 80) {
+            unit.morale = (unit.morale + 1).coerceAtMost(100)
+        }
+    }
+
+    // ── Geometry helpers ──
+
+    private fun distance(a: TacticalUnit, b: TacticalUnit): Double =
+        sqrt((a.posX - b.posX).pow(2) + (a.posY - b.posY).pow(2))
+
+    /** Perpendicular distance from point to line segment. */
+    private fun distanceToLine(px: Double, py: Double, lx1: Double, ly1: Double, lx2: Double, ly2: Double): Double {
+        val dx = lx2 - lx1
+        val dy = ly2 - ly1
+        val lenSq = dx * dx + dy * dy
+        if (lenSq == 0.0) return sqrt((px - lx1).pow(2) + (py - ly1).pow(2))
+        val t = ((px - lx1) * dx + (py - ly1) * dy) / lenSq
+        val clampedT = t.coerceIn(0.0, 1.0)
+        val closestX = lx1 + clampedT * dx
+        val closestY = ly1 + clampedT * dy
+        return sqrt((px - closestX).pow(2) + (py - closestY).pow(2))
+    }
+
+    /** Project point onto line, return distance along line from start. */
+    private fun projectOnLine(px: Double, py: Double, lx1: Double, ly1: Double, lx2: Double, ly2: Double): Double {
+        val dx = lx2 - lx1
+        val dy = ly2 - ly1
+        val lenSq = dx * dx + dy * dy
+        if (lenSq == 0.0) return 0.0
+        return ((px - lx1) * dx + (py - ly1) * dy) / sqrt(lenSq)
+    }
+}
