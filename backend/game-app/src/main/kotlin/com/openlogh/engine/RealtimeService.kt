@@ -80,9 +80,8 @@ class RealtimeService(
             IllegalArgumentException("General not found: $generalId")
         }
 
-        // Card-based authority check with legacy officerLevel fallback
         val officerCards = general.getPositionCardEnums()
-        if (actionCode !in ALWAYS_ALLOWED_COMMANDS && !PositionCardRegistry.canExecute(officerCards, actionCode) && general.officerLevel < 5) {
+        if (actionCode !in ALWAYS_ALLOWED_COMMANDS && !PositionCardRegistry.canExecute(officerCards, actionCode)) {
             return CommandResult(success = false, logs = listOf("해당 직무권한카드가 없습니다."))
         }
 

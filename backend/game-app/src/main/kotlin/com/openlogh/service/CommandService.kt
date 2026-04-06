@@ -67,9 +67,8 @@ class CommandService(
     @Transactional
     fun executeFactionCommand(generalId: Long, actionCode: String, arg: Map<String, Any>?): CommandResult? {
         val officer = officerRepository.findById(generalId).orElse(null) ?: return null
-        // Card-based authority check with legacy officerLevel fallback
         val officerCards = officer.getPositionCardEnums()
-        if (actionCode != "Nation휴식" && !PositionCardRegistry.canExecute(officerCards, actionCode) && officer.officerLevel < 5) {
+        if (actionCode != "Nation휴식" && !PositionCardRegistry.canExecute(officerCards, actionCode)) {
             return CommandResult(success = false, logs = listOf("해당 직무권한카드가 없습니다."))
         }
         val world = sessionStateRepository.findById(officer.sessionId.toShort()).orElse(null) ?: return null
