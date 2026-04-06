@@ -2,7 +2,9 @@ package com.openlogh.service
 
 import com.openlogh.entity.Planet
 import com.openlogh.entity.Officer
+import com.openlogh.entity.StarSystem
 import com.openlogh.model.CityConst
+import com.openlogh.model.FortressType
 import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.FactionRepository
@@ -223,7 +225,13 @@ class PlanetService(
      * Legacy parity: matches the initial values from CityConstBase.
      * Population and development values in CityConst are stored as x100.
      */
-    fun initializeCityFromConst(worldId: Long, cityConst: CityConst, nationId: Long = 0): Planet {
+    fun initializeCityFromConst(
+        worldId: Long,
+        cityConst: CityConst,
+        nationId: Long = 0,
+        fortressType: FortressType = FortressType.NONE,
+        starSystemId: Long? = null,
+    ): Planet {
         return Planet(
             sessionId = worldId,
             name = cityConst.name,
@@ -249,6 +257,12 @@ class PlanetService(
             state = 0,
             region = cityConst.region.toShort(),
             term = 0,
+            starSystemId = starSystemId,
+            fortressType = fortressType.name,
+            fortressGunPower = fortressType.gunPower,
+            fortressGunRange = fortressType.gunRange,
+            fortressGunCooldown = fortressType.gunCooldownTicks,
+            garrisonCapacity = fortressType.garrisonCapacity,
             conflict = mutableMapOf(),
             meta = mutableMapOf(
                 "x" to cityConst.x,
@@ -262,10 +276,34 @@ class PlanetService(
      * Initialize all cities for a world from the map definition.
      * Returns saved cities keyed by their CityConst ID.
      */
+    /**
+     * Initialize all cities for a world from the map definition.
+     * Returns saved cities keyed by their CityConst ID.
+     *
+     * @param starSystemMap Optional map of CityConst ID -> StarSystem, used to set starSystemId
+     *        and fortress data on planets belonging to star systems.
+     */
     @Transactional
-    fun initializeAllCities(worldId: Long, mapCode: String): Map<Int, Planet> {
+    fun initializeAllCities(
+        worldId: Long,
+        mapCode: String,
+        starSystemMap: Map<Int, StarSystem>? = null,
+    ): Map<Int, Planet> {
         val cityConsts = mapService.getCities(mapCode)
-        val cities = cityConsts.map { initializeCityFromConst(worldId, it) }
+        val starExtras = mapService.getStarSystemExtras(mapCode).associateBy { it.id }
+
+        val cities = cityConsts.map { cityConst ->
+            val starSystem = starSystemMap?.get(cityConst.id)
+            val fortressTypeName = starExtras[cityConst.id]?.fortressType ?: "NONE"
+            val fortressType = FortressType.entries.find { it.name == fortressTypeName } ?: FortressType.NONE
+
+            initializeCityFromConst(
+                worldId = worldId,
+                cityConst = cityConst,
+                fortressType = fortressType,
+                starSystemId = starSystem?.id,
+            )
+        }
         val saved = planetRepository.saveAll(cities)
         return saved.associateBy { (it.meta["constId"] as? Number)?.toInt() ?: 0 }
     }

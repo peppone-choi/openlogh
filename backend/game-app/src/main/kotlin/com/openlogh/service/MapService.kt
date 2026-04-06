@@ -14,9 +14,22 @@ import java.util.LinkedList
 @Service
 class MapService {
 
+    /**
+     * LOGH-specific star system extra data parsed from the "starSystems" section of map JSON.
+     */
+    data class StarSystemExtra(
+        val id: Int,
+        val nameEn: String,
+        val starRgb: List<Int>,
+        val spectralType: String,
+        val planets: List<String>,
+        val fortressType: String,
+    )
+
     private val maps = mutableMapOf<String, List<CityConst>>()
     private val adjacencyIndex = mutableMapOf<String, Map<Int, List<Int>>>()
     private val regionNames = mutableMapOf<String, Map<Int, String>>()
+    private val starSystemExtras = mutableMapOf<String, List<StarSystemExtra>>()
 
     @PostConstruct
     fun init() {
@@ -55,6 +68,21 @@ class MapService {
             val regionId = entry.key?.toString()?.toIntOrNull() ?: return@mapNotNull null
             entry.value?.toString()?.let { regionId to it }
         }.toMap()
+
+        // Parse LOGH-specific starSystems section if present
+        val rawStarSystems = readListOfStringAnyMap(data["starSystems"])
+        if (rawStarSystems.isNotEmpty()) {
+            starSystemExtras[mapName] = rawStarSystems.map { raw ->
+                StarSystemExtra(
+                    id = (raw["id"] as Number).toInt(),
+                    nameEn = raw["nameEn"] as? String ?: "",
+                    starRgb = readNumberList(raw["starRgb"]).map { it.toInt() },
+                    spectralType = raw["spectralType"] as? String ?: "A",
+                    planets = (raw["planets"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
+                    fortressType = raw["fortressType"] as? String ?: "NONE",
+                )
+            }
+        }
     }
 
     fun getCities(mapName: String): List<CityConst> {
@@ -84,6 +112,17 @@ class MapService {
     }
 
     fun getRegionName(mapName: String, regionId: Int): String? = getRegions(mapName)[regionId]
+
+    fun getStarSystemExtras(mapName: String): List<StarSystemExtra> {
+        if (!starSystemExtras.containsKey(mapName) && !maps.containsKey(mapName)) {
+            loadMap(mapName)
+        }
+        return starSystemExtras[mapName] ?: emptyList()
+    }
+
+    fun getStarSystemExtra(mapName: String, starId: Int): StarSystemExtra? {
+        return getStarSystemExtras(mapName).find { it.id == starId }
+    }
 
     fun getMapJson(mapName: String): JsonNode? {
         val resource = ClassPathResource("data/maps/$mapName.json")
