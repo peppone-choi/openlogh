@@ -5,6 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 
+/**
+ * DEPRECATED: Legacy turn-based queue repository.
+ * Not used in real-time mode — commands execute immediately with cooldowns.
+ * Kept for CQRS layer compatibility only.
+ */
 interface FactionTurnRepository : JpaRepository<FactionTurn, Long> {
     fun findBySessionId(sessionId: Long): List<FactionTurn>
     fun findByFactionIdAndOfficerLevelOrderByTurnIdx(factionId: Long, officerLevel: Short): List<FactionTurn>

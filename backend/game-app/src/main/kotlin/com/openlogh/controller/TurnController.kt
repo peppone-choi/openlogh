@@ -1,17 +1,21 @@
 package com.openlogh.controller
 
+import com.openlogh.engine.TurnDaemon
 import com.openlogh.service.AdminAuthorizationService
-import com.openlogh.service.TurnManagementService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
+/**
+ * Admin controls for the real-time tick daemon.
+ * Provides pause/resume/status/manual-run endpoints.
+ */
 @RestController
 @RequestMapping("/api/turns")
 class TurnController(
-    private val turnManagementService: TurnManagementService,
+    private val turnDaemon: TurnDaemon,
     private val adminAuthorizationService: AdminAuthorizationService,
 ) {
     private companion object {
@@ -22,7 +26,7 @@ class TurnController(
 
     @GetMapping("/status")
     fun getStatus(): ResponseEntity<Map<String, String>> {
-        return ResponseEntity.ok(mapOf("state" to turnManagementService.getStatus()))
+        return ResponseEntity.ok(mapOf("state" to turnDaemon.getStatus().name))
     }
 
     @PostMapping("/run")
@@ -37,7 +41,8 @@ class TurnController(
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
 
-        return ResponseEntity.ok(mapOf("result" to turnManagementService.manualRun()))
+        turnDaemon.manualRun()
+        return ResponseEntity.ok(mapOf("result" to "triggered"))
     }
 
     @PostMapping("/pause")
@@ -52,7 +57,8 @@ class TurnController(
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
 
-        return ResponseEntity.ok(mapOf("state" to turnManagementService.pause()))
+        turnDaemon.pause()
+        return ResponseEntity.ok(mapOf("state" to turnDaemon.getStatus().name))
     }
 
     @PostMapping("/resume")
@@ -71,6 +77,7 @@ class TurnController(
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
 
-        return ResponseEntity.ok(mapOf("state" to turnManagementService.resume()))
+        turnDaemon.resume()
+        return ResponseEntity.ok(mapOf("state" to turnDaemon.getStatus().name))
     }
 }

@@ -5,6 +5,11 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.OffsetDateTime
 
+/**
+ * DEPRECATED: Legacy turn-based queue entity.
+ * Not used in real-time mode — commands execute immediately with cooldowns.
+ * Kept for Hibernate schema validation only.
+ */
 @Entity
 @Table(
     name = "officer_turn",

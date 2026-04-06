@@ -5,12 +5,10 @@ import com.openlogh.dto.CreateGeneralRequest
 import com.openlogh.engine.DeterministicRng
 import com.openlogh.engine.modifier.TraitSpecRegistry
 import com.openlogh.entity.Officer
-import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
 import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.OfficerRepository
-import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.SessionStateRepository
 import org.springframework.stereotype.Service
@@ -26,7 +24,6 @@ class OfficerService(
     private val sessionStateRepository: SessionStateRepository,
     private val planetRepository: PlanetRepository,
     private val factionRepository: FactionRepository,
-    private val officerTurnRepository: OfficerTurnRepository,
     private val gameConstService: GameConstService,
 ) {
     companion object {
@@ -281,18 +278,6 @@ class OfficerService(
             saved.name = generateObfuscatedName(saved.id, world)
             officerRepository.save(saved)
         }
-
-        officerTurnRepository.saveAll(
-            (0 until gameConstService.getInt("maxTurn")).map { turnIdx ->
-                OfficerTurn(
-                    sessionId = worldId,
-                    officerId = saved.id,
-                    turnIdx = turnIdx.toShort(),
-                    actionCode = "휴식",
-                    brief = "휴식",
-                )
-            },
-        )
 
         if (faction != null) {
             faction.officerCount += 1

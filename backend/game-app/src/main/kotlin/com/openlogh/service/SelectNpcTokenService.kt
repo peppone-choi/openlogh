@@ -6,9 +6,7 @@ import com.openlogh.dto.NpcTokenResponse
 import com.openlogh.dto.SelectNpcResult
 import com.openlogh.dto.GeneralResponse
 import com.openlogh.entity.Officer
-import com.openlogh.entity.OfficerTurn
 import com.openlogh.repository.OfficerRepository
-import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.SessionStateRepository
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -26,7 +24,6 @@ import kotlin.random.Random
 @Service
 class SelectNpcTokenService(
     private val officerRepository: OfficerRepository,
-    private val officerTurnRepository: OfficerTurnRepository,
     private val factionRepository: FactionRepository,
     private val sessionStateRepository: SessionStateRepository,
     private val gameConstService: GameConstService,
@@ -153,20 +150,6 @@ class SelectNpcTokenService(
         officer.updatedAt = OffsetDateTime.now()
 
         val saved = officerRepository.save(officer)
-
-        // Initialize turn queue so the possessed NPC can execute reserved commands
-        val maxTurn = gameConstService.getInt("maxTurn")
-        officerTurnRepository.saveAll(
-            (0 until maxTurn).map { turnIdx ->
-                OfficerTurn(
-                    sessionId = worldId,
-                    officerId = saved.id,
-                    turnIdx = turnIdx.toShort(),
-                    actionCode = "휴식",
-                    brief = "휴식",
-                )
-            },
-        )
 
         deleteToken(worldId, userId)
         return SelectNpcResult(success = true, general = GeneralResponse.from(saved))

@@ -1,7 +1,6 @@
 package com.openlogh.engine
 
 import com.openlogh.repository.SessionStateRepository
-import com.openlogh.engine.turn.cqrs.TurnCoordinator
 import com.openlogh.service.GameEventService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -10,18 +9,13 @@ import org.springframework.stereotype.Component
 import java.time.OffsetDateTime
 
 /**
- * 턴 데몬: 주기적으로 월드를 순회하며 턴을 처리한다.
- * - 일반 모드: TurnService (전체 파이프라인 — 커맨드 실행, 경제, 외교, 이벤트, AI, 유지보수)
- * - 실시간 모드: RealtimeService (커맨드 포인트 기반)
+ * Tick daemon: periodically iterates worlds and processes real-time ticks.
+ * The legacy turn-based path has been removed — all worlds now use the TickEngine.
  */
 @Component
 class TurnDaemon(
-    private val turnService: TurnService,
-    private val turnCoordinator: TurnCoordinator,
-    private val realtimeService: RealtimeService,
     private val tickEngine: TickEngine,
     @Value("\${game.commit-sha:local}") private val processCommitSha: String,
-    @Value("\${opensam.cqrs.enabled:false}") private val cqrsEnabled: Boolean,
     private val sessionStateRepository: SessionStateRepository,
     private val gameEventService: GameEventService,
 ) {
@@ -62,25 +56,7 @@ class TurnDaemon(
                 if (isPreOpen(world)) continue
                 if (isWorldLocked(world)) continue
                 try {
-                    if (world.realtimeMode) {
-                        tickEngine.processTick(world)
-                    } else {
-                        val prevYear = world.currentYear.toInt()
-                        val prevMonth = world.currentMonth.toInt()
-                        if (cqrsEnabled) {
-                            turnCoordinator.processSession(world)
-                        } else {
-                            turnService.processWorld(world)
-                            // Legacy path doesn't broadcast — notify frontend of turn advance
-                            if (world.currentYear.toInt() != prevYear || world.currentMonth.toInt() != prevMonth) {
-                                gameEventService.broadcastTurnAdvance(
-                                    world.id.toLong(),
-                                    world.currentYear.toInt(),
-                                    world.currentMonth.toInt(),
-                                )
-                            }
-                        }
-                    }
+                    tickEngine.processTick(world)
                 } catch (e: Exception) {
                     logger.error("Error processing world ${world.id}: ${e.message}", e)
                 }

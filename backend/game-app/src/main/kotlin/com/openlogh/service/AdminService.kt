@@ -10,7 +10,6 @@ import com.openlogh.dto.NationStatistic
 import com.openlogh.dto.ResourceDistributionRequest
 import com.openlogh.dto.TimeControlRequest
 import com.openlogh.entity.Officer
-import com.openlogh.entity.OfficerTurn
 import com.openlogh.repository.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,7 +19,6 @@ import java.time.OffsetDateTime
 class AdminService(
     private val sessionStateRepository: SessionStateRepository,
     private val officerRepository: OfficerRepository,
-    private val officerTurnRepository: OfficerTurnRepository,
     private val factionRepository: FactionRepository,
     private val planetRepository: PlanetRepository,
     private val appUserRepository: AppUserRepository,
@@ -273,13 +271,17 @@ class AdminService(
             "kill" -> {
                 officer.killTurn = 0
                 officer.turnTime = OffsetDateTime.now()
-                upsertOfficerTurn(officer, 0, "휴식", "휴식")
             }
             "killturnInfinite" -> officer.killTurn = INFINITE_KILL_TURN.toShort()
-            "resign" -> upsertOfficerTurn(officer, 0, "che_하야", "하야")
+            "resign" -> {
+                // In real-time mode, admin resign is immediate — mark officer for resignation
+                officer.killTurn = 0
+                officer.turnTime = OffsetDateTime.now()
+            }
             "wanderDismiss" -> {
-                upsertOfficerTurn(officer, 0, "che_방랑", "방랑")
-                upsertOfficerTurn(officer, 1, "che_해산", "해산")
+                // In real-time mode, admin dismiss is immediate
+                officer.killTurn = 0
+                officer.turnTime = OffsetDateTime.now()
             }
             "exp1000" -> officer.experience += 1000
             "dedication1000" -> officer.dedication += 1000
@@ -355,26 +357,6 @@ class AdminService(
     private fun rate(numerator: Int, denominator: Int): Double {
         if (denominator <= 0) return 0.0
         return numerator.toDouble() / denominator.toDouble()
-    }
-
-    private fun upsertOfficerTurn(
-        officer: Officer,
-        turnIdx: Int,
-        actionCode: String,
-        brief: String,
-    ) {
-        val turn = officerTurnRepository.findByOfficerIdOrderByTurnIdx(officer.id)
-            .firstOrNull { it.turnIdx.toInt() == turnIdx }
-            ?: OfficerTurn(
-                sessionId = officer.sessionId,
-                officerId = officer.id,
-                turnIdx = turnIdx.toShort(),
-            )
-
-        turn.actionCode = actionCode
-        turn.arg = mutableMapOf()
-        turn.brief = brief
-        officerTurnRepository.save(turn)
     }
 
     fun listUsers(): List<AdminUserSummary> {
