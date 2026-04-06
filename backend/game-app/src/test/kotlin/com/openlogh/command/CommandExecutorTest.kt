@@ -30,7 +30,7 @@ class CommandExecutorTest {
             sessionId = 1,
             name = "테스트국가",
             color = "#FF0000",
-            level = 1,
+            factionRank = 1,
         )
         val city = Planet(
             id = 1,
@@ -212,7 +212,7 @@ class CommandExecutorTest {
             id = 10,
             sessionId = 1,
             name = "방랑국",
-            level = 0,
+            factionRank = 0,
             officerCount = 2,
             chiefOfficerId = 1,
         )

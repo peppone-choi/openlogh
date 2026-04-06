@@ -76,7 +76,7 @@ class DiplomacyServiceTest {
         }
 
         `when`(
-            diplomacyRepository.findBySessionIdAndSrcNationIdOrDestNationId(
+            diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(
                 ArgumentMatchers.anyLong(),
                 ArgumentMatchers.anyLong(),
                 ArgumentMatchers.anyLong(),

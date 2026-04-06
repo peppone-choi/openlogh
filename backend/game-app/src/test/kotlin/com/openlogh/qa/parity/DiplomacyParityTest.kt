@@ -68,7 +68,7 @@ class DiplomacyParityTest {
         `when`(diplomacyRepository.findBySessionId(anyLong())).thenAnswer {
             diplomacies.filter { it.sessionId == WORLD_ID }
         }
-        `when`(diplomacyRepository.findBySessionIdAndSrcNationIdOrDestNationId(anyLong(), anyLong(), anyLong()))
+        `when`(diplomacyRepository.findBySessionIdAndSrcFactionIdOrDestFactionId(anyLong(), anyLong(), anyLong()))
             .thenAnswer { inv ->
                 val factionId = inv.arguments[1] as Long
                 diplomacies.filter {

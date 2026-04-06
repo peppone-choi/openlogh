@@ -154,7 +154,7 @@ class EconomyServiceTest {
         color = "#FF0000",
         funds = funds,
         supplies = supplies,
-        level = level,
+        factionRank = level,
         conscriptionRateTmp = rateTmp,
         taxRate = bill,
         capitalPlanetId = capitalPlanetId,

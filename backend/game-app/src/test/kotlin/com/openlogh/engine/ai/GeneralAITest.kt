@@ -128,7 +128,7 @@ class GeneralAITest {
             sessionId = 1,
             name = "국가$id",
             color = "#FF0000",
-            level = level,
+            factionRank = level,
             funds = funds,
             supplies = supplies,
             militaryPower = militaryPower,

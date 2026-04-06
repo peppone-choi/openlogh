@@ -94,7 +94,7 @@ class NationResourceCommandTest {
         color = "#FF0000",
         funds = funds,
         supplies = supplies,
-        level = 7,
+        factionRank = 7,
         strategicCmdLimit = strategicCmdLimit,
         chiefOfficerId = 1,
     )

@@ -561,7 +561,7 @@ class TurnServiceTest {
 
         // Commands execute before month advances: month is still 6 at time of fireCommand
         verify(gameEventService).fireCommand(
-            sessionId = 1L,
+            worldId = 1L,
             year = 200.toShort(),
             month = 6.toShort(),
             officerId = 1L,

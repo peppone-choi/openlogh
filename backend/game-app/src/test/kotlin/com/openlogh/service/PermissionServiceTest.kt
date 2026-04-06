@@ -60,9 +60,9 @@ class PermissionServiceTest {
 
         val result = service.setPermission(
             userId = 10,
-            factionId = 1,
+            nationId = 1,
             isAmbassador = false,
-            officerIds = listOf(2, 3, 4, 5),
+            generalIds = listOf(2, 3, 4, 5),
         )
 
         assertTrue(result.result)
@@ -85,9 +85,9 @@ class PermissionServiceTest {
 
         val result = service.setPermission(
             userId = 10,
-            factionId = 1,
+            nationId = 1,
             isAmbassador = true,
-            officerIds = emptyList(),
+            generalIds = emptyList(),
         )
 
         assertTrue(result.result)
@@ -103,9 +103,9 @@ class PermissionServiceTest {
 
         val result = service.setPermission(
             userId = 10,
-            factionId = 1,
+            nationId = 1,
             isAmbassador = true,
-            officerIds = listOf(2, 3, 4),
+            generalIds = listOf(2, 3, 4),
         )
 
         assertFalse(result.result)

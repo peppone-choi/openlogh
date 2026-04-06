@@ -353,10 +353,10 @@ class CommandServiceTest {
         serviceWithEvent.reserveGeneralTurns(1L, turns)
 
         verify(gameEventService).fireCommand(
-            sessionId = 1L,
+            worldId = 1L,
             year = world.currentYear,
             month = world.currentMonth,
-            officerId = 1L,
+            generalId = 1L,
             commandEventType = "reserved",
             detail = mapOf("turnCount" to 1),
         )

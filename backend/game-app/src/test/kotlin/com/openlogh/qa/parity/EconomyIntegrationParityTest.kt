@@ -155,7 +155,7 @@ class EconomyIntegrationParityTest {
         factionType: String = "che_중립",
     ): Faction = Faction(
         id = id, sessionId = 1, name = "nation$id", color = "#FF0000",
-        funds = funds, supplies = supplies, level = level, conscriptionRateTmp = rateTmp,
+        funds = funds, supplies = supplies, factionRank = level, conscriptionRateTmp = rateTmp,
         taxRate = bill, capitalPlanetId = capitalPlanetId, conscriptionRate = conscriptionRate,
         factionType = factionType,
     )
@@ -489,7 +489,7 @@ class EconomyIntegrationParityTest {
             val step = EconomyPreUpdateStep(service)
             val w = world(year = 200, month = 3)
             val ctx = TurnContext(
-                world = w, sessionId = 1,
+                world = w, worldId = 1,
                 year = 200, month = 3,
                 previousYear = 200, previousMonth = 2,
                 nextTurnAt = OffsetDateTime.now()
@@ -505,7 +505,7 @@ class EconomyIntegrationParityTest {
 
             val wMonth3 = world(year = 200, month = 3)
             val ctx3 = TurnContext(
-                world = wMonth3, sessionId = 1,
+                world = wMonth3, worldId = 1,
                 year = 200, month = 3,
                 previousYear = 200, previousMonth = 2,
                 nextTurnAt = OffsetDateTime.now()
@@ -515,7 +515,7 @@ class EconomyIntegrationParityTest {
 
             val wMonth1 = world(year = 200, month = 1)
             val ctx1 = TurnContext(
-                world = wMonth1, sessionId = 1,
+                world = wMonth1, worldId = 1,
                 year = 200, month = 1,
                 previousYear = 199, previousMonth = 12,
                 nextTurnAt = OffsetDateTime.now()
@@ -529,7 +529,7 @@ class EconomyIntegrationParityTest {
             val step = EconomyPostUpdateStep(service)
             val w = world(year = 200, month = 6)
             val ctx = TurnContext(
-                world = w, sessionId = 1,
+                world = w, worldId = 1,
                 year = 200, month = 6,
                 previousYear = 200, previousMonth = 5,
                 nextTurnAt = OffsetDateTime.now()
@@ -543,7 +543,7 @@ class EconomyIntegrationParityTest {
             val step = DisasterAndTradeStep(service)
             val w = world(year = 200, month = 4)
             val ctx = TurnContext(
-                world = w, sessionId = 1,
+                world = w, worldId = 1,
                 year = 200, month = 4,
                 previousYear = 200, previousMonth = 3,
                 nextTurnAt = OffsetDateTime.now()

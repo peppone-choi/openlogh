@@ -57,10 +57,10 @@ class GameEventServiceTest {
         val captor = ArgumentCaptor.forClass(CommandEvent::class.java)
 
         service.fireCommand(
-            sessionId = 1L,
+            worldId = 1L,
             year = 200,
             month = 6,
-            officerId = 42L,
+            generalId = 42L,
             commandEventType = "reserved",
         )
 

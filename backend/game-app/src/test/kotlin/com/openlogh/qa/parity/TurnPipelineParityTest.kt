@@ -80,7 +80,7 @@ class TurnPipelineParityTest {
         val world = SessionState(id = 1, scenarioCode = "test", currentYear = 200, currentMonth = 3, tickSeconds = 300)
         return TurnContext(
             world = world,
-            sessionId = 1L,
+            worldId = 1L,
             year = 200,
             month = 3,
             previousYear = 200,
@@ -185,7 +185,7 @@ class TurnPipelineParityTest {
         // Month 1: should execute
         val month1World = SessionState(id = 1, scenarioCode = "test", currentYear = 200, currentMonth = 1, tickSeconds = 300)
         val month1Context = TurnContext(
-            world = month1World, sessionId = 1L,
+            world = month1World, worldId = 1L,
             year = 200, month = 1, previousYear = 199, previousMonth = 12,
             nextTurnAt = OffsetDateTime.now(),
         )

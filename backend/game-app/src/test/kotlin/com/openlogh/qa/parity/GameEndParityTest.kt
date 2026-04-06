@@ -114,7 +114,7 @@ class GameEndParityTest {
             sessionId = 1,
             name = name,
             color = "#FF0000",
-            level = level.toShort(),
+            factionRank = level.toShort(),
         )
     }
 
@@ -164,7 +164,7 @@ class GameEndParityTest {
         `when`(gameHistoryRepository.findByServerId(anyString())).thenReturn(null)
         `when`(gameHistoryRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(gameHistoryRepository.count()).thenReturn(0)
-        `when`(oldFactionRepository.findBySessionIdAndFaction(anyString(), anyLong())).thenReturn(null)
+        `when`(oldFactionRepository.findBySessionIdAndFactionId(anyString(), anyLong())).thenReturn(null)
         `when`(oldFactionRepository.save(anyNonNull())).thenAnswer { it.arguments[0] }
         `when`(oldFactionRepository.findByServerId(anyString())).thenReturn(emptyList())
         `when`(oldOfficerRepository.findBySessionIdAndOfficerId(anyString(), anyLong())).thenReturn(null)

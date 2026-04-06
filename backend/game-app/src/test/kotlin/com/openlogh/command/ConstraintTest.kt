@@ -96,7 +96,7 @@ class ConstraintTest {
             color = "#FF0000",
             funds = funds,
             supplies = supplies,
-            level = level,
+            factionRank = level,
             capitalPlanetId = capitalPlanetId,
             strategicCmdLimit = strategicCmdLimit,
         )

@@ -145,7 +145,7 @@ class EconomyFormulaParityTest {
         factionType: String = "che_중립",
     ): Faction = Faction(
         id = id, sessionId = 1, name = "nation$id", color = "#FF0000",
-        funds = funds, supplies = supplies, level = level, conscriptionRateTmp = rateTmp,
+        funds = funds, supplies = supplies, factionRank = level, conscriptionRateTmp = rateTmp,
         taxRate = bill, capitalPlanetId = capitalPlanetId, conscriptionRate = conscriptionRate,
         factionType = factionType,
     )

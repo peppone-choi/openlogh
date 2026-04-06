@@ -126,10 +126,10 @@ class CrewTypeAvailabilityTest {
             general = Officer(factionId = 1, officerLevel = 3),
             nation = Faction(id = 1, techLevel = 3000f),
             mapCities = listOf(
-                MapCityDefinition(id = 1, name = "A", level = 6, region = 1),
+                MapCityDefinition(id = 1, name = "A", factionRank = 6, region = 1),
             ),
             ownedCities = listOf(
-                Planet(id = 1, name = "A", factionId = 1, level = 6),
+                Planet(id = 1, name = "A", factionId = 1, factionRank = 6),
             ),
             currentYear = 10,
             startYear = 1,

@@ -31,7 +31,7 @@ class InMemoryTurnHarnessIntegrationTest {
             sessionId = 1,
             name = "위",
             color = "#ffffff",
-            level = 3,
+            factionRank = 3,
             strategicCmdLimit = 10,
         )
         val city = Planet(
@@ -97,7 +97,7 @@ class InMemoryTurnHarnessIntegrationTest {
             sessionId = 1,
             name = "촉",
             color = "#00ff00",
-            level = 4,
+            factionRank = 4,
             strategicCmdLimit = 5,
         )
         val city = Planet(

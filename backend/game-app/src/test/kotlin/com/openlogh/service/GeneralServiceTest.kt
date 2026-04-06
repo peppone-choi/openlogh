@@ -128,13 +128,13 @@ class OfficerServiceTest {
             "user",
             CreateGeneralRequest(
                 name = "신장수",
-                planetId = 10L,
+                cityId = 10L,
                 leadership = 70,
-                command = 70,
-                intelligence = 70,
+                strength = 70,
+                intel = 70,
                 politics = 70,
-                administration = 70,
-                shipClass = 2,
+                charm = 70,
+                crewType = 2,
                 personality = "che_대의",
                 pic = true,
                 inheritSpecial = "che_저격",
@@ -195,12 +195,12 @@ class OfficerServiceTest {
             "user",
             CreateGeneralRequest(
                 name = "계승장수",
-                planetId = 5L,
+                cityId = 5L,
                 leadership = 70,
-                command = 70,
-                intelligence = 70,
+                strength = 70,
+                intel = 70,
                 politics = 70,
-                administration = 70,
+                charm = 70,
                 personality = "che_안전",
             ),
         )
@@ -289,13 +289,13 @@ class OfficerServiceTest {
             "USER",
             CreateGeneralRequest(
                 name = "신장수",
-                planetId = 10L,
+                cityId = 10L,
                 leadership = 70,
-                command = 70,
-                intelligence = 70,
+                strength = 70,
+                intel = 70,
                 politics = 70,
-                administration = 70,
-                shipClass = 0,
+                charm = 70,
+                crewType = 0,
             ),
         )
 
@@ -336,12 +336,12 @@ class OfficerServiceTest {
             "user",
             CreateGeneralRequest(
                 name = "턴타임장수",
-                planetId = 10L,
+                cityId = 10L,
                 leadership = 70,
-                command = 70,
-                intelligence = 70,
+                strength = 70,
+                intel = 70,
                 politics = 70,
-                administration = 70,
+                charm = 70,
             ),
         )
 
@@ -387,12 +387,12 @@ class OfficerServiceTest {
             "user",
             CreateGeneralRequest(
                 name = "삭턴장수",
-                planetId = 10L,
+                cityId = 10L,
                 leadership = 70,
-                command = 70,
-                intelligence = 70,
+                strength = 70,
+                intel = 70,
                 politics = 70,
-                administration = 70,
+                charm = 70,
             ),
         )
 
@@ -431,12 +431,12 @@ class OfficerServiceTest {
             "user",
             CreateGeneralRequest(
                 name = "설정장수",
-                planetId = 10L,
+                cityId = 10L,
                 leadership = 70,
-                command = 70,
-                intelligence = 70,
+                strength = 70,
+                intel = 70,
                 politics = 70,
-                administration = 70,
+                charm = 70,
             ),
         )
 
@@ -455,12 +455,12 @@ class OfficerServiceTest {
                 "ghost",
                 CreateGeneralRequest(
                     name = "신장수",
-                    planetId = 10L,
+                    cityId = 10L,
                     leadership = 70,
-                    command = 70,
-                    intelligence = 70,
+                    strength = 70,
+                    intel = 70,
                     politics = 70,
-                    administration = 70,
+                    charm = 70,
                 ),
             )
         }

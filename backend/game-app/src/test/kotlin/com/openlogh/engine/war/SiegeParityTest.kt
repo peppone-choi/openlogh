@@ -146,11 +146,11 @@ class SiegeParityTest {
         // PHP: fortress = (fortress - damage / 20).coerceAtLeast(0)
         val city = makeCity(orbitalDefense = 500, fortress = 1000)
         val unit = WarUnitPlanet(city, year = 200, startYear = 190)
-        assertEquals(1000, unit.fortress, "Initial fortress should be 1000")
+        assertEquals(1000, unit.wall, "Initial fortress should be 1000")
 
         // takeDamage(100) -> fortress = 1000 - 100/20 = 1000 - 5 = 995
         unit.takeDamage(100)
-        assertEquals(995, unit.fortress, "After 100 damage: fortress = 1000 - 5 = 995")
+        assertEquals(995, unit.wall, "After 100 damage: fortress = 1000 - 5 = 995")
     }
 
     @Test
@@ -160,7 +160,7 @@ class SiegeParityTest {
 
         // takeDamage(2000) -> fortress = 1000 - 2000/20 = 1000 - 100 = 900
         unit.takeDamage(2000)
-        assertEquals(900, unit.fortress, "After 2000 damage: fortress = 1000 - 100 = 900")
+        assertEquals(900, unit.wall, "After 2000 damage: fortress = 1000 - 100 = 900")
     }
 
     @Test
@@ -170,7 +170,7 @@ class SiegeParityTest {
 
         // takeDamage(20000) -> fortress = 500 - 20000/20 = 500 - 1000 = -500 -> clamped to 0
         unit.takeDamage(20000)
-        assertEquals(0, unit.fortress, "Wall should clamp at 0 after excessive damage")
+        assertEquals(0, unit.wall, "Wall should clamp at 0 after excessive damage")
     }
 
     @Test
@@ -181,7 +181,7 @@ class SiegeParityTest {
         // 10 phases of 200 damage each: fortress -= 200/20 = 10 per phase
         // After 10 phases: fortress = 100 - 10*10 = 0
         repeat(10) { unit.takeDamage(200) }
-        assertEquals(0, unit.fortress, "Wall should be 0 after 10 phases of 200 damage")
+        assertEquals(0, unit.wall, "Wall should be 0 after 10 phases of 200 damage")
     }
 
     // ── applyResults write-back ──

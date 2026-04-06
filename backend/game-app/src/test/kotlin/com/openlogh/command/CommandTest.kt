@@ -113,7 +113,7 @@ class CommandTest {
             color = "#FF0000",
             funds = funds,
             supplies = supplies,
-            level = level,
+            factionRank = level,
         )
     }
 
