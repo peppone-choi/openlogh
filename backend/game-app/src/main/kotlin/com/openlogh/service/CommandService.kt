@@ -181,6 +181,7 @@ class CommandService(
                     reason = reason,
                     durationSeconds = command.getDuration(),
                     commandPointCost = command.getCommandPointCost(),
+                    poolType = command.getCommandPoolType().name,
                 )
             )
         }
@@ -226,6 +227,7 @@ class CommandService(
                     reason = reason,
                     durationSeconds = command.getDuration(),
                     commandPointCost = command.getCommandPointCost(),
+                    poolType = command.getCommandPoolType().name,
                 )
             )
         }

@@ -18,6 +18,7 @@ import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.SessionStateRepository
 import com.openlogh.service.CommandLogDispatcher
+import com.openlogh.service.CpService
 import com.openlogh.service.GameEventService
 import com.openlogh.service.ScenarioService
 import kotlinx.coroutines.runBlocking
@@ -40,6 +41,7 @@ class RealtimeService(
     private val modifierService: ModifierService,
     private val commandLogDispatcher: CommandLogDispatcher,
     private val gameConstService: com.openlogh.service.GameConstService,
+    private val cpService: CpService,
 ) {
     private val logger = LoggerFactory.getLogger(RealtimeService::class.java)
 
@@ -214,9 +216,11 @@ class RealtimeService(
     fun regenerateCommandPoints(world: SessionState) {
         val generals = officerRepository.findBySessionId(world.id.toLong())
         for (general in generals) {
-            val newCp = (general.commandPoints + world.commandPointRegenRate).coerceAtMost(100)
-            if (newCp != general.commandPoints) {
-                general.commandPoints = newCp
+            val oldPcp = general.pcp
+            val oldMcp = general.mcp
+            cpService.regeneratePcpMcp(general)
+            if (general.pcp != oldPcp || general.mcp != oldMcp) {
+                general.commandPoints = general.pcp + general.mcp  // backward compat
                 officerRepository.save(general)
             }
         }
@@ -235,6 +239,10 @@ class RealtimeService(
             "commandPoints" to general.commandPoints,
             "commandEndTime" to general.commandEndTime,
             "remainingSeconds" to remainingSeconds,
+            "pcp" to general.pcp,
+            "mcp" to general.mcp,
+            "pcpMax" to general.pcpMax,
+            "mcpMax" to general.mcpMax,
         )
     }
 
@@ -297,16 +305,18 @@ class RealtimeService(
         }
 
         val commandPointCost = command.getCommandPointCost().coerceAtLeast(1)
-        if (general.commandPoints < commandPointCost) {
+        val poolType = command.getCommandPoolType()
+        val deduction = cpService.deductCp(general, commandPointCost, poolType)
+        if (!deduction.success) {
             return CommandResult(
                 success = false,
-                logs = listOf("커맨드 포인트가 부족합니다. (필요: $commandPointCost, 보유: ${general.commandPoints})")
+                logs = listOf(deduction.errorMessage!!)
             )
         }
 
         val duration = command.getDuration().coerceAtLeast(1)
 
-        general.commandPoints -= commandPointCost
+        general.commandPoints = general.pcp + general.mcp  // backward compat
         general.commandEndTime = OffsetDateTime.now().plusSeconds(duration.toLong())
         general.updatedAt = OffsetDateTime.now()
         officerRepository.save(general)
@@ -333,6 +343,11 @@ class RealtimeService(
                 "durationSeconds" to duration,
                 "commandEndTime" to general.commandEndTime,
                 "remainingCommandPoints" to general.commandPoints,
+                "pcp" to general.pcp,
+                "mcp" to general.mcp,
+                "pcpMax" to general.pcpMax,
+                "mcpMax" to general.mcpMax,
+                "crossUsed" to deduction.crossUsed,
             )
         )
 
