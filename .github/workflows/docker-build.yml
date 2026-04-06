@@ -127,6 +127,7 @@ jobs:
                   host: ${{ secrets.SSH_HOST }}
                   username: ${{ secrets.SSH_USERNAME }}
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  envs: DB_PASSWORD,JWT_SECRET
                   script: |
                       if [ ! -d ~/openlogh-deploy/.git ]; then
                         rm -rf ~/openlogh-deploy
@@ -134,6 +135,12 @@ jobs:
                       fi
                       cd ~/openlogh-deploy
                       git pull origin main
+                      cat > .env << DOTENV
+                      DB_NAME=openlogh
+                      DB_USER=openlogh
+                      DB_PASSWORD=${DB_PASSWORD}
+                      JWT_SECRET=${JWT_SECRET}
+                      DOTENV
                       docker compose down --remove-orphans || true
                       docker compose pull
                       docker compose up -d
