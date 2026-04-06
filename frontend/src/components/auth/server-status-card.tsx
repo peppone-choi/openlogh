@@ -111,7 +111,7 @@ export function ServerStatusCard() {
 
                 <div>
                     <h3 className="mb-2 text-sm font-semibold">중원 정세</h3>
-                    {!data?.available || data.history.length === 0 ? (
+                    {!data?.available || !data.history || data.history.length === 0 ? (
                         <p className="text-sm text-muted-foreground">표시할 기록이 없습니다</p>
                     ) : (
                         <ul className="space-y-1">

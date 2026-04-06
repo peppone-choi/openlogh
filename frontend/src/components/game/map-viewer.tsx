@@ -83,12 +83,12 @@ export function MapViewer({
         }
     }, [mapCode, loadMap, isPublicMode, worldId, mapMode]);
 
-    const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
-    const emperorCityId = useMemo(() => generals.find((g) => g.npcState === 10)?.cityId ?? -1, [generals]);
+    const nationMap = useMemo(() => new Map((nations ?? []).map((n) => [n.id, n])), [nations]);
+    const emperorCityId = useMemo(() => (generals ?? []).find((g) => g.npcState === 10)?.cityId ?? -1, [generals]);
 
     const renderCities = useMemo<RenderCity[]>(() => {
         if (isPublicMode) {
-            return publicData.cities.map((c) => ({
+            return (publicData?.cities ?? []).map((c) => ({
                 id: c.id,
                 name: c.name,
                 x: c.x,
