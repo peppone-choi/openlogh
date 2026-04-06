@@ -853,16 +853,53 @@ export interface RecordEntry {
     date: string;
 }
 
+// Position Card types
+export interface PositionCard {
+    code: string;
+    nameKo: string;
+    nameEn: string;
+}
+
 // Command table
 export interface CommandTableEntry {
     actionCode: string;
     name: string;
     category: string;
+    commandGroup?: string; // OPERATIONS | PERSONAL | COMMAND | LOGISTICS | PERSONNEL | POLITICS | INTELLIGENCE
     enabled: boolean;
     reason?: string;
     durationSeconds: number;
     commandPointCost: number;
     poolType?: 'PCP' | 'MCP';
+}
+
+// Proposal types
+export interface Proposal {
+    id: number;
+    requesterId: number;
+    requesterName: string;
+    approverId: number;
+    approverName: string;
+    actionCode: string;
+    args: Record<string, unknown>;
+    status: 'pending' | 'approved' | 'rejected' | 'expired';
+    reason: string | null;
+    createdAt: string;
+    resolvedAt: string | null;
+}
+
+export interface EligibleApprover {
+    officerId: number;
+    officerName: string;
+    rank: number;
+    cards: string[];
+}
+
+export interface SubmitProposalRequest {
+    approverId: number;
+    actionCode: string;
+    args?: Record<string, unknown>;
+    reason?: string;
 }
 
 // Contact

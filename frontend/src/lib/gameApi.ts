@@ -76,6 +76,9 @@ import type {
     WorldSummary,
     SelectPoolEntry,
     GameRecord,
+    Proposal,
+    EligibleApprover,
+    SubmitProposalRequest,
 } from '@/types';
 
 // World API
@@ -918,3 +921,17 @@ export const factionPolicyApi = nationPolicyApi;
 
 /** @see officerLogApi (was generalLogApi) */
 export const officerLogApi = generalLogApi;
+
+// Proposal API
+export const proposalApi = {
+    submit: (generalId: number, data: SubmitProposalRequest) =>
+        api.post<Proposal>(`/proposals/submit/${generalId}`, data),
+    resolve: (generalId: number, proposalId: number, data: { approved: boolean; reason?: string }) =>
+        api.post<Proposal>(`/proposals/resolve/${generalId}/${proposalId}`, data),
+    pending: (generalId: number) =>
+        api.get<Proposal[]>(`/proposals/pending/${generalId}`),
+    my: (generalId: number) =>
+        api.get<Proposal[]>(`/proposals/my/${generalId}`),
+    eligibleApprovers: (generalId: number, actionCode: string) =>
+        api.get<EligibleApprover[]>(`/proposals/eligible-approvers/${generalId}`, { params: { actionCode } }),
+};
