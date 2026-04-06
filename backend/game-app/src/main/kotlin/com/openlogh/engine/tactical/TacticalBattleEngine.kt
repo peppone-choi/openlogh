@@ -2,6 +2,7 @@ package com.openlogh.engine.tactical
 
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
+import com.openlogh.model.TacticalWeaponType
 import com.openlogh.model.UnitStance
 import kotlin.math.*
 import kotlin.random.Random
@@ -127,7 +128,10 @@ data class BattleTickEvent(
  * - Formation modifiers
  * - Fortress gun line-of-fire
  */
-class TacticalBattleEngine {
+class TacticalBattleEngine(
+    private val missileSystem: MissileWeaponSystem = MissileWeaponSystem(),
+    private val fortressGunSystem: FortressGunSystem = FortressGunSystem(),
+) {
 
     companion object {
         const val BEAM_BASE_DAMAGE = 30.0
@@ -138,6 +142,8 @@ class TacticalBattleEngine {
         const val COMMAND_RANGE_GROWTH_RATE = 0.5  // per tick, scaled by command stat
         const val RETREAT_SPEED = 0.02     // progress per tick when retreating
         const val MORALE_DAMAGE_THRESHOLD = 20  // below this, combat effectiveness drops
+        const val MISSILE_RANGE = 800.0    // TacticalWeaponType.MISSILE.baseRange * 100
+        const val FIGHTER_RANGE = 600.0    // TacticalWeaponType.FIGHTER.baseRange * 100
     }
 
     /**
@@ -234,6 +240,8 @@ class TacticalBattleEngine {
 
     private fun updateCommandRange(unit: TacticalUnit) {
         unit.ticksSinceLastOrder++
+        // commandRangeMax scales linearly with command stat: command=50 → 100, command=100 → 200
+        unit.commandRangeMax = (unit.command / 50.0) * 100.0
         val growthRate = COMMAND_RANGE_GROWTH_RATE * (unit.command / 50.0)
         unit.commandRange = (unit.commandRange + growthRate).coerceAtMost(unit.commandRangeMax)
     }
@@ -242,7 +250,13 @@ class TacticalBattleEngine {
         // gin7 rule: STATIONED/ANCHORING 태세는 이동 불가
         if (!unit.stance.canMove) return
 
-        val speed = BASE_SPEED * unit.energy.speedMultiplier() * unit.formation.speedModifier * (unit.mobility / 50.0)
+        // gin7 rule: 전투정 속도 디버프 (30% 감소, 60틱 지속)
+        val speedDebuffFactor = if (unit.fighterSpeedDebuffTicks > 0) {
+            unit.fighterSpeedDebuffTicks--
+            1.0 - TacticalWeaponType.FIGHTER_SPEED_REDUCTION
+        } else 1.0
+
+        val speed = BASE_SPEED * unit.energy.speedMultiplier() * unit.formation.speedModifier * (unit.mobility / 50.0) * speedDebuffFactor
 
         // Find closest enemy
         val enemies = allUnits.filter { it.side != unit.side && it.isAlive && !it.isRetreating }
@@ -310,10 +324,12 @@ class TacticalBattleEngine {
         // gin7 rule: 태세별 attackModifier 적용
         val stanceAttack = unit.stance.attackModifier
 
-        // BEAM damage
+        // BEAM damage — gin7 rule: 최대사거리 70% 지점에서 최대 위력, 너무 가깝거나 멀면 선형 감소
         if (unit.energy.beam > 0 && dist <= BEAM_RANGE) {
+            val optimalDist = BEAM_RANGE * 0.7
+            val distFactor = (1.0 - abs(dist - optimalDist) / optimalDist).coerceAtLeast(0.0)
             val beamDmg = (BEAM_BASE_DAMAGE * unit.energy.beamMultiplier() * attackStatModifier
-                * formationAttack * stanceAttack * moraleModifier * trainingModifier)
+                * formationAttack * stanceAttack * moraleModifier * trainingModifier * distFactor)
             val sensorAccuracy = unit.energy.sensorMultiplier()
             val hitChance = (0.6 + sensorAccuracy * 0.3).coerceAtMost(0.95)
             if (rng.nextDouble() < hitChance) {
@@ -330,6 +346,20 @@ class TacticalBattleEngine {
             if (rng.nextDouble() < hitChance) {
                 applyDamage(target, gunDmg.toInt(), state, unit, "GUN")
             }
+        }
+
+        // MISSILE attack (long range, missileCount > 0)
+        val missileTarget = enemies.filter { distance(unit, it) <= MISSILE_RANGE }
+            .minByOrNull { distance(unit, it) }
+        if (missileTarget != null) {
+            missileSystem.processMissileAttack(unit, missileTarget, state, rng)
+        }
+
+        // FIGHTER launch (carrier only, medium range)
+        val fighterTarget = enemies.filter { distance(unit, it) <= FIGHTER_RANGE }
+            .minByOrNull { distance(unit, it) }
+        if (fighterTarget != null) {
+            missileSystem.processFighterAttack(unit, fighterTarget, state, rng)
         }
     }
 
@@ -355,36 +385,8 @@ class TacticalBattleEngine {
     }
 
     private fun processFortressGun(state: TacticalBattleState, rng: Random) {
-        if (state.tickCount - state.fortressGunLastFired < state.fortressGunCooldown) return
-
-        // Fortress gun fires at enemies of the fortress faction
-        val enemies = state.units.filter {
-            it.isAlive && it.factionId != state.fortressFactionId && !it.isRetreating
-        }
-        if (enemies.isEmpty()) return
-
-        // Target the largest enemy fleet
-        val target = enemies.maxByOrNull { it.ships } ?: return
-
-        // Line of fire: hits ALL units in the path (including friendlies!)
-        val unitsInPath = calculateLineOfFire(
-            state, gunPosX = state.battleBoundsX / 2, gunPosY = 0.0,
-            targetX = target.posX, targetY = target.posY, range = state.fortressGunRange.toDouble() * 100
-        )
-
-        for (hitUnit in unitsInPath) {
-            val damage = state.fortressGunPower / unitsInPath.size  // damage split across hits
-            hitUnit.hp -= damage
-            val shipLoss = (damage.toDouble() / hitUnit.maxHp.coerceAtLeast(1) * hitUnit.maxShips).toInt()
-            hitUnit.ships = (hitUnit.ships - shipLoss).coerceAtLeast(0)
-            state.tickEvents.add(BattleTickEvent(
-                "fortress_fire", targetUnitId = hitUnit.fleetId, value = damage,
-                detail = "요새포 → ${hitUnit.officerName}" + if (hitUnit.factionId == state.fortressFactionId) " (아군 피해!)" else ""
-            ))
-        }
-
-        state.fortressGunLastFired = state.tickCount
-        state.tickEvents.add(BattleTickEvent("fortress_fire", detail = "요새포 발사"))
+        // Delegate to FortressGunSystem — handles 4-type enum, full power per unit (not split), friendly fire
+        fortressGunSystem.processFortressGunFire(state, rng)
     }
 
     /**
