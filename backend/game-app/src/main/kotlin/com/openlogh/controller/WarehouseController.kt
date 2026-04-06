@@ -2,6 +2,7 @@ package com.openlogh.controller
 
 import com.openlogh.entity.FleetWarehouse
 import com.openlogh.entity.PlanetWarehouse
+import com.openlogh.service.TransferRequest
 import com.openlogh.service.WarehouseService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -34,7 +35,69 @@ class WarehouseController(
             ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(FleetWarehouseDto.from(fw))
     }
+
+    // ===== Transfer =====
+
+    /**
+     * POST /api/warehouse/transfer
+     * 행성창고 → 부대창고 이동
+     */
+    @PostMapping("/transfer")
+    fun transferToFleet(@RequestBody body: TransferRequestBody): ResponseEntity<Any> {
+        return try {
+            val result = warehouseService.transferToFleet(
+                sessionId = body.sessionId,
+                planetId = body.planetId,
+                fleetId = body.fleetId,
+                request = TransferRequest(
+                    ships = body.ships,
+                    crew = body.crew,
+                    supplies = body.supplies,
+                    missiles = body.missiles,
+                ),
+            )
+            ResponseEntity.ok(result)
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(mapOf("error" to e.message))
+        }
+    }
+
+    /**
+     * POST /api/warehouse/return
+     * 부대창고 → 행성창고 반납
+     */
+    @PostMapping("/return")
+    fun returnToPlanet(@RequestBody body: TransferRequestBody): ResponseEntity<Any> {
+        return try {
+            val result = warehouseService.returnToPlanet(
+                sessionId = body.sessionId,
+                fleetId = body.fleetId,
+                planetId = body.planetId,
+                request = TransferRequest(
+                    ships = body.ships,
+                    crew = body.crew,
+                    supplies = body.supplies,
+                    missiles = body.missiles,
+                ),
+            )
+            ResponseEntity.ok(result)
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(mapOf("error" to e.message))
+        }
+    }
 }
+
+// ===== Request Bodies =====
+
+data class TransferRequestBody(
+    val sessionId: Long,
+    val planetId: Long,
+    val fleetId: Long,
+    val ships: Map<String, Int> = emptyMap(),
+    val crew: Map<String, Int> = emptyMap(),
+    val supplies: Int = 0,
+    val missiles: Int = 0,
+)
 
 // ===== DTOs =====
 
