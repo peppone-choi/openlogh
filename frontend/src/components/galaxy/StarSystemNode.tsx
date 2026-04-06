@@ -13,40 +13,21 @@ interface StarSystemNodeProps {
     onHover: (hovering: boolean) => void;
 }
 
-/** Pixel-art style color steps: highlight → base → shadow */
-function getDotPalette(region: number) {
-    // region: 1=Empire, 2=Alliance, 3=Fezzan (convention from galaxy.ts)
-    if (region === 1) {
-        return {
-            highlight: '#a0b4ff',
-            light: '#7088e0',
-            base: '#5a6ee0',
-            dark: '#3a4ab0',
-            shadow: '#252e70',
-        };
-    } else if (region === 2) {
-        return {
-            highlight: '#ffa0b0',
-            light: '#e08090',
-            base: '#d06878',
-            dark: '#a04858',
-            shadow: '#602838',
-        };
-    } else if (region === 3) {
-        return {
-            highlight: '#d0d0d8',
-            light: '#b0b0b8',
-            base: '#9898a0',
-            dark: '#686870',
-            shadow: '#404048',
-        };
-    }
+/** Generate 5-step dot palette from any hex color (pixel-art shading) */
+function getDotPaletteFromHex(hex: string) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+    const toHex = (rv: number, gv: number, bv: number) =>
+        `#${clamp(rv).toString(16).padStart(2, '0')}${clamp(gv).toString(16).padStart(2, '0')}${clamp(bv).toString(16).padStart(2, '0')}`;
+
     return {
-        highlight: '#c0c0c8',
-        light: '#a0a0a8',
-        base: '#808088',
-        dark: '#585860',
-        shadow: '#303038',
+        highlight: toHex(r + 80, g + 80, b + 80),
+        light: toHex(r + 30, g + 30, b + 30),
+        base: hex,
+        dark: toHex(r * 0.65, g * 0.65, b * 0.65),
+        shadow: toHex(r * 0.35, g * 0.35, b * 0.35),
     };
 }
 
@@ -74,8 +55,8 @@ export function StarSystemNode({
     onHover,
 }: StarSystemNodeProps) {
     const r = getStarRadius(system.level);
-    const palette = getDotPalette(system.region);
-    const baseColor = getFactionColor(system.region);
+    const color = system.factionColor || getFactionColor(system.region);
+    const palette = getDotPaletteFromHex(color);
     const hasFortress = isFortress(system);
 
     const labelText = system.nameEn;
@@ -109,7 +90,7 @@ export function StarSystemNode({
             {/* Outer glow (subtle) */}
             <Circle
                 radius={r + 3}
-                fill={baseColor}
+                fill={color}
                 opacity={isSelected ? 0.3 : isHovered ? 0.2 : 0.1}
                 listening={false}
                 perfectDrawEnabled={false}
