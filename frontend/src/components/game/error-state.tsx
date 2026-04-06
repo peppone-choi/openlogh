@@ -12,7 +12,7 @@ interface ErrorStateProps {
 
 export function ErrorState({
     icon: Icon = AlertTriangle,
-    title = '데이터를 불러오지 못했습니다.',
+    title = 'Failed to load data.',
     description,
     onRetry,
 }: ErrorStateProps) {
@@ -24,7 +24,7 @@ export function ErrorState({
                 {description && <p className="text-xs text-muted-foreground/70 mt-1">{description}</p>}
                 {onRetry && (
                     <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>
-                        다시 시도
+                        Retry
                     </Button>
                 )}
             </CardContent>

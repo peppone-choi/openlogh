@@ -71,18 +71,18 @@ function ProcessingContent() {
 
         return (
             <div className="p-4 space-y-4 max-w-3xl mx-auto">
-                <PageHeader icon={ClipboardList} title={`명령 인수 입력 — ${command}`} />
+                <PageHeader icon={ClipboardList} title={`Command Parameters — ${command}`} />
                 <Card>
                     <CardContent className="space-y-4 pt-4">
                         <div className="space-y-2">
-                            <p className="text-xs text-muted-foreground">대상 턴</p>
+                            <p className="text-xs text-muted-foreground">Target Slots</p>
                             <div className="flex flex-wrap gap-1.5">
                                 {turnList.map((turnIdx) => (
                                     <span
                                         key={turnIdx}
                                         className="inline-flex items-center gap-1 rounded-full bg-amber-900/30 px-2.5 py-0.5 text-xs font-medium text-amber-200"
                                     >
-                                        <ClipboardList className="size-3" />턴 {turnIdx}
+                                        <ClipboardList className="size-3" />Slot {turnIdx}
                                     </span>
                                 ))}
                             </div>
@@ -97,7 +97,7 @@ function ProcessingContent() {
                             disabled={isSubmitting}
                             className="w-full mt-2"
                         >
-                            취소
+                            Cancel
                         </Button>
                     </CardContent>
                 </Card>
@@ -108,8 +108,8 @@ function ProcessingContent() {
     // Wait mode: turn processing
     return (
         <div className="flex flex-col items-center justify-center py-24">
-            <LoadingState message="턴 처리 중..." />
-            <p className="mt-4 text-xs text-muted-foreground">턴 실행이 완료되면 자동으로 이동합니다.</p>
+            <LoadingState message="Processing command..." />
+            <p className="mt-4 text-xs text-muted-foreground">You will be redirected when execution completes.</p>
         </div>
     );
 }
