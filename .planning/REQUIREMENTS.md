@@ -12,7 +12,7 @@
 - [ ] **LEGACY-03**: 삼국지 수치비교 자동전투 로직 제거
 - [x] **LEGACY-04**: 삼국지 경제 로직(농업/상업 수치) 제거
 - [x] **LEGACY-05**: 삼국지 아이템(무기/서적/말) 제거
-- [ ] **LEGACY-06**: 삼국지 NPC 데이터(general_pool.json) 제거
+- [x] **LEGACY-06**: 삼국지 NPC 데이터(general_pool.json) 제거
 
 ### 함종/유닛 시스템 (SHIP)
 
@@ -119,7 +119,7 @@
 | LEGACY-03 | Phase 1 | Pending |
 | LEGACY-04 | Phase 1 | Complete |
 | LEGACY-05 | Phase 1 | Complete |
-| LEGACY-06 | Phase 1 | Pending |
+| LEGACY-06 | Phase 1 | Complete |
 | SHIP-01 | Phase 1 | Pending |
 | SHIP-02 | Phase 1 | Pending |
 | SHIP-03 | Phase 1 | Pending |
