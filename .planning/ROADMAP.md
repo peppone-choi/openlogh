@@ -26,7 +26,14 @@
   3. 기함/육전대 유닛이 Fleet에 연결 가능하며 승조원 수련도 4단계가 적용된다
   4. 삼국지 병종 상성 및 수치비교 전투 로직이 코드베이스에 존재하지 않는다
   5. `grep -r "officerLevel >= 5"` 결과가 0이거나 stub 대체가 완료된 상태이다
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Gin7CommandRegistry stub (81종) + 삼국지 커맨드 파일 삭제
+- [ ] 01-02-PLAN.md — 삼국지 전투엔진 삭제 (BattleEngine/BattleService/GroundBattleEngine)
+- [ ] 01-03-PLAN.md — EconomyService 삼국지 로직 제거 + processMonthly() stub
+- [ ] 01-04-PLAN.md — ShipUnit 엔티티 + V45 DB 마이그레이션 + ShipUnitRepository
+- [ ] 01-05-PLAN.md — ShipStatRegistry (JSON 로드) + ShipUnitService + officerLevel >= 5 전량 제거
 
 ### Phase 2: gin7 81종 커맨드 시스템
 **Goal**: 직무권한카드 기반 81종 gin7 커맨드가 실시간 실행 파이프라인을 통해 동작하며 삼국지 권한 우회가 완전히 제거된다
@@ -106,7 +113,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. 레거시 제거 + 함종 유닛 기반 | 0/TBD | Not started | - |
+| 1. 레거시 제거 + 함종 유닛 기반 | 0/5 | Not started | - |
 | 2. gin7 81종 커맨드 시스템 | 0/TBD | Not started | - |
 | 3. 실시간 전술전 엔진 | 0/TBD | Not started | - |
 | 4. 경제 시스템 | 0/TBD | Not started | - |
