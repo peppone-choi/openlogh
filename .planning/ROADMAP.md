@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Position Card & Command Authority** - 77 position cards, command groups, authority gating, suggestion system (completed 2026-04-06)
 - [ ] **Phase 5: Organization & Fleet Structure** - 6 unit types with crew slots, population-military linkage
 - [x] **Phase 6: Galaxy Map & Planet Model** - 80 star systems, route network, territory zones, fortress systems, galaxy map UI (completed 2026-04-06)
-- [ ] **Phase 7: Rank, Merit & Personnel** - 11-tier rank ladder, merit points, promotion/demotion, appointment authority
+- [x] **Phase 7: Rank, Merit & Personnel** - 11-tier rank ladder, merit points, promotion/demotion, appointment authority (completed 2026-04-05)
 - [ ] **Phase 8: Scenario & Character System** - 10 scenarios, custom character creation, original character selection, scenario events
 - [ ] **Phase 9: Strategic Commands** - Operation planning, logistics, production, supply chain commands
 - [ ] **Phase 10: Tactical Combat (RTS)** - WebSocket real-time fleet battle, energy allocation, formations, fortress guns
@@ -145,8 +145,13 @@ Plans:
   3. Promotion occurs when merit threshold is met and a superior (or system for top ranks) approves; demotion occurs on sufficient demerit
   4. Rank determines maximum CP pool size, eligible position cards, and appointable subordinate positions
   5. The personnel management UI shows rank, merit progress, promotion eligibility, and chain of command
-**Plans**: TBD
+**Plans:** 3/3 plans complete
 **UI hint**: yes
+
+Plans:
+- [x] 07-01-PLAN.md — V36 Flyway migration (merit/evaluation/fame points), Officer entity update, RankHeadcount config
+- [x] 07-02-PLAN.md — RankLadderService, PersonnelService, PersonnelController, PersonnelDtos
+- [x] 07-03-PLAN.md — Frontend types, API client, personnelStore, RankBadge, PersonnelPanel
 
 ### Phase 8: Scenario & Character System
 **Goal**: Players select from 10 historical scenarios and create or choose characters to begin gameplay
@@ -225,7 +230,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 4. Position Card & Command Authority | 4/4 | Complete   | 2026-04-06 |
 | 5. Organization & Fleet Structure | 1/4 | In Progress|  |
 | 6. Galaxy Map & Planet Model | 4/4 | Complete   | 2026-04-06 |
-| 7. Rank, Merit & Personnel | 0/TBD | Not started | - |
+| 7. Rank, Merit & Personnel | 3/3 | Complete   | 2026-04-05 |
 | 8. Scenario & Character System | 0/TBD | Not started | - |
 | 9. Strategic Commands | 0/TBD | Not started | - |
 | 10. Tactical Combat (RTS) | 0/TBD | Not started | - |
