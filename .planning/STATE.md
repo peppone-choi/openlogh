@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 04-economy-system/04-02-PLAN.md
-last_updated: "2026-04-06T17:33:17.814Z"
+stopped_at: Completed 04-economy-system/04-04-PLAN.md
+last_updated: "2026-04-06T17:37:54.736Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 10
   completed_phases: 7
   total_plans: 48
-  completed_plans: 43
+  completed_plans: 44
   percent: 77
 ---
 
@@ -70,6 +70,7 @@ Progress: [████████░░] 77%
 | Phase 04-economy-system P03 | 35 | 2 tasks | 4 files |
 | Phase 04 P01 | 180 | 2 tasks | 6 files |
 | Phase 04-economy-system P02 | 25 | 2 tasks | 5 files |
+| Phase 04-economy-system P04 | 56 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,8 @@ Progress: [████████░░] 77%
 - [Phase 04]: Tax collection on months 1,4,7,10 only (90-day gin7 cycle)
 - [Phase 04]: supplyState=0 planets excluded from tax and resource growth
 - [Phase 04-economy-system]: ShipyardProductionService: factionId=0 neutral guard + planet.meta[shipyardClass] config + SHIPYARD_INTERVAL_TICKS=3600 in GameTimeConstants
+- [Phase 04-economy-system]: FezzanEndingService broadcasts via broadcastWorldUpdate() not typed GameEvent — avoids world year/month dependency at trigger time
+- [Phase 04-economy-system]: FleetSortieCostService uses fleet.leaderOfficerId (not meta[commanderId]) as commander reference — matches actual Fleet entity field
 
 ### Pending Todos
 
@@ -129,6 +132,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T17:33:17.797Z
-Stopped at: Completed 04-economy-system/04-02-PLAN.md
+Last session: 2026-04-06T17:37:54.728Z
+Stopped at: Completed 04-economy-system/04-04-PLAN.md
 Resume file: None

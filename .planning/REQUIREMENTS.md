@@ -56,8 +56,8 @@
 - [x] **ECON-02**: 조병창 자동생산 (행성별 자동생산 품목, 지배권 이전까지 계속)
 - [x] **ECON-03**: 세율/납입률 시스템 (행성별 세수→진영 자금, 90일 주기 징수)
 - [x] **ECON-04**: 행성/부대 창고 시스템 (행성창고↔부대창고 간 이동)
-- [ ] **ECON-05**: 페잔 차관 시스템 (일시불 차관, 이자 10%/분기, 미상환 시 페잔 엔딩)
-- [ ] **ECON-06**: 함대 출격 비용 (출격 중 함대 수 비례 자금 소모, 운영력 절감)
+- [x] **ECON-05**: 페잔 차관 시스템 (일시불 차관, 이자 10%/분기, 미상환 시 페잔 엔딩)
+- [x] **ECON-06**: 함대 출격 비용 (출격 중 함대 수 비례 자금 소모, 운영력 절감)
 
 ### AI 시스템 (AI)
 
@@ -151,8 +151,8 @@
 | ECON-02 | Phase 4 | Complete |
 | ECON-03 | Phase 4 | Complete |
 | ECON-04 | Phase 4 | Complete |
-| ECON-05 | Phase 4 | Pending |
-| ECON-06 | Phase 4 | Pending |
+| ECON-05 | Phase 4 | Complete |
+| ECON-06 | Phase 4 | Complete |
 | AI-01 | Phase 5 | Pending |
 | AI-02 | Phase 5 | Pending |
 | AI-03 | Phase 5 | Pending |
