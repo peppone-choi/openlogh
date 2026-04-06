@@ -110,6 +110,7 @@ class FieldBattleTriggerTest {
         override fun <S : Planet> findOne(example: Example<S>): Optional<S> = Optional.empty()
         override fun findBySessionId(sessionId: Long): List<Planet> = emptyList()
         override fun findByFactionId(factionId: Long): List<Planet> = emptyList()
+        override fun findBySessionIdAndFactionId(sessionId: Long, factionId: Long): List<Planet> = emptyList()
     }
 
     private class StubMessageRepository : MessageRepository {

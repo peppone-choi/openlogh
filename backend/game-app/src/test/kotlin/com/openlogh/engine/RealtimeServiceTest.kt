@@ -58,6 +58,7 @@ class RealtimeServiceTest {
             modifierService,
             mock(com.openlogh.service.CommandLogDispatcher::class.java),
             mock(com.openlogh.service.GameConstService::class.java),
+            mock(com.openlogh.service.CpService::class.java),
         )
     }
 
