@@ -1,217 +1,103 @@
-# Open LOGH (오픈 은하영웅전설)
+# Open LOGH — gin7 전면 재작성 프로젝트
 
-## What This Is
+## 개요
 
-은하영웅전설 VII(gin7, 2004 BOTHTEC)을 웹 기반으로 재구현하는 다인원 온라인 전략 시뮬레이션 게임. OpenSamguk(삼국지 웹게임)의 백엔드를 재활용하되, 프론트엔드는 LOGH 전용으로 새로 설계한다. 플레이어는 은하제국 또는 자유행성동맹의 장교(소위~원수)로 참가하여 조직 내에서 협력하며 진영의 승리를 목표로 한다.
+OpenSamguk(삼국지 웹게임)을 포크하여 은하영웅전설VII(gin7, 2004 BOTHTEC) 기반 웹 MMO로 전환하는 프로젝트.
+현재 엔티티 이름과 일부 모델은 LOGH로 변환했으나, **게임 로직 자체는 여전히 삼국지 기반**이다.
+이 계획은 삼국지 게임 로직을 gin7 매뉴얼 기준으로 **전면 재작성**하기 위한 것이다.
 
-## Core Value
+## 핵심 가치
 
-gin7의 핵심인 **"조직 시뮬레이션"** — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행하며, 원작의 라인하르트나 양웬리의 입장을 체험할 수 있는 것.
+gin7의 핵심인 "조직 시뮬레이션" — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행하며, 원작의 라인하르트나 양웬리의 입장을 체험할 수 있는 것.
 
-## Context
+## 현재 상태 (v1.0 완료 기준)
 
-### Origin
-OpenSamguk(삼국지 웹게임) 포크. Spring Boot 3 (Kotlin) + Next.js 15 + PostgreSQL 16 + Redis 7 기술 스택 유지. 패키지명 com.opensam → com.openlogh 변환 완료. 백엔드 빌드/부팅 확인됨.
+### 이미 구현된 것 (유지)
+- **DB 스키마**: V1~V44 마이그레이션, gin7 도메인 용어로 전환 완료
+- **엔티티 모델**: Officer(8스탯), Planet, Faction, Fleet, SessionState 등 48개
+- **실시간 엔진**: TickDaemon/TickEngine (1초 tick, 24배속), GameTimeConstants
+- **CP 시스템**: PCP/MCP 분리, 회복/대용(2배) 로직, CpService
+- **직무권한카드**: 82종 PositionCard, 7개 CommandGroup, 권한 게이팅
+- **조직 구조**: 6종 UnitType, CrewSlotRole, UnitCrew, FormationCapService
+- **은하맵**: 80개 성계, StarSystem/StarRoute, React Konva 2D
+- **계급/인사**: 11단계 RankTitle, 공적/평가/명성 포인트
+- **시나리오**: 10개 시나리오 JSON, 커스텀 캐릭터 생성
+- **전술전 기초**: TacticalBattle 엔티티, BattleTriggerService, SVG 맵
+- **정치 기초**: CoupPhase, CouncilSeat, Election, FezzanLoan 엔티티
+- **NPC AI 기초**: PersonalityTrait(5종), OfflinePlayerAIService
+- **승리/세션**: VictoryService(3조건, 4등급), SessionLifecycleService
+- **통신**: ChatService(3스코프), MessageService(120통 제한)
+- **인프라**: Spring Boot 3 + Kotlin, Next.js 15, PostgreSQL, Redis, WebSocket/STOMP
 
-### What Exists
-- 백엔드: 세션/월드 관리, 인증(Kakao OAuth), 턴 엔진, 커맨드 시스템, 자동전투, WebSocket(STOMP), Flyway 마이그레이션 (V1~V27)
-- 프론트엔드: Next.js 15 삼국지 UI (리스킨 예정, 구조 재설계)
-- 코드베이스 매핑: .planning/codebase/ 7개 문서 완성
+### 핵심 문제점 (재작성 대상)
+1. **커맨드 시스템 불일치**: CommandRegistry에 93개 삼국지 커맨드가 실제 동작, commands.json의 gin7 81종은 문서용
+2. **전투 로직 미완**: 삼국지 수치비교 자동전투 잔재, gin7 에너지/무기/색적/요새포 미구현
+3. **경제 미구현**: gin7 매뉴얼에서도 "미구현" 명시, 조병창/세율/창고/차관 필요
+4. **함종 시스템 부재**: 11함종×서브타입 전투 스탯 미반영, 기함 시스템 미완
+5. **NPC 데이터**: general_pool.json이 여전히 삼국지 인물
+6. **프론트엔드 삼국지 잔재**: city/nation/troop 용어, 삼국지 스타일 UI
 
-### What Needs to Change
-삼국지 게임 로직 → LOGH/gin7 게임 로직 전면 전환
+## 기술 스택
 
-## Principles
+- Backend: Spring Boot 3 (Kotlin 2.1.0) + JPA + PostgreSQL 16 + Redis 7
+- Frontend: Next.js 16 + React 19 + TypeScript + Tailwind CSS + React Konva + Three.js
+- 실시간: WebSocket/STOMP + 1초 tick (24배속)
+- 빌드: Gradle 8 + pnpm
+- 배포: Docker + GitHub Actions + EC2
 
-1. **gin7 충실도**: 매뉴얼의 게임 메카닉스를 최대한 충실히 재현
-2. **조직 시뮬레이션 우선**: 계급/직무/권한 구조가 게임의 본질
-3. **리얼타임 기반**: 1초 서버 tick = 게임 내 24초 (24배속)
-4. **인구-병력 연동**: 인구 10억당 함대 1, 순찰대/지상부대 6
-5. **프론트엔드 신규 설계**: 백엔드만 재활용, UI/UX는 LOGH 전용
-6. **점진적 확장**: 중규모(100-500명) 동시접속 목표
+## 참조 문서
 
-## Requirements
+- `CLAUDE.md` — 도메인 매핑, 스탯, 조직, 계급, 함종
+- `/Users/apple/Downloads/gin7manualsaved.pdf` — gin7 공식 매뉴얼 (101페이지)
+- `docs/REWRITE_PROMPT.md` — 전면 재작성 상세 프롬프트
+- `docs/reference/gin4ex_wiki.md` — gin4 EX 위키 요약
+- `docs/reference/unit_composition.md` — 부대 편성 규칙
+- `docs/reference/scenarios_detail.md` — 시나리오 상세
+- `backend/shared/src/main/resources/data/commands.json` — gin7 81종 커맨드 정의
+- `backend/shared/src/main/resources/data/ship_stats_empire.json` — 제국 함선 스탯
+- `backend/shared/src/main/resources/data/ship_stats_alliance.json` — 동맹 함선 스탯
+- `backend/shared/src/main/resources/data/ground_unit_stats.json` — 육전병 스탯
 
-### Validated
+## Current Milestone: v2.0 gin7 게임 로직 전면 재작성
 
-- ✓ 세션/월드 생성 및 참가 — existing (OpenSamguk)
-- ✓ 인증/OAuth 로그인 — existing
-- ✓ WebSocket 실시간 이벤트 — existing
-- ✓ Flyway DB 마이그레이션 — existing
-- ✓ Gateway + Game-app 멀티프로세스 — existing
-- ✓ @Transactional CUD 보호 — fixed
+**Goal:** 삼국지 게임 로직을 gin7 매뉴얼 기반으로 전면 재작성하여 은하영웅전설VII 웹 MMO 구현
 
-### Active
+**Target features:**
+- 삼국지 게임 로직 제거 (병종/전투/커맨드/경제/아이템/AI)
+- 함종/함정 유닛 시스템 (11함종×서브타입, 기함, 육전대)
+- gin7 커맨드 81종 구현 (직무권한카드 기반 실시간)
+- 전술전 엔진 (에너지/무기/진형/색적/요새포/지상전)
+- 경제 시스템 (행성자원/조병창/세율/차관)
+- AI 시스템 (성격기반 의사결정/진영AI)
+- 프론트엔드 전면 재작성 (은하맵/전술전UI/전략게임화면)
+- 시나리오 데이터 (10개 시나리오 초기 데이터)
+- 밸런싱 + 테스트
 
-**캐릭터/계급 시스템**
-- [ ] CHAR-01: 8스탯 시스템 (leadership, politics, administration, intelligence, command, mobility, attack, defense)
-- [ ] CHAR-02: PCP(정략) + MCP(군사) 스탯 그룹 분리
-- [ ] CHAR-03: 11단계 계급 (소위~원수), 제국/동맹 칭호 구분
-- [ ] CHAR-04: 공적 포인트 기반 승진/강등
-- [ ] CHAR-05: 커스텀 캐릭터 생성 (8스탯 배분)
-- [ ] CHAR-06: 원작 캐릭터 일부 선택 가능 (시나리오별)
-- [ ] CHAR-07: 소위부터 플레이 시작 가능
+## 제약사항
 
-**커맨드 시스템**
-- [ ] CMD-01: 직무권한카드 기반 커맨드 체계 (77종 카드)
-- [ ] CMD-02: PCP/MCP 커맨드포인트 분리 (각각 독립 회복, 5분마다)
-- [ ] CMD-03: 교차사용 시 2배 비용
-- [ ] CMD-04: 리얼타임 쿨다운 (턴 대기 없음)
-- [ ] CMD-05: 제안공작 시스템
-
-**리얼타임 엔진**
-- [ ] ENG-01: 1초 서버 tick = 게임 내 24초 (24배속)
-- [ ] ENG-02: 실시간 30시간 = 게임 내 1개월
-- [ ] ENG-03: CP 5분마다 회복
-- [ ] ENG-04: 커맨드 실행 시 실시간 대기
-
-**조직 구조**
-- [ ] ORG-01: 함대: 60유닛(18,000척), 10명 편성
-- [ ] ORG-02: 순찰대: 3유닛(900척), 3명 편성
-- [ ] ORG-03: 수송함대: 수송20+전투3유닛, 3명
-- [ ] ORG-04: 지상부대: 양륙함3+육전대3유닛, 1명
-- [ ] ORG-05: 행성수비대: 육전대10유닛, 1명
-- [ ] ORG-06: 인구 10억당 함대/수송함대 1, 순찰대/지상부대 6
-
-**갤럭시 맵**
-- [ ] GAL-01: 80개 성계 (docs/star_systems.json)
-- [ ] GAL-02: 성계 간 항로 연결
-- [ ] GAL-03: 제국/동맹/페잔 영역 구분
-- [ ] GAL-04: 이제르론/가이에스부르크 등 요새 시스템
-
-**전술전 (RTS)**
-- [ ] TAC-01: WebSocket 기반 실시간 함대전
-- [ ] TAC-02: 에너지 배분: BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR
-- [ ] TAC-03: 진형: 방추/함종별/혼성/삼열
-- [ ] TAC-04: 요새포 (토르 해머, 가이에스하켄)
-- [ ] TAC-05: 점거 커맨드, 통신방해
-
-**3세력 시스템**
-- [ ] FAC-01: 제국: 전제군주제, 귀족 체계, 쿠데타 이벤트
-- [ ] FAC-02: 동맹: 민주공화제, 최고평의회, 선거
-- [ ] FAC-03: 페잔: NPC 세력, 중립 교역, 차관 시스템, 정보 거래
-- [ ] FAC-04: 페잔 빚 상환, 페잔 엔딩
-
-**시나리오**
-- [ ] SCN-01: 10개 시나리오 (UC795.9 ~ UC799.4)
-- [ ] SCN-02: 시나리오별 초기 성계 배치, 전투 현황, 편성 가능 함대
-- [ ] SCN-03: 시나리오별 이벤트 (쿠데타, 내전 등)
-
-**NPC AI**
-- [ ] NPC-01: 성격/성향 기반 행동 패턴 (향상된 AI)
-- [ ] NPC-02: 오프라인 플레이어 캐릭터 자동 행동
-- [ ] NPC-03: 미선택 원작 캐릭터 자율 행동
-
-**승리 조건**
-- [ ] VIC-01: 적 수도 성계 점령
-- [ ] VIC-02: 적 보유 성계 3개 이하
-- [ ] VIC-03: UC801.7.27 시간제한 → 인구 비교
-- [ ] VIC-04: 결정적/한정적/국지적/패배 4단계 평가
-
-### Out of Scope
-
-- 페잔 플레이어 세력 — NPC 전용으로 결정
-- 모바일 앱 — 웹 기반 우선
-- 대규모(2000명) 최적화 — 중규모(100-500명) 우선, 이후 확장
-
-## Traceability
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| CHAR-01 | Phase 1 | Pending |
-| CHAR-02 | Phase 1 | Pending |
-| CHAR-03 | Phase 1 | Pending |
-| CHAR-04 | Phase 7 | Pending |
-| CHAR-05 | Phase 8 | Pending |
-| CHAR-06 | Phase 8 | Pending |
-| CHAR-07 | Phase 7 | Pending |
-| CMD-01 | Phase 4 | Pending |
-| CMD-02 | Phase 3 | Pending |
-| CMD-03 | Phase 3 | Pending |
-| CMD-04 | Phase 4 | Pending |
-| CMD-05 | Phase 4 | Pending |
-| ENG-01 | Phase 2 | Pending |
-| ENG-02 | Phase 2 | Pending |
-| ENG-03 | Phase 2 | Pending |
-| ENG-04 | Phase 2 | Pending |
-| ORG-01 | Phase 5 | Pending |
-| ORG-02 | Phase 5 | Pending |
-| ORG-03 | Phase 5 | Pending |
-| ORG-04 | Phase 5 | Pending |
-| ORG-05 | Phase 5 | Pending |
-| ORG-06 | Phase 5 | Pending |
-| GAL-01 | Phase 6 | Pending |
-| GAL-02 | Phase 6 | Pending |
-| GAL-03 | Phase 6 | Pending |
-| GAL-04 | Phase 6 | Pending |
-| TAC-01 | Phase 10 | Pending |
-| TAC-02 | Phase 10 | Pending |
-| TAC-03 | Phase 10 | Pending |
-| TAC-04 | Phase 10 | Pending |
-| TAC-05 | Phase 9 | Pending |
-| FAC-01 | Phase 11 | Pending |
-| FAC-02 | Phase 11 | Pending |
-| FAC-03 | Phase 11 | Pending |
-| FAC-04 | Phase 11 | Pending |
-| SCN-01 | Phase 8 | Pending |
-| SCN-02 | Phase 8 | Pending |
-| SCN-03 | Phase 8 | Pending |
-| NPC-01 | Phase 12 | Pending |
-| NPC-02 | Phase 12 | Pending |
-| NPC-03 | Phase 12 | Pending |
-| VIC-01 | Phase 12 | Pending |
-| VIC-02 | Phase 12 | Pending |
-| VIC-03 | Phase 12 | Pending |
-| VIC-04 | Phase 12 | Pending |
-
-## Key Decisions
-
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| 풀스택 MVP 동시 개발 | 전략+전술 모두 기본 기능을 갖춘 MVP | 전략/전술 병행 |
-| 프론트엔드 신규 설계 | 삼국지 UI는 LOGH와 맞지 않음 | 백엔드만 재활용 |
-| 커스텀 캐릭터 + 원작 일부 선택 | 다인원 MMO에서 모두가 라인하르트일 수 없음 | 커스텀 기본, 원작 일부 가능 |
-| 소위부터 시작 | gin7 원작(소장급)과 다르게, 조직 시뮬레이션의 깊이 확장 | 전 계급 플레이 |
-| 페잔 NPC 전용 | 3세력 중 교역국은 AI가 운영, 플레이 복잡도 절감 | 제국/동맹만 플레이어 |
-| 1초 서버 tick | gin7 원작 24배속 충실 재현, 서버 부하 감수 | 최고 반응성 |
-| 향상된 NPC AI | 성격/성향 기반으로 원작보다 정교한 행동 | 몰입감 향상 |
-| 인구-병력 연동 | gin7 원작 시스템, 전략적 깊이 확보 | 인구 10억=함대1 |
-
-## Constraints
-
-- **Tech Stack**: Spring Boot 3 (Kotlin) + Next.js 15 + PostgreSQL 16 + Redis 7 유지
-- **Architecture**: gateway-app + game-app JVM 분리 구조 유지
-- **Reference Fidelity**: gin7 매뉴얼의 게임 메카닉스 최대한 충실히 재현
-- **Real-time**: 전술전은 WebSocket 기반 실시간 처리
-- **Scale**: 세션당 100-500명 동시접속 목표
-- **DB Migration**: Flyway V28__ 이후로 추가
-
-## Reference Materials
-
-- gin7 매뉴얼: `/Users/apple/Downloads/gin7manualsaved.pdf`
-- 도메인 매핑: `CLAUDE.md` Domain Mapping 섹션
-- 성계 데이터: `docs/star_systems.json` (80개 성계)
-- 시나리오 데이터: `docs/scenarios.json` (10개 시나리오)
-- 부대 편성: `docs/reference/unit_composition.md`
-- 시나리오 상세: `docs/reference/scenarios_detail.md`
-- 코드베이스 분석: `.planning/codebase/` (7개 문서)
+- DB 마이그레이션은 V45__ 이후로 추가
+- 기존 엔티티 필드 중 삼국지 전용은 마이그레이션으로 제거
+- gin7 매뉴얼의 게임 메카닉스를 최대한 충실히 재현
+- 리얼타임 (1초 tick = 24 게임초) 기반
+- 모든 UI 텍스트는 한국어
+- 삼국지 용어/개념 완전 제거
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
-**After each phase transition:**
+**After each phase transition** (via `/gsd:transition`):
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
 3. New requirements emerged? → Add to Active
 4. Decisions to log? → Add to Key Decisions
 5. "What This Is" still accurate? → Update if drifted
 
-**After each milestone:**
+**After each milestone** (via `/gsd:complete-milestone`):
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after roadmap creation*
+*Last updated: 2026-04-06 after milestone v2.0 started*
