@@ -51,7 +51,7 @@ Plans:
 - [x] 02-02-PLAN.md — 작전커맨드 16종 + 병참커맨드 6종 구현체
 - [x] 02-03-PLAN.md — 개인커맨드 15종 + 인사커맨드 10종 구현체
 - [x] 02-04-PLAN.md — 정치커맨드 12종 + 첩보커맨드 14종 구현체
-- [ ] 02-05-PLAN.md — 지휘커맨드 8종 구현체 + stub 전량 제거
+- [x] 02-05-PLAN.md — 지휘커맨드 8종 구현체 + stub 전량 제거
 - [ ] 02-06-PLAN.md — 제안 시스템 (CommandProposal 엔티티 + 승인/거부 API)
 - [ ] 02-07-PLAN.md — 통합 테스트 (81종 등록 + 파이프라인 + 제안 시스템)
 
@@ -122,7 +122,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. 레거시 제거 + 함종 유닛 기반 | 8/8 | Complete   | 2026-04-06 |
-| 2. gin7 81종 커맨드 시스템 | 1/7 | In Progress|  |
+| 2. gin7 81종 커맨드 시스템 | 5/7 | In Progress|  |
 | 3. 실시간 전술전 엔진 | 0/TBD | Not started | - |
 | 4. 경제 시스템 | 0/TBD | Not started | - |
 | 5. AI 시스템 | 0/TBD | Not started | - |

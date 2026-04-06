@@ -31,7 +31,7 @@
 - [x] **CMD-04**: 병참커맨드 6종 구현 (완전수리~할당)
 - [x] **CMD-05**: 인사커맨드 10종 구현 (승진~봉토직할)
 - [x] **CMD-06**: 정치커맨드 12종 구현 (야회~통치목표)
-- [ ] **CMD-07**: 첩보커맨드 14종 구현 (일제수색~귀환공작)
+- [x] **CMD-07**: 첩보커맨드 14종 구현 (일제수색~귀환공작)
 - [ ] **CMD-08**: 실시간 커맨드 실행 파이프라인 (CP차감→대기시간→실행→결과)
 - [ ] **CMD-09**: 직무권한카드 기반 커맨드 게이팅 (commands.json 연동)
 
@@ -132,7 +132,7 @@
 | CMD-04 | Phase 2 | Complete |
 | CMD-05 | Phase 2 | Complete |
 | CMD-06 | Phase 2 | Complete |
-| CMD-07 | Phase 2 | Pending |
+| CMD-07 | Phase 2 | Complete |
 | CMD-08 | Phase 2 | Pending |
 | CMD-09 | Phase 2 | Pending |
 | BATTLE-01 | Phase 3 | Pending |
