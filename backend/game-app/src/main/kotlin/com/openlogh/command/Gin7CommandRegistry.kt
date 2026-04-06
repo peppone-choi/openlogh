@@ -74,6 +74,14 @@ import com.openlogh.command.gin7.politics.NationalGoalCommand
 import com.openlogh.command.gin7.politics.SpeechCommand
 import com.openlogh.command.gin7.politics.TariffRateChangeCommand
 import com.openlogh.command.gin7.politics.TaxRateChangeCommand
+import com.openlogh.command.gin7.commander.AssignmentCommand
+import com.openlogh.command.gin7.commander.DisbandFleetCommand
+import com.openlogh.command.gin7.commander.FormFleetCommand
+import com.openlogh.command.gin7.commander.GiveLectureCommand
+import com.openlogh.command.gin7.commander.OperationCancelCommand
+import com.openlogh.command.gin7.commander.OperationPlanCommand
+import com.openlogh.command.gin7.commander.TransportCancelCommand
+import com.openlogh.command.gin7.commander.TransportPlanCommand
 import com.openlogh.entity.Officer
 import com.openlogh.model.StatCategory
 import kotlin.random.Random
@@ -133,15 +141,15 @@ class Gin7CommandRegistry : CommandRegistry() {
         registerOfficerCommand("자금투입") { g, e, a -> FundInjectionCommand(g, e, a) }
         registerOfficerCommand("기함구매") { g, e, a -> FlagshipPurchaseCommand(g, e, a) }
 
-        // === 지휘커맨드 (Command, MCP, 8종) — stub (Plan 02-03) ===
-        registerMcpStub("작전계획")        // operation_plan
-        registerMcpStub("작전철회")        // operation_cancel
-        registerMcpStub("발령")            // assignment
-        registerMcpStub("부대결성")        // form_fleet
-        registerMcpStub("부대해산")        // disband_fleet
-        registerMcpStub("강의")            // give_lecture
-        registerMcpStub("수송계획")        // transport_plan
-        registerMcpStub("수송중지")        // transport_cancel
+        // === 지휘커맨드 (Command, MCP, 8종) — 실제 구현체 (Plan 02-05) ===
+        registerOfficerCommand("작전계획") { g, e, a -> OperationPlanCommand(g, e, a) }
+        registerOfficerCommand("작전철회") { g, e, a -> OperationCancelCommand(g, e, a) }
+        registerOfficerCommand("발령") { g, e, a -> AssignmentCommand(g, e, a) }
+        registerOfficerCommand("부대결성") { g, e, a -> FormFleetCommand(g, e, a) }
+        registerOfficerCommand("부대해산") { g, e, a -> DisbandFleetCommand(g, e, a) }
+        registerOfficerCommand("강의") { g, e, a -> GiveLectureCommand(g, e, a) }
+        registerOfficerCommand("수송계획") { g, e, a -> TransportPlanCommand(g, e, a) }
+        registerOfficerCommand("수송중지") { g, e, a -> TransportCancelCommand(g, e, a) }
 
         // === 병참커맨드 (Logistics, MCP, 6종) — 실제 구현체 (Plan 02-02) ===
         registerOfficerCommand("완전수리") { g, e, a -> FullRepairCommand(g, e, a) }
