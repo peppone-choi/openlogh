@@ -10,8 +10,8 @@
 - [ ] **LEGACY-01**: 삼국지 93개 커맨드(농지개간, 상업투자, 징병 등) 완전 제거
 - [ ] **LEGACY-02**: 병종 상성 시스템(보병/궁병/기병) 완전 제거
 - [ ] **LEGACY-03**: 삼국지 수치비교 자동전투 로직 제거
-- [ ] **LEGACY-04**: 삼국지 경제 로직(농업/상업 수치) 제거
-- [ ] **LEGACY-05**: 삼국지 아이템(무기/서적/말) 제거
+- [x] **LEGACY-04**: 삼국지 경제 로직(농업/상업 수치) 제거
+- [x] **LEGACY-05**: 삼국지 아이템(무기/서적/말) 제거
 - [ ] **LEGACY-06**: 삼국지 NPC 데이터(general_pool.json) 제거
 
 ### 함종/유닛 시스템 (SHIP)
@@ -117,8 +117,8 @@
 | LEGACY-01 | Phase 1 | Pending |
 | LEGACY-02 | Phase 1 | Pending |
 | LEGACY-03 | Phase 1 | Pending |
-| LEGACY-04 | Phase 1 | Pending |
-| LEGACY-05 | Phase 1 | Pending |
+| LEGACY-04 | Phase 1 | Complete |
+| LEGACY-05 | Phase 1 | Complete |
 | LEGACY-06 | Phase 1 | Pending |
 | SHIP-01 | Phase 1 | Pending |
 | SHIP-02 | Phase 1 | Pending |

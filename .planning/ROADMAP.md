@@ -6,7 +6,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: 레거시 제거 + 함종 유닛 기반** - 삼국지 잔재 완전 제거 및 gin7 ShipUnit 엔티티 수립
+- [x] **Phase 1: 레거시 제거 + 함종 유닛 기반** - 삼국지 잔재 완전 제거 및 gin7 ShipUnit 엔티티 수립 (completed 2026-04-06)
 - [ ] **Phase 2: gin7 81종 커맨드 시스템** - 직무권한카드 기반 커맨드 전면 재구현
 - [ ] **Phase 3: 실시간 전술전 엔진** - 에너지/무기/진형/색적/요새포/지상전 구현
 - [ ] **Phase 4: 경제 시스템** - 행성자원/조병창/세율/차관 경제 루프 구현
@@ -29,11 +29,11 @@
 **Plans**: 5 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Gin7CommandRegistry stub (81종) + 삼국지 커맨드 파일 삭제
-- [ ] 01-02-PLAN.md — 삼국지 전투엔진 삭제 (BattleEngine/BattleService/GroundBattleEngine)
-- [ ] 01-03-PLAN.md — EconomyService 삼국지 로직 제거 + processMonthly() stub
-- [ ] 01-04-PLAN.md — ShipUnit 엔티티 + V45 DB 마이그레이션 + ShipUnitRepository
-- [ ] 01-05-PLAN.md — ShipStatRegistry (JSON 로드) + ShipUnitService + officerLevel >= 5 전량 제거
+- [x] 01-01-PLAN.md — Gin7CommandRegistry stub (81종) + 삼국지 커맨드 파일 삭제
+- [x] 01-02-PLAN.md — 삼국지 전투엔진 삭제 (BattleEngine/BattleService/GroundBattleEngine)
+- [x] 01-03-PLAN.md — EconomyService 삼국지 로직 제거 + processMonthly() stub
+- [x] 01-04-PLAN.md — ShipUnit 엔티티 + V45 DB 마이그레이션 + ShipUnitRepository
+- [x] 01-05-PLAN.md — ShipStatRegistry (JSON 로드) + ShipUnitService + officerLevel >= 5 전량 제거
 
 ### Phase 2: gin7 81종 커맨드 시스템
 **Goal**: 직무권한카드 기반 81종 gin7 커맨드가 실시간 실행 파이프라인을 통해 동작하며 삼국지 권한 우회가 완전히 제거된다
@@ -113,7 +113,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. 레거시 제거 + 함종 유닛 기반 | 0/5 | Not started | - |
+| 1. 레거시 제거 + 함종 유닛 기반 | 8/8 | Complete   | 2026-04-06 |
 | 2. gin7 81종 커맨드 시스템 | 0/TBD | Not started | - |
 | 3. 실시간 전술전 엔진 | 0/TBD | Not started | - |
 | 4. 경제 시스템 | 0/TBD | Not started | - |
