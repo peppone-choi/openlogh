@@ -1,0 +1,2915 @@
+{
+    "name": "logh",
+    "regions": {
+        "1": "은하제국",
+        "2": "자유행성동맹",
+        "3": "페잔 자치령"
+    },
+    "levelNames": {
+        "1": "변경",
+        "2": "전초",
+        "3": "중계",
+        "4": "거점",
+        "5": "주요",
+        "6": "핵심",
+        "7": "수도",
+        "8": "요새"
+    },
+    "cities": [
+        {
+            "id": 1,
+            "name": "시리우스",
+            "level": 4,
+            "region": 1,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 1444,
+            "y": 286,
+            "connections": [
+                3,
+                4
+            ]
+        },
+        {
+            "id": 2,
+            "name": "마로비아",
+            "level": 4,
+            "region": 2,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 504,
+            "y": 303,
+            "connections": [
+                7,
+                9
+            ]
+        },
+        {
+            "id": 3,
+            "name": "태양계",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1375,
+            "y": 320,
+            "connections": [
+                1,
+                4,
+                15
+            ]
+        },
+        {
+            "id": 4,
+            "name": "베가",
+            "level": 4,
+            "region": 1,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 1444,
+            "y": 337,
+            "connections": [
+                1,
+                3
+            ]
+        },
+        {
+            "id": 5,
+            "name": "시바",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 623,
+            "y": 337,
+            "connections": [
+                7,
+                8,
+                12,
+                21,
+                29
+            ]
+        },
+        {
+            "id": 6,
+            "name": "비프뢰스트",
+            "level": 4,
+            "region": 1,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 1171,
+            "y": 354,
+            "connections": [
+                10,
+                19
+            ]
+        },
+        {
+            "id": 7,
+            "name": "하다트",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 521,
+            "y": 372,
+            "connections": [
+                2,
+                5,
+                9,
+                29
+            ]
+        },
+        {
+            "id": 8,
+            "name": "다곤",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 777,
+            "y": 372,
+            "connections": [
+                5,
+                12,
+                14,
+                25
+            ]
+        },
+        {
+            "id": 9,
+            "name": "파라-파라",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 418,
+            "y": 389,
+            "connections": [
+                2,
+                7,
+                16,
+                23
+            ]
+        },
+        {
+            "id": 10,
+            "name": "볼소른",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1239,
+            "y": 389,
+            "connections": [
+                6,
+                20,
+                28
+            ]
+        },
+        {
+            "id": 11,
+            "name": "카스트로프",
+            "level": 4,
+            "region": 1,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 1649,
+            "y": 406,
+            "connections": [
+                13,
+                27
+            ]
+        },
+        {
+            "id": 12,
+            "name": "엘곤",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 692,
+            "y": 406,
+            "connections": [
+                5,
+                8,
+                21
+            ]
+        },
+        {
+            "id": 13,
+            "name": "빌렌슈타인",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1529,
+            "y": 423,
+            "connections": [
+                11,
+                15,
+                26
+            ]
+        },
+        {
+            "id": 14,
+            "name": "아스타테",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 828,
+            "y": 457,
+            "connections": [
+                8,
+                17,
+                21,
+                24,
+                25,
+                33,
+                41
+            ]
+        },
+        {
+            "id": 15,
+            "name": "린더호프",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1409,
+            "y": 457,
+            "connections": [
+                3,
+                13,
+                28
+            ]
+        },
+        {
+            "id": 16,
+            "name": "로포텐",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 333,
+            "y": 456,
+            "connections": [
+                9,
+                22,
+                23,
+                36,
+                57
+            ]
+        },
+        {
+            "id": 17,
+            "name": "반 플리트",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 880,
+            "y": 474,
+            "connections": [
+                14,
+                18,
+                24
+            ]
+        },
+        {
+            "id": 18,
+            "name": "이제르론",
+            "level": 8,
+            "region": 1,
+            "population": 500000,
+            "agriculture": 10000,
+            "commerce": 10000,
+            "security": 10000,
+            "defence": 15000,
+            "wall": 20000,
+            "x": 998,
+            "y": 473,
+            "connections": [
+                17,
+                19
+            ]
+        },
+        {
+            "id": 19,
+            "name": "암리처",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1119,
+            "y": 474,
+            "connections": [
+                6,
+                18,
+                20,
+                32
+            ]
+        },
+        {
+            "id": 20,
+            "name": "드베르그",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1239,
+            "y": 474,
+            "connections": [
+                10,
+                19,
+                28
+            ]
+        },
+        {
+            "id": 21,
+            "name": "도리아",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 606,
+            "y": 475,
+            "connections": [
+                5,
+                12,
+                14,
+                29,
+                30
+            ]
+        },
+        {
+            "id": 22,
+            "name": "시론",
+            "level": 4,
+            "region": 2,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 213,
+            "y": 508,
+            "connections": [
+                16,
+                35
+            ]
+        },
+        {
+            "id": 23,
+            "name": "케림",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 418,
+            "y": 508,
+            "connections": [
+                9,
+                16,
+                29,
+                36,
+                47
+            ]
+        },
+        {
+            "id": 24,
+            "name": "알트뮐",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 880,
+            "y": 508,
+            "connections": [
+                14,
+                17,
+                33
+            ]
+        },
+        {
+            "id": 25,
+            "name": "티아매트",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 777,
+            "y": 525,
+            "connections": [
+                8,
+                14,
+                34
+            ]
+        },
+        {
+            "id": 26,
+            "name": "하인스베르크",
+            "level": 6,
+            "region": 1,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 1580,
+            "y": 525,
+            "connections": [
+                13,
+                27,
+                31,
+                38,
+                42
+            ]
+        },
+        {
+            "id": 27,
+            "name": "바나하임",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1666,
+            "y": 525,
+            "connections": [
+                11,
+                26,
+                40
+            ]
+        },
+        {
+            "id": 28,
+            "name": "야반할",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1290,
+            "y": 525,
+            "connections": [
+                10,
+                15,
+                20,
+                37
+            ]
+        },
+        {
+            "id": 29,
+            "name": "잠시드",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 521,
+            "y": 542,
+            "connections": [
+                5,
+                7,
+                21,
+                23,
+                30,
+                39,
+                47
+            ]
+        },
+        {
+            "id": 30,
+            "name": "엘 파실",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 640,
+            "y": 559,
+            "connections": [
+                21,
+                29,
+                41,
+                43
+            ]
+        },
+        {
+            "id": 31,
+            "name": "니플하임",
+            "level": 4,
+            "region": 1,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 1597,
+            "y": 576,
+            "connections": [
+                26,
+                42
+            ]
+        },
+        {
+            "id": 32,
+            "name": "반스타드",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1153,
+            "y": 576,
+            "connections": [
+                19,
+                37,
+                45
+            ]
+        },
+        {
+            "id": 33,
+            "name": "알레스하임",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 845,
+            "y": 593,
+            "connections": [
+                14,
+                24,
+                41,
+                44
+            ]
+        },
+        {
+            "id": 34,
+            "name": "드라고니아",
+            "level": 4,
+            "region": 2,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 794,
+            "y": 593,
+            "connections": [
+                25,
+                44
+            ]
+        },
+        {
+            "id": 35,
+            "name": "룸비니",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 195,
+            "y": 611,
+            "connections": [
+                22,
+                36,
+                46
+            ]
+        },
+        {
+            "id": 36,
+            "name": "바라트",
+            "level": 7,
+            "region": 2,
+            "population": 400000,
+            "agriculture": 8000,
+            "commerce": 8000,
+            "security": 8000,
+            "defence": 10000,
+            "wall": 8000,
+            "x": 350,
+            "y": 611,
+            "connections": [
+                16,
+                23,
+                35,
+                39,
+                46,
+                47,
+                57
+            ]
+        },
+        {
+            "id": 37,
+            "name": "알타이르",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1273,
+            "y": 628,
+            "connections": [
+                28,
+                32,
+                48
+            ]
+        },
+        {
+            "id": 38,
+            "name": "벨라",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1496,
+            "y": 645,
+            "connections": [
+                26,
+                42,
+                48,
+                54
+            ]
+        },
+        {
+            "id": 39,
+            "name": "류카스",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 504,
+            "y": 662,
+            "connections": [
+                29,
+                36,
+                47,
+                52,
+                61
+            ]
+        },
+        {
+            "id": 40,
+            "name": "루이트폴딩",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1701,
+            "y": 661,
+            "connections": [
+                27,
+                42,
+                53
+            ]
+        },
+        {
+            "id": 41,
+            "name": "팔란티아",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 845,
+            "y": 679,
+            "connections": [
+                14,
+                30,
+                33,
+                50
+            ]
+        },
+        {
+            "id": 42,
+            "name": "발할라",
+            "level": 7,
+            "region": 1,
+            "population": 400000,
+            "agriculture": 8000,
+            "commerce": 8000,
+            "security": 8000,
+            "defence": 10000,
+            "wall": 8000,
+            "x": 1581,
+            "y": 679,
+            "connections": [
+                26,
+                31,
+                38,
+                40,
+                51,
+                54
+            ]
+        },
+        {
+            "id": 43,
+            "name": "란테마리오",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 675,
+            "y": 679,
+            "connections": [
+                30,
+                49,
+                61
+            ]
+        },
+        {
+            "id": 44,
+            "name": "포르세티",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 794,
+            "y": 679,
+            "connections": [
+                33,
+                34,
+                50
+            ]
+        },
+        {
+            "id": 45,
+            "name": "트라바흐",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1170,
+            "y": 696,
+            "connections": [
+                32,
+                56,
+                60
+            ]
+        },
+        {
+            "id": 46,
+            "name": "타나토스",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 264,
+            "y": 713,
+            "connections": [
+                35,
+                36,
+                57,
+                59,
+                69
+            ]
+        },
+        {
+            "id": 47,
+            "name": "버밀리언",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 469,
+            "y": 730,
+            "connections": [
+                23,
+                29,
+                36,
+                39,
+                52,
+                62
+            ]
+        },
+        {
+            "id": 48,
+            "name": "알비스",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1376,
+            "y": 730,
+            "connections": [
+                37,
+                38,
+                58,
+                60
+            ]
+        },
+        {
+            "id": 49,
+            "name": "마르 아데타",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 743,
+            "y": 747,
+            "connections": [
+                43,
+                55,
+                61
+            ]
+        },
+        {
+            "id": 50,
+            "name": "파이어자드",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 828,
+            "y": 747,
+            "connections": [
+                41,
+                44,
+                55,
+                68
+            ]
+        },
+        {
+            "id": 51,
+            "name": "아스가르드",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1649,
+            "y": 764,
+            "connections": [
+                42,
+                53,
+                63
+            ]
+        },
+        {
+            "id": 52,
+            "name": "타실리",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 555,
+            "y": 764,
+            "connections": [
+                39,
+                47,
+                61,
+                62
+            ]
+        },
+        {
+            "id": 53,
+            "name": "보름스가우",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1752,
+            "y": 764,
+            "connections": [
+                40,
+                51,
+                63
+            ]
+        },
+        {
+            "id": 54,
+            "name": "샨타우",
+            "level": 6,
+            "region": 1,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 1581,
+            "y": 798,
+            "connections": [
+                38,
+                42,
+                58,
+                65,
+                74
+            ]
+        },
+        {
+            "id": 55,
+            "name": "샨달루아",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 760,
+            "y": 815,
+            "connections": [
+                49,
+                50,
+                71
+            ]
+        },
+        {
+            "id": 56,
+            "name": "아르멘토벨",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1170,
+            "y": 815,
+            "connections": [
+                45,
+                60,
+                70,
+                80
+            ]
+        },
+        {
+            "id": 57,
+            "name": "리오 베르데",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 298,
+            "y": 815,
+            "connections": [
+                16,
+                36,
+                46,
+                59,
+                62
+            ]
+        },
+        {
+            "id": 58,
+            "name": "알테나",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1461,
+            "y": 815,
+            "connections": [
+                48,
+                54,
+                60
+            ]
+        },
+        {
+            "id": 59,
+            "name": "엘리세라",
+            "level": 4,
+            "region": 2,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 230,
+            "y": 832,
+            "connections": [
+                46,
+                57
+            ]
+        },
+        {
+            "id": 60,
+            "name": "프레이야",
+            "level": 8,
+            "region": 1,
+            "population": 500000,
+            "agriculture": 10000,
+            "commerce": 10000,
+            "security": 10000,
+            "defence": 15000,
+            "wall": 20000,
+            "x": 1273,
+            "y": 832,
+            "connections": [
+                45,
+                48,
+                56,
+                58,
+                73
+            ]
+        },
+        {
+            "id": 61,
+            "name": "간다르바",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 658,
+            "y": 832,
+            "connections": [
+                39,
+                43,
+                49,
+                52,
+                62,
+                69,
+                75
+            ]
+        },
+        {
+            "id": 62,
+            "name": "라이갈",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 469,
+            "y": 849,
+            "connections": [
+                47,
+                52,
+                57,
+                61,
+                69
+            ]
+        },
+        {
+            "id": 63,
+            "name": "빈스팅겐",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1735,
+            "y": 849,
+            "connections": [
+                51,
+                53,
+                66
+            ]
+        },
+        {
+            "id": 64,
+            "name": "페잔",
+            "level": 7,
+            "region": 3,
+            "population": 400000,
+            "agriculture": 8000,
+            "commerce": 8000,
+            "security": 8000,
+            "defence": 10000,
+            "wall": 8000,
+            "x": 969,
+            "y": 901,
+            "connections": [
+                67,
+                68,
+                71
+            ]
+        },
+        {
+            "id": 65,
+            "name": "발데마르",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1581,
+            "y": 900,
+            "connections": [
+                54,
+                72,
+                74
+            ]
+        },
+        {
+            "id": 66,
+            "name": "비텔스바흐",
+            "level": 4,
+            "region": 1,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 1667,
+            "y": 900,
+            "connections": [
+                63,
+                72
+            ]
+        },
+        {
+            "id": 67,
+            "name": "아이젠헤르츠",
+            "level": 8,
+            "region": 1,
+            "population": 500000,
+            "agriculture": 10000,
+            "commerce": 10000,
+            "security": 10000,
+            "defence": 15000,
+            "wall": 20000,
+            "x": 1068,
+            "y": 900,
+            "connections": [
+                64,
+                70,
+                80
+            ]
+        },
+        {
+            "id": 68,
+            "name": "폴레비트",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 845,
+            "y": 900,
+            "connections": [
+                50,
+                64,
+                71
+            ]
+        },
+        {
+            "id": 69,
+            "name": "트리플라",
+            "level": 6,
+            "region": 2,
+            "population": 300000,
+            "agriculture": 6000,
+            "commerce": 6000,
+            "security": 6000,
+            "defence": 7000,
+            "wall": 5000,
+            "x": 538,
+            "y": 918,
+            "connections": [
+                46,
+                61,
+                62,
+                77,
+                78
+            ]
+        },
+        {
+            "id": 70,
+            "name": "예툰하임",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1153,
+            "y": 934,
+            "connections": [
+                56,
+                67,
+                73
+            ]
+        },
+        {
+            "id": 71,
+            "name": "바라트루프",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 760,
+            "y": 951,
+            "connections": [
+                55,
+                64,
+                68,
+                75
+            ]
+        },
+        {
+            "id": 72,
+            "name": "람멜스베르크",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1598,
+            "y": 985,
+            "connections": [
+                65,
+                66,
+                74
+            ]
+        },
+        {
+            "id": 73,
+            "name": "브라운슈바이크",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1221,
+            "y": 1002,
+            "connections": [
+                60,
+                70,
+                76
+            ]
+        },
+        {
+            "id": 74,
+            "name": "리텐하임",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1479,
+            "y": 1003,
+            "connections": [
+                54,
+                65,
+                72,
+                76
+            ]
+        },
+        {
+            "id": 75,
+            "name": "멜카르트",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 675,
+            "y": 1020,
+            "connections": [
+                61,
+                71,
+                78
+            ]
+        },
+        {
+            "id": 76,
+            "name": "키포이저",
+            "level": 8,
+            "region": 1,
+            "population": 500000,
+            "agriculture": 10000,
+            "commerce": 10000,
+            "security": 10000,
+            "defence": 15000,
+            "wall": 20000,
+            "x": 1324,
+            "y": 1020,
+            "connections": [
+                73,
+                74,
+                79
+            ]
+        },
+        {
+            "id": 77,
+            "name": "폴린",
+            "level": 4,
+            "region": 2,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 418,
+            "y": 1037,
+            "connections": [
+                69,
+                78
+            ]
+        },
+        {
+            "id": 78,
+            "name": "슈팔라",
+            "level": 5,
+            "region": 2,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 555,
+            "y": 1037,
+            "connections": [
+                69,
+                75,
+                77
+            ]
+        },
+        {
+            "id": 79,
+            "name": "발두르",
+            "level": 4,
+            "region": 1,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 1393,
+            "y": 1054,
+            "connections": [
+                76,
+                80
+            ]
+        },
+        {
+            "id": 80,
+            "name": "포르겐",
+            "level": 5,
+            "region": 1,
+            "population": 200000,
+            "agriculture": 4000,
+            "commerce": 4000,
+            "security": 4000,
+            "defence": 5000,
+            "wall": 3000,
+            "x": 1119,
+            "y": 1054,
+            "connections": [
+                56,
+                67,
+                79
+            ]
+        }
+    ],
+    "starSystems": [
+        {
+            "id": 1,
+            "nameEn": "Sirius",
+            "starRgb": [
+                255,
+                250,
+                228
+            ],
+            "spectralType": "A",
+            "planets": [
+                "포트로",
+                "엠메야",
+                "논모",
+                "론드리나"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 2,
+            "nameEn": "Marovia",
+            "starRgb": [
+                255,
+                249,
+                225
+            ],
+            "spectralType": "A",
+            "planets": [],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 3,
+            "nameEn": "Solar System",
+            "starRgb": [
+                255,
+                255,
+                243
+            ],
+            "spectralType": "A",
+            "planets": [
+                "수성",
+                "금성",
+                "지구",
+                "화성"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 4,
+            "nameEn": "Vega",
+            "starRgb": [
+                255,
+                224,
+                157
+            ],
+            "spectralType": "K",
+            "planets": [
+                "오르페우스",
+                "에우리디케",
+                "아크리시오스",
+                "페르세포네"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 5,
+            "nameEn": "Shiva",
+            "starRgb": [
+                221,
+                255,
+                252
+            ],
+            "spectralType": "B",
+            "planets": [
+                "파르바티",
+                "강가",
+                "난디",
+                "아난타"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 6,
+            "nameEn": "Bifröst",
+            "starRgb": [
+                255,
+                217,
+                192
+            ],
+            "spectralType": "G",
+            "planets": [
+                "헤임달",
+                "히민뵈르그",
+                "부르트강",
+                "갸라르호른"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 7,
+            "nameEn": "Hadat",
+            "starRgb": [
+                255,
+                212,
+                174
+            ],
+            "spectralType": "K",
+            "planets": [
+                "샴푸르",
+                "벨라시",
+                "안자르"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 8,
+            "nameEn": "Dagon",
+            "starRgb": [
+                255,
+                253,
+                234
+            ],
+            "spectralType": "A",
+            "planets": [
+                "다곤 1",
+                "다곤 2",
+                "다곤 3",
+                "다곤 4"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 9,
+            "nameEn": "Fara-Fara",
+            "starRgb": [
+                255,
+                255,
+                225
+            ],
+            "spectralType": "A",
+            "planets": [
+                "아람 바다르",
+                "라물",
+                "미세눔",
+                "아스완"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 10,
+            "nameEn": "Volsorn",
+            "starRgb": [
+                255,
+                252,
+                221
+            ],
+            "spectralType": "A",
+            "planets": [
+                "베스트라",
+                "볼소른",
+                "바이센바흐",
+                "볼"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 11,
+            "nameEn": "Castrop",
+            "starRgb": [
+                255,
+                252,
+                204
+            ],
+            "spectralType": "F",
+            "planets": [
+                "카스트로프",
+                "니더빈덴보른",
+                "볼딩보르크",
+                "마리엔도르프"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 12,
+            "nameEn": "Elgon",
+            "starRgb": [
+                255,
+                255,
+                235
+            ],
+            "spectralType": "A",
+            "planets": [
+                "카모록",
+                "부탄디가",
+                "무발레",
+                "캄팔라"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 13,
+            "nameEn": "Willenstein",
+            "starRgb": [
+                255,
+                253,
+                205
+            ],
+            "spectralType": "F",
+            "planets": [
+                "비치히하우젠",
+                "바이센호른",
+                "그래펠츠회펜",
+                "오벤하우젠"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 14,
+            "nameEn": "Astarte",
+            "starRgb": [
+                253,
+                255,
+                241
+            ],
+            "spectralType": "A",
+            "planets": [
+                "아스타테 1",
+                "아스타테 2",
+                "아스타테 3",
+                "아스타테 4"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 15,
+            "nameEn": "Linderhof",
+            "starRgb": [
+                255,
+                255,
+                225
+            ],
+            "spectralType": "A",
+            "planets": [
+                "노이슈반슈타인",
+                "킴제",
+                "호엔슈반가우",
+                "오버암머가우"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 16,
+            "nameEn": "Lofoten",
+            "starRgb": [
+                255,
+                253,
+                231
+            ],
+            "spectralType": "A",
+            "planets": [
+                "루드밀라 기지",
+                "알스타",
+                "발스타",
+                "스볼배르"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 17,
+            "nameEn": "Van Fleet",
+            "starRgb": [
+                209,
+                255,
+                255
+            ],
+            "spectralType": "B",
+            "planets": [
+                "반 플리트 1",
+                "반 플리트 2",
+                "반 플리트 3",
+                "반 플리트 4"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 18,
+            "nameEn": "Iserlohn",
+            "starRgb": [
+                253,
+                213,
+                203
+            ],
+            "spectralType": "G",
+            "planets": [
+                "이제르론 요새"
+            ],
+            "fortressType": "ISERLOHN"
+        },
+        {
+            "id": 19,
+            "nameEn": "Amritsar",
+            "starRgb": [
+                255,
+                223,
+                179
+            ],
+            "spectralType": "G",
+            "planets": [
+                "클라인겔트",
+                "모르겐",
+                "당크",
+                "하펜"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 20,
+            "nameEn": "Dverg",
+            "starRgb": [
+                255,
+                253,
+                226
+            ],
+            "spectralType": "A",
+            "planets": [
+                "글라이프니르",
+                "이발디",
+                "레긴",
+                "카발"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 21,
+            "nameEn": "Doria",
+            "starRgb": [
+                255,
+                245,
+                241
+            ],
+            "spectralType": "A",
+            "planets": [
+                "몬테카프라로",
+                "카스타뇰라",
+                "비에베타",
+                "보르게제"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 22,
+            "nameEn": "Chiron",
+            "starRgb": [
+                255,
+                252,
+                223
+            ],
+            "spectralType": "A",
+            "planets": [
+                "넵티스",
+                "자라인",
+                "아누비스",
+                "오시리스"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 23,
+            "nameEn": "Kerim",
+            "starRgb": [
+                255,
+                253,
+                231
+            ],
+            "spectralType": "A",
+            "planets": [
+                "카시나",
+                "바프라",
+                "아유딘",
+                "팔라스"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 24,
+            "nameEn": "Altmühl",
+            "starRgb": [
+                216,
+                255,
+                251
+            ],
+            "spectralType": "B",
+            "planets": [
+                "카프첼란카",
+                "바우브지프",
+                "에디르네",
+                "레그니차"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 25,
+            "nameEn": "Tiamat",
+            "starRgb": [
+                255,
+                220,
+                158
+            ],
+            "spectralType": "K",
+            "planets": [
+                "티아매트 1",
+                "티아매트 2",
+                "티아매트 3",
+                "티아매트 4"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 26,
+            "nameEn": "Heinsberg",
+            "starRgb": [
+                255,
+                221,
+                161
+            ],
+            "spectralType": "K",
+            "planets": [
+                "란데라트",
+                "다셀",
+                "뮐렌아르크"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 27,
+            "nameEn": "Vanaheim",
+            "starRgb": [
+                255,
+                255,
+                227
+            ],
+            "spectralType": "A",
+            "planets": [
+                "아인헤리야르",
+                "노아툰",
+                "뇨르드",
+                "프레이"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 28,
+            "nameEn": "Javanhar",
+            "starRgb": [
+                255,
+                250,
+                229
+            ],
+            "spectralType": "A",
+            "planets": [
+                "할발트",
+                "뤼겐",
+                "비스마르",
+                "슈베린"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 29,
+            "nameEn": "Jamshid",
+            "starRgb": [
+                255,
+                253,
+                224
+            ],
+            "spectralType": "A",
+            "planets": [
+                "타흐테 잠시드",
+                "카파",
+                "무하바트",
+                "아바다나"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 30,
+            "nameEn": "El Facil",
+            "starRgb": [
+                255,
+                254,
+                230
+            ],
+            "spectralType": "A",
+            "planets": [
+                "카르타헤나",
+                "라스 카시타스",
+                "산타 아나",
+                "살바도르"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 31,
+            "nameEn": "Niflheim",
+            "starRgb": [
+                232,
+                255,
+                255
+            ],
+            "spectralType": "B",
+            "planets": [
+                "엘리바가르",
+                "교을",
+                "흐베르겔미르"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 32,
+            "nameEn": "Vanstad",
+            "starRgb": [
+                255,
+                215,
+                190
+            ],
+            "spectralType": "G",
+            "planets": [
+                "라분스트룹",
+                "레그스테드",
+                "팔드가르데"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 33,
+            "nameEn": "Arlesheim",
+            "starRgb": [
+                255,
+                255,
+                198
+            ],
+            "spectralType": "F",
+            "planets": [
+                "알레스하임 1",
+                "알레스하임 2",
+                "알레스하임 3",
+                "알레스하임 4"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 34,
+            "nameEn": "Dragonia",
+            "starRgb": [
+                207,
+                255,
+                254
+            ],
+            "spectralType": "B",
+            "planets": [
+                "드라고니아 1",
+                "드라고니아 2",
+                "드라고니아 3"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 35,
+            "nameEn": "Lumbini",
+            "starRgb": [
+                255,
+                216,
+                190
+            ],
+            "spectralType": "G",
+            "planets": [
+                "박타푸르",
+                "카라이야",
+                "바드가온"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 36,
+            "nameEn": "Bharat",
+            "starRgb": [
+                255,
+                253,
+                230
+            ],
+            "spectralType": "A",
+            "planets": [
+                "테르뇌젠",
+                "카스바 나굼",
+                "하이네센",
+                "스리나가르"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 37,
+            "nameEn": "Altair",
+            "starRgb": [
+                255,
+                214,
+                153
+            ],
+            "spectralType": "K",
+            "planets": [
+                "카탈라우눔",
+                "안티노우스",
+                "테르모퓔라이",
+                "알타이르"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 38,
+            "nameEn": "Wehrla",
+            "starRgb": [
+                212,
+                255,
+                253
+            ],
+            "spectralType": "B",
+            "planets": [
+                "마르크트",
+                "야코비",
+                "슈테파니"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 39,
+            "nameEn": "Lucas",
+            "starRgb": [
+                255,
+                250,
+                211
+            ],
+            "spectralType": "F",
+            "planets": [
+                "자카리아스",
+                "인코바네",
+                "발미"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 40,
+            "nameEn": "Luitpolding",
+            "starRgb": [
+                255,
+                213,
+                165
+            ],
+            "spectralType": "K",
+            "planets": [
+                "루이트폴트",
+                "베르톨트",
+                "아르눌프"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 41,
+            "nameEn": "Palantia",
+            "starRgb": [
+                215,
+                255,
+                255
+            ],
+            "spectralType": "B",
+            "planets": [
+                "팔란티아 1",
+                "팔란티아 2",
+                "팔란티아 3",
+                "팔란티아 4"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 42,
+            "nameEn": "Valhalla",
+            "starRgb": [
+                255,
+                250,
+                213
+            ],
+            "spectralType": "F",
+            "planets": [
+                "조스트",
+                "오딘",
+                "토르",
+                "발그린드"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 43,
+            "nameEn": "Lantemario",
+            "starRgb": [
+                255,
+                210,
+                162
+            ],
+            "spectralType": "K",
+            "planets": [
+                "루예비트",
+                "스벤토비트",
+                "야로비트"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 44,
+            "nameEn": "Forseti",
+            "starRgb": [
+                224,
+                255,
+                255
+            ],
+            "spectralType": "B",
+            "planets": [],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 45,
+            "nameEn": "Trabach",
+            "starRgb": [
+                255,
+                255,
+                224
+            ],
+            "spectralType": "A",
+            "planets": [
+                "볼펠스도르프",
+                "팔켄빌러",
+                "슈테르넨베르크",
+                "트라벤"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 46,
+            "nameEn": "Thanatos",
+            "starRgb": [
+                255,
+                254,
+                206
+            ],
+            "spectralType": "F",
+            "planets": [
+                "에코니아",
+                "프로스키나스",
+                "마스지드",
+                "케르"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 47,
+            "nameEn": "Vermilion",
+            "starRgb": [
+                255,
+                216,
+                165
+            ],
+            "spectralType": "K",
+            "planets": [
+                "에크런",
+                "로톤",
+                "캐스케이드"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 48,
+            "nameEn": "Alvis",
+            "starRgb": [
+                255,
+                253,
+                207
+            ],
+            "spectralType": "F",
+            "planets": [
+                "빌스키르니르",
+                "스루드",
+                "운터그륀",
+                "방갈"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 49,
+            "nameEn": "Mar Adetta",
+            "starRgb": [
+                255,
+                251,
+                235
+            ],
+            "spectralType": "A",
+            "planets": [
+                "바라셋",
+                "아베라노스",
+                "파르네제",
+                "만토바"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 50,
+            "nameEn": "Firezard",
+            "starRgb": [
+                255,
+                255,
+                232
+            ],
+            "spectralType": "A",
+            "planets": [
+                "파이어자드 1",
+                "파이어자드 2",
+                "파이어자드 3"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 51,
+            "nameEn": "Asgard",
+            "starRgb": [
+                212,
+                253,
+                255
+            ],
+            "spectralType": "B",
+            "planets": [
+                "미미르",
+                "긴눈가가프",
+                "토이토부르크",
+                "이다벨리르"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 52,
+            "nameEn": "Tassili",
+            "starRgb": [
+                255,
+                210,
+                153
+            ],
+            "spectralType": "K",
+            "planets": [
+                "타실리 나제르",
+                "아드라르 소우프",
+                "투아레그"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 53,
+            "nameEn": "Wormsgau",
+            "starRgb": [
+                255,
+                246,
+                231
+            ],
+            "spectralType": "A",
+            "planets": [
+                "베르너",
+                "콘라트",
+                "브루노",
+                "리우돌프"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 54,
+            "nameEn": "Schantau",
+            "starRgb": [
+                208,
+                255,
+                255
+            ],
+            "spectralType": "B",
+            "planets": [
+                "크네스도르프",
+                "하켄도르프",
+                "노이엔키르헨",
+                "제도르프"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 55,
+            "nameEn": "Chandalua",
+            "starRgb": [
+                201,
+                246,
+                255
+            ],
+            "spectralType": "B",
+            "planets": [
+                "샨달루아 1",
+                "샨달루아 2",
+                "샨달루아 3"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 56,
+            "nameEn": "Armentobel",
+            "starRgb": [
+                255,
+                210,
+                157
+            ],
+            "spectralType": "K",
+            "planets": [
+                "비켄바흐",
+                "게른스하임",
+                "알스바흐",
+                "클레베르크"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 57,
+            "nameEn": "Rio Verde",
+            "starRgb": [
+                255,
+                213,
+                153
+            ],
+            "spectralType": "K",
+            "planets": [
+                "메사 델 아구아",
+                "산 카를로스",
+                "야노 블랑코",
+                "이슬라 블랑카"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 58,
+            "nameEn": "Altena",
+            "starRgb": [
+                208,
+                250,
+                255
+            ],
+            "spectralType": "B",
+            "planets": [
+                "베르데",
+                "나흐로트",
+                "노이엔라데",
+                "헴트펠트"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 59,
+            "nameEn": "Eleuthera",
+            "starRgb": [
+                247,
+                255,
+                253
+            ],
+            "spectralType": "A",
+            "planets": [
+                "코르텔라초",
+                "폰테 크레팔도",
+                "크룩키드",
+                "안드로스"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 60,
+            "nameEn": "Freya",
+            "starRgb": [
+                216,
+                255,
+                255
+            ],
+            "spectralType": "B",
+            "planets": [
+                "폴크방",
+                "펜살리르",
+                "브리싱가멘",
+                "렌텐베르크 요새"
+            ],
+            "fortressType": "RENTENBERG"
+        },
+        {
+            "id": 61,
+            "nameEn": "Gandharva",
+            "starRgb": [
+                254,
+                212,
+                154
+            ],
+            "spectralType": "K",
+            "planets": [
+                "우르바시",
+                "카르티케야",
+                "아가스티야",
+                "바루나"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 62,
+            "nameEn": "Raigarh",
+            "starRgb": [
+                255,
+                208,
+                166
+            ],
+            "spectralType": "K",
+            "planets": [
+                "싱갈라",
+                "밀팔라",
+                "아유아라"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 63,
+            "nameEn": "Winstingen",
+            "starRgb": [
+                251,
+                254,
+                243
+            ],
+            "spectralType": "A",
+            "planets": [
+                "포르마르",
+                "비트",
+                "이젠부르크"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 64,
+            "nameEn": "Phezzan",
+            "starRgb": [
+                253,
+                254,
+                249
+            ],
+            "spectralType": "A",
+            "planets": [
+                "지라",
+                "리우돌핑크",
+                "자리엘",
+                "페잔"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 65,
+            "nameEn": "Waldemar",
+            "starRgb": [
+                255,
+                244,
+                205
+            ],
+            "spectralType": "F",
+            "planets": [
+                "우파",
+                "파울",
+                "링케"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 66,
+            "nameEn": "Wittelsbach",
+            "starRgb": [
+                255,
+                255,
+                214
+            ],
+            "spectralType": "F",
+            "planets": [
+                "레지덴츠",
+                "뉼펜부르크",
+                "빅투아리엔"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 67,
+            "nameEn": "Eisenherz",
+            "starRgb": [
+                255,
+                246,
+                234
+            ],
+            "spectralType": "A",
+            "planets": [
+                "힌터빌트",
+                "가이에스부르크 요새",
+                "라도메르",
+                "고타"
+            ],
+            "fortressType": "GEIERSBURG"
+        },
+        {
+            "id": 68,
+            "nameEn": "Polevit",
+            "starRgb": [
+                223,
+                255,
+                252
+            ],
+            "spectralType": "B",
+            "planets": [
+                "루지아나",
+                "체르노보그",
+                "스바로그",
+                "폴레비크"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 69,
+            "nameEn": "Tripura",
+            "starRgb": [
+                255,
+                212,
+                159
+            ],
+            "spectralType": "K",
+            "planets": [
+                "팔메렌드",
+                "아가탈라",
+                "칼리얀푸르",
+                "이스파한"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 70,
+            "nameEn": "Jötunheim",
+            "starRgb": [
+                255,
+                251,
+                212
+            ],
+            "spectralType": "F",
+            "planets": [
+                "우트가르드",
+                "예툰하임",
+                "엘리바가르"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 71,
+            "nameEn": "Baratrup",
+            "starRgb": [
+                255,
+                217,
+                165
+            ],
+            "spectralType": "K",
+            "planets": [
+                "바라트루프 1",
+                "바라트루프 2",
+                "바라트루프 3"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 72,
+            "nameEn": "Rammelsberg",
+            "starRgb": [
+                255,
+                252,
+                237
+            ],
+            "spectralType": "A",
+            "planets": [
+                "할스브뤼케",
+                "할텐슈타인",
+                "힘멜스퓌르스트",
+                "슐레마"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 73,
+            "nameEn": "Braunschweig",
+            "starRgb": [
+                255,
+                247,
+                216
+            ],
+            "spectralType": "F",
+            "planets": [
+                "베스터란트",
+                "베델",
+                "쇼펜슈테트",
+                "폴켄로데"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 74,
+            "nameEn": "Littenheim",
+            "starRgb": [
+                255,
+                251,
+                215
+            ],
+            "spectralType": "F",
+            "planets": [
+                "잉엔하임",
+                "뒨첸하임",
+                "알텐하임",
+                "로겐도르프"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 75,
+            "nameEn": "Melkart",
+            "starRgb": [
+                251,
+                255,
+                252
+            ],
+            "spectralType": "A",
+            "planets": [
+                "아슈르",
+                "네르갈",
+                "바알 차폰"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 76,
+            "nameEn": "Kiphoiser",
+            "starRgb": [
+                228,
+                255,
+                252
+            ],
+            "spectralType": "B",
+            "planets": [
+                "가르미슈 요새",
+                "로르바흐",
+                "바겐바흐",
+                "발텐키르헨"
+            ],
+            "fortressType": "GARMISCH"
+        },
+        {
+            "id": 77,
+            "nameEn": "Polyn",
+            "starRgb": [
+                255,
+                208,
+                151
+            ],
+            "spectralType": "K",
+            "planets": [
+                "엘든",
+                "베레켓",
+                "키르니스",
+                "다얀 칸 기지"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 78,
+            "nameEn": "Schpara",
+            "starRgb": [
+                255,
+                248,
+                226
+            ],
+            "spectralType": "A",
+            "planets": [
+                "아른키파",
+                "비스카 그란데",
+                "시우다드 로드리고",
+                "비슈코프"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 79,
+            "nameEn": "Baldur",
+            "starRgb": [
+                255,
+                241,
+                209
+            ],
+            "spectralType": "F",
+            "planets": [
+                "브레이다블리크",
+                "흘링호르니",
+                "글리트니르",
+                "호드"
+            ],
+            "fortressType": "NONE"
+        },
+        {
+            "id": 80,
+            "nameEn": "Forgen",
+            "starRgb": [
+                252,
+                221,
+                157
+            ],
+            "spectralType": "K",
+            "planets": [
+                "슈반가우",
+                "퓌센",
+                "보델스베르크"
+            ],
+            "fortressType": "NONE"
+        }
+    ]
+}
