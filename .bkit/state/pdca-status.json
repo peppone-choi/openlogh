@@ -1,6 +1,6 @@
 {
   "version": "3.0",
-  "lastUpdated": "2026-04-06T08:54:38.575Z",
+  "lastUpdated": "2026-04-06T09:04:36.780Z",
   "activeFeatures": [
     "engine",
     "war",
@@ -74,9 +74,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T07:03:03.192Z",
-        "lastUpdated": "2026-04-06T05:48:58.054Z"
+        "lastUpdated": "2026-04-06T09:04:09.608Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/engine/TickEngine.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/test/kotlin/com/openlogh/engine/TickEngineTest.kt"
     },
     "war": {
       "phase": "do",
@@ -87,9 +87,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T07:03:30.290Z",
-        "lastUpdated": "2026-04-06T07:24:06.634Z"
+        "lastUpdated": "2026-04-06T09:04:28.289Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/test/kotlin/com/openlogh/engine/war/TacticalCombatEngineTest.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/test/kotlin/com/openlogh/engine/war/FieldBattleTriggerTest.kt"
     },
     "service": {
       "phase": "do",
@@ -100,9 +100,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T07:03:46.614Z",
-        "lastUpdated": "2026-04-06T07:59:05.595Z"
+        "lastUpdated": "2026-04-06T09:04:36.779Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/service/OfflineLocationService.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/test/kotlin/com/openlogh/service/ScenarioServiceTest.kt"
     },
     "general": {
       "phase": "do",
@@ -875,7 +875,7 @@
   "session": {
     "startedAt": "2026-03-23T06:31:12.665Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-06T08:54:38.575Z"
+    "lastActivity": "2026-04-06T09:04:36.780Z"
   },
   "history": [
     {
@@ -7829,6 +7829,30 @@
     {
       "timestamp": "2026-04-06T08:54:38.574Z",
       "feature": "model",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:04:09.612Z",
+      "feature": "engine",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:04:17.700Z",
+      "feature": "war",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:04:28.291Z",
+      "feature": "war",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:04:36.780Z",
+      "feature": "service",
       "phase": "do",
       "action": "updated"
     }
