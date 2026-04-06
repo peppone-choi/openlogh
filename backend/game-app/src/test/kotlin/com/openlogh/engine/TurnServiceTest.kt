@@ -564,7 +564,7 @@ class TurnServiceTest {
             worldId = 1L,
             year = 200.toShort(),
             month = 6.toShort(),
-            officerId = 1L,
+            generalId = 1L,
             commandEventType = "consumed",
             detail = mapOf("actionCode" to "Nation휴식", "factionId" to 1L),
         )

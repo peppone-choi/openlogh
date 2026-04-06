@@ -170,7 +170,7 @@ class TurnCoordinatorIntegrationTest {
             techLevel = 0f,
             militaryPower = 0,
             officerCount = 0,
-            level = 0,
+            factionRank = 0,
             factionType = "che_중립",
             abbreviation = "",
             spy = mutableMapOf(),

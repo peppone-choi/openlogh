@@ -806,7 +806,7 @@ class EconomyCommandParityTest {
         approval = approval,
         supplyState = 1,
         level = level,
-        tradeRoute = trade,
+        tradeRoute = tradeRoute,
         frontState = frontState,
     )
 

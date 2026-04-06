@@ -350,7 +350,7 @@ class GeneralMaintenanceServiceTest {
         val captor = ArgumentCaptor.forClass(OldOfficer::class.java)
         verify(oldOfficerRepository).save(captor.capture())
         assertEquals("test-world", captor.value.serverId)
-        assertEquals(1L, captor.value.generalNo)
+        assertEquals(1L, captor.value.officerNo)
         assertEquals(20006, captor.value.lastYearMonth)
     }
 

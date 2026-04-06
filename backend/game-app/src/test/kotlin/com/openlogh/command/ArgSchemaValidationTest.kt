@@ -31,7 +31,7 @@ class ArgSchemaValidationTest {
 
     @Test
     fun `trade schema applies default isBuy true`() {
-        val validated = ArgSchemas.tradeRoute.parse(mapOf("amount" to "300"))
+        val validated = ArgSchemas.trade.parse(mapOf("amount" to "300"))
 
         assertTrue(validated.ok())
         assertEquals(300, validated.intOrNull("amount"))

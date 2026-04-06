@@ -66,7 +66,7 @@ class GeneralControllerTest {
         `when`(worldService.getWorld(1.toShort())).thenReturn(world)
         `when`(worldService.getGamePhase(world)).thenReturn(WorldService.PHASE_CLOSED)
 
-        val result = controller.selectNpc(1L, SelectNpcRequest(officerId = 1))
+        val result = controller.selectNpc(1L, SelectNpcRequest(generalId = 1))
 
         assertEquals(HttpStatus.FORBIDDEN, result.statusCode)
     }
@@ -77,7 +77,7 @@ class GeneralControllerTest {
         `when`(worldService.getWorld(1.toShort())).thenReturn(world)
         `when`(worldService.getGamePhase(world)).thenReturn(WorldService.PHASE_CLOSED)
 
-        val result = controller.selectFromPool(1L, SelectNpcRequest(officerId = 1))
+        val result = controller.selectFromPool(1L, SelectNpcRequest(generalId = 1))
 
         assertEquals(HttpStatus.FORBIDDEN, result.statusCode)
     }

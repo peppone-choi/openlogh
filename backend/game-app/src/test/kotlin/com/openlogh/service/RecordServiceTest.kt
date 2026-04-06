@@ -82,7 +82,7 @@ class RecordServiceTest {
     ): Record {
         return Record(
             id = id,
-            worldId = sessionId,
+            sessionId = sessionId,
             recordType = recordType,
             srcId = srcId,
             destId = destId,

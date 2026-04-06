@@ -46,9 +46,9 @@ class GameEventServiceTest {
 
         val payload = event.toPayload()
 
-        assertEquals(42L, payload["officerId"])
+        assertEquals(42L, payload["generalId"])
         assertEquals("reserved", payload["commandEventType"])
-        assertEquals(1L, payload["sessionId"])
+        assertEquals(1L, payload["worldId"])
         assertEquals("command", payload["eventType"])
     }
 
@@ -66,15 +66,15 @@ class GameEventServiceTest {
 
         verify(applicationEventPublisher).publishEvent(captor.capture())
         val published = captor.value
-        assertEquals(42L, published.officerId)
+        assertEquals(42L, published.generalId)
         assertEquals("reserved", published.commandEventType)
-        assertEquals(1L, published.sessionId)
+        assertEquals(1L, published.worldId)
     }
 
     @Test
     fun `onGameEvent with CommandEvent calls broadcastCommand`() {
         val history = WorldHistory(
-            worldId = 1L,
+            sessionId = 1L,
             year = 200,
             month = 6,
             eventType = "command",

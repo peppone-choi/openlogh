@@ -51,7 +51,7 @@ class BattleServiceTest {
         `when`(officerRepository.save(anyNonNull<Officer>())).thenAnswer { it.arguments[0] }
         `when`(factionRepository.save(anyNonNull<Faction>())).thenAnswer { it.arguments[0] }
         `when`(messageRepository.save(anyNonNull<Message>())).thenAnswer { it.arguments[0] }
-        `when`(oldFactionRepository.save(anyNonNull<Faction>())).thenAnswer { it.arguments[0] }
+        `when`(oldFactionRepository.save(anyNonNull<com.openlogh.entity.OldFaction>())).thenAnswer { it.arguments[0] }
         `when`(fleetRepository.findByFactionId(anyLong())).thenReturn(emptyList())
 
         val modifierService = mock(com.openlogh.engine.modifier.ModifierService::class.java)
@@ -432,7 +432,7 @@ class BattleServiceTest {
 
         if (result.cityOccupied) {
             verify(factionRepository).delete(defenderNation)
-            verify(oldFactionRepository).save(anyNonNull<Faction>())
+            verify(oldFactionRepository).save(anyNonNull<com.openlogh.entity.OldFaction>())
             verify(factionTurnRepository).deleteByFactionId(2L)
         }
     }

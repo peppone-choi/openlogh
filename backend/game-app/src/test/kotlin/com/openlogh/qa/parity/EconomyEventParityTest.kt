@@ -1164,7 +1164,7 @@ class EconomyEventParityTest {
             service.processYearlyStatistics(world(year = 200, month = 1))
 
             val militaryPower = nations[1L]!!.militaryPower
-            assertThat(power)
+            assertThat(militaryPower)
                 .describedAs("Power should be deterministic for fixed inputs")
                 .isGreaterThan(0)
 
@@ -1175,7 +1175,7 @@ class EconomyEventParityTest {
                 listOf(nation(funds = 50000, supplies = 50000, level = 3)),
                 listOf(general(funds = 5000, supplies = 5000, dedication = 5000)))
             service.processYearlyStatistics(world(year = 200, month = 1))
-            assertThat(nations[1L]!!.militaryPower).isEqualTo(power)
+            assertThat(nations[1L]!!.militaryPower).isEqualTo(militaryPower)
         }
 
         @Test

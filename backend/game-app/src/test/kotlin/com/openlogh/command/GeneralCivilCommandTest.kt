@@ -100,7 +100,7 @@ class GeneralCivilCommandTest {
             approval = approval,
             supplyState = supplyState,
             frontState = frontState,
-            tradeRoute = trade,
+            tradeRoute = tradeRoute,
         )
     }
 
