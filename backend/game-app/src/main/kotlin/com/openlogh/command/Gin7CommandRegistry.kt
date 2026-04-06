@@ -1,5 +1,27 @@
 package com.openlogh.command
 
+import com.openlogh.command.gin7.logistics.AllocateCommand
+import com.openlogh.command.gin7.logistics.FullRepairCommand
+import com.openlogh.command.gin7.logistics.FullResupplyCommand
+import com.openlogh.command.gin7.logistics.ReorganizeCommand
+import com.openlogh.command.gin7.logistics.ReinforceCommand
+import com.openlogh.command.gin7.logistics.TransferGoodsCommand
+import com.openlogh.command.gin7.operations.AlertSortieCommand
+import com.openlogh.command.gin7.operations.ArmedSuppressionCommand
+import com.openlogh.command.gin7.operations.FlightTrainingCommand
+import com.openlogh.command.gin7.operations.FuelResupplyCommand
+import com.openlogh.command.gin7.operations.GroundCombatTrainingCommand
+import com.openlogh.command.gin7.operations.GroundForceDeployCommand
+import com.openlogh.command.gin7.operations.GroundForceWithdrawCommand
+import com.openlogh.command.gin7.operations.GroundTacticsTrainingCommand
+import com.openlogh.command.gin7.operations.IntraSystemNavigationCommand
+import com.openlogh.command.gin7.operations.MaintainDisciplineCommand
+import com.openlogh.command.gin7.operations.RequisitionCommand
+import com.openlogh.command.gin7.operations.SpaceCombatTrainingCommand
+import com.openlogh.command.gin7.operations.SpaceTacticsTrainingCommand
+import com.openlogh.command.gin7.operations.SpecialSecurityCommand
+import com.openlogh.command.gin7.operations.SplitMarchCommand
+import com.openlogh.command.gin7.operations.WarpNavigationCommand
 import com.openlogh.command.gin7.personal.AttendLectureCommand
 import com.openlogh.command.gin7.personal.AudienceCommand
 import com.openlogh.command.gin7.personal.ConspiracyCommand
@@ -59,42 +81,42 @@ import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
 
 /**
- * gin7 81종 커맨드 레지스트리. Phase 2에서 실제 구현체로 교체된다.
+ * gin7 81종 커맨드 레지스트리.
  * @Primary로 CommandExecutor에 주입되어 기존 CommandRegistry를 대체한다.
  *
  * 커맨드 그룹:
- * - 작전커맨드 (Operations, MCP): 16종
- * - 개인커맨드 (Personal, PCP): 15종
- * - 지휘커맨드 (Command, MCP): 8종
- * - 병참커맨드 (Logistics, MCP): 6종
- * - 인사커맨드 (Personnel, PCP): 10종
- * - 정치커맨드 (Politics, PCP): 12종
- * - 첩보커맨드 (Intelligence, MCP): 14종
+ * - 작전커맨드 (Operations, MCP): 16종 — 실제 구현체 (Plan 02-02)
+ * - 개인커맨드 (Personal, PCP): 15종 — 실제 구현체 (Plan 02-03)
+ * - 지휘커맨드 (Command, MCP): 8종 — stub (Plan 02-03)
+ * - 병참커맨드 (Logistics, MCP): 6종 — 실제 구현체 (Plan 02-02)
+ * - 인사커맨드 (Personnel, PCP): 10종 — 실제 구현체 (Plan 02-04)
+ * - 정치커맨드 (Politics, PCP): 12종 — 실제 구현체 (Plan 02-04)
+ * - 첩보커맨드 (Intelligence, MCP): 14종 — 실제 구현체 (Plan 02-05)
  */
 @Primary
 @Component
 class Gin7CommandRegistry : CommandRegistry() {
 
     init {
-        // === 작전커맨드 (Operations, MCP, 16종) ===
-        registerMcpStub("워프항행")        // warp_navigation
-        registerMcpStub("연료보급")        // fuel_resupply
-        registerMcpStub("성계내항행")      // intra_system_navigation
-        registerMcpStub("군기유지")        // maintain_discipline
-        registerMcpStub("항공훈련")        // flight_training
-        registerMcpStub("육전훈련")        // ground_combat_training
-        registerMcpStub("공전훈련")        // space_combat_training
-        registerMcpStub("육전전술훈련")    // ground_tactics_training
-        registerMcpStub("공전전술훈련")    // space_tactics_training
-        registerMcpStub("경계출동")        // alert_sortie
-        registerMcpStub("무력진압")        // armed_suppression
-        registerMcpStub("분열행진")        // split_march
-        registerMcpStub("징발")            // requisition
-        registerMcpStub("특별경비")        // special_security
-        registerMcpStub("육전대출격")      // ground_force_deploy
-        registerMcpStub("육전대철수")      // ground_force_withdraw
+        // === 작전커맨드 (Operations, MCP, 16종) — 실제 구현체 (Plan 02-02) ===
+        registerOfficerCommand("워프항행") { g, e, a -> WarpNavigationCommand(g, e, a) }
+        registerOfficerCommand("연료보급") { g, e, a -> FuelResupplyCommand(g, e, a) }
+        registerOfficerCommand("성계내항행") { g, e, a -> IntraSystemNavigationCommand(g, e, a) }
+        registerOfficerCommand("군기유지") { g, e, a -> MaintainDisciplineCommand(g, e, a) }
+        registerOfficerCommand("항공훈련") { g, e, a -> FlightTrainingCommand(g, e, a) }
+        registerOfficerCommand("육전훈련") { g, e, a -> GroundCombatTrainingCommand(g, e, a) }
+        registerOfficerCommand("공전훈련") { g, e, a -> SpaceCombatTrainingCommand(g, e, a) }
+        registerOfficerCommand("육전전술훈련") { g, e, a -> GroundTacticsTrainingCommand(g, e, a) }
+        registerOfficerCommand("공전전술훈련") { g, e, a -> SpaceTacticsTrainingCommand(g, e, a) }
+        registerOfficerCommand("경계출동") { g, e, a -> AlertSortieCommand(g, e, a) }
+        registerOfficerCommand("무력진압") { g, e, a -> ArmedSuppressionCommand(g, e, a) }
+        registerOfficerCommand("분열행진") { g, e, a -> SplitMarchCommand(g, e, a) }
+        registerOfficerCommand("징발") { g, e, a -> RequisitionCommand(g, e, a) }
+        registerOfficerCommand("특별경비") { g, e, a -> SpecialSecurityCommand(g, e, a) }
+        registerOfficerCommand("육전대출격") { g, e, a -> GroundForceDeployCommand(g, e, a) }
+        registerOfficerCommand("육전대철수") { g, e, a -> GroundForceWithdrawCommand(g, e, a) }
 
-        // === 개인커맨드 (Personal, PCP, 15종) ===
+        // === 개인커맨드 (Personal, PCP, 15종) — 실제 구현체 (Plan 02-03) ===
         registerOfficerCommand("원거리이동") { g, e, a -> LongRangeMoveCommand(g, e, a) }
         registerOfficerCommand("근거리이동") { g, e, a -> ShortRangeMoveCommand(g, e, a) }
         registerOfficerCommand("퇴역") { g, e, a -> RetirementCommand(g, e, a) }
@@ -111,7 +133,7 @@ class Gin7CommandRegistry : CommandRegistry() {
         registerOfficerCommand("자금투입") { g, e, a -> FundInjectionCommand(g, e, a) }
         registerOfficerCommand("기함구매") { g, e, a -> FlagshipPurchaseCommand(g, e, a) }
 
-        // === 지휘커맨드 (Command, MCP, 8종) ===
+        // === 지휘커맨드 (Command, MCP, 8종) — stub (Plan 02-03) ===
         registerMcpStub("작전계획")        // operation_plan
         registerMcpStub("작전철회")        // operation_cancel
         registerMcpStub("발령")            // assignment
@@ -121,15 +143,15 @@ class Gin7CommandRegistry : CommandRegistry() {
         registerMcpStub("수송계획")        // transport_plan
         registerMcpStub("수송중지")        // transport_cancel
 
-        // === 병참커맨드 (Logistics, MCP, 6종) ===
-        registerMcpStub("완전수리")        // full_repair
-        registerMcpStub("완전보급")        // full_resupply
-        registerMcpStub("재편성")          // reorganize
-        registerMcpStub("보충")            // reinforce
-        registerMcpStub("반출입")          // transfer_goods
-        registerMcpStub("할당")            // allocate
+        // === 병참커맨드 (Logistics, MCP, 6종) — 실제 구현체 (Plan 02-02) ===
+        registerOfficerCommand("완전수리") { g, e, a -> FullRepairCommand(g, e, a) }
+        registerOfficerCommand("완전보급") { g, e, a -> FullResupplyCommand(g, e, a) }
+        registerOfficerCommand("재편성") { g, e, a -> ReorganizeCommand(g, e, a) }
+        registerOfficerCommand("보충") { g, e, a -> ReinforceCommand(g, e, a) }
+        registerOfficerCommand("반출입") { g, e, a -> TransferGoodsCommand(g, e, a) }
+        registerOfficerCommand("할당") { g, e, a -> AllocateCommand(g, e, a) }
 
-        // === 인사커맨드 (Personnel, PCP, 10종) ===
+        // === 인사커맨드 (Personnel, PCP, 10종) — 실제 구현체 (Plan 02-04) ===
         registerOfficerCommand("승진") { g, e, a -> PromoteCommand(g, e, a) }
         registerOfficerCommand("발탁") { g, e, a -> FieldPromoteCommand(g, e, a) }
         registerOfficerCommand("강등") { g, e, a -> DemoteCommand(g, e, a) }
@@ -141,7 +163,7 @@ class Gin7CommandRegistry : CommandRegistry() {
         registerOfficerCommand("봉토수여") { g, e, a -> GrantFiefCommand(g, e, a) }
         registerOfficerCommand("봉토직할") { g, e, a -> ReclaimFiefCommand(g, e, a) }
 
-        // === 정치커맨드 (Politics, PCP, 12종) ===
+        // === 정치커맨드 (Politics, PCP, 12종) — 실제 구현체 (Plan 02-04) ===
         registerOfficerCommand("야회") { g, e, a -> BanquetCommand(g, e, a) }
         registerOfficerCommand("수렵") { g, e, a -> HuntCommand(g, e, a) }
         registerOfficerCommand("회담") { g, e, a -> ConferenceCommand(g, e, a) }
@@ -155,7 +177,7 @@ class Gin7CommandRegistry : CommandRegistry() {
         registerOfficerCommand("외교") { g, e, a -> DiplomacyCommand(g, e, a) }
         registerOfficerCommand("통치목표") { g, e, a -> GovernanceGoalCommand(g, e, a) }
 
-        // === 첩보커맨드 (Intelligence, MCP, 14종) ===
+        // === 첩보커맨드 (Intelligence, MCP, 14종) — 실제 구현체 (Plan 02-05) ===
         registerOfficerCommand("일제수색") { g, e, a -> GeneralSearchCommand(g, e, a) }
         registerOfficerCommand("체포허가") { g, e, a -> ArrestAuthorizationCommand(g, e, a) }
         registerOfficerCommand("집행명령") { g, e, a -> ExecutionOrderCommand(g, e, a) }
@@ -178,7 +200,6 @@ class Gin7CommandRegistry : CommandRegistry() {
     /**
      * MCP 커맨드 stub을 officerCommands에 등록한다.
      * getCommandPoolType()이 StatCategory.MCP를 반환한다.
-     * Phase 2에서 실제 구현체로 교체된다.
      */
     private fun registerMcpStub(nameKo: String) {
         registerOfficerCommand(nameKo) { general, env, arg ->
@@ -189,7 +210,6 @@ class Gin7CommandRegistry : CommandRegistry() {
     /**
      * PCP 커맨드 stub을 officerCommands에 등록한다.
      * getCommandPoolType()이 StatCategory.PCP를 반환한다 (기본값).
-     * Phase 2에서 실제 구현체로 교체된다.
      */
     private fun registerPcpStub(nameKo: String) {
         registerOfficerCommand(nameKo) { general, env, arg ->
@@ -200,7 +220,6 @@ class Gin7CommandRegistry : CommandRegistry() {
     /**
      * gin7 stub 커맨드 구현체.
      * cpType 파라미터로 MCP/PCP 풀을 구분한다.
-     * Phase 2 구현 전까지 모든 커맨드는 이 stub을 반환한다.
      */
     private inner class Gin7StubCommand(
         private val commandName: String,
@@ -221,7 +240,7 @@ class Gin7CommandRegistry : CommandRegistry() {
         override fun getPostReqTurn(): Int = 0
 
         override suspend fun run(rng: Random): CommandResult {
-            return CommandResult.fail("[$commandName] Phase 2에서 구현 예정 (stub)")
+            return CommandResult.fail("[$commandName] 구현 예정 (stub)")
         }
     }
 }
