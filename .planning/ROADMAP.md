@@ -9,7 +9,7 @@
 - [x] **Phase 1: 레거시 제거 + 함종 유닛 기반** - 삼국지 잔재 완전 제거 및 gin7 ShipUnit 엔티티 수립 (completed 2026-04-06)
 - [ ] **Phase 2: gin7 81종 커맨드 시스템** - 직무권한카드 기반 커맨드 전면 재구현
 - [ ] **Phase 3: 실시간 전술전 엔진** - 에너지/무기/진형/색적/요새포/지상전 구현
-- [ ] **Phase 4: 경제 시스템** - 행성자원/조병창/세율/차관 경제 루프 구현
+- [x] **Phase 4: 경제 시스템** - 행성자원/조병창/세율/차관 경제 루프 구현 (completed 2026-04-06)
 - [ ] **Phase 5: AI 시스템** - 성격 기반 NPC AI 및 진영 AI 구현
 - [ ] **Phase 6: 프론트엔드 통합** - 은하맵/전술전 UI/전략게임 화면 전면 재작성
 - [ ] **Phase 7: 시나리오 데이터 + 밸런싱** - 10개 시나리오 데이터 및 균형 조정
@@ -91,7 +91,7 @@ Plans:
 - [x] 04-02-PLAN.md — ShipyardProductionService gin7 확장 + TickEngine 주기적 호출
 - [x] 04-03-PLAN.md — 행성↔부대창고 transfer/return API (WarehouseService + WarehouseController)
 - [x] 04-04-PLAN.md — 페잔 차관 엔딩 트리거 (FezzanEndingService) + 함대 출격비용 (FleetSortieCostService)
-- [ ] 04-05-PLAN.md — 경제 시스템 통합 테스트 (ECON-01~06 전체 검증)
+- [x] 04-05-PLAN.md — 경제 시스템 통합 테스트 (ECON-01~06 전체 검증)
 
 ### Phase 5: AI 시스템
 **Goal**: 오프라인 플레이어와 NPC가 gin7 81종 커맨드 시스템을 통해 성격 기반으로 행동하며, 진영 AI가 예산/인사/작전을 자율 처리한다
@@ -137,7 +137,7 @@ Plans:
 | 1. 레거시 제거 + 함종 유닛 기반 | 8/8 | Complete   | 2026-04-06 |
 | 2. gin7 81종 커맨드 시스템 | 6/7 | In Progress|  |
 | 3. 실시간 전술전 엔진 | 2/5 | In Progress|  |
-| 4. 경제 시스템 | 4/5 | In Progress|  |
+| 4. 경제 시스템 | 5/5 | Complete   | 2026-04-06 |
 | 5. AI 시스템 | 0/TBD | Not started | - |
 | 6. 프론트엔드 통합 | 0/TBD | Not started | - |
 | 7. 시나리오 데이터 + 밸런싱 | 0/TBD | Not started | - |
