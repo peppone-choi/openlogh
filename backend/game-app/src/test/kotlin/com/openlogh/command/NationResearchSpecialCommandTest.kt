@@ -96,7 +96,7 @@ class NationResearchSpecialCommandTest {
         color = "#FF0000",
         funds = funds,
         supplies = supplies,
-        factionRank = 7,
+        level = 7,
         strategicCmdLimit = strategicCmdLimit,
         chiefOfficerId = 1,
     )

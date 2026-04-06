@@ -176,7 +176,7 @@ class GameplayIntegrationTest {
             sessionId = 1,
             name = "위",
             color = "#ffffff",
-            factionRank = 3,
+            level = 3,
             strategicCmdLimit = strategicCmdLimit.toShort(),
         )
     }

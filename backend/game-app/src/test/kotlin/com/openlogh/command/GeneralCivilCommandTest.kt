@@ -117,7 +117,7 @@ class GeneralCivilCommandTest {
             color = "#FF0000",
             funds = funds,
             supplies = supplies,
-            factionRank = level,
+            level = level,
         )
     }
 
@@ -765,7 +765,7 @@ class GeneralCivilCommandTest {
     }
 
     @Test
-    fun `parity 사기진작 constraint fails when atmos is maxed`() {
+    fun `parity 사기진작 constraint fails when morale is maxed`() {
         val cmd = che_사기진작(createTestGeneral(ships = 200, morale = 100, funds = 1000), createTestEnv())
         cmd.city = createTestCity()
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
@@ -790,7 +790,7 @@ class GeneralCivilCommandTest {
     }
 
     @Test
-    fun `parity 소집해제 constraint fails when crew is zero`() {
+    fun `parity 소집해제 constraint fails when ships is zero`() {
         val cmd = che_소집해제(createTestGeneral(ships = 0), createTestEnv())
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }
@@ -880,7 +880,7 @@ class GeneralCivilCommandTest {
     }
 
     @Test
-    fun `parity 단련 constraint fails when crew is zero`() {
+    fun `parity 단련 constraint fails when ships is zero`() {
         val cmd = che_단련(createTestGeneral(ships = 0, funds = 1000, supplies = 1000), createTestEnv())
         assertTrue(cmd.checkFullCondition() is ConstraintResult.Fail)
     }

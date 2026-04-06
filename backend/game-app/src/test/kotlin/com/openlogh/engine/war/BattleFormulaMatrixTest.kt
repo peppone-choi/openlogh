@@ -306,7 +306,7 @@ class BattleFormulaMatrixTest {
         // The attackerDamageDealt includes all damage (to generals + city), so we check
         // that the defender general's HP went to 0 (they were defeated).
         assertEquals(0, weakDefender.ships,
-            "Weak defender should be reduced to 0 crew after overkill")
+            "Weak defender should be reduced to 0 ships after overkill")
         assertTrue(result.attackerDamageDealt > 0,
             "Attacker should deal positive damage overall")
     }

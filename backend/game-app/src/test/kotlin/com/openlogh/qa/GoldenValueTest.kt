@@ -37,8 +37,8 @@ class GoldenValueTest {
     inner class JingbyeongBlend {
 
         @Test
-        @DisplayName("same crew type: blendedTrain = (1000*80 + 1000*40) / 2000 = 60")
-        fun `same crew type blend produces train 60`() {
+        @DisplayName("same ships type: blendedTrain = (1000*80 + 1000*40) / 2000 = 60")
+        fun `same ships type blend produces train 60`() {
             // oldCrew=1000/training =80, newCrew=1000(recruited)/defaultTrain=40 → blendedTrain=60
             val general = createGeneral(ships = 1000, shipClass = 0, training = 80, morale = 80)
             val cmd = che_징병(
@@ -55,7 +55,7 @@ class GoldenValueTest {
         }
 
         @Test
-        @DisplayName("same crew type: popLoss equals recruited amount (reqCrewDown = reqCrew with no modifier)")
+        @DisplayName("same ships type: popLoss equals recruited amount (reqCrewDown = reqCrew with no modifier)")
         fun `population loss equals recruited amount`() {
             val general = createGeneral(ships = 1000, shipClass = 0, training = 80, morale = 80)
             val cmd = che_징병(
@@ -75,16 +75,16 @@ class GoldenValueTest {
     }
 
     // ──────────────────────────────────────────────────
-    // 2. 징병 reset (different crew type)
+    // 2. 징병 reset (different ships type)
     // ──────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("징병 reset - different crew type")
+    @DisplayName("징병 reset - different ships type")
     inner class JingbyeongReset {
 
         @Test
-        @DisplayName("different crew type resets train to 40 (delta from old train)")
-        fun `different crew type resets train to default 40`() {
+        @DisplayName("different ships type resets train to 40 (delta from old train)")
+        fun `different ships type resets train to default 40`() {
             // oldTrain=80, crewType differs → reset to defaultTrain=40, delta=-40
             val general = createGeneral(ships = 1000, shipClass = 1, training = 80, morale = 80)
             val cmd = che_징병(
@@ -97,7 +97,7 @@ class GoldenValueTest {
             val json = mapper.readTree(result.message)
             val trainDelta = json["statChanges"]["train"].asInt()
             // new training = 40 (default for 징병), old training = 80 → delta = -40
-            assertEquals(-40, trainDelta, "different crew type should reset train to 40 (delta=-40)")
+            assertEquals(-40, trainDelta, "different ships type should reset train to 40 (delta=-40)")
         }
     }
 
@@ -110,8 +110,8 @@ class GoldenValueTest {
     inner class MobyeongBlend {
 
         @Test
-        @DisplayName("same crew type: blendedTrain = (1000*80 + 1000*70) / 2000 = 75")
-        fun `same crew type blend produces train 75`() {
+        @DisplayName("same ships type: blendedTrain = (1000*80 + 1000*70) / 2000 = 75")
+        fun `same ships type blend produces train 75`() {
             // 모병 defaultTrain = 70; (1000*80 + 1000*70) / 2000 = 75
             val general = createGeneral(ships = 1000, shipClass = 0, training = 80, morale = 80)
             val cmd = che_모병(
@@ -128,8 +128,8 @@ class GoldenValueTest {
         }
 
         @Test
-        @DisplayName("모병 default training = 70, different crew type resets to 70")
-        fun `different crew type resets to mobyeong default 70`() {
+        @DisplayName("모병 default training = 70, different ships type resets to 70")
+        fun `different ships type resets to mobyeong default 70`() {
             val general = createGeneral(ships = 1000, shipClass = 1, training = 40, morale = 40)
             val cmd = che_모병(
                 general, createEnv(),
@@ -185,9 +185,9 @@ class GoldenValueTest {
         }
 
         @Test
-        @DisplayName("warPower formula: atmos/train ratio applied correctly")
-        fun `warPower atmos train ratio golden value`() {
-            // Verify the ratio: warPower is multiplied by atmos and divided by train
+        @DisplayName("warPower formula: morale/train ratio applied correctly")
+        fun `warPower morale train ratio golden value`() {
+            // Verify the ratio: warPower is multiplied by morale and divided by train
             // With simple values: morale =100, training =100 → ratio = 1.0 (no change)
             val general = createGeneral(leadership = 70, command = 70, ships = 1000, training = 100, morale = 100)
             val unit = WarUnitOfficer(general, 0f)
@@ -274,7 +274,7 @@ class GoldenValueTest {
         }
 
         @Test
-        @DisplayName("continueWar: general stops if rice depleted below crew/100")
+        @DisplayName("continueWar: general stops if rice depleted below ships/100")
         fun `general stops if rice below threshold`() {
             val general = createGeneral(ships = 1000, supplies = 0)
             val unit = WarUnitOfficer(general, 0f)

@@ -30,7 +30,7 @@ class CommandExecutorTest {
             sessionId = 1,
             name = "테스트국가",
             color = "#FF0000",
-            factionRank = 1,
+            level = 1,
         )
         val city = Planet(
             id = 1,
@@ -130,7 +130,7 @@ class CommandExecutorTest {
         val nations = harness.factionRepository.findBySessionId(1)
         assertEquals(1, nations.size)
         assertEquals(general.factionId, nations.first().id)
-        assertEquals(0.toShort(), nations.first().level)
+        assertEquals(0.toShort(), nations.first().factionRank)
     }
 
     @Test
@@ -193,7 +193,7 @@ class CommandExecutorTest {
         val foundedNation = harness.factionRepository.findById(general.factionId).orElse(null)
         assertNotNull(foundedNation)
         assertEquals("신국", foundedNation!!.name)
-        assertEquals(1.toShort(), foundedNation.level)
+        assertEquals(1.toShort(), foundedNation.factionRank)
         assertEquals("che_군벌", foundedNation.factionType)
     }
 
@@ -212,7 +212,7 @@ class CommandExecutorTest {
             id = 10,
             sessionId = 1,
             name = "방랑국",
-            factionRank = 0,
+            level = 0,
             officerCount = 2,
             chiefOfficerId = 1,
         )
@@ -294,7 +294,7 @@ class CommandExecutorTest {
 
         val updatedNation = harness.factionRepository.findById(10).orElseThrow()
         assertEquals(movedCityId, updatedNation.capitalPlanetId)
-        assertEquals(1.toShort(), updatedNation.level)
+        assertEquals(1.toShort(), updatedNation.factionRank)
 
         val selectedCity = harness.planetRepository.findById(movedCityId).orElseThrow()
         assertEquals(10L, selectedCity.factionId)

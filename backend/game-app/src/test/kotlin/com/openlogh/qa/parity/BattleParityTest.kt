@@ -219,7 +219,7 @@ class BattleParityTest {
     inner class BaseDefenceParity {
 
         @Test
-        fun `defence uses crew factor formula`() {
+        fun `defence uses ships factor formula`() {
             // Legacy: crewFactor = ships/233.33 + 70; defence = (crewType.defence + techAbil) * crewFactor/100
             val gen = createGeneral(shipClass = CrewType.FOOTMAN.code, ships = 5000)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
@@ -229,7 +229,7 @@ class BattleParityTest {
         }
 
         @Test
-        fun `small crew gives lower defence`() {
+        fun `small ships gives lower defence`() {
             val gen = createGeneral(shipClass = CrewType.FOOTMAN.code, ships = 100)
             val unit = WarUnitOfficer(gen, nationTech = 0f)
             val crewFactor = 100 / 233.33 + 70.0
@@ -312,7 +312,7 @@ class BattleParityTest {
     inner class DodgeChanceParity {
 
         @Test
-        fun `dodge chance uses crew type avoid and train`() {
+        fun `dodge chance uses ships type avoid and train`() {
             // Legacy: crewType.avoid / 100 * (train / 100)
             val gen = createGeneral(shipClass = CrewType.FOOTMAN.code, training = 80)
             val unit = WarUnitOfficer(gen, nationTech = 0f)

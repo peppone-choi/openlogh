@@ -55,7 +55,7 @@ class GeneralControllerTest {
         `when`(worldService.getWorld(1.toShort())).thenReturn(world)
         `when`(worldService.getGamePhase(world)).thenReturn(WorldService.PHASE_CLOSED)
 
-        val result = controller.createGeneral(1L, CreateGeneralRequest(name = "test", factionId = 1))
+        val result = controller.createGeneral(1L, CreateGeneralRequest(name = "test", nationId = 1))
 
         assertEquals(HttpStatus.FORBIDDEN, result.statusCode)
     }

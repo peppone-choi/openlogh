@@ -74,7 +74,7 @@ class ItemDomesticModifierTest {
     inner class RecruitTriggerType {
 
         @Test
-        fun `recruit triggerType on conscription sets train and atmos`() {
+        fun `recruit triggerType on conscription sets train and morale`() {
             val item = MiscItem(code = "test_recruit", name = "test", triggerType = "recruit")
             val result = item.onCalcDomestic(DomesticContext(actionCode = "징병"))
             assertThat(result.trainMultiplier).isEqualTo(70.0)
@@ -82,7 +82,7 @@ class ItemDomesticModifierTest {
         }
 
         @Test
-        fun `recruit triggerType on volunteer sets train and atmos`() {
+        fun `recruit triggerType on volunteer sets train and morale`() {
             val item = MiscItem(code = "test_recruit", name = "test", triggerType = "recruit")
             val result = item.onCalcDomestic(DomesticContext(actionCode = "모병"))
             assertThat(result.trainMultiplier).isEqualTo(70.0)

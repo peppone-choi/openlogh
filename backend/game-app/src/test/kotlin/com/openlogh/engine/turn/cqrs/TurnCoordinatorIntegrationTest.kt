@@ -94,7 +94,7 @@ class TurnCoordinatorIntegrationTest {
 
         val state = InMemoryWorldState(
             sessionId = 1,
-            generals = mutableMapOf(
+            officers = mutableMapOf(
                 101L to generalSnapshot(
                     id = 101,
                     sessionId = 1,
@@ -103,7 +103,7 @@ class TurnCoordinatorIntegrationTest {
                     turnTime = now.minusSeconds(20),
                 )
             ),
-            nations = mutableMapOf(
+            factions = mutableMapOf(
                 10L to nationSnapshot(id = 10, sessionId = 1, strategicCmdLimit = 3)
             ),
             officerTurnsByOfficerId = mutableMapOf(
@@ -145,7 +145,7 @@ class TurnCoordinatorIntegrationTest {
         assertEquals(2, world.currentMonth.toInt())
         assertTrue(state.officerTurnsByOfficerId[101].isNullOrEmpty())
         assertTrue(state.factionTurnsByFactionAndLevel[FactionTurnKey(10, 5)].isNullOrEmpty())
-        assertEquals(2, state.nations.getValue(10).strategicCmdLimit.toInt())
+        assertEquals(2, state.factions.getValue(10).strategicCmdLimit.toInt())
     }
 
     private fun nationSnapshot(id: Long, sessionId: Long, strategicCmdLimit: Int): FactionSnapshot {
@@ -169,8 +169,10 @@ class TurnCoordinatorIntegrationTest {
             surrenderLimit = 72,
             techLevel = 0f,
             militaryPower = 0,
+            officerCount = 0,
             level = 0,
             factionType = "che_중립",
+            abbreviation = "",
             spy = mutableMapOf(),
             meta = mutableMapOf(),
             createdAt = now,
@@ -208,12 +210,23 @@ class TurnCoordinatorIntegrationTest {
             intelligence = 50,
             intelligenceExp = 0,
             politics = 50,
+            politicsExp = 0,
             administration = 50,
+            administrationExp = 0,
+            mobility = 50,
+            mobilityExp = 0,
+            attack = 50,
+            attackExp = 0,
+            defense = 50,
+            defenseExp = 0,
             dex1 = 0,
             dex2 = 0,
             dex3 = 0,
             dex4 = 0,
             dex5 = 0,
+            dex6 = 0,
+            dex7 = 0,
+            dex8 = 0,
             injury = 0,
             experience = 0,
             dedication = 0,
@@ -252,6 +265,10 @@ class TurnCoordinatorIntegrationTest {
             tournamentState = 0,
             commandPoints = 10,
             commandEndTime = null,
+            posX = 0f,
+            posY = 0f,
+            destX = null,
+            destY = null,
             lastTurn = mutableMapOf(),
             meta = mutableMapOf(),
             penalty = mutableMapOf(),

@@ -128,18 +128,18 @@ class ShortOverflowGuardTest {
         }
 
         @Test
-        fun `atmos overflow is clamped to 150`() {
+        fun `morale overflow is clamped to 150`() {
             assertEquals(150.toShort(), guardedShort(200, 0, 150))
             assertEquals(150.toShort(), guardedShort(40000, 0, 150))
         }
 
         @Test
-        fun `atmos underflow is clamped to 0`() {
+        fun `morale underflow is clamped to 0`() {
             assertEquals(0.toShort(), guardedShort(-10, 0, 150))
         }
 
         @Test
-        fun `atmos boundary values pass through`() {
+        fun `morale boundary values pass through`() {
             assertEquals(0.toShort(), guardedShort(0, 0, 150))
             assertEquals(150.toShort(), guardedShort(150, 0, 150))
         }
@@ -238,7 +238,7 @@ class ShortOverflowGuardTest {
 
         @Test
         fun `large intermediate computation stays safe with guard`() {
-            // Simulates crew * training = 10000 * 110 = 1_100_000 then assigned to Short field
+            // Simulates ships * training = 10000 * 110 = 1_100_000 then assigned to Short field
             val computed = 10000 * 110  // 1_100_000
             assertEquals(110.toShort(), guardedShort(computed, 0, 110))
         }

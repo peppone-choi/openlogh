@@ -59,7 +59,7 @@ class GeneralTriggerTest {
     // ========== TroopConsumptionTrigger ==========
 
     @Test
-    fun `TroopConsumptionTrigger consumes rice for crew`() {
+    fun `TroopConsumptionTrigger consumes rice for ships`() {
         val general = createGeneral(ships = 500, supplies = 100)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 6, generalId = 1)
@@ -85,14 +85,14 @@ class GeneralTriggerTest {
     }
 
     @Test
-    fun `TroopConsumptionTrigger does nothing when crew is 0`() {
+    fun `TroopConsumptionTrigger does nothing when ships is 0`() {
         val general = createGeneral(ships = 0, supplies = 100)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 6, generalId = 1)
 
         trigger.action(env)
 
-        assertEquals(100, general.supplies, "Rice should not change with zero crew")
+        assertEquals(100, general.supplies, "Rice should not change with zero ships")
     }
 
     // ========== MedicineHealTrigger ==========

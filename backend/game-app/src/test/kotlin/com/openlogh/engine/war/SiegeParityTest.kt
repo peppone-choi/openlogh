@@ -296,7 +296,7 @@ class SiegeParityTest {
     @Test
     fun `full siege with fixed seed produces deterministic city state`() {
         // FOOTMAN attacker (ships =10000, str=80, leadership=80, intelligence =50, training =80, morale =80)
-        // vs city (orbitalDefense=500, fortress=1000, level=2)
+        // vs city (orbitalDefense=500, fortress=1000, level = 2)
         // year=200, startYear=190
         val gen = makeGeneral(
             crewTypeCode = CrewType.FOOTMAN.code,

@@ -822,7 +822,7 @@ class EconomyCommandParityTest {
         color = "#FF0000",
         funds = funds,
         supplies = supplies,
-        factionRank = level,
+        level = level,
         capitalPlanetId = 1,
     )
 }

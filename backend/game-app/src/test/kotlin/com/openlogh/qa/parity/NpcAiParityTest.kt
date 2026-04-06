@@ -497,19 +497,19 @@ class NpcAiParityTest {
     inner class WarReadinessParity {
 
         @Test
-        fun `low crew below minWarCrew triggers recruitment`() {
+        fun `low ships below minWarCrew triggers recruitment`() {
             val gen = createGeneral(ships = 100, leadership = 80, training = 80, morale = 80)
             val policy = NpcGeneralPolicy(minWarCrew = 500)
             assertTrue(gen.ships < policy.minWarCrew,
-                "crew(100) < minWarCrew(500) -> should recruit")
+                "ships(100) < minWarCrew(500) -> should recruit")
         }
 
         @Test
-        fun `sufficient crew passes recruitment check`() {
+        fun `sufficient ships passes recruitment check`() {
             val gen = createGeneral(ships = 5000, leadership = 80)
             val policy = NpcGeneralPolicy(minWarCrew = 500)
             assertFalse(gen.ships < policy.minWarCrew,
-                "crew(5000) >= minWarCrew(500) -> no recruitment needed")
+                "ships(5000) >= minWarCrew(500) -> no recruitment needed")
         }
 
         @Test
@@ -520,7 +520,7 @@ class NpcAiParityTest {
         }
 
         @Test
-        fun `low atmos triggers morale boost`() {
+        fun `low morale triggers morale boost`() {
             val gen = createGeneral(morale = 30)
             val policy = NpcGeneralPolicy(properWarTrainAtmos = 80)
             assertTrue(gen.morale < policy.properWarTrainAtmos)
@@ -587,7 +587,7 @@ class NpcAiParityTest {
         }
 
         @Test
-        fun `warrior type prefers training when crew exists`() {
+        fun `warrior type prefers training when ships exists`() {
             val gen = createGeneral(command = 90, intelligence = 40, leadership = 40)
             val type = ai.classifyGeneral(gen)
             assertTrue(type and GeneralType.WARRIOR.flag != 0,

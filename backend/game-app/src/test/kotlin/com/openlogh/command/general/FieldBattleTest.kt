@@ -194,7 +194,7 @@ class FieldBattleTest {
     }
 
     @Test
-    fun `FieldBattleService ambush reduces target atmos and defenceMultiplier`() {
+    fun `FieldBattleService ambush reduces target morale and defenceMultiplier`() {
         val service = FieldBattleService()
         val interceptorGeneral = createGeneral(id = 1, factionId = 1, ships = 3000, supplies = 30000, command = 80.toShort())
         val targetGeneral = createGeneral(id = 2, factionId = 2, ships = 2000, supplies = 20000, morale = 60.toShort())
@@ -228,7 +228,7 @@ class FieldBattleTest {
 
         service.resolve(interceptor, target, city, Random(42), isAmbush = false, year = 200, startYear = 180)
 
-        // No ambush boost — only the atmos/orbitalDefense reductions still apply
+        // No ambush boost — only the morale/orbitalDefense reductions still apply
         assertEquals(initialAttackMultiplier, interceptor.attackMultiplier, 0.001)
         assertEquals(initialCritChance, interceptor.criticalChance, 0.001)
         assertEquals(initialTargetDefMult * 0.85, target.defenceMultiplier, 0.001)

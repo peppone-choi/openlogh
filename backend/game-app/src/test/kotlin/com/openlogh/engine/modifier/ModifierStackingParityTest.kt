@@ -137,7 +137,7 @@ class ModifierStackingParityTest {
 
         @Test
         @DisplayName("Scenario 4: che_징병 special + recruit item on 징병 (last-writer wins)")
-        fun `징병 special then recruit item overwrites train and atmos`() {
+        fun `징병 special then recruit item overwrites train and morale`() {
             // che_징병: for "징병" -> trainMultiplier=70.0, atmosMultiplier=84.0
             // MiscItem(recruit): for "징병" -> trainMultiplier=70.0, atmosMultiplier=84.0
             // Both set same absolute values; item (step 5+) overwrites special (step 4)

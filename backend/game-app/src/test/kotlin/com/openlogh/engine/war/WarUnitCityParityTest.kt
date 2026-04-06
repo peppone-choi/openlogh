@@ -62,7 +62,7 @@ class WarUnitCityParityTest {
         // year=201, startYear=180 → cityTrainAtmos=80; training =80+5=85, morale =80
         val unit = WarUnitPlanet(buildCity(level = 1), year = 201, startYear = 180)
         assertEquals(85, unit.training, "Level 1 city grants +5 train bonus")
-        assertEquals(80, unit.morale, "Level 1 city does not affect atmos")
+        assertEquals(80, unit.morale, "Level 1 city does not affect morale")
     }
 
     @Test
@@ -70,7 +70,7 @@ class WarUnitCityParityTest {
         // PHP: level==3 → trainBonus += 5
         val unit = WarUnitPlanet(buildCity(level = 3), year = 201, startYear = 180)
         assertEquals(85, unit.training, "Level 3 city grants +5 train bonus")
-        assertEquals(80, unit.morale, "Level 3 city does not affect atmos")
+        assertEquals(80, unit.morale, "Level 3 city does not affect morale")
     }
 
     @Test

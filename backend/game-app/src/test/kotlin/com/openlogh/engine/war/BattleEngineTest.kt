@@ -81,7 +81,7 @@ class BattleEngineTest {
     // ========== WarUnitOfficer: stats ==========
 
     @Test
-    fun `WarUnitOfficer initializes HP from crew`() {
+    fun `WarUnitOfficer initializes HP from ships`() {
         val general = createGeneral(ships = 2000)
         val unit = WarUnitOfficer(general)
 
@@ -90,7 +90,7 @@ class BattleEngineTest {
     }
 
     @Test
-    fun `WarUnitOfficer base attack uses legacy crew-type-specific stat ratio`() {
+    fun `WarUnitOfficer base attack uses legacy ships-type-specific stat ratio`() {
         val general = createGeneral(command = 100, leadership = 50)
         val unit = WarUnitOfficer(general)
 
@@ -100,7 +100,7 @@ class BattleEngineTest {
     }
 
     @Test
-    fun `WarUnitOfficer base defence uses legacy crew factor formula`() {
+    fun `WarUnitOfficer base defence uses legacy ships factor formula`() {
         val general = createGeneral(leadership = 60, command = 40, intelligence = 80, ships = 1000)
         val unit = WarUnitOfficer(general)
 
@@ -254,7 +254,7 @@ class BattleEngineTest {
     // ========== WarUnit: calcBattleOrder ==========
 
     @Test
-    fun `calcBattleOrder higher stats and crew gives higher order`() {
+    fun `calcBattleOrder higher stats and ships gives higher order`() {
         val strong = createGeneral(leadership = 90, command = 90, intelligence = 90, ships = 5000, training = 80, morale = 80)
         val weak = createGeneral(leadership = 30, command = 30, intelligence = 30, ships = 500, training = 30, morale = 30)
 
@@ -325,7 +325,7 @@ class BattleEngineTest {
 
         engine.resolveBattle(attacker, listOf(defender), city, rng)
 
-        // Attacker loses 1 atmos per phase, defender loses 3
+        // Attacker loses 1 morale per phase, defender loses 3
         assertTrue(attacker.morale < 80, "Attacker morale should decrease")
     }
 

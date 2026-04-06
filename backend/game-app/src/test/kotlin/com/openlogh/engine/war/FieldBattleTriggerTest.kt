@@ -381,7 +381,7 @@ class FieldBattleTriggerTest {
     }
 
     @Test
-    fun `interceptor with zero crew does not trigger`() {
+    fun `interceptor with zero ships does not trigger`() {
         val city = makeCity(10L)
         val interceptor = makeGeneral(
             id = 2L, factionId = 2L, planetId = 10L, ships = 0,
@@ -397,7 +397,7 @@ class FieldBattleTriggerTest {
         val trigger = makeTrigger(city)
         val triggered = trigger.checkAndTrigger(mover, "이동", fromCityId = 10L, allGenerals = allGenerals, world = makeWorld())
 
-        assertFalse(triggered, "Interceptor with zero crew should not trigger")
+        assertFalse(triggered, "Interceptor with zero ships should not trigger")
     }
 
     @Test

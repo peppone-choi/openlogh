@@ -122,7 +122,7 @@ class GeneralMilitaryCommandTest {
             color = "#FF0000",
             funds = funds,
             supplies = supplies,
-            factionRank = level,
+            level = level,
         )
     }
 
@@ -341,7 +341,7 @@ class GeneralMilitaryCommandTest {
         assertTrue(result.message!!.contains("\"planetId\":\"2\""))
         assertTrue(result.message!!.contains("\"gold\":-500"))
         assertTrue(result.message!!.contains("\"train\":-5"))
-        assertTrue(result.message!!.contains("\"atmos\":-5"))
+        assertTrue(result.message!!.contains("\"morale\":-5"))
     }
 
     @Test
@@ -384,7 +384,7 @@ class GeneralMilitaryCommandTest {
     }
 
     @Test
-    fun `전투태세 should set minimum train and atmos on run`() {
+    fun `전투태세 should set minimum train and morale on run`() {
         val general = createTestGeneral(factionId = 1, ships = 1000, shipClass = 1, training = 50, morale = 50, funds = 1000)
         val env = createTestEnv()
         val cmd = 전투태세(general, env)
@@ -639,7 +639,7 @@ class GeneralMilitaryCommandTest {
     }
 
     @Test
-    fun `parity 출병 constraint fails when crew is zero`() {
+    fun `parity 출병 constraint fails when ships is zero`() {
         val general = createTestGeneral(ships = 0, factionId = 1, planetId = 1)
         val env = createTestEnv()
         val cmd = 출병(general, env)
@@ -1111,7 +1111,7 @@ class GeneralMilitaryCommandTest {
     }
 
     @Test
-    fun `kotlin-only 순찰 constraint fails without crew`() {
+    fun `kotlin-only 순찰 constraint fails without ships`() {
         val general = createTestGeneral(factionId = 1, ships = 0)
         val cmd = 순찰(general, createTestEnv())
         cmd.city = createTestCity(factionId = 1)
@@ -1145,7 +1145,7 @@ class GeneralMilitaryCommandTest {
     }
 
     @Test
-    fun `kotlin-only 요격 constraint fails without crew`() {
+    fun `kotlin-only 요격 constraint fails without ships`() {
         val general = createTestGeneral(factionId = 1, ships = 0, supplies = 100)
         val cmd = 요격(general, createTestEnv())
         cmd.city = createTestCity(factionId = 1)

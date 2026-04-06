@@ -151,7 +151,7 @@ class GeneralPoliticalCommandTest {
             color = "#FF0000",
             funds = funds,
             supplies = supplies,
-            factionRank = level,
+            level = level,
             capitalPlanetId = capitalPlanetId,
         )
     }
@@ -1336,7 +1336,7 @@ class GeneralPoliticalCommandTest {
     inner class CR맹훈련Test {
 
         @Test
-        fun `CR맹훈련 parity -- train and atmos gain golden value`() {
+        fun `CR맹훈련 parity -- train and morale gain golden value`() {
             val general = createTestGeneral(
                 id = 1, name = "관우", factionId = 1,
                 ships = 1000, training = 50, morale = 60,

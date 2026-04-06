@@ -94,14 +94,14 @@ class EdgeCaseTest {
     // ─── 1. General with 0 troops: ReqGeneralCrew blocks ────────────────────
 
     @Test
-    fun `ReqGeneralCrew fails when crew is 0`() {
+    fun `ReqGeneralCrew fails when ships is 0`() {
         val gen = general(ships = 0)
         val result = ReqGeneralCrew(minCrew = 1).test(constraintCtx(gen))
         assertTrue(result is ConstraintResult.Fail, "Expected Fail when ships =0")
     }
 
     @Test
-    fun `ReqGeneralCrew passes when crew is 1`() {
+    fun `ReqGeneralCrew passes when ships is 1`() {
         val gen = general(ships = 1)
         val result = ReqGeneralCrew(minCrew = 1).test(constraintCtx(gen))
         assertEquals(ConstraintResult.Pass, result)
@@ -229,7 +229,7 @@ class EdgeCaseTest {
     // ─── 7. 징병 blend formula: (oldCrew*oldTrain + newCrew*40) / (oldCrew+newCrew) ─
 
     @Test
-    fun `징병 blends train at 40 when adding to same crew type`() {
+    fun `징병 blends train at 40 when adding to same ships type`() {
         val oldCrew = 1000
         val oldTrain = 80
         val newCrew = 500
@@ -262,7 +262,7 @@ class EdgeCaseTest {
     // ─── 8. 모병 blend formula: same but with 70 default train ───────────────
 
     @Test
-    fun `모병 blends train at 70 when adding to same crew type`() {
+    fun `모병 blends train at 70 when adding to same ships type`() {
         val oldCrew = 1000
         val oldTrain = 40
         val newCrew = 1000

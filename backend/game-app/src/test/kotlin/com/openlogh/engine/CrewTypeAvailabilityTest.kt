@@ -141,7 +141,7 @@ class CrewTypeAvailabilityTest {
     }
 
     @Test
-    fun `crew type region requirements follow map specific region ids`() {
+    fun `ships type region requirements follow map specific region ids`() {
         val habukCrewType = CrewType.entries.first { it.reqRegionNames == setOf("하북") }
 
         assertFalse(habukCrewType.isValidForNation(emptySet(), setOf(4), relYear = 10, techLevel = 5000))

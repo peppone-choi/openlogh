@@ -190,7 +190,7 @@ class TriggerCallerTest {
     }
 
     @Test
-    fun `TroopConsumptionTrigger does nothing when crew is 0`() {
+    fun `TroopConsumptionTrigger does nothing when ships is 0`() {
         val general = createGeneral(ships = 0, supplies = 100)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)
@@ -201,7 +201,7 @@ class TriggerCallerTest {
     }
 
     @Test
-    fun `TroopConsumptionTrigger reduces atmos when not enough rice`() {
+    fun `TroopConsumptionTrigger reduces morale when not enough rice`() {
         val general = createGeneral(ships = 1000, supplies = 3, morale = 80)
         val trigger = TroopConsumptionTrigger(general)
         val env = TriggerEnv(worldId = 1, year = 200, month = 3, generalId = general.id)

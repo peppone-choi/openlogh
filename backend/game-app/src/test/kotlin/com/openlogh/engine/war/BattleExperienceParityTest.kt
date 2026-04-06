@@ -16,7 +16,7 @@ import kotlin.random.Random
  * to legacy PHP process_war.php for:
  * - Level exp calculation (damage/50 for attacker, damage/50*0.8 for defender)
  * - Stat exp routing by arm type (FOOTMAN/ARCHER/CAVALRY->strengthExp, WIZARD->intelExp, SIEGE->leadershipExp, MISC->all three)
- * - Win/lose atmos formula (winner *1.1, loser *1.05, cap 100)
+ * - Win/lose morale formula (winner *1.1, loser *1.05, cap 100)
  * - Overflow guards (coerceIn 0..1000 for stat exp)
  * - Full pipeline integration (resolveBattle -> applyResults -> general.experience/statExp)
  */
@@ -290,28 +290,28 @@ class BattleExperienceParityTest {
     inner class WinLoseAtmos {
 
         @Test
-        @DisplayName("Winner (attacker) atmos 80 -> (80*1.1).toInt() = 88")
-        fun `winner atmos multiplied by 1_1`() {
+        @DisplayName("Winner (attacker) morale 80 -> (80*1.1).toInt() = 88")
+        fun `winner morale multiplied by 1_1`() {
             val general = createGeneral(morale = 80)
             val unit = WarUnitOfficer(general)
-            // Simulate attacker win: atmos *= 1.1
+            // Simulate attacker win: morale *= 1.1
             unit.morale = (unit.morale * 1.1).toInt().coerceAtMost(100)
             assertEquals(88, unit.morale)
         }
 
         @Test
-        @DisplayName("Loser (attacker lost) atmos 80 -> (80*1.05).toInt() = 84")
-        fun `loser atmos multiplied by 1_05`() {
+        @DisplayName("Loser (attacker lost) morale 80 -> (80*1.05).toInt() = 84")
+        fun `loser morale multiplied by 1_05`() {
             val general = createGeneral(morale = 80)
             val unit = WarUnitOfficer(general)
-            // Simulate attacker lose: atmos *= 1.05
+            // Simulate attacker lose: morale *= 1.05
             unit.morale = (unit.morale * 1.05).toInt().coerceAtMost(100)
             assertEquals(84, unit.morale)
         }
 
         @Test
-        @DisplayName("Winner atmos capped at 100")
-        fun `winner atmos capped at 100`() {
+        @DisplayName("Winner morale capped at 100")
+        fun `winner morale capped at 100`() {
             val general = createGeneral(morale = 95)
             val unit = WarUnitOfficer(general)
             // morale =95, (95*1.1).toInt() = 104, coerceAtMost(100) = 100
@@ -336,8 +336,8 @@ class BattleExperienceParityTest {
         }
 
         @Test
-        @DisplayName("Loser atmos 96 -> (96*1.05).toInt() = 100, within cap")
-        fun `loser atmos at boundary`() {
+        @DisplayName("Loser morale 96 -> (96*1.05).toInt() = 100, within cap")
+        fun `loser morale at boundary`() {
             val general = createGeneral(morale = 96)
             val unit = WarUnitOfficer(general)
             // (96*1.05).toInt() = 100.8.toInt() = 100, coerceAtMost(100) = 100

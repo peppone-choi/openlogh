@@ -97,10 +97,10 @@ class IntimidationTriggerTest {
         assertFalse(result.magicDisabled)
     }
 
-    // ========== Test 3: Defender atmos reduced by 5 on activation ==========
+    // ========== Test 3: Defender morale reduced by 5 on activation ==========
 
     @Test
-    fun `onEngagementStart reduces defender atmos by 5 when activated`() {
+    fun `onEngagementStart reduces defender morale by 5 when activated`() {
         val defender = WarUnitOfficer(createGeneral(id = 2))
         defender.morale = 50
         val ctx = makeCtx(defender = defender, rng = Random(activateSeed))
@@ -158,7 +158,7 @@ class IntimidationTriggerTest {
     // ========== Test 8: Atmos does not go below 0 ==========
 
     @Test
-    fun `onEngagementStart does not reduce atmos below 0`() {
+    fun `onEngagementStart does not reduce morale below 0`() {
         val defender = WarUnitOfficer(createGeneral(id = 2))
         defender.morale = 3
         val ctx = makeCtx(defender = defender, rng = Random(activateSeed))

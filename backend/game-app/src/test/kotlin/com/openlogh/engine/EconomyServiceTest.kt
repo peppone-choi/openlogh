@@ -154,7 +154,7 @@ class EconomyServiceTest {
         color = "#FF0000",
         funds = funds,
         supplies = supplies,
-        factionRank = level,
+        level = level,
         conscriptionRateTmp = rateTmp,
         taxRate = bill,
         capitalPlanetId = capitalPlanetId,
@@ -289,11 +289,11 @@ class EconomyServiceTest {
         val highCities = (1..5).map { city(id = it.toLong(), level = 5) }
         seed(w, highCities, listOf(nation(level = 1, funds = 0, supplies = 0, bill = 0)), listOf(general(dedication = 0)))
         service.processMonthly(w)
-        assertTrue(nations[1L]!!.level >= 3)
+        assertTrue(nations[1L]!!.factionRank >= 3)
 
         seed(w, listOf(city(level = 5)), listOf(nation(level = 5, funds = 0, supplies = 0, bill = 0)), listOf(general(dedication = 0)))
         service.processMonthly(w)
-        assertEquals(5, nations[1L]!!.level.toInt())
+        assertEquals(5, nations[1L]!!.factionRank.toInt())
     }
 
     // ── Legacy parity: semi-annual decay logic ──

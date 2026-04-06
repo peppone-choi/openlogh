@@ -114,7 +114,7 @@ class GameEndParityTest {
             sessionId = 1,
             name = name,
             color = "#FF0000",
-            factionRank = level.toShort(),
+            level = level.toShort(),
         )
     }
 

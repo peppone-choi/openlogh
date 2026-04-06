@@ -112,7 +112,7 @@ class IndividualCommandTest {
             color = "#FF0000",
             funds = funds,
             supplies = supplies,
-            factionRank = level,
+            level = level,
         )
     }
 
@@ -251,7 +251,7 @@ class IndividualCommandTest {
     }
 
     @Test
-    fun `이동 should decrease atmos by 5 (min 20)`() {
+    fun `이동 should decrease morale by 5 (min 20)`() {
         val general = createTestGeneral(morale = 60, funds = 500)
         val env = createTestEnv()
         val destPlanet = createTestCity().apply { id = 2 }
@@ -262,12 +262,12 @@ class IndividualCommandTest {
 
         assertTrue(result.success)
         assertNotNull(result.message)
-        // atmos should decrease by 5 (from 60 to 55)
-        assertTrue(result.message!!.contains("\"atmos\":-5"))
+        // morale should decrease by 5 (from 60 to 55)
+        assertTrue(result.message!!.contains("\"morale\":-5"))
     }
 
     @Test
-    fun `이동 should not decrease atmos below 20`() {
+    fun `이동 should not decrease morale below 20`() {
         val general = createTestGeneral(morale = 20, funds = 500)
         val env = createTestEnv()
         val destPlanet = createTestCity().apply { id = 2 }
@@ -278,8 +278,8 @@ class IndividualCommandTest {
 
         assertTrue(result.success)
         assertNotNull(result.message)
-        // atmos should stay at 20 (delta = 0)
-        assertTrue(result.message!!.contains("\"atmos\":0"))
+        // morale should stay at 20 (delta = 0)
+        assertTrue(result.message!!.contains("\"morale\":0"))
     }
 
     @Test
@@ -318,7 +318,7 @@ class IndividualCommandTest {
     }
 
     @Test
-    fun `훈련 should reduce atmos as side effect (90 percent retention)`() {
+    fun `훈련 should reduce morale as side effect (90 percent retention)`() {
         val general = createTestGeneral(ships = 1000, training = 50, morale = 80, leadership = 80, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity()
@@ -329,8 +329,8 @@ class IndividualCommandTest {
 
         assertTrue(result.success)
         assertNotNull(result.message)
-        // atmos should become 72 (80 * 0.9), delta = -8
-        assertTrue(result.message!!.contains("\"atmos\":"))
+        // morale should become 72 (80 * 0.9), delta = -8
+        assertTrue(result.message!!.contains("\"morale\":"))
     }
 
     @Test
@@ -351,7 +351,7 @@ class IndividualCommandTest {
     // ========== 사기진작 (Morale Boost) ==========
 
     @Test
-    fun `사기진작 should increase atmos stat`() {
+    fun `사기진작 should increase morale stat`() {
         val general = createTestGeneral(ships = 1000, morale = 50, training = 80, leadership = 80, factionId = 1, funds = 500)
         val env = createTestEnv()
         val city = createTestCity()
@@ -363,8 +363,8 @@ class IndividualCommandTest {
         assertTrue(result.success)
         assertTrue(result.logs[0].contains("사기치"))
         assertNotNull(result.message)
-        // atmos should increase
-        assertTrue(result.message!!.contains("\"atmos\":"))
+        // morale should increase
+        assertTrue(result.message!!.contains("\"morale\":"))
     }
 
     @Test
@@ -384,7 +384,7 @@ class IndividualCommandTest {
     }
 
     @Test
-    fun `사기진작 should consume gold based on crew count`() {
+    fun `사기진작 should consume gold based on ships count`() {
         val general = createTestGeneral(ships = 1000, morale = 50, leadership = 80, factionId = 1, funds = 500)
         val env = createTestEnv()
         val city = createTestCity()
@@ -402,7 +402,7 @@ class IndividualCommandTest {
     // ========== 모병 (Recruitment) ==========
 
     @Test
-    fun `모병 should increase crew count`() {
+    fun `모병 should increase ships count`() {
         val general = createTestGeneral(ships = 0, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity(population = 50000)
@@ -415,12 +415,12 @@ class IndividualCommandTest {
         assertTrue(result.success)
         assertTrue(result.logs[0].contains("모병"))
         assertNotNull(result.message)
-        // crew should increase by 500
-        assertTrue(result.message!!.contains("\"crew\":500"))
+        // ships should increase by 500
+        assertTrue(result.message!!.contains("\"ships\":500"))
     }
 
     @Test
-    fun `모병 should set default train and atmos for new crew`() {
+    fun `모병 should set default train and morale for new ships`() {
         val general = createTestGeneral(ships = 0, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity(population = 50000)
@@ -432,13 +432,13 @@ class IndividualCommandTest {
 
         assertTrue(result.success)
         assertNotNull(result.message)
-        // train should be 70 (default high), atmos should be 70
+        // train should be 70 (default high), morale should be 70
         assertTrue(result.message!!.contains("\"train\":70"))
-        assertTrue(result.message!!.contains("\"atmos\":70"))
+        assertTrue(result.message!!.contains("\"morale\":70"))
     }
 
     @Test
-    fun `모병 should merge train and atmos when adding to same crew type`() {
+    fun `모병 should merge train and morale when adding to same ships type`() {
         val general = createTestGeneral(ships = 1000, shipClass = 1, training = 80, morale = 80, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity(population = 50000)
@@ -490,7 +490,7 @@ class IndividualCommandTest {
     // ========== 징병 (Conscription) ==========
 
     @Test
-    fun `징병 should increase crew count with lower train and atmos than 모병`() {
+    fun `징병 should increase ships count with lower train and morale than 모병`() {
         val general = createTestGeneral(ships = 0, leadership = 50, funds = 5000, supplies = 5000, factionId = 1)
         val env = createTestEnv()
         val city = createTestCity(population = 50000)
@@ -503,11 +503,11 @@ class IndividualCommandTest {
         assertTrue(result.success)
         assertTrue(result.logs[0].contains("징병"))
         assertNotNull(result.message)
-        // crew should increase by 500
-        assertTrue(result.message!!.contains("\"crew\":500"))
-        // train should be 40 (default low per PHP GameConstBase), atmos should be 40
+        // ships should increase by 500
+        assertTrue(result.message!!.contains("\"ships\":500"))
+        // train should be 40 (default low per PHP GameConstBase), morale should be 40
         assertTrue(result.message!!.contains("\"train\":40"))
-        assertTrue(result.message!!.contains("\"atmos\":40"))
+        assertTrue(result.message!!.contains("\"morale\":40"))
     }
 
     @Test
@@ -531,7 +531,7 @@ class IndividualCommandTest {
     // ========== 소집해제 (Disband) ==========
 
     @Test
-    fun `소집해제 should set crew to zero`() {
+    fun `소집해제 should set ships to zero`() {
         val general = createTestGeneral(ships = 500, factionId = 1)
         val env = createTestEnv()
         val cmd = che_소집해제(general, env)
@@ -541,12 +541,12 @@ class IndividualCommandTest {
         assertTrue(result.success)
         assertTrue(result.logs[0].contains("소집해제"))
         assertNotNull(result.message)
-        // crew should decrease by 500 (to 0)
-        assertTrue(result.message!!.contains("\"crew\":-500"))
+        // ships should decrease by 500 (to 0)
+        assertTrue(result.message!!.contains("\"ships\":-500"))
     }
 
     @Test
-    fun `소집해제 should return crew as city population`() {
+    fun `소집해제 should return ships as city population`() {
         val general = createTestGeneral(ships = 500, factionId = 1)
         val env = createTestEnv()
         val cmd = che_소집해제(general, env)

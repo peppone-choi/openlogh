@@ -97,7 +97,7 @@ class EventActionServiceTest {
         level: Short = 2,
         scoutLevel: Short = 0,
         funds: Int = 10000,
-    ): Faction = Faction(id = id, sessionId = sessionId, name = name, factionRank = level, scoutLevel = scoutLevel, funds = funds)
+    ): Faction = Faction(id = id, sessionId = sessionId, name = name, level = level, scoutLevel = scoutLevel, funds = funds)
 
     private fun createCity(
         id: Long = 1L,

@@ -291,7 +291,7 @@ class GeneralMaintenanceServiceTest {
             color = "#112233",
             chiefOfficerId = 1,
             officerCount = 3,
-            factionRank = 4,
+            level = 4,
         )
         val troop = Fleet(
             id = 10,
@@ -420,7 +420,7 @@ class GeneralMaintenanceServiceTest {
             capitalPlanetId = 99,
             officerCount = 1,
             militaryPower = 400,
-            factionRank = 5,
+            level = 5,
         )
         val city = Planet(
             id = 99,

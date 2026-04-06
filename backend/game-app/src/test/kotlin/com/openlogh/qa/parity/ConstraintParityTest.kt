@@ -108,7 +108,7 @@ class ConstraintParityTest {
         }
 
         @Test
-        fun `fails with 0 crew`() {
+        fun `fails with 0 ships`() {
             val gen = createGeneral(ships = 0)
             assertTrue(ReqGeneralCrew().test(ctx(gen)) is ConstraintResult.Fail)
         }
@@ -138,13 +138,13 @@ class ConstraintParityTest {
         }
 
         @Test
-        fun `atmos margin passes when below max`() {
+        fun `morale margin passes when below max`() {
             val gen = createGeneral(morale = 79)
             assertEquals(ConstraintResult.Pass, ReqGeneralAtmosMargin(80).test(ctx(gen)))
         }
 
         @Test
-        fun `atmos margin fails at max`() {
+        fun `morale margin fails at max`() {
             val gen = createGeneral(morale = 80)
             assertTrue(ReqGeneralAtmosMargin(80).test(ctx(gen)) is ConstraintResult.Fail)
         }
@@ -264,7 +264,7 @@ class ConstraintParityTest {
     inner class CrewMarginParity {
 
         @Test
-        fun `passes when different crew type`() {
+        fun `passes when different ships type`() {
             val gen = createGeneral(shipClass = 1100, ships = 10000, leadership = 50)
             assertEquals(ConstraintResult.Pass, ReqGeneralCrewMargin(1200).test(ctx(gen)))
         }

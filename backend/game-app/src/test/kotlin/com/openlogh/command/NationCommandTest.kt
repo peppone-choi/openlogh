@@ -95,7 +95,7 @@ class NationCommandTest {
         color = "#FF0000",
         funds = funds,
         supplies = supplies,
-        factionRank = 7,
+        level = 7,
         strategicCmdLimit = strategicCmdLimit,
         chiefOfficerId = 1,
     )
@@ -396,7 +396,7 @@ class NationCommandTest {
     // ========== Golden Value: 필사즉생 entity diff ==========
 
     @Test
-    fun `필사즉생 golden value -- train and atmos raised to 100`() {
+    fun `필사즉생 golden value -- train and morale raised to 100`() {
         val chief = createGeneral(officerLevel = 20)
         chief.experience = 0
         chief.dedication = 0
@@ -426,7 +426,7 @@ class NationCommandTest {
         assertTrue(result.success)
         // PHP golden value: strategicCmdLimit = 9
         assertEquals(9, nation.strategicCmdLimit.toInt())
-        // PHP golden value: train/atmos raised to 100 for all generals
+        // PHP golden value: train/morale raised to 100 for all generals
         assertEquals(100, chief.training.toInt(), "chief training = 100")
         assertEquals(100, chief.morale.toInt(), "chief morale = 100")
         assertEquals(100, gen2.training.toInt(), "gen2 training = 100")
@@ -502,7 +502,7 @@ class NationCommandTest {
         val nonChief = createGeneral(officerLevel = 5)
         val cmd = che_칭제(nonChief, env())
         cmd.city = createCity(factionId = 1)
-        cmd.nation = createNation(id = 1).also { it.level = 8 }
+        cmd.nation = createNation(id = 1).also { it.factionRank = 8 }
         cmd.constraintEnv = mapOf("emperorSystem" to true, "nationCityCount" to 20)
         val result = cmd.checkFullCondition()
         assertTrue(result is ConstraintResult.Fail)

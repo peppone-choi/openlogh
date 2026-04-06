@@ -145,7 +145,7 @@ class EconomyFormulaParityTest {
         factionType: String = "che_중립",
     ): Faction = Faction(
         id = id, sessionId = 1, name = "nation$id", color = "#FF0000",
-        funds = funds, supplies = supplies, factionRank = level, conscriptionRateTmp = rateTmp,
+        funds = funds, supplies = supplies, level = level, conscriptionRateTmp = rateTmp,
         taxRate = bill, capitalPlanetId = capitalPlanetId, conscriptionRate = conscriptionRate,
         factionType = factionType,
     )
@@ -699,7 +699,7 @@ class EconomyFormulaParityTest {
 
             service.postUpdateMonthly(world(month = 3))
 
-            assertThat(nations[1L]!!.level.toInt()).isEqualTo(expectedLevel)
+            assertThat(nations[1L]!!.factionRank.toInt()).isEqualTo(expectedLevel)
         }
 
         @Test
@@ -728,7 +728,7 @@ class EconomyFormulaParityTest {
 
             service.postUpdateMonthly(world(month = 3))
 
-            assertThat(nations[1L]!!.level.toInt()).isEqualTo(5)
+            assertThat(nations[1L]!!.factionRank.toInt()).isEqualTo(5)
         }
     }
 
@@ -814,7 +814,7 @@ class EconomyFormulaParityTest {
             service.preUpdateMonthly(world())
             val goldNonCapital = nations[1L]!!.funds - 100000
 
-            // level=1: bonus = 1 + 1/3/1 = 1.333
+            // level = 1: bonus = 1 + 1/3/1 = 1.333
             val expectedRatio = 1 + 1.0 / 3 / 1
             assertThat(goldCapital.toDouble() / goldNonCapital)
                 .isCloseTo(expectedRatio, within(0.01))

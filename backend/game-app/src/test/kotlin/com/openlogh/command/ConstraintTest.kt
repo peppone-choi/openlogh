@@ -96,7 +96,7 @@ class ConstraintTest {
             color = "#FF0000",
             funds = funds,
             supplies = supplies,
-            factionRank = level,
+            level = level,
             capitalPlanetId = capitalPlanetId,
             strategicCmdLimit = strategicCmdLimit,
         )
@@ -239,14 +239,14 @@ class ConstraintTest {
     // ========== ReqGeneralCrew ==========
 
     @Test
-    fun `ReqGeneralCrew passes with enough crew`() {
+    fun `ReqGeneralCrew passes with enough ships`() {
         val general = createGeneral(ships = 100)
         val result = ReqGeneralCrew(100).test(ctx(general = general))
         assertTrue(result is ConstraintResult.Pass)
     }
 
     @Test
-    fun `ReqGeneralCrew fails with zero crew`() {
+    fun `ReqGeneralCrew fails with zero ships`() {
         val general = createGeneral(ships = 0)
         val result = ReqGeneralCrew().test(ctx(general = general))
         assertTrue(result is ConstraintResult.Fail)
@@ -358,14 +358,14 @@ class ConstraintTest {
     }
 
     @Test
-    fun `ReqGeneralAtmosMargin passes when atmos is below max`() {
+    fun `ReqGeneralAtmosMargin passes when morale is below max`() {
         val general = createGeneral(morale = 50)
         val result = ReqGeneralAtmosMargin(80).test(ctx(general = general))
         assertTrue(result is ConstraintResult.Pass)
     }
 
     @Test
-    fun `ReqGeneralAtmosMargin fails when atmos is at max`() {
+    fun `ReqGeneralAtmosMargin fails when morale is at max`() {
         val general = createGeneral(morale = 80)
         val result = ReqGeneralAtmosMargin(80).test(ctx(general = general))
         assertTrue(result is ConstraintResult.Fail)

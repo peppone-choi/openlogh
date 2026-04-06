@@ -241,11 +241,11 @@ class CommandParityTest {
         score = maxOf(1, score)
 
         // Legacy CriticalRatioDomestic
-        val avg = (leadership + strength + intel) / 3.0
+        val avg = (leadership + command + intelligence) / 3.0
         val statValue = when (statKey) {
             "leadership" -> leadership.toDouble()
-            "strength" -> strength.toDouble()
-            else -> intel.toDouble()
+            "strength" -> command.toDouble()
+            else -> intelligence.toDouble()
         }
         val ratio = min(avg / statValue, 1.2)
         var failRatio = ((ratio / 1.2).pow(1.4) - 0.3).coerceIn(0.0, 0.5)
@@ -313,10 +313,10 @@ class CommandParityTest {
             }
         }
 
-        val baseScore = (crew.toDouble() * train * atmos) / 200000.0
+        val baseScore = (ships.toDouble() * training * morale) / 200000.0
         val score = (baseScore * multiplier).roundToInt()
 
-        val totalWeight = leadership + strength + intel
+        val totalWeight = leadership + command + intelligence
         var roll = rng.nextDouble() * totalWeight
         val incStat = when {
             run {

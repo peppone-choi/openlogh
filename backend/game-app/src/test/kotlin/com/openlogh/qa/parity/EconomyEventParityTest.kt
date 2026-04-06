@@ -144,7 +144,7 @@ class EconomyEventParityTest {
         factionType: String = "che_중립",
     ): Faction = Faction(
         id = id, sessionId = 1, name = "nation$id", color = "#FF0000",
-        funds = funds, supplies = supplies, factionRank = level, conscriptionRateTmp = rateTmp,
+        funds = funds, supplies = supplies, level = level, conscriptionRateTmp = rateTmp,
         taxRate = bill, capitalPlanetId = capitalPlanetId, conscriptionRate = conscriptionRate,
         factionType = factionType,
     )
@@ -1058,7 +1058,7 @@ class EconomyEventParityTest {
 
             service.postUpdateMonthly(world(month = 3))
 
-            assertThat(nations[1L]!!.level.toInt())
+            assertThat(nations[1L]!!.factionRank.toInt())
                 .describedAs("Level for $highCityCount high cities")
                 .isEqualTo(expectedLevel)
             assertThat(nations[1L]!!.funds)
@@ -1080,7 +1080,7 @@ class EconomyEventParityTest {
 
             service.postUpdateMonthly(world(month = 3))
 
-            assertThat(nations[1L]!!.level.toInt()).isEqualTo(4)
+            assertThat(nations[1L]!!.factionRank.toInt()).isEqualTo(4)
             // Reward = newLevel * 1000 = 4000
             assertThat(nations[1L]!!.funds).isEqualTo(5000 + 4000)
             assertThat(nations[1L]!!.supplies).isEqualTo(5000 + 4000)

@@ -33,7 +33,7 @@ import org.mockito.Mockito.`when`
  *   - RNG seed string parity ("disater" typo in PHP)
  *   - Disaster state codes per month
  *   - Disaster/boom affectRatio formulas and city field effects
- *   - SabotageInjury: 30% chance, injury 1-16, crew/atmos/train *= 0.98
+ *   - SabotageInjury: 30% chance, injury 1-16, ships/morale/training *= 0.98
  *
  * Legacy source: hwe/sammo/Event/Action/RaiseDisaster.php
  */
@@ -506,11 +506,11 @@ class DisasterParityTest {
     inner class SabotageInjury {
 
         @Test
-        @DisplayName("30% injury chance, injury 1-16, crew/atmos/train *= 0.98, injury cap 80")
+        @DisplayName("30% injury chance, injury 1-16, ships/morale/training *= 0.98, injury cap 80")
         fun `sabotage injury parameters match legacy`() {
             // Legacy SabotageInjury: 30% chance (rng.nextDouble() >= 0.3 means NO injury)
             // If injured: injury += rng.nextInt(1, 17) (Kotlin: 1..16), cap at 80
-            // crew *= 0.98, atmos *= 0.98, train *= 0.98
+            // ships *= 0.98, morale *= 0.98, training *= 0.98
 
             // Verify formula constants by reading source
             val sourceFile = java.io.File("src/main/kotlin/com/opensam/engine/EconomyService.kt")
@@ -523,9 +523,9 @@ class DisasterParityTest {
             assertThat(source).contains("rng.nextInt(1, 17)")
 
             // Check 0.98 multipliers
-            assertThat(source).contains("crew * 0.98")
-            assertThat(source).contains("atmos * 0.98")
-            assertThat(source).contains("train * 0.98")
+            assertThat(source).contains("ships * 0.98")
+            assertThat(source).contains("morale * 0.98")
+            assertThat(source).contains("training * 0.98")
 
             // Check injury cap at 80
             assertThat(source).contains("coerceIn(0, 80)")
@@ -542,7 +542,7 @@ class DisasterParityTest {
         }
 
         @Test
-        @DisplayName("Crew/atmos/train reduction golden values")
+        @DisplayName("Crew/morale/train reduction golden values")
         fun `stat reduction golden values`() {
             // ships =5000 -> 5000 * 0.98 = 4900
             assertThat((5000 * 0.98).toInt()).isEqualTo(4900)

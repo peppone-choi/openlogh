@@ -113,7 +113,7 @@ class CommandTest {
             color = "#FF0000",
             funds = funds,
             supplies = supplies,
-            factionRank = level,
+            level = level,
         )
     }
 
@@ -339,7 +339,7 @@ class CommandTest {
     }
 
     @Test
-    fun `모병 should cap crew at leadership times 100`() {
+    fun `모병 should cap ships at leadership times 100`() {
         val general = createTestGeneral(funds = 50000, supplies = 50000, leadership = 10)
         val env = createTestEnv()
         val city = createTestCity()
@@ -354,7 +354,7 @@ class CommandTest {
     }
 
     @Test
-    fun `모병 should calculate additional recruit cost when same crew type`() {
+    fun `모병 should calculate additional recruit cost when same ships type`() {
         val general = createTestGeneral(funds = 50000, supplies = 50000, leadership = 50, ships = 2000, shipClass = 1)
         val env = createTestEnv()
         val city = createTestCity()
@@ -368,7 +368,7 @@ class CommandTest {
     }
 
     @Test
-    fun `모병 should merge train and atmos when same crew type`() {
+    fun `모병 should merge train and morale when same ships type`() {
         val general = createTestGeneral(
             funds = 50000, supplies = 50000, leadership = 50,
             ships = 1000, shipClass = 1, training = 80, morale = 80
@@ -385,7 +385,7 @@ class CommandTest {
     }
 
     @Test
-    fun `모병 should set default train and atmos when different crew type`() {
+    fun `모병 should set default train and morale when different ships type`() {
         val general = createTestGeneral(
             funds = 50000, supplies = 50000, leadership = 50,
             ships = 1000, shipClass = 1, training = 80, morale = 80
@@ -459,7 +459,7 @@ class CommandTest {
     // ========== 훈련 (Training) ==========
 
     @Test
-    fun `훈련 should fail without crew`() {
+    fun `훈련 should fail without ships`() {
         val general = createTestGeneral(ships = 0)
         val env = createTestEnv()
         val city = createTestCity()
@@ -557,7 +557,7 @@ class CommandTest {
     // ========== 소집해제 (Disband) ==========
 
     @Test
-    fun `소집해제 should fail without crew`() {
+    fun `소집해제 should fail without ships`() {
         val general = createTestGeneral(ships = 0)
         val env = createTestEnv()
         val cmd = che_소집해제(general, env)
@@ -567,7 +567,7 @@ class CommandTest {
     }
 
     @Test
-    fun `소집해제 should succeed with crew`() {
+    fun `소집해제 should succeed with ships`() {
         val general = createTestGeneral(ships = 500)
         val env = createTestEnv()
         val cmd = che_소집해제(general, env)
@@ -578,7 +578,7 @@ class CommandTest {
         val result = runBlocking { cmd.run(fixedRng) }
         assertTrue(result.success)
         assertTrue(result.logs[0].contains("소집해제"))
-        // Should return all crew as population
+        // Should return all ships as population
         assertNotNull(result.message)
         assertTrue(result.message!!.contains("\"population\":500"))
     }

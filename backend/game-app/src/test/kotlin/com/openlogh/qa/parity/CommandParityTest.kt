@@ -42,8 +42,8 @@ class CommandParityTest {
     inner class TrainingParity {
 
         @Test
-        fun `high leadership low crew gives high training score`() {
-            // Legacy: score = clamp(round(leadership * 100 / crew * trainDelta), 0, maxTrain - train)
+        fun `high leadership low ships gives high training score`() {
+            // Legacy: score = clamp(round(leadership * 100 / ships * trainDelta), 0, maxTrain - train)
             val gen = createGeneral(leadership = 100, ships = 100, training = 0, morale = 80)
             val result = runCmd(che_훈련(gen, createEnv()), "train_1")
             assertTrue(result.success)
@@ -72,9 +72,9 @@ class CommandParityTest {
         }
 
         @Test
-        fun `atmos side effect matches legacy formula`() {
+        fun `morale side effect matches legacy formula`() {
             // atmosSideEffectByTraining = 1.0 (no side effect)
-            // atmosAfter = max(0, (atmos * 1.0).toInt()); delta = atmosAfter - morale = 0
+            // atmosAfter = max(0, (morale * 1.0).toInt()); delta = atmosAfter - morale = 0
             val gen = createGeneral(leadership = 80, ships = 200, training = 60, morale = 100)
             val result = runCmd(che_훈련(gen, createEnv()), "train_4")
             val json = mapper.readTree(result.message)
@@ -83,7 +83,7 @@ class CommandParityTest {
         }
 
         @Test
-        fun `atmos zero stays zero`() {
+        fun `morale zero stays zero`() {
             val gen = createGeneral(leadership = 80, ships = 200, training = 60, morale = 0)
             val result = runCmd(che_훈련(gen, createEnv()), "train_5")
             val json = mapper.readTree(result.message)
@@ -111,7 +111,7 @@ class CommandParityTest {
     inner class ConscriptionParity {
 
         @Test
-        fun `adding to existing same crew type blends train and atmos`() {
+        fun `adding to existing same ships type blends train and morale`() {
             // Legacy: newTrain = (oldCrew*oldTrain + newCrew*50) / (oldCrew+newCrew)
             val gen = createGeneral(ships = 1000, shipClass = 1100, training = 80, morale = 80, funds = 10000, supplies = 10000, leadership = 80)
             val arg = mapOf<String, Any>("amount" to 1000, "crewType" to 1100)
@@ -124,7 +124,7 @@ class CommandParityTest {
         }
 
         @Test
-        fun `switching crew type resets to 50 50`() {
+        fun `switching ships type resets to 50 50`() {
             val gen = createGeneral(ships = 1000, shipClass = 1100, training = 80, morale = 80, funds = 10000, supplies = 10000, leadership = 80)
             val arg = mapOf<String, Any>("amount" to 500, "crewType" to 1200) // different type
             val result = runCmd(che_징병(gen, createEnv(), arg), "con_2")
@@ -452,14 +452,14 @@ class CommandParityTest {
     )
 
     // Extension for General to support copy-like behavior in tests
-    private fun General.copy(): Officer = Officer(
+    private fun Officer.copy(): Officer = Officer(
         id = id, sessionId = sessionId, name = name, factionId = factionId, planetId = planetId,
         funds = funds, supplies = supplies, ships = ships, shipClass = shipClass, training = training, morale = morale,
         leadership = leadership, command = command, intelligence = intelligence, politics = politics, administration = administration,
         turnTime = turnTime,
     )
 
-    private fun City.copy(): Planet = Planet(
+    private fun Planet.copy(): Planet = Planet(
         id = id, sessionId = sessionId, name = name, factionId = factionId,
         population = population, populationMax = populationMax, production = production, productionMax = productionMax, commerce = commerce, commerceMax = commerceMax,
         security = security, securityMax = securityMax, orbitalDefense = orbitalDefense, orbitalDefenseMax = orbitalDefenseMax, fortress = fortress, fortressMax = fortressMax,

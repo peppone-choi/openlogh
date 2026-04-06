@@ -99,7 +99,7 @@ class IntegerDivisionParityTest {
     @Test
     @DisplayName("Edge case: large values within game range")
     fun `large game values`() {
-        // Max crew * train scenario
+        // Max ships * train scenario
         assertEquals(11000, 1100000 / 100)
 
         // Population / max cities

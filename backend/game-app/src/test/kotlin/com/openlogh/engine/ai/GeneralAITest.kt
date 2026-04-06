@@ -128,7 +128,7 @@ class GeneralAITest {
             sessionId = 1,
             name = "국가$id",
             color = "#FF0000",
-            factionRank = level,
+            level = level,
             funds = funds,
             supplies = supplies,
             militaryPower = militaryPower,
@@ -651,12 +651,12 @@ class GeneralAITest {
     // ========== War actions ==========
 
     @Test
-    fun `recruits via mobing when at war with low crew and plenty of gold and high train`() {
+    fun `recruits via mobing when at war with low ships and plenty of gold and high train`() {
         val world = createWorld()
         // Per legacy: 모병 requires gold after train cost >= trainCost*6
         // leadership=50, trainCost=150, so need gold > 150 + 150*6 = 1050
         // Use "전쟁" (PHP state=0, active war) to trigger AT_WAR diplomacy state
-        // Set train/atmos high so 전투준비 is skipped, reaching 징병 in priority
+        // Set train/morale high so 전투준비 is skipped, reaching 징병 in priority
         val general = createGeneral(ships = 50, funds = 2000, supplies = 2000, training = 90, morale = 90)
         val city = createCity(factionId = 1)
         val nation = createNation(funds = 20000, supplies = 20000)
@@ -670,11 +670,11 @@ class GeneralAITest {
     }
 
     @Test
-    fun `conscripts when at war with low crew and moderate gold and high train`() {
+    fun `conscripts when at war with low ships and moderate gold and high train`() {
         val world = createWorld()
         // Per legacy: 징병 when gold is enough for train but not 모병
         // Use "전쟁" (PHP state=0, active war) to trigger AT_WAR diplomacy state
-        // Set train/atmos high so 전투준비 is skipped, reaching 징병 in priority
+        // Set train/morale high so 전투준비 is skipped, reaching 징병 in priority
         val general = createGeneral(ships = 50, funds = 500, supplies = 1000, training = 90, morale = 90)
         val city = createCity(factionId = 1)
         val nation = createNation(funds = 20000, supplies = 20000)
@@ -688,10 +688,10 @@ class GeneralAITest {
     }
 
     @Test
-    fun `trains when at war with low train and high atmos`() {
+    fun `trains when at war with low train and high morale`() {
         val world = createWorld()
         // Per legacy: weighted random choice between 훈련 and 사기진작
-        // With atmos already at threshold (90), only 훈련 is chosen
+        // With morale already at threshold (90), only 훈련 is chosen
         // Use "전쟁" (PHP state=0, active war) to trigger AT_WAR diplomacy state
         val general = createGeneral(ships = 2000, training = 50, morale = 90)
         val city = createCity(factionId = 1)
@@ -706,7 +706,7 @@ class GeneralAITest {
     }
 
     @Test
-    fun `boosts morale when at war with low atmos`() {
+    fun `boosts morale when at war with low morale`() {
         val world = createWorld()
         // Use "전쟁" (PHP state=0, active war) to trigger AT_WAR diplomacy state
         val general = createGeneral(ships = 2000, training = 80, morale = 50)
@@ -803,9 +803,9 @@ class GeneralAITest {
     }
 
     @Test
-    fun `warrior type produces valid action when at war with no crew`() {
+    fun `warrior type produces valid action when at war with no ships`() {
         val world = createWorld()
-        // With PHP priority order, general with no crew and low gold may do domestic or disband
+        // With PHP priority order, general with no ships and low gold may do domestic or disband
         val general = createGeneral(command = 90, leadership = 50, intelligence = 30, ships = 0, funds = 200, supplies = 200, training = 90, morale = 90)
         val city = createCity(factionId = 1, production = 600, productionMax = 1000, commerce = 600, commerceMax = 1000, security = 600, securityMax = 1000)
         val nation = createNation()
@@ -867,7 +867,7 @@ class GeneralAITest {
         // Per legacy parity: funds =500 with leadership=50 -> trainCost=150, goldAfter=350
         // 350 < 900 (trainCost*6), so 징병 (conscript) not 모병 (volunteer)
         // Use "전쟁" (PHP state=0, active war) to trigger AT_WAR diplomacy state
-        // Set train/atmos high so 전투준비 is skipped, reaching 징병 in PHP priority
+        // Set train/morale high so 전투준비 is skipped, reaching 징병 in PHP priority
         val general = createGeneral(ships = 50, funds = 500, training = 90, morale = 90)
         val city = createCity(factionId = 1)
         val nation = createNation(funds = 20000, supplies = 20000)
@@ -876,7 +876,7 @@ class GeneralAITest {
         setupRepos(world, general, city, nation, diplomacies = listOf(diplomacy),
             allNations = listOf(nation, createNation(id = 2)))
 
-        // At war with low crew and moderate gold -> conscript
+        // At war with low ships and moderate gold -> conscript
         val action = ai.decideAndExecute(general, world)
         assertEquals("징병", action)
     }
@@ -1106,7 +1106,7 @@ class GeneralAITest {
     // ========== Military AI parity: doSortie ==========
 
     @Test
-    fun `doSortie returns 출병 when at war with sufficient crew train atmos at front city`() {
+    fun `doSortie returns 출병 when at war with sufficient ships train morale at front city`() {
         val world = createWorld()
         val general = createGeneral(
             leadership = 80, command = 70, intelligence = 50,
@@ -1160,8 +1160,8 @@ class GeneralAITest {
     }
 
     @Test
-    fun `doSortie returns null when crew below minWarCrew policy threshold`() {
-        // PHP guard: crew < min((fullLeadership - 2) * 100, nationPolicy.minWarCrew)
+    fun `doSortie returns null when ships below minWarCrew policy threshold`() {
+        // PHP guard: ships < min((fullLeadership - 2) * 100, nationPolicy.minWarCrew)
         // leadership=80, (80-2)*100=7800, minWarCrew=1500 -> threshold=1500
         // ships =1000 < 1500 -> null
         val world = createWorld()
@@ -1184,7 +1184,7 @@ class GeneralAITest {
         )
 
         val result = invokeDoSortie(ctx, Random(42), NpcNationPolicy(), true, mapOf(2L to 2))
-        assertNull(result, "Should return null when crew < min((leadership-2)*100, minWarCrew)")
+        assertNull(result, "Should return null when ships < min((leadership-2)*100, minWarCrew)")
     }
 
     @Test
@@ -1217,7 +1217,7 @@ class GeneralAITest {
     // ========== Military AI parity: doRecruit ==========
 
     @Test
-    fun `doRecruit returns 징병 when at war with low crew and sufficient population`() {
+    fun `doRecruit returns 징병 when at war with low ships and sufficient population`() {
         val world = createWorld()
         val general = createGeneral(
             leadership = 50, ships = 500, funds = 2000, supplies = 2000,
@@ -1320,12 +1320,12 @@ class GeneralAITest {
         )
 
         val result = invokeDoCombatPrep(ctx, Random(42), NpcNationPolicy(), emptyMap())
-        assertNotNull(result, "Should return training action when train/atmos below threshold")
+        assertNotNull(result, "Should return training action when train/morale below threshold")
         assertTrue(result == "훈련" || result == "사기진작", "Expected combat prep but got: $result")
     }
 
     @Test
-    fun `doCombatPrep returns null when train and atmos both at or above policy threshold`() {
+    fun `doCombatPrep returns null when train and morale both at or above policy threshold`() {
         // PHP: both >= properWarTrainAtmos (90) -> no cmd -> null
         val world = createWorld()
         val general = createGeneral(ships = 2000, training = 95, morale = 95)
@@ -1345,11 +1345,11 @@ class GeneralAITest {
         )
 
         val result = invokeDoCombatPrep(ctx, Random(42), NpcNationPolicy(), emptyMap())
-        assertNull(result, "Should return null when both train and atmos >= properWarTrainAtmos (90)")
+        assertNull(result, "Should return null when both train and morale >= properWarTrainAtmos (90)")
     }
 
     @Test
-    fun `doCombatPrep uses weighted choice between train and atmos per PHP`() {
+    fun `doCombatPrep uses weighted choice between train and morale per PHP`() {
         // PHP: training =60, morale =85, threshold=90 -> both below
         // PHP builds weighted list: [훈련 weight=maxTrain/60, 사기진작 weight=maxAtmos/85]
         // Kotlin should use weighted choice, not deterministic first match
@@ -1370,7 +1370,7 @@ class GeneralAITest {
             nationGenerals = listOf(general),
         )
 
-        // With atmos much lower, 사기진작 should have higher weight
+        // With morale much lower, 사기진작 should have higher weight
         // Using a specific seed that would produce 사기진작 given proper weighting
         val result = invokeDoCombatPrep(ctx, Random(42), NpcNationPolicy(), emptyMap())
         assertNotNull(result, "Should return combat prep action")
@@ -1489,7 +1489,7 @@ class GeneralAITest {
     // ========== Military AI parity: doWarpToRear ==========
 
     @Test
-    fun `doWarpToRear returns warp when commander with low crew and recruitable rear city exists`() {
+    fun `doWarpToRear returns warp when commander with low ships and recruitable rear city exists`() {
         val world = createWorld()
         val general = createGeneral(leadership = 80, ships = 500, training = 90, morale = 90)
         val frontCity = createCity(id = 1, factionId = 1, frontState = 2).apply {
@@ -1549,7 +1549,7 @@ class GeneralAITest {
     }
 
     @Test
-    fun `doWarpToRear returns null when already have enough crew`() {
+    fun `doWarpToRear returns null when already have enough ships`() {
         val world = createWorld()
         val general = createGeneral(leadership = 80, ships = 2000)
         val frontCity = createCity(id = 1, factionId = 1, frontState = 2)
@@ -1575,7 +1575,7 @@ class GeneralAITest {
             ctx, Random(42), NpcGeneralPolicy(), NpcNationPolicy(),
             listOf(rearCity), listOf(frontCity, rearCity),
         )
-        assertNull(result, "Should not warp to rear when crew >= minWarCrew")
+        assertNull(result, "Should not warp to rear when ships >= minWarCrew")
     }
 
     // ========== Military AI parity: doRally ==========
@@ -1637,7 +1637,7 @@ class GeneralAITest {
     }
 
     @Test
-    fun `doDismiss returns null when crew is zero`() {
+    fun `doDismiss returns null when ships is zero`() {
         val world = createWorld()
         val general = createGeneral(ships = 0)
         val city = createCity(factionId = 1)
@@ -1656,11 +1656,11 @@ class GeneralAITest {
         )
 
         val result = invokeDoDismiss(ctx, Random(42), false)
-        assertNull(result, "Should not dismiss when crew is zero")
+        assertNull(result, "Should not dismiss when ships is zero")
     }
 
     @Test
-    fun `doDismiss returns 소집해제 when at peace with crew and random passes`() {
+    fun `doDismiss returns 소집해제 when at peace with ships and random passes`() {
         // PHP: 75% chance to skip -> need random >= 0.75 to proceed
         val world = createWorld()
         val general = createGeneral(ships = 2000)
@@ -1905,7 +1905,7 @@ class GeneralAITest {
         // ── doUserRearAssignment: user war general needing recruitment to rear ──
 
         @Test
-        fun `doUserRearAssignment returns 발령 for low-crew user general at war`() {
+        fun `doUserRearAssignment returns 발령 for low-ships user general at war`() {
             val world = createWorld()
             val chief = createGeneral(id = 1, officerLevel = 20, npcState = 2)
             val userGen = createGeneral(id = 2, npcState = 0, officerLevel = 1).apply {

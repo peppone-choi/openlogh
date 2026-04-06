@@ -60,7 +60,7 @@ class WarFormulaTest {
 
     @Test
     fun `getDexLog returns value above 1 when dex1 level is higher`() {
-        // dex1 level=2 (1375), dex2 level=0 (0) => diff = 2, result = 2/55 + 1 = ~1.036
+        // dex1 level = 2 (1375), dex2 level = 0 (0) => diff = 2, result = 2/55 + 1 = ~1.036
         val result = getDexLog(1375, 0)
         assertTrue(result > 1.0, "getDexLog should be > 1.0 when dex1 > dex2")
         assertEquals(1.0 + 2.0 / 55.0, result, 0.001)

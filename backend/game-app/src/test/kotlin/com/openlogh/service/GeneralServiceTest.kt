@@ -123,7 +123,7 @@ class OfficerServiceTest {
         `when`(officerRepository.findByNameAndSessionId("신장수", 1L)).thenReturn(null)
         `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
 
-        val general = service.createGeneral(
+        val general = service.createOfficer(
             1L,
             "user",
             CreateGeneralRequest(
@@ -190,7 +190,7 @@ class OfficerServiceTest {
         `when`(officerRepository.findByNameAndSessionId("계승장수", 1L)).thenReturn(null)
         `when`(planetRepository.findById(11L)).thenReturn(Optional.of(city))
 
-        val general = service.createGeneral(
+        val general = service.createOfficer(
             1L,
             "user",
             CreateGeneralRequest(
@@ -236,7 +236,7 @@ class OfficerServiceTest {
         `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
         `when`(officerRepository.findBySessionIdAndUserId(1L, 3L)).thenReturn(emptyList())
 
-        val general = service.buildPoolGeneral(
+        val general = service.buildPoolOfficer(
             1L,
             "user",
             BuildPoolGeneralRequest(
@@ -284,7 +284,7 @@ class OfficerServiceTest {
         `when`(officerRepository.findByNameAndSessionId("신장수", 1L)).thenReturn(null)
         `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
 
-        val general = service.createGeneral(
+        val general = service.createOfficer(
             1L,
             "USER",
             CreateGeneralRequest(
@@ -331,7 +331,7 @@ class OfficerServiceTest {
         `when`(officerRepository.findByNameAndSessionId("턴타임장수", 1L)).thenReturn(null)
         `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
 
-        val general = service.createGeneral(
+        val general = service.createOfficer(
             1L,
             "user",
             CreateGeneralRequest(
@@ -382,7 +382,7 @@ class OfficerServiceTest {
         `when`(officerRepository.findByNameAndSessionId("삭턴장수", 1L)).thenReturn(null)
         `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
 
-        val general = service.createGeneral(
+        val general = service.createOfficer(
             1L,
             "user",
             CreateGeneralRequest(
@@ -426,7 +426,7 @@ class OfficerServiceTest {
         `when`(officerRepository.findByNameAndSessionId("설정장수", 1L)).thenReturn(null)
         `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
 
-        val general = service.createGeneral(
+        val general = service.createOfficer(
             1L,
             "user",
             CreateGeneralRequest(
@@ -450,7 +450,7 @@ class OfficerServiceTest {
         `when`(appUserRepository.findByLoginIdIgnoreCase("ghost")).thenReturn(null)
 
         val ex = assertThrows(IllegalArgumentException::class.java) {
-            service.createGeneral(
+            service.createOfficer(
                 1L,
                 "ghost",
                 CreateGeneralRequest(

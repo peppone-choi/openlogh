@@ -135,13 +135,13 @@ class NumericParityGoldenTest {
 
         val nationWei = Faction(
             id = 1, sessionId = 1, name = "위", color = "#FF0000",
-            funds = 10000, supplies = 10000, factionRank = 3,
+            funds = 10000, supplies = 10000, level = 3,
             taxRate = 100, conscriptionRateTmp = 15, conscriptionRate = 15,
             capitalPlanetId = 1,
         )
         val nationShu = Faction(
             id = 2, sessionId = 1, name = "촉", color = "#00FF00",
-            funds = 10000, supplies = 10000, factionRank = 3,
+            funds = 10000, supplies = 10000, level = 3,
             taxRate = 100, conscriptionRateTmp = 15, conscriptionRate = 15,
             capitalPlanetId = 2,
         )

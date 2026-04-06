@@ -211,7 +211,7 @@ class BattleEngineParityTest {
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // WarUnitPlanet year-based train/atmos in battle context
+    // WarUnitPlanet year-based train/morale in battle context
     // ──────────────────────────────────────────────────────────────────
 
     @Test

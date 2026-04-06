@@ -59,7 +59,7 @@ class WarAftermathTest {
             funds = 1000,
             supplies = 1000,
             militaryPower = 0,
-            factionRank = 1,
+            level = 1,
             factionType = "test",
             techLevel = 1000f,
             meta = mutableMapOf("tech" to 1000),

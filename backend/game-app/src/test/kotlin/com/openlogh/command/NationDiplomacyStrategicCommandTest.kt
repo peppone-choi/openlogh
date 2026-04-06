@@ -102,7 +102,7 @@ class NationDiplomacyStrategicCommandTest {
         color = "#FF0000",
         funds = funds,
         supplies = supplies,
-        factionRank = level,
+        level = level,
         strategicCmdLimit = strategicCmdLimit,
         chiefOfficerId = 1,
     )
