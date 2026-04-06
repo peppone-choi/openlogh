@@ -76,6 +76,11 @@ export function CommandSelectForm({
                                                 {realtimeMode && (
                                                     <span className="ml-1 text-[10px] text-gray-300">
                                                         ({cmd.commandPointCost}CP/{cmd.durationSeconds}s)
+                                                        {cmd.poolType && (
+                                                            <span className={cmd.poolType === 'MCP' ? 'ml-0.5 text-red-400' : 'ml-0.5 text-blue-400'}>
+                                                                [{cmd.poolType}]
+                                                            </span>
+                                                        )}
                                                     </span>
                                                 )}
                                             </Badge>

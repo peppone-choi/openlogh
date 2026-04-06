@@ -183,6 +183,10 @@ export interface General {
     special2Code: string;
     spec2Age: number;
     commandPoints: number;
+    pcp: number;
+    mcp: number;
+    pcpMax: number;
+    mcpMax: number;
     commandEndTime: string | null;
     lastTurn: LastTurnInfo;
     meta: Record<string, unknown>;
@@ -526,6 +530,10 @@ export type AccountDetailedInfoResponse = AccountDetailedInfo;
 export interface RealtimeStatus {
     generalId: number;
     commandPoints: number;
+    pcp: number;
+    mcp: number;
+    pcpMax: number;
+    mcpMax: number;
     commandEndTime: string | null;
     remainingSeconds: number;
 }
@@ -749,6 +757,10 @@ export interface GeneralFrontInfo {
     turntime: string;
     recentWar: string | null;
     commandPoints: number;
+    pcp: number;
+    mcp: number;
+    pcpMax: number;
+    mcpMax: number;
     commandEndTime: string | null;
     ownerName: string | null;
     refreshScoreTotal: number | null;
@@ -850,6 +862,7 @@ export interface CommandTableEntry {
     reason?: string;
     durationSeconds: number;
     commandPointCost: number;
+    poolType?: 'PCP' | 'MCP';
 }
 
 // Contact

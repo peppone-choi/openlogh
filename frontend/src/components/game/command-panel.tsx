@@ -733,8 +733,12 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                         <Clock3 className="size-3.5 text-amber-300" />
                         <span>{serverClock}</span>
                         {realtimeMode && realtimeStatus ? (
-                            <Badge variant="outline" className="text-[11px] text-cyan-300">
-                                CP {realtimeStatus.commandPoints} / 대기 {realtimeStatus.remainingSeconds}s
+                            <Badge variant="outline" className="text-[11px]">
+                                <span className="text-blue-400">PCP {realtimeStatus.pcp}/{realtimeStatus.pcpMax}</span>
+                                {' '}
+                                <span className="text-red-400">MCP {realtimeStatus.mcp}/{realtimeStatus.mcpMax}</span>
+                                {' / 대기 '}
+                                {realtimeStatus.remainingSeconds}s
                             </Badge>
                         ) : null}
                     </div>
