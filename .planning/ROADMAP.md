@@ -89,8 +89,13 @@ Plans:
   3. Commands have real-time cooldowns (not turn-gated) that count down visibly to the player
   4. A lower-rank officer can submit a suggestion/proposal to a superior, and the superior can approve or reject it
   5. The command panel UI shows only commands available to the player's current position card
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 4 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — PositionCard enum (77 cards), CommandGroup enum (7 groups), PositionCardRegistry, Flyway V32, Officer entity update
+- [ ] 04-02-PLAN.md — Authority gating in CommandExecutor, real-time cooldowns (OffsetDateTime), command table filtering
+- [ ] 04-03-PLAN.md — Proposal entity + Flyway V33, ProposalService (submit/approve/reject), ProposalController REST endpoints
+- [ ] 04-04-PLAN.md — Frontend command panel (card-filtered, grouped by command group), proposal panel UI, command store
 
 ### Phase 5: Organization & Fleet Structure
 **Goal**: Military units are organized into 6 distinct types with correct crew slots and population-based formation limits
@@ -205,7 +210,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 1. Entity Model Foundation | 0/8 | Planning complete | - |
 | 2. Real-time Tick Engine | 2/3 | In Progress|  |
 | 3. Command Point System | 0/TBD | Not started | - |
-| 4. Position Card & Command Authority | 0/TBD | Not started | - |
+| 4. Position Card & Command Authority | 0/4 | Planning complete | - |
 | 5. Organization & Fleet Structure | 0/TBD | Not started | - |
 | 6. Galaxy Map & Planet Model | 0/TBD | Not started | - |
 | 7. Rank, Merit & Personnel | 0/TBD | Not started | - |
