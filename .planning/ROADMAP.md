@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Organization & Fleet Structure** - 6 unit types with crew slots, population-military linkage
 - [x] **Phase 6: Galaxy Map & Planet Model** - 80 star systems, route network, territory zones, fortress systems, galaxy map UI (completed 2026-04-06)
 - [x] **Phase 7: Rank, Merit & Personnel** - 11-tier rank ladder, merit points, promotion/demotion, appointment authority (completed 2026-04-05)
-- [ ] **Phase 8: Scenario & Character System** - 10 scenarios, custom character creation, original character selection, scenario events
+- [x] **Phase 8: Scenario & Character System** - 10 scenarios, custom character creation, original character selection, scenario events (completed 2026-04-06)
 - [ ] **Phase 9: Strategic Commands** - Operation planning, logistics, production, supply chain commands
 - [ ] **Phase 10: Tactical Combat (RTS)** - WebSocket real-time fleet battle, energy allocation, formations, fortress guns
 - [ ] **Phase 11: Faction Politics & Diplomacy** - Empire autocracy, Alliance democracy, Fezzan NPC systems, coups, elections
@@ -163,8 +163,13 @@ Plans:
   3. Players can select an available original character (per scenario roster), inheriting that character's stats and starting position
   4. Scenario-specific events fire at the correct game time (coups, civil wars, special battles) matching the scenarios_detail.md specifications
   5. The scenario selection UI shows scenario description, timeline, faction balance, and available original characters
-**Plans**: TBD
+**Plans:** 3/3 plans complete
 **UI hint**: yes
+
+Plans:
+- [x] 08-01 — 10 LOGH scenario JSON files + ScenarioService 8-stat parsing + ScenarioEventService
+- [x] 08-02 — 8-stat custom character creation (CreateGeneralRequest, OfficerService, origin system)
+- [x] 08-03 — Frontend scenario selection UI, character creation UI, scenarioStore
 
 ### Phase 9: Strategic Commands
 **Goal**: Officers can execute the full range of strategic commands for territory management, logistics, production, and military operations
@@ -231,7 +236,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 5. Organization & Fleet Structure | 1/4 | In Progress|  |
 | 6. Galaxy Map & Planet Model | 4/4 | Complete   | 2026-04-06 |
 | 7. Rank, Merit & Personnel | 3/3 | Complete   | 2026-04-05 |
-| 8. Scenario & Character System | 0/TBD | Not started | - |
+| 8. Scenario & Character System | 3/3 | Complete   | 2026-04-06 |
 | 9. Strategic Commands | 0/TBD | Not started | - |
 | 10. Tactical Combat (RTS) | 0/TBD | Not started | - |
 | 11. Faction Politics & Diplomacy | 0/TBD | Not started | - |
