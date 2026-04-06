@@ -21,6 +21,8 @@ export interface StarSystem {
     garrisonCapacity: number;
     connections: number[];
     planetCount: number;
+    /** Planet names within this star system (from static data or API) */
+    planets: string[];
 }
 
 export type FortressType =

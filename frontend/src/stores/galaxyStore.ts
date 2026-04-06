@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { StarSystem, StarRoute } from '@/types/galaxy';
 import { fetchGalaxyMap } from '@/lib/api/galaxy';
+import { STAR_SYSTEM_PLANETS } from '@/data/star-system-planets';
 
 interface GalaxyState {
     systems: StarSystem[];
@@ -37,6 +38,15 @@ export const useGalaxyStore = create<GalaxyState & GalaxyActions>()(
             set({ isLoading: true, error: null });
             try {
                 const data = await fetchGalaxyMap(sessionId);
+                // Merge static planet names if API doesn't provide them
+                for (const sys of data.systems) {
+                    if (!sys.planets || sys.planets.length === 0) {
+                        sys.planets = STAR_SYSTEM_PLANETS[sys.mapStarId] ?? [];
+                    }
+                    if (sys.planetCount === 0 && sys.planets.length > 0) {
+                        sys.planetCount = sys.planets.length;
+                    }
+                }
                 const systemsById: Record<number, StarSystem> = {};
                 for (const sys of data.systems) {
                     systemsById[sys.mapStarId] = sys;

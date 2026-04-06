@@ -138,6 +138,34 @@ export function StarSystemDetailPanel({
                 </div>
             )}
 
+            {/* Planets in this system */}
+            {system.planets && system.planets.length > 0 && (
+                <div className="mb-3">
+                    <p className="mb-1.5 text-xs font-medium text-gray-400">
+                        소속 행성
+                    </p>
+                    <div className="space-y-1">
+                        {system.planets.map((planetName) => (
+                            <div
+                                key={planetName}
+                                className="flex items-center gap-2 rounded bg-gray-800/70 px-2 py-1.5 text-xs"
+                            >
+                                <span
+                                    className="inline-block h-2 w-2 rounded-full"
+                                    style={{
+                                        backgroundColor: color,
+                                        boxShadow: `0 0 4px ${color}60`,
+                                    }}
+                                />
+                                <span className="font-medium text-gray-200">
+                                    {planetName}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Connected systems */}
             {connectedSystems.length > 0 && (
                 <div>
