@@ -2,6 +2,10 @@ package com.openlogh.engine
 
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.SessionStateRepository
+import com.openlogh.service.AlliancePoliticsService
+import com.openlogh.service.EmpirePoliticsService
+import com.openlogh.service.FezzanEndingService
+import com.openlogh.service.FezzanService
 import com.openlogh.service.GameEventService
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -20,7 +24,16 @@ class TickEngineTest {
         realtimeService = mock(RealtimeService::class.java)
         sessionStateRepository = mock(SessionStateRepository::class.java)
         gameEventService = mock(GameEventService::class.java)
-        tickEngine = TickEngine(realtimeService, sessionStateRepository, gameEventService)
+        tickEngine = TickEngine(
+            realtimeService,
+            sessionStateRepository,
+            gameEventService,
+            mock(EmpirePoliticsService::class.java),
+            mock(AlliancePoliticsService::class.java),
+            mock(FezzanService::class.java),
+            mock(FezzanAiService::class.java),
+            mock(FezzanEndingService::class.java),
+        )
 
         // stub save to return the argument
         `when`(sessionStateRepository.save(any(SessionState::class.java))).thenAnswer { it.arguments[0] }

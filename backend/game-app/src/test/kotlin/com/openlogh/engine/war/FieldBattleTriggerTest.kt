@@ -73,6 +73,7 @@ class FieldBattleTriggerTest {
         override fun findBySessionIdAndCommandEndTimeBefore(sessionId: Long, time: OffsetDateTime): List<Officer> = emptyList()
         override fun findByFleetId(fleetId: Long): List<Officer> = emptyList()
         override fun findBySessionIdAndFactionId(sessionId: Long, factionId: Long): List<Officer> = emptyList()
+        override fun findBySessionIdAndPlanetId(sessionId: Long, planetId: Long): List<Officer> = store.values.filter { it.sessionId == sessionId && it.planetId == planetId }
         override fun findByNameAndSessionId(name: String, sessionId: Long): Officer? = null
         override fun getAverageStats(sessionId: Long, factionId: Long) = com.openlogh.repository.OfficerAverageStats()
     }
@@ -154,6 +155,9 @@ class FieldBattleTriggerTest {
         override fun findBySessionIdAndMailboxCodeOrderBySentAtDesc(sessionId: Long, mailboxCode: String): List<Message> = emptyList()
         override fun findBySessionIdAndMailboxCodeAndSrcIdOrderBySentAtDesc(sessionId: Long, mailboxCode: String, srcId: Long): List<Message> = emptyList()
         override fun findBySrcIdAndMailboxCodeOrderBySentAtDesc(srcId: Long, mailboxCode: String): List<Message> = emptyList()
+        override fun findBySrcIdAndMailboxType(srcId: Long, mailboxType: String): List<Message> = emptyList()
+        override fun findByDestIdAndMailboxType(destId: Long, mailboxType: String): List<Message> = emptyList()
+        override fun countByDestIdAndMailboxType(destId: Long, mailboxType: String): Long = 0L
         override fun findBySessionIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(sessionId: Long, mailboxCode: String, id: Long): List<Message> = emptyList()
         override fun findByIdGreaterThanOrderBySentAtDesc(id: Long): List<Message> = emptyList()
         override fun findByDestIdAndMailboxCodeOrderBySentAtDesc(destId: Long, mailboxCode: String): List<Message> = emptyList()
