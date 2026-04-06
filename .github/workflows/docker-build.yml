@@ -140,5 +140,6 @@ jobs:
                       git pull origin main
                       printf 'DB_NAME=openlogh\nDB_USER=openlogh\nDB_PASSWORD=%s\nJWT_SECRET=%s\n' "$DB_PASSWORD" "$JWT_SECRET" > .env
                       docker compose down --remove-orphans || true
+                      docker rm -f openlogh-frontend openlogh-gateway openlogh-game openlogh-bootstrap openlogh-nginx openlogh-postgres openlogh-redis 2>/dev/null || true
                       docker compose pull
                       docker compose up -d
