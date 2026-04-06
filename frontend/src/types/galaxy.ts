@@ -39,13 +39,35 @@ export interface GalaxyMap {
     factionTerritories: Record<number, number[]>;
 }
 
-/** Faction-region color mapping for the galaxy map */
+/** Faction-region color mapping for the galaxy map (gin7 art style) */
 export const FACTION_REGION_COLORS = {
-    EMPIRE: '#4488ff',
-    ALLIANCE: '#44cc66',
-    FEZZAN: '#ffcc44',
-    NEUTRAL: '#888888',
+    EMPIRE: '#5a6ee0',
+    ALLIANCE: '#d06878',
+    FEZZAN: '#9898a0',
+    NEUTRAL: '#666666',
 } as const;
+
+/** Radial gradient color pairs for glossy orb rendering (inner highlight -> outer base) */
+export const FACTION_GRADIENT_COLORS = {
+    EMPIRE: { inner: '#8298ff', outer: '#4a5cc0' },
+    ALLIANCE: { inner: '#ff96aa', outer: '#c86478' },
+    FEZZAN: { inner: '#c8c8d2', outer: '#9696a0' },
+    NEUTRAL: { inner: '#888888', outer: '#555555' },
+} as const;
+
+/** Return gradient pair for a given region code */
+export function getFactionGradient(region: number): { inner: string; outer: string } {
+    switch (region) {
+        case 1:
+            return FACTION_GRADIENT_COLORS.EMPIRE;
+        case 2:
+            return FACTION_GRADIENT_COLORS.ALLIANCE;
+        case 3:
+            return FACTION_GRADIENT_COLORS.FEZZAN;
+        default:
+            return FACTION_GRADIENT_COLORS.NEUTRAL;
+    }
+}
 
 /** Return the display color for a given region code */
 export function getFactionColor(region: number): string {

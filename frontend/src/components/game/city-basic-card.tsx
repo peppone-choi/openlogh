@@ -62,20 +62,20 @@ export function CityBasicCard({ city, region }: CityBasicCardProps) {
                     {city.pop[0].toLocaleString()} / {city.pop[1].toLocaleString()}
                 </CellText>
             </StatPanel>
-            <StatPanel label="민심" colSpan="3 / 4">
+            <StatPanel label="지지도" colSpan="3 / 4">
                 <SammoBar height={7} percent={city.trust} />
                 <CellText>{city.trust.toLocaleString(undefined, { maximumFractionDigits: 1 })}</CellText>
             </StatPanel>
             <OfficerCell label="태수" npc={city.officerList[4]?.npc ?? 0} name={city.officerList[4]?.name} />
 
-            {/* Row 4: 농업 + 상업 + 군사 */}
-            <StatPanel label="농업">
+            {/* Row 4: 생산 + 교역 + 군사 */}
+            <StatPanel label="생산">
                 <SammoBar height={7} percent={(city.agri[0] / city.agri[1]) * 100} />
                 <CellText>
                     {city.agri[0].toLocaleString()} / {city.agri[1].toLocaleString()}
                 </CellText>
             </StatPanel>
-            <StatPanel label="상업">
+            <StatPanel label="교역">
                 <SammoBar height={7} percent={(city.comm[0] / city.comm[1]) * 100} />
                 <CellText>
                     {city.comm[0].toLocaleString()} / {city.comm[1].toLocaleString()}
@@ -89,14 +89,14 @@ export function CityBasicCard({ city, region }: CityBasicCardProps) {
             </StatPanel>
             <OfficerCell label="군사" npc={city.officerList[3]?.npc ?? 0} name={city.officerList[3]?.name} />
 
-            {/* Row 5: 수비 + 성벽 + 시세 + 종사 */}
+            {/* Row 5: 수비 + 요새 + 시세 + 종사 */}
             <StatPanel label="수비">
                 <SammoBar height={7} percent={(city.def[0] / city.def[1]) * 100} />
                 <CellText>
                     {city.def[0].toLocaleString()} / {city.def[1].toLocaleString()}
                 </CellText>
             </StatPanel>
-            <StatPanel label="성벽">
+            <StatPanel label="요새">
                 <SammoBar height={7} percent={(city.wall[0] / city.wall[1]) * 100} />
                 <CellText>
                     {city.wall[0].toLocaleString()} / {city.wall[1].toLocaleString()}

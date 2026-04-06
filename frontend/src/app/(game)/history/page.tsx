@@ -24,7 +24,7 @@ const EVENT_LABELS: Record<EventType, string> = {
     war: '전쟁',
     diplomacy: '외교',
     nation: '진영',
-    general: '장수',
+    general: '장교',
     city: '행성',
     other: '기타',
 };
@@ -490,7 +490,7 @@ export default function HistoryPage() {
                                                     영토 {nation.territoryCount}
                                                 </span>
                                                 <span className="text-muted-foreground">
-                                                    장수 {nation.generalCount ?? '-'}
+                                                    장교 {nation.generalCount ?? '-'}
                                                 </span>
                                             </div>
                                         ))}

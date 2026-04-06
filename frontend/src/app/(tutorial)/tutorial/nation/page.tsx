@@ -50,7 +50,7 @@ export default function TutorialNationPage() {
                         <span className="font-medium">{myNation.tech}</span>
                     </div>
                     <div>
-                        <span className="text-muted-foreground">국력: </span>
+                        <span className="text-muted-foreground">군사력: </span>
                         <span className="font-medium">{myNation.power}</span>
                     </div>
                     <div>
@@ -58,7 +58,7 @@ export default function TutorialNationPage() {
                         <span className="font-medium">{nationCities.length}</span>
                     </div>
                     <div>
-                        <span className="text-muted-foreground">장수 수: </span>
+                        <span className="text-muted-foreground">장교 수: </span>
                         <span className="font-medium">{nationGenerals.length}</span>
                     </div>
                 </CardContent>
@@ -67,7 +67,7 @@ export default function TutorialNationPage() {
             {/* 인사부 — 장교 목록 + 관직 */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">인사부 - 장수 관직</CardTitle>
+                    <CardTitle className="text-base">인사부 - 장교 관직</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     <p className="text-xs text-muted-foreground mb-3">
@@ -109,7 +109,7 @@ export default function TutorialNationPage() {
                         </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        세율이 높으면 국고 수입이 늘지만 민심(치안)이 떨어집니다.
+                        세율이 높으면 진영 재정 수입이 늘지만 지지도(치안)이 떨어집니다.
                     </p>
                 </CardContent>
             </Card>

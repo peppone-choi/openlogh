@@ -43,7 +43,7 @@ const ALL_COLUMNS: {
     { key: 'stats', label: '능력치', minOfficerLevel: 0 },
     { key: 'crew', label: '함선', minOfficerLevel: 0 },
     { key: 'train', label: '훈련/사기', minOfficerLevel: 3 },
-    { key: 'troop', label: '부대', minOfficerLevel: 0 },
+    { key: 'troop', label: '함대', minOfficerLevel: 0 },
     { key: 'gold', label: '자금', minOfficerLevel: 0 },
     { key: 'rice', label: '물자', minOfficerLevel: 0 },
     { key: 'level', label: '레벨', minOfficerLevel: 0 },

@@ -133,25 +133,25 @@ export default function SpyPage() {
                     </div>
                 </div>
                 <div className="bg-muted/30 px-2 py-1 text-center">
-                    <span className="text-muted-foreground">전체 함선/장수</span>
+                    <span className="text-muted-foreground">전체 함선/장교</span>
                     <div className="font-medium">
                         {summary.crewTotal.toLocaleString()}/{summary.effCount.toLocaleString()}
                     </div>
                 </div>
                 <div className="bg-muted/30 px-2 py-1 text-center">
-                    <span className="text-muted-foreground">훈사90 함선/장수</span>
+                    <span className="text-muted-foreground">훈사90 함선/장교</span>
                     <div className="font-medium text-green-400">
                         {summary.crew90.toLocaleString()}/{summary.gen90.toLocaleString()}
                     </div>
                 </div>
                 <div className="bg-muted/30 px-2 py-1 text-center">
-                    <span className="text-muted-foreground">훈사80 함선/장수</span>
+                    <span className="text-muted-foreground">훈사80 함선/장교</span>
                     <div className="font-medium text-yellow-400">
                         {summary.crew80.toLocaleString()}/{summary.gen80.toLocaleString()}
                     </div>
                 </div>
                 <div className="bg-muted/30 px-2 py-1 text-center">
-                    <span className="text-muted-foreground">훈사60 함선/장수</span>
+                    <span className="text-muted-foreground">훈사60 함선/장교</span>
                     <div className="font-medium text-orange-400">
                         {summary.crew60.toLocaleString()}/{summary.gen60.toLocaleString()}
                     </div>
@@ -172,7 +172,7 @@ export default function SpyPage() {
                             <TableHead>사기</TableHead>
                             <TableHead>삭턴</TableHead>
                             <TableHead>턴</TableHead>
-                            <TableHead>부대</TableHead>
+                            <TableHead>함대</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

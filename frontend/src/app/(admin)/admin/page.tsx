@@ -1851,7 +1851,7 @@ export default function AdminDashboardPage() {
                                             onChange: setAllowRecruit,
                                         },
                                         {
-                                            label: '징병',
+                                            label: '징집',
                                             checked: allowConscript,
                                             onChange: setAllowConscript,
                                         },
@@ -2299,7 +2299,7 @@ export default function AdminDashboardPage() {
                                         try {
                                             const res = await adminApi.forceRehall(worldId!);
                                             toast.success(
-                                                `강제 리홀 완료 (장수 ${res.data.processedGenerals}명, 유저 ${res.data.updatedUsers}명)`
+                                                `강제 리홀 완료 (장교 ${res.data.processedGenerals}명, 유저 ${res.data.updatedUsers}명)`
                                             );
                                         } catch {
                                             toast.error('강제 리홀 실패');

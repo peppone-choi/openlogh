@@ -307,11 +307,11 @@ export default function BattlePage() {
                                                 </div>
                                                 <div className="text-xs text-muted-foreground flex gap-4">
                                                     <span>
-                                                        {src?.name ?? '?'}: 도시{' '}
+                                                        {src?.name ?? '?'}: 행성{' '}
                                                         {cities.filter((c) => c.nationId === w.srcNationId).length}개
                                                     </span>
                                                     <span>
-                                                        {dest?.name ?? '?'}: 도시{' '}
+                                                        {dest?.name ?? '?'}: 행성{' '}
                                                         {cities.filter((c) => c.nationId === w.destNationId).length}개
                                                     </span>
                                                 </div>
@@ -413,7 +413,7 @@ export default function BattlePage() {
                                                     className="cursor-pointer select-none text-right"
                                                     onClick={() => handleSort('generalCount')}
                                                 >
-                                                    장수
+                                                    장교
                                                     <SortIndicator active={sortKey === 'generalCount'} />
                                                 </TableHead>
                                                 <TableHead

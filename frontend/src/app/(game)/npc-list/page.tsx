@@ -128,7 +128,7 @@ export default function NpcListPage() {
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
                         type="text"
-                        placeholder="장수/악령 검색..."
+                        placeholder="장교/악령 검색..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="pl-8"
@@ -178,7 +178,7 @@ export default function NpcListPage() {
                                     className="cursor-pointer hover:text-foreground"
                                     onClick={() => handleSortChange('name')}
                                 >
-                                    희생된 장수{arrow('name')}
+                                    희생된 장교{arrow('name')}
                                 </TableHead>
                                 <TableHead>악령 이름</TableHead>
                                 <TableHead>Lv</TableHead>

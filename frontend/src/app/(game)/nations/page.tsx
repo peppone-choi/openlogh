@@ -372,7 +372,7 @@ export default function NationsPage() {
                                                             className="text-sm font-semibold mb-2"
                                                             style={{ color: n.color }}
                                                         >
-                                                            장수 ({nationGens.length}명)
+                                                            장교 ({nationGens.length}명)
                                                         </h4>
                                                         {/* Type classification summary */}
                                                         {nationGens.length > 0 &&
@@ -501,13 +501,13 @@ export default function NationsPage() {
                                                                                 통솔
                                                                             </th>
                                                                             <th className="text-right py-1 px-1">
-                                                                                무력
+                                                                                지휘
                                                                             </th>
                                                                             <th className="text-right py-1 px-1">
-                                                                                지력
+                                                                                정보
                                                                             </th>
                                                                             <th className="text-right py-1 px-1">
-                                                                                병력
+                                                                                함선
                                                                             </th>
                                                                             <th className="text-center py-1 px-1">
                                                                                 벌점

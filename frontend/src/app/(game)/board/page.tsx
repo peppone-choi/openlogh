@@ -201,7 +201,7 @@ function BoardPageContent() {
                 description={
                     isSecret
                         ? '아국 관료만 열람할 수 있는 비밀 게시판입니다.'
-                        : '자국 장수만 열람할 수 있는 게시판입니다.'
+                        : '자국 장교만 열람할 수 있는 게시판입니다.'
                 }
             />
 

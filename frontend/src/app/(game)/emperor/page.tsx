@@ -258,7 +258,7 @@ export default function EmperorPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                             <StatItem label="진영 등급" value={String(emperorNation.level)} />
                             <StatItem label="기술력" value={String(emperorNation.tech)} />
-                            <StatItem label="국력" value={emperorNation.power.toLocaleString()} />
+                            <StatItem label="군사력" value={emperorNation.power.toLocaleString()} />
                             <StatItem label="수도" value={capitalCity?.name ?? '-'} />
                             <StatItem
                                 label="금"
@@ -472,9 +472,9 @@ export default function EmperorPage() {
                 </CardHeader>
                 {showStats && (
                     <CardContent className="space-y-4">
-                        <BarSection title="국력" stats={nationStats} field="power" max={maxPower} />
-                        <BarSection title="금" stats={nationStats} field="gold" max={maxGold} />
-                        <BarSection title="쌀" stats={nationStats} field="rice" max={maxRice} />
+                        <BarSection title="군사력" stats={nationStats} field="power" max={maxPower} />
+                        <BarSection title="자금" stats={nationStats} field="gold" max={maxGold} />
+                        <BarSection title="물자" stats={nationStats} field="rice" max={maxRice} />
                         <BarSection title="기술" stats={nationStats} field="tech" max={maxTech} />
                     </CardContent>
                 )}

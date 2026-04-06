@@ -595,7 +595,7 @@ export default function DiplomacyPage() {
                                                         <div className="flex items-center gap-2 rounded border border-gray-800 px-2 py-1.5">
                                                             <GeneralPortrait
                                                                 picture={srcSigner?.picture}
-                                                                name={srcSigner?.name ?? '발신 장수'}
+                                                                name={srcSigner?.name ?? '발신 장교'}
                                                                 size="lg"
                                                             />
                                                             <div className="min-w-0 text-xs">
@@ -610,7 +610,7 @@ export default function DiplomacyPage() {
                                                         <div className="flex items-center gap-2 rounded border border-gray-800 px-2 py-1.5">
                                                             <GeneralPortrait
                                                                 picture={destSigner?.picture}
-                                                                name={destSigner?.name ?? '수신 장수'}
+                                                                name={destSigner?.name ?? '수신 장교'}
                                                                 size="lg"
                                                             />
                                                             <div className="min-w-0 text-xs">

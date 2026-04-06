@@ -1576,7 +1576,7 @@ export const UNIT_TYPE_INFO: Record<UnitType, { nameKo: string; nameEn: string; 
     FLEET: { nameKo: '함대', nameEn: 'Fleet', maxUnits: 60, maxShips: 18000, maxCrew: 10 },
     PATROL: { nameKo: '순찰대', nameEn: 'Patrol', maxUnits: 3, maxShips: 900, maxCrew: 3 },
     TRANSPORT: { nameKo: '수송함대', nameEn: 'Transport Fleet', maxUnits: 23, maxShips: 6900, maxCrew: 3 },
-    GROUND: { nameKo: '지상부대', nameEn: 'Ground Force', maxUnits: 6, maxShips: 1800, maxCrew: 1 },
+    GROUND: { nameKo: '지상함대', nameEn: 'Ground Force', maxUnits: 6, maxShips: 1800, maxCrew: 1 },
     GARRISON: { nameKo: '행성수비대', nameEn: 'Garrison', maxUnits: 10, maxShips: 0, maxCrew: 1 },
     SOLO: { nameKo: '단독함', nameEn: 'Solo', maxUnits: 0, maxShips: 1, maxCrew: 0 },
 };

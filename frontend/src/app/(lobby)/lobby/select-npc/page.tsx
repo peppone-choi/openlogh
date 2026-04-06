@@ -382,7 +382,7 @@ export default function LobbySelectNpcPage() {
                     {generalListLimit < generalList.length && (
                         <div className="p-2 text-center border-t">
                             <Button variant="ghost" size="sm" onClick={() => setGeneralListLimit((prev) => prev + 30)}>
-                                장수 더 보기 ({generalList.length - generalListLimit}명 남음)
+                                장교 더 보기 ({generalList.length - generalListLimit}명 남음)
                             </Button>
                         </div>
                     )}

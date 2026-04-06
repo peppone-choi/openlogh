@@ -410,7 +410,7 @@ export default function GeneralPage() {
                                         <span className="text-yellow-400">{numberWithCommas(g.gold)}</span>
                                     </div>
                                     <div>
-                                        <span className="text-muted-foreground">군량:</span>{' '}
+                                        <span className="text-muted-foreground">물자:</span>{' '}
                                         <span className="text-green-400">{numberWithCommas(g.rice)}</span>
                                     </div>
                                     <div>

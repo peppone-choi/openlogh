@@ -7,15 +7,17 @@ import { useGalaxyStore } from '@/stores/galaxyStore';
 import { StarSystemNode } from './StarSystemNode';
 import { StarRouteEdge } from './StarRouteEdge';
 import { StarSystemDetailPanel } from './StarSystemDetailPanel';
+import { StarField } from './StarField';
 
 interface GalaxyMapProps {
     sessionId: number;
 }
 
 const PADDING = 80;
-const MIN_SCALE = 0.5;
-const MAX_SCALE = 3.0;
-const BG_COLOR = '#0a0e1a';
+const MIN_SCALE = 0.3;
+const MAX_SCALE = 4.0;
+/** gin7-style dark navy space background */
+const BG_COLOR = '#0a0e17';
 
 export function GalaxyMap({ sessionId }: GalaxyMapProps) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -60,9 +62,9 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
     }, []);
 
     // Compute coordinate mapping: scale star_systems coords to fit container
-    const { scaleX, scaleY, offsetX, offsetY, uniformScale } = useMemo(() => {
+    const { offsetX, offsetY, uniformScale } = useMemo(() => {
         if (systems.length === 0) {
-            return { scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0, uniformScale: 1 };
+            return { offsetX: 0, offsetY: 0, uniformScale: 1 };
         }
 
         const xs = systems.map((s) => s.x);
@@ -85,7 +87,7 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
         const ox = PADDING + (availWidth - dataWidth * us) / 2 - minX * us;
         const oy = PADDING + (availHeight - dataHeight * us) / 2 - minY * us;
 
-        return { scaleX: sx, scaleY: sy, offsetX: ox, offsetY: oy, uniformScale: us };
+        return { offsetX: ox, offsetY: oy, uniformScale: us };
     }, [systems, containerSize]);
 
     // Map star coordinates to canvas space
@@ -114,7 +116,7 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
         return set;
     }, [selectedSystemId, systemsById]);
 
-    // Wheel zoom
+    // Wheel zoom with pointer tracking
     const handleWheel = useCallback(
         (e: Konva.KonvaEventObject<WheelEvent>) => {
             e.evt.preventDefault();
@@ -190,7 +192,7 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
                 onWheel={handleWheel}
                 onDragEnd={handleDragEnd}
             >
-                {/* Background layer */}
+                {/* Background layer: dark space + star field */}
                 <Layer listening={false}>
                     <Rect
                         x={-5000}
@@ -198,6 +200,11 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
                         width={10000}
                         height={10000}
                         fill={BG_COLOR}
+                    />
+                    <StarField
+                        width={containerSize.width}
+                        height={containerSize.height}
+                        count={400}
                     />
                 </Layer>
 

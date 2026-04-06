@@ -10,6 +10,11 @@ interface StarRouteEdgeProps {
     isHighlighted?: boolean;
 }
 
+/**
+ * Thin route connection line between star systems.
+ * gin7 style: semi-transparent white lines, no dashes.
+ * Highlighted when connected to the selected system.
+ */
 export function StarRouteEdge({
     fromX,
     fromY,
@@ -20,11 +25,11 @@ export function StarRouteEdge({
     return (
         <Line
             points={[fromX, fromY, toX, toY]}
-            stroke={isHighlighted ? '#6699cc' : '#334455'}
-            strokeWidth={isHighlighted ? 2 : 1}
-            opacity={isHighlighted ? 0.8 : 0.4}
-            dash={[6, 4]}
+            stroke={isHighlighted ? '#ffffff' : '#ffffff'}
+            strokeWidth={isHighlighted ? 1.8 : 1}
+            opacity={isHighlighted ? 0.55 : 0.18}
             listening={false}
+            perfectDrawEnabled={false}
         />
     );
 }

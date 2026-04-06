@@ -88,7 +88,7 @@ export default function TutorialDiplomacyPage() {
                                 </div>
                                 <div className="flex gap-3 text-xs text-muted-foreground">
                                     <span>행성: {nationCities.length}</span>
-                                    <span>장수: {nationGenerals.length}</span>
+                                    <span>장교: {nationGenerals.length}</span>
                                     <span>기술: {n.tech}</span>
                                 </div>
                             </div>

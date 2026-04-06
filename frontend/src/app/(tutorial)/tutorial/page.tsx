@@ -36,7 +36,7 @@ export default function TutorialIntroPage() {
                         </div>
                         <div className="flex items-start gap-2">
                             <span className="font-bold text-primary shrink-0">3.</span>
-                            <span>병사를 징병하고 훈련시켜 전투에 참여합니다</span>
+                            <span>함선을 징집하고 훈련시켜 전투에 참여합니다</span>
                         </div>
                         <div className="flex items-start gap-2">
                             <span className="font-bold text-primary shrink-0">4.</span>

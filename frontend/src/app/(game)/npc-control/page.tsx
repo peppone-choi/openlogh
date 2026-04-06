@@ -178,7 +178,7 @@ const POLICY_CATEGORIES: {
                 key: 'minWarCrew',
                 label: '최소 전투 가능 함선 수',
                 step: 50,
-                hint: '이보다 적을 때에는 징병을 시도합니다.',
+                hint: '이보다 적을 때에는 징집을 시도합니다.',
             },
             {
                 key: 'minNPCRecruitCityPopulation',
@@ -227,8 +227,8 @@ const ALL_POLICY_KEYS = POLICY_CATEGORIES.flatMap((c) => c.fields.map((f) => f.k
 
 const DEFAULT_NATION_PRIORITY_ITEMS = [
     { key: '부대전방발령', help: '함대 단위 전방 발령' },
-    { key: '부대후방발령', help: '부대 후방 발령' },
-    { key: '부대구출발령', help: '부대 구출 발령' },
+    { key: '부대후방발령', help: '함대 후방 발령' },
+    { key: '부대구출발령', help: '함대 구출 발령' },
     { key: '부대유저장후방발령', help: '함대 단위 유저장 후방 발령' },
     { key: 'NPC전방발령', help: 'NPC장 전방 발령' },
     { key: 'NPC후방발령', help: 'NPC장 후방 발령' },
@@ -252,12 +252,12 @@ const DEFAULT_NATION_PRIORITY_ITEMS = [
 const DEFAULT_GENERAL_PRIORITY_ITEMS = [
     { key: '긴급내정', help: '긴급 행성 관리 수행' },
     { key: '전쟁내정', help: '전쟁 중 행성 관리 수행' },
-    { key: '징병', help: '병사 충원' },
-    { key: '전투준비', help: '전투 준비 (징병/훈련)' },
+    { key: '징병', help: '함선 충원' },
+    { key: '전투준비', help: '전투 준비 (징집/훈련)' },
     { key: '출병', help: '출전하여 전투 수행' },
     { key: '전방워프', help: '전방으로 이동' },
     { key: '후방워프', help: '후방으로 이동' },
-    { key: '내정워프', help: '내정 행성으로 이동' },
+    { key: '내정워프', help: '행성 관리 행성으로 이동' },
     { key: '귀환', help: '귀환' },
     { key: '일반내정', help: '일반 행성 관리 수행' },
     { key: '자금물자구매', help: '금/물자 구매' },
@@ -1211,7 +1211,7 @@ export default function NpcPage() {
                                     )}
                                     {lastSetters.general && (
                                         <div className="text-xs text-muted-foreground">
-                                            장수 우선순위: {lastSetters.general.setter} ({lastSetters.general.date})
+                                            장교 우선순위: {lastSetters.general.setter} ({lastSetters.general.date})
                                         </div>
                                     )}
                                 </div>

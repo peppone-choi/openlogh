@@ -412,9 +412,9 @@ export default function NationFinancePage() {
 
                     {/* Summary badges */}
                     <div className="flex flex-wrap gap-2 text-xs">
-                        <Badge variant="secondary">국력: {getNationLevelLabel(nation.level, nation.typeCode)}</Badge>
+                        <Badge variant="secondary">군사력: {getNationLevelLabel(nation.level, nation.typeCode)}</Badge>
                         <Badge variant="secondary">행성: {cities.length}개</Badge>
-                        <Badge variant="secondary">장수: {generals.filter((g) => g.npcState !== 5).length}명</Badge>
+                        <Badge variant="secondary">장교: {generals.filter((g) => g.npcState !== 5).length}명</Badge>
                         <Badge variant="secondary">기술: {nation.tech}</Badge>
                     </div>
                 </CardContent>

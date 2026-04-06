@@ -625,7 +625,7 @@ function CommandsPageInner() {
                             onClick={() => setMode(mode === 'nation' ? 'general' : 'nation')}
                         >
                             <Crown className="size-3.5 mr-1" />
-                            {mode === 'nation' ? '장수 명령' : '진영 명령'}
+                            {mode === 'nation' ? '장교 명령' : '진영 명령'}
                         </Button>
                     )}
                 </div>

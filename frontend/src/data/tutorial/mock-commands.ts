@@ -28,7 +28,7 @@ export const MOCK_COMMAND_TABLE: CommandTableEntry[] = [
     },
     {
         actionCode: 'che_recruit',
-        name: '징병',
+        name: '징집',
         category: '군사',
         enabled: true,
         durationSeconds: 0,

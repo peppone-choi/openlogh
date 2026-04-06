@@ -360,7 +360,7 @@ function ComparisonView({
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                     <ArrowLeftRight className="size-4" />
-                    장수 비교
+                    장교 비교
                 </CardTitle>
             </CardHeader>
             <CardContent className="text-xs space-y-4">

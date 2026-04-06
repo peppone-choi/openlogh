@@ -209,7 +209,7 @@ export default function AdminStatisticsPage() {
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                            <Users className="size-3" />총 장수
+                            <Users className="size-3" />총 장교
                         </div>
                         <div className="text-2xl font-bold">{totals.generals}</div>
                     </CardContent>
@@ -352,7 +352,7 @@ export default function AdminStatisticsPage() {
                                                     />
                                                     <span className="font-medium">{n.name}</span>
                                                     <span className="text-xs text-muted-foreground">
-                                                        (장수 {n.genCount}명)
+                                                        (장교 {n.genCount}명)
                                                     </span>
                                                 </div>
                                                 <span className="font-mono text-xs">

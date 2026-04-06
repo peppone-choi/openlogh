@@ -381,7 +381,7 @@ export function MessagePanel({ worldId, myGeneralId, generals }: MessagePanelPro
                             개인
                         </TabsTrigger>
                         <TabsTrigger value="nation" className="text-xs">
-                            국가
+                            진영
                         </TabsTrigger>
                         <TabsTrigger value="diplomacy" className="text-xs">
                             외교

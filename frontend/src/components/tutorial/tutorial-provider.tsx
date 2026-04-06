@@ -88,7 +88,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
                 break;
             }
             case 8: {
-                // 징병 결과 — 장교 함선 증가
+                // 징집 결과 — 장교 함선 증가
                 const generals8 = useGameStore
                     .getState()
                     .generals.map((g) => (g.id === -1 ? { ...g, crew: g.crew + 500 } : g));

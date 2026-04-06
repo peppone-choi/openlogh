@@ -88,7 +88,7 @@ export default function EmperorDetailPage() {
                     <div className="grid grid-cols-2 gap-3 text-sm">
                         <Row label="진영 등급" value={String(emperorNation.level)} />
                         <Row label="기술력" value={String(emperorNation.tech)} />
-                        <Row label="국력" value={String(emperorNation.power)} />
+                        <Row label="군사력" value={String(emperorNation.power)} />
                         <Row
                             label="금"
                             value={<span className="text-yellow-400">{emperorNation.gold.toLocaleString()}</span>}
@@ -99,7 +99,7 @@ export default function EmperorDetailPage() {
                         />
                         <Row label="수도" value={capitalCity?.name ?? '-'} />
                         <Row label="행성 수" value={`${nationCities.length}개`} />
-                        <Row label="장수 수" value={`${nationGenerals.length}명`} />
+                        <Row label="장교 수" value={`${nationGenerals.length}명`} />
                     </div>
 
                     {/* Chief general */}

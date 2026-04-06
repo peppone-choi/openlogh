@@ -44,7 +44,7 @@ export default function TutorialCreatePage() {
 
                     <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                         <div>
-                            <span className="font-semibold text-red-400">통솔</span> - 전투 지휘, 징병 효율
+                            <span className="font-semibold text-red-400">통솔</span> - 전투 지휘, 징집 효율
                         </div>
                         <div>
                             <span className="font-semibold text-orange-400">지휘</span> - 전투 데미지, 일기토
@@ -56,7 +56,7 @@ export default function TutorialCreatePage() {
                             <span className="font-semibold text-green-400">정치</span> - 행성 관리 효율
                         </div>
                         <div>
-                            <span className="font-semibold text-purple-400">운영</span> - 외교, 징병 성공률
+                            <span className="font-semibold text-purple-400">운영</span> - 외교, 징집 성공률
                         </div>
                     </div>
                 </CardContent>

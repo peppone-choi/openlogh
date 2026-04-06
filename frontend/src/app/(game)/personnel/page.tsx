@@ -551,8 +551,8 @@ export default function PersonnelPage() {
                                 );
                             })}
                         <p className="text-xs text-muted-foreground">
-                            ※ <span className="text-red-400">빨간색</span>은 현재 임명중인 장수,{' '}
-                            <span className="text-orange-400">노란색</span>은 다른 관직에 임명된 장수, 흰색은 일반
+                            ※ <span className="text-red-400">빨간색</span>은 현재 임명중인 장교,{' '}
+                            <span className="text-orange-400">노란색</span>은 다른 관직에 임명된 장교, 흰색은 일반
                             장교를 뜻합니다.
                         </p>
                     </CardContent>

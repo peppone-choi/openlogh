@@ -155,12 +155,12 @@ export function DetailTooltip({
             <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-white/60">
                 <span>레벨: {CITY_LEVEL_NAMES[level] ?? level}</span>
                 <span>인구: {isVisible ? pop.toLocaleString() : '?'}</span>
-                <span>농업: {agri}</span>
-                <span>상업: {comm}</span>
+                <span>생산: {agri}</span>
+                <span>교역: {comm}</span>
                 <span>치안: {secu}</span>
                 <span>수비: {def}</span>
-                <span>성벽: {wall}</span>
-                <span>민심: {isVisible ? trust : '?'}</span>
+                <span>요새: {wall}</span>
+                <span>지지도: {isVisible ? trust : '?'}</span>
             </div>
 
             <button

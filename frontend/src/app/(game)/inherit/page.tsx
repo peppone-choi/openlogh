@@ -90,12 +90,12 @@ const COMBAT_BUFF_LIST: {
     {
         code: 'domesticSuccessProb',
         label: '행성 관리 성공 확률 증가',
-        info: '내정의 성공 확률이 1%p ~ 5%p 증가합니다.',
+        info: '행성 관리의 성공 확률이 1%p ~ 5%p 증가합니다.',
     },
     {
         code: 'domesticFailProb',
         label: '행성 관리 실패 확률 감소',
-        info: '내정의 실패 확률이 1%p ~ 5%p 감소합니다.',
+        info: '행성 관리의 실패 확률이 1%p ~ 5%p 감소합니다.',
     },
 ];
 
@@ -944,7 +944,7 @@ export default function InheritPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-sm">
                                 <Search className="size-4" />
-                                장수 소유주 확인 ({actionCost.checkOwner}P)
+                                장교 소유주 확인 ({actionCost.checkOwner}P)
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">

@@ -54,7 +54,7 @@ const PERSONALITIES = LEGACY_PERSONALITY_OPTIONS.map((option) => ({
     info: option.info,
 }));
 
-// Famous general presets for quick character creation (랜덤 장수 프리셋)
+// Famous general presets for quick character creation (랜덤 장교 프리셋)
 const GENERAL_PRESETS: {
     name: string;
     stats: Record<StatKey, number>;
@@ -533,7 +533,7 @@ function LobbyJoinPageContent() {
                                 </Button>
                             </div>
 
-                            {/* 랜덤 장수 프리셋 (legacy parity: quick general templates) */}
+                            {/* 랜덤 장교 프리셋 (legacy parity: quick general templates) */}
                             <div className="space-y-1">
                                 <label className="text-xs text-muted-foreground">유명 장교 프리셋</label>
                                 <div className="flex flex-wrap gap-2">

@@ -5,7 +5,6 @@ import {
     getFactionColor,
     isFortress,
     FORTRESS_NAMES,
-    FACTION_REGION_COLORS,
 } from '@/types/galaxy';
 import { useGalaxyStore } from '@/stores/galaxyStore';
 
@@ -42,9 +41,10 @@ export function StarSystemDetailPanel({
 
     return (
         <div
-            className="absolute right-4 top-4 z-10 w-72 rounded-lg border border-gray-700 bg-gray-900/95 p-4 shadow-xl backdrop-blur-sm"
+            className="absolute right-4 top-4 z-10 w-72 rounded-lg border border-gray-700/60 bg-[#0d1117]/95 p-4 shadow-2xl backdrop-blur-md"
             style={{
-                borderColor: hasFortress ? '#ffaa00' : undefined,
+                borderLeftWidth: 3,
+                borderLeftColor: hasFortress ? '#ffaa00' : color,
             }}
         >
             {/* Header */}
@@ -58,7 +58,7 @@ export function StarSystemDetailPanel({
                 <button
                     type="button"
                     onClick={onClose}
-                    className="rounded p-1 text-gray-400 hover:bg-gray-800 hover:text-white"
+                    className="rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-white"
                     aria-label="닫기"
                 >
                     <svg
@@ -78,7 +78,10 @@ export function StarSystemDetailPanel({
             <div className="mb-3 flex items-center gap-2">
                 <span
                     className="inline-block h-3 w-3 rounded-full"
-                    style={{ backgroundColor: color }}
+                    style={{
+                        backgroundColor: color,
+                        boxShadow: `0 0 6px ${color}80`,
+                    }}
                 />
                 <span className="text-sm text-gray-300">
                     {getRegionLabel(system.region)}
@@ -87,23 +90,23 @@ export function StarSystemDetailPanel({
 
             {/* Info grid */}
             <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded bg-gray-800 px-2 py-1.5">
+                <div className="rounded bg-gray-800/70 px-2 py-1.5">
                     <span className="text-gray-500">항성 분류</span>
                     <p className="font-medium text-gray-200">
                         {system.spectralType}형
                     </p>
                 </div>
-                <div className="rounded bg-gray-800 px-2 py-1.5">
+                <div className="rounded bg-gray-800/70 px-2 py-1.5">
                     <span className="text-gray-500">레벨</span>
                     <p className="font-medium text-gray-200">{system.level}</p>
                 </div>
-                <div className="rounded bg-gray-800 px-2 py-1.5">
+                <div className="rounded bg-gray-800/70 px-2 py-1.5">
                     <span className="text-gray-500">행성 수</span>
                     <p className="font-medium text-gray-200">
                         {system.planetCount}
                     </p>
                 </div>
-                <div className="rounded bg-gray-800 px-2 py-1.5">
+                <div className="rounded bg-gray-800/70 px-2 py-1.5">
                     <span className="text-gray-500">항로 연결</span>
                     <p className="font-medium text-gray-200">
                         {system.connections.length}
@@ -115,7 +118,7 @@ export function StarSystemDetailPanel({
             {hasFortress && (
                 <div
                     className="mb-3 rounded border px-3 py-2"
-                    style={{ borderColor: '#ffaa00' }}
+                    style={{ borderColor: '#ffaa0060', backgroundColor: '#ffaa0008' }}
                 >
                     <p className="mb-1 text-xs font-bold" style={{ color: '#ffaa00' }}>
                         {FORTRESS_NAMES[system.fortressType]}
@@ -146,7 +149,7 @@ export function StarSystemDetailPanel({
             {/* Connected systems */}
             {connectedSystems.length > 0 && (
                 <div>
-                    <p className="mb-1 text-xs font-medium text-gray-400">
+                    <p className="mb-1.5 text-xs font-medium text-gray-400">
                         연결된 항성계
                     </p>
                     <div className="flex flex-wrap gap-1">
@@ -155,7 +158,7 @@ export function StarSystemDetailPanel({
                                 key={conn.mapStarId}
                                 type="button"
                                 onClick={() => selectSystem(conn.mapStarId)}
-                                className="rounded bg-gray-800 px-2 py-0.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white"
+                                className="rounded bg-gray-800/70 px-2 py-0.5 text-xs text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
                             >
                                 <span
                                     className="mr-1 inline-block h-2 w-2 rounded-full"

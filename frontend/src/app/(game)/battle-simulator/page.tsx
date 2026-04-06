@@ -328,7 +328,7 @@ function UnitBuilder({
                         return;
                     }
                     if (data.objType !== 'general') {
-                        alert('장수 데이터가 아닙니다');
+                        alert('장교 데이터가 아닙니다');
                         return;
                     }
                     importFromJson(data);
@@ -859,7 +859,7 @@ export default function BattleSimulatorPage() {
 
     return (
         <div className="space-y-4 max-w-4xl mx-auto">
-            <PageHeader icon={Swords} title="전투 시뮬레이터" description="장수 간 전투를 시뮬레이션합니다." />
+            <PageHeader icon={Swords} title="전투 시뮬레이터" description="장교 간 전투를 시뮬레이션합니다." />
 
             {/* Global Config */}
             <Card>
@@ -946,7 +946,7 @@ export default function BattleSimulatorPage() {
             {/* Attacker / Defenders */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <UnitBuilder
-                    title="공격측 장수"
+                    title="공격측 장교"
                     unit={attacker}
                     onChange={setAttacker}
                     generals={generals}
@@ -959,7 +959,7 @@ export default function BattleSimulatorPage() {
                             className="relative"
                         >
                             <UnitBuilder
-                                title={defenders.length > 1 ? `방어측 장수 ${idx + 1}` : '방어측 장수'}
+                                title={defenders.length > 1 ? `방어측 장교 ${idx + 1}` : '방어측 장교'}
                                 unit={def}
                                 onChange={(u) => setDefenders((prev) => prev.map((d, i) => (i === idx ? u : d)))}
                                 generals={generals}
@@ -1000,7 +1000,7 @@ export default function BattleSimulatorPage() {
                                     step={10}
                                 />
                                 <NumberField
-                                    label="성벽"
+                                    label="요새"
                                     value={cityDef.wall}
                                     onChange={(v) => setCityDef({ ...cityDef, wall: v })}
                                     min={0}

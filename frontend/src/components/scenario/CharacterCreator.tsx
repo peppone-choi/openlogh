@@ -9,7 +9,7 @@ const STAT_MAX = 95;
 
 const STATS = [
     { key: 'leadership', label: 'Leadership', labelKo: '통솔', category: 'PCP', desc: '인재 활용, 함대 최대 사기' },
-    { key: 'command', label: 'Command', labelKo: '지휘', category: 'MCP', desc: '부대 지휘 능력' },
+    { key: 'command', label: 'Command', labelKo: '지휘', category: 'MCP', desc: '함대 지휘 능력' },
     { key: 'intelligence', label: 'Intelligence', labelKo: '정보', category: 'PCP', desc: '정보 수집/분석, 첩보' },
     { key: 'politics', label: 'Politics', labelKo: '정치', category: 'PCP', desc: '시민 지지 획득' },
     { key: 'administration', label: 'Administration', labelKo: '운영', category: 'PCP', desc: '행성 통치, 사무 관리' },

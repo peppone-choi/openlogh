@@ -837,7 +837,7 @@ export default function BettingPage() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead className="text-xs">진영</TableHead>
-                                                <TableHead className="text-xs text-right">참가 장수</TableHead>
+                                                <TableHead className="text-xs text-right">참가 장교</TableHead>
                                                 <TableHead className="text-xs text-right">베팅 총액</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -1260,7 +1260,7 @@ export default function BettingPage() {
                         <p>소지금 500 이하일 때는 베팅이 불가능합니다.</p>
                         <div className="mt-2 pt-2 border-t border-gray-800 text-center">
                             <span className="text-sky-400">배당률</span>이 낮을수록 베팅된 금액이 많고 유저들이{' '}
-                            <span className="text-amber-400">우승후보</span>로 많이 선택한 장수입니다.
+                            <span className="text-amber-400">우승후보</span>로 많이 선택한 장교입니다.
                         </div>
                     </CardContent>
                 </Card>

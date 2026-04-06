@@ -96,13 +96,13 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
             <Head>세율</Head>
             <Body>{noNation ? '해당 없음' : `${nation.taxRate}%`}</Body>
 
-            {/* 속령/장수 */}
+            {/* 속령/장교 */}
             <Head>속령</Head>
             <Body>{noNation ? '해당 없음' : nation.population.cityCnt.toLocaleString()}</Body>
             <Head>장교</Head>
             <Body>{noNation ? '해당 없음' : nation.crew.generalCnt.toLocaleString()}</Body>
 
-            {/* 국력/기술력 */}
+            {/* 군사력/기술력 */}
             <Head>군사력</Head>
             <Body>{noNation ? '해당 없음' : nation.power.toLocaleString()}</Body>
             <Head>기술력</Head>

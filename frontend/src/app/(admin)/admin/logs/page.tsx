@@ -166,7 +166,7 @@ export default function AdminLogsPage() {
     const handleSearch = useCallback(async () => {
         const id = Number(generalId);
         if (!id) {
-            toast.error('장수 ID를 입력하세요.');
+            toast.error('장교 ID를 입력하세요.');
             return;
         }
         setLoading(true);
@@ -214,14 +214,14 @@ export default function AdminLogsPage() {
 
     return (
         <div className="space-y-4">
-            <PageHeader icon={ScrollText} title="장수 로그" />
+            <PageHeader icon={ScrollText} title="장교 로그" />
 
             <div className="flex flex-wrap items-center gap-2">
                 <div className="relative w-52">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
                         type="number"
-                        placeholder="장수 ID"
+                        placeholder="장교 ID"
                         value={generalId}
                         onChange={(e) => setGeneralId(e.target.value)}
                         className="pl-8"

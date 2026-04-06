@@ -29,7 +29,7 @@ export default function TutorialCompletePage() {
                         <div className="space-y-1 text-muted-foreground">
                             <p>- 장교 생성과 능력치(통/무/지/정/매) 배분</p>
                             <p>- 행성 관리 커맨드로 행성 발전 (개간, 교역투자 등)</p>
-                            <p>- 군사 커맨드 (징병, 훈련, 출진)</p>
+                            <p>- 군사 커맨드 (징집, 훈련, 출진)</p>
                             <p>- 전투 시스템과 행성 점령</p>
                             <p>- 외교 관계와 서신 교환</p>
                             <p>- 진영 운영 (세력 정보, 인사부, 내무부)</p>

@@ -87,8 +87,8 @@ function getActionAvailability(
         return {
             canJoin: false,
             canPossessNpc: false,
-            joinReason: '이미 장수가 있습니다',
-            npcReason: '이미 장수가 있습니다',
+            joinReason: '이미 장교가 있습니다',
+            npcReason: '이미 장교가 있습니다',
         };
     }
 
@@ -388,12 +388,12 @@ export default function LobbyPage() {
                     ) : generalLoading ? (
                         <div className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground">
                             <Loader2 className="size-5 animate-spin mr-2" />
-                            장수 확인 중...
+                            장교 확인 중...
                         </div>
                     ) : myOfficer ? (
                         /* General exists - show preview + enter button */
                         <div className="space-y-4">
-                            <h2 className="text-lg font-semibold">내 장수</h2>
+                            <h2 className="text-lg font-semibold">내 장교</h2>
                             <Card>
                                 <CardContent className="space-y-4 pt-4">
                                     <div className="flex items-center gap-4">
@@ -511,7 +511,7 @@ export default function LobbyPage() {
                                             <div className="flex-1">
                                                 <p className="font-medium">장교 선택</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    등록된 장수 중 하나를 선택하여 시작합니다.
+                                                    등록된 장교 중 하나를 선택하여 시작합니다.
                                                 </p>
                                             </div>
                                             <Badge variant="secondary" className="text-[10px]">

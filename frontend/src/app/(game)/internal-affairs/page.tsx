@@ -518,10 +518,10 @@ export default function InternalAffairsPage() {
                                                 <span className="truncate text-sm">{nation.name}</span>
                                             </div>
                                             <span className="text-xs text-muted-foreground tabular-nums">
-                                                국력 {nation.power.toLocaleString()}
+                                                군사력 {nation.power.toLocaleString()}
                                             </span>
                                             <span className="text-xs text-muted-foreground tabular-nums">
-                                                장수 {nation.generalCount}
+                                                장교 {nation.generalCount}
                                             </span>
                                             <span className="text-xs text-muted-foreground tabular-nums">
                                                 행성 {nation.cityCount}

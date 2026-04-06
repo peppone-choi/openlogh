@@ -555,7 +555,7 @@ function CityPageContent() {
                                 </div>
 
                                 {/* Row 4: generals summary */}
-                                <LabelCell>장수({cityGens.length})</LabelCell>
+                                <LabelCell>장교({cityGens.length})</LabelCell>
                                 <div
                                     className="border-t border-l border-gray-600 px-1 py-0.5 col-span-9"
                                     style={{ lineHeight: '1.6em' }}
