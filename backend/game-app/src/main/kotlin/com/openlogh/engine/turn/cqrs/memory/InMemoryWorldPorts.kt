@@ -5,6 +5,7 @@ import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.PLANET
 import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.DIPLOMACY
 import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.FACTION
 import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.FLEET
+import com.openlogh.engine.turn.cqrs.memory.DirtyTracker.EntityType.UNIT_CREW
 import com.openlogh.engine.turn.cqrs.persist.WorldPorts
 
 class InMemoryWorldPorts(
@@ -19,6 +20,8 @@ class InMemoryWorldPorts(
 
     override fun fleet(id: Long): FleetSnapshot? = state.fleets[id]
 
+    override fun unitCrew(id: Long): UnitCrewSnapshot? = state.unitCrews[id]
+
     override fun diplomacy(id: Long): DiplomacySnapshot? = state.diplomacies[id]
 
     override fun allOfficers(): Collection<OfficerSnapshot> = state.officers.values
@@ -28,6 +31,8 @@ class InMemoryWorldPorts(
     override fun allFactions(): Collection<FactionSnapshot> = state.factions.values
 
     override fun allFleets(): Collection<FleetSnapshot> = state.fleets.values
+
+    override fun allUnitCrews(): Collection<UnitCrewSnapshot> = state.unitCrews.values
 
     override fun allDiplomacies(): Collection<DiplomacySnapshot> = state.diplomacies.values
 
@@ -72,6 +77,11 @@ class InMemoryWorldPorts(
         dirtyTracker.markDirty(FLEET, snapshot.id)
     }
 
+    override fun putUnitCrew(snapshot: UnitCrewSnapshot) {
+        state.unitCrews[snapshot.id] = snapshot
+        dirtyTracker.markDirty(UNIT_CREW, snapshot.id)
+    }
+
     override fun putDiplomacy(snapshot: DiplomacySnapshot) {
         state.diplomacies[snapshot.id] = snapshot
         dirtyTracker.markDirty(DIPLOMACY, snapshot.id)
@@ -95,6 +105,11 @@ class InMemoryWorldPorts(
     override fun deleteFleet(id: Long) {
         state.fleets.remove(id)
         dirtyTracker.markDeleted(FLEET, id)
+    }
+
+    override fun deleteUnitCrew(id: Long) {
+        state.unitCrews.remove(id)
+        dirtyTracker.markDeleted(UNIT_CREW, id)
     }
 
     override fun deleteDiplomacy(id: Long) {

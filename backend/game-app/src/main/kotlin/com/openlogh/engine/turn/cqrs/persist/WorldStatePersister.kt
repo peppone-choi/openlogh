@@ -11,6 +11,7 @@ import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.FactionTurnRepository
 import com.openlogh.repository.FleetRepository
+import com.openlogh.repository.UnitCrewRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -20,6 +21,7 @@ class WorldStatePersister(
     private val planetRepository: PlanetRepository,
     private val factionRepository: FactionRepository,
     private val fleetRepository: FleetRepository,
+    private val unitCrewRepository: UnitCrewRepository,
     private val diplomacyRepository: DiplomacyRepository,
     private val officerTurnRepository: OfficerTurnRepository,
     private val factionTurnRepository: FactionTurnRepository,
@@ -206,6 +208,20 @@ class WorldStatePersister(
             }
         jpaBulkWriter.saveAll(fleetRepository, fleetUpserts)
         jpaBulkWriter.deleteAllById(fleetRepository, changes.deletedFleetIds)
+
+        val unitCrewUpserts = (changes.dirtyUnitCrewIds + changes.createdUnitCrewIds)
+            .mapNotNull { id ->
+                val snapshot = state.unitCrews[id] ?: return@mapNotNull null
+                unitCrewRepository.findById(id).orElse(null)?.also { entity ->
+                    entity.sessionId = sessionId
+                    entity.fleetId = snapshot.fleetId
+                    entity.officerId = snapshot.officerId
+                    entity.slotRole = snapshot.slotRole
+                    entity.assignedAt = snapshot.assignedAt
+                }
+            }
+        jpaBulkWriter.saveAll(unitCrewRepository, unitCrewUpserts)
+        jpaBulkWriter.deleteAllById(unitCrewRepository, changes.deletedUnitCrewIds)
 
         val diplomacyUpserts = (changes.dirtyDiplomacyIds + changes.createdDiplomacyIds)
             .mapNotNull { id ->

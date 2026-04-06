@@ -7,12 +7,14 @@ import com.openlogh.engine.turn.cqrs.memory.FleetSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerTurnSnapshot
 import com.openlogh.engine.turn.cqrs.memory.PlanetSnapshot
+import com.openlogh.engine.turn.cqrs.memory.UnitCrewSnapshot
 
 class CachingWorldPorts(private val delegate: WorldPorts) : WorldPorts {
     private var officerCache: MutableMap<Long, OfficerSnapshot>? = null
     private var planetCache: MutableMap<Long, PlanetSnapshot>? = null
     private var factionCache: MutableMap<Long, FactionSnapshot>? = null
     private var fleetCache: MutableMap<Long, FleetSnapshot>? = null
+    private var unitCrewCache: MutableMap<Long, UnitCrewSnapshot>? = null
     private var diplomacyCache: MutableMap<Long, DiplomacySnapshot>? = null
 
     override fun allOfficers(): Collection<OfficerSnapshot> = ensureOfficerCache().values
@@ -39,6 +41,10 @@ class CachingWorldPorts(private val delegate: WorldPorts) : WorldPorts {
     override fun allFleets(): Collection<FleetSnapshot> = ensureFleetCache().values
 
     override fun fleet(id: Long): FleetSnapshot? = ensureFleetCache()[id]
+
+    override fun allUnitCrews(): Collection<UnitCrewSnapshot> = ensureUnitCrewCache().values
+
+    override fun unitCrew(id: Long): UnitCrewSnapshot? = ensureUnitCrewCache()[id]
 
     override fun allDiplomacies(): Collection<DiplomacySnapshot> = ensureDiplomacyCache().values
 
@@ -75,6 +81,11 @@ class CachingWorldPorts(private val delegate: WorldPorts) : WorldPorts {
         fleetCache?.put(snapshot.id, snapshot)
     }
 
+    override fun putUnitCrew(snapshot: UnitCrewSnapshot) {
+        delegate.putUnitCrew(snapshot)
+        unitCrewCache?.put(snapshot.id, snapshot)
+    }
+
     override fun putDiplomacy(snapshot: DiplomacySnapshot) {
         delegate.putDiplomacy(snapshot)
         diplomacyCache?.put(snapshot.id, snapshot)
@@ -98,6 +109,11 @@ class CachingWorldPorts(private val delegate: WorldPorts) : WorldPorts {
     override fun deleteFleet(id: Long) {
         delegate.deleteFleet(id)
         fleetCache?.remove(id)
+    }
+
+    override fun deleteUnitCrew(id: Long) {
+        delegate.deleteUnitCrew(id)
+        unitCrewCache?.remove(id)
     }
 
     override fun deleteDiplomacy(id: Long) {
@@ -134,6 +150,11 @@ class CachingWorldPorts(private val delegate: WorldPorts) : WorldPorts {
     private fun ensureFleetCache(): MutableMap<Long, FleetSnapshot> {
         return fleetCache
             ?: delegate.allFleets().associateByTo(mutableMapOf()) { it.id }.also { fleetCache = it }
+    }
+
+    private fun ensureUnitCrewCache(): MutableMap<Long, UnitCrewSnapshot> {
+        return unitCrewCache
+            ?: delegate.allUnitCrews().associateByTo(mutableMapOf()) { it.id }.also { unitCrewCache = it }
     }
 
     private fun ensureDiplomacyCache(): MutableMap<Long, DiplomacySnapshot> {

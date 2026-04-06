@@ -7,18 +7,21 @@ import com.openlogh.engine.turn.cqrs.memory.FleetSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerTurnSnapshot
 import com.openlogh.engine.turn.cqrs.memory.PlanetSnapshot
+import com.openlogh.engine.turn.cqrs.memory.UnitCrewSnapshot
 
 interface WorldReadPort {
     fun officer(id: Long): OfficerSnapshot?
     fun planet(id: Long): PlanetSnapshot?
     fun faction(id: Long): FactionSnapshot?
     fun fleet(id: Long): FleetSnapshot?
+    fun unitCrew(id: Long): UnitCrewSnapshot?
     fun diplomacy(id: Long): DiplomacySnapshot?
 
     fun allOfficers(): Collection<OfficerSnapshot>
     fun allPlanets(): Collection<PlanetSnapshot>
     fun allFactions(): Collection<FactionSnapshot>
     fun allFleets(): Collection<FleetSnapshot>
+    fun allUnitCrews(): Collection<UnitCrewSnapshot>
     fun allDiplomacies(): Collection<DiplomacySnapshot>
 
     fun officersByFaction(factionId: Long): List<OfficerSnapshot>

@@ -8,6 +8,7 @@ import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.FactionTurnRepository
 import com.openlogh.repository.FleetRepository
+import com.openlogh.repository.UnitCrewRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -17,6 +18,7 @@ class WorldStateLoader(
     private val planetRepository: PlanetRepository,
     private val factionRepository: FactionRepository,
     private val fleetRepository: FleetRepository,
+    private val unitCrewRepository: UnitCrewRepository,
     private val diplomacyRepository: DiplomacyRepository,
     private val officerTurnRepository: OfficerTurnRepository,
     private val factionTurnRepository: FactionTurnRepository,
@@ -39,6 +41,10 @@ class WorldStateLoader(
 
         fleetRepository.findBySessionId(sessionId).forEach { fleet ->
             state.fleets[fleet.id] = fleet.toSnapshot()
+        }
+
+        unitCrewRepository.findBySessionId(sessionId).forEach { unitCrew ->
+            state.unitCrews[unitCrew.id] = unitCrew.toSnapshot()
         }
 
         diplomacyRepository.findBySessionId(sessionId).forEach { diplomacy ->

@@ -7,6 +7,7 @@ import com.openlogh.engine.turn.cqrs.memory.FleetSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerTurnSnapshot
 import com.openlogh.engine.turn.cqrs.memory.PlanetSnapshot
+import com.openlogh.engine.turn.cqrs.memory.UnitCrewSnapshot
 import com.openlogh.engine.turn.cqrs.port.WorldReadPort
 import com.openlogh.engine.turn.cqrs.port.WorldWritePort
 import com.openlogh.entity.Diplomacy
@@ -20,6 +21,7 @@ import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.FactionTurnRepository
 import com.openlogh.repository.FleetRepository
+import com.openlogh.repository.UnitCrewRepository
 import org.springframework.stereotype.Component
 
 interface WorldPorts : WorldReadPort, WorldWritePort
@@ -30,6 +32,7 @@ class JpaWorldPortFactory(
     private val planetRepository: PlanetRepository? = null,
     private val factionRepository: FactionRepository? = null,
     private val fleetRepository: FleetRepository? = null,
+    private val unitCrewRepository: UnitCrewRepository? = null,
     private val diplomacyRepository: DiplomacyRepository? = null,
     private val officerTurnRepository: OfficerTurnRepository? = null,
     private val factionTurnRepository: FactionTurnRepository? = null,
@@ -58,7 +61,7 @@ class JpaWorldPortFactory(
     private fun createRaw(sessionId: Long): WorldPorts {
         if (
             officerRepository != null && planetRepository != null && factionRepository != null &&
-            fleetRepository != null && diplomacyRepository != null &&
+            fleetRepository != null && unitCrewRepository != null && diplomacyRepository != null &&
             officerTurnRepository != null && factionTurnRepository != null
         ) {
             return JpaWorldPorts(
@@ -67,6 +70,7 @@ class JpaWorldPortFactory(
                 planetRepository = planetRepository,
                 factionRepository = factionRepository,
                 fleetRepository = fleetRepository,
+                unitCrewRepository = unitCrewRepository,
                 diplomacyRepository = diplomacyRepository,
                 officerTurnRepository = officerTurnRepository,
                 factionTurnRepository = factionTurnRepository,
@@ -101,6 +105,8 @@ private class PartialJpaWorldPorts(
 
     override fun fleet(id: Long): FleetSnapshot? = null
 
+    override fun unitCrew(id: Long): UnitCrewSnapshot? = null
+
     override fun diplomacy(id: Long): DiplomacySnapshot? =
         diplomacyRepository?.findById(id)?.orElse(null)?.takeIf { it.sessionId == sessionId }?.toSnapshot()
 
@@ -111,6 +117,8 @@ private class PartialJpaWorldPorts(
     override fun allFactions(): Collection<FactionSnapshot> = factionRepository?.findBySessionId(sessionId)?.map(Faction::toSnapshot).orEmpty()
 
     override fun allFleets(): Collection<FleetSnapshot> = emptyList()
+
+    override fun allUnitCrews(): Collection<UnitCrewSnapshot> = emptyList()
 
     override fun allDiplomacies(): Collection<DiplomacySnapshot> =
         diplomacyRepository?.findBySessionId(sessionId)?.map(Diplomacy::toSnapshot).orEmpty()
@@ -157,6 +165,10 @@ private class PartialJpaWorldPorts(
         throw UnsupportedOperationException("Fleet operations are not available in PartialJpaWorldPorts")
     }
 
+    override fun putUnitCrew(snapshot: UnitCrewSnapshot) {
+        throw UnsupportedOperationException("UnitCrew operations are not available in PartialJpaWorldPorts")
+    }
+
     override fun putDiplomacy(snapshot: DiplomacySnapshot) {
         checkNotNull(diplomacyRepository) { "DiplomacyRepository is required" }
         diplomacyRepository.save(snapshot.toEntity())
@@ -179,6 +191,10 @@ private class PartialJpaWorldPorts(
 
     override fun deleteFleet(id: Long) {
         throw UnsupportedOperationException("Fleet operations are not available in PartialJpaWorldPorts")
+    }
+
+    override fun deleteUnitCrew(id: Long) {
+        throw UnsupportedOperationException("UnitCrew operations are not available in PartialJpaWorldPorts")
     }
 
     override fun deleteDiplomacy(id: Long) {

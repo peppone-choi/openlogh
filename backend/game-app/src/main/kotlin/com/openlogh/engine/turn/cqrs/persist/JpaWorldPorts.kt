@@ -7,6 +7,7 @@ import com.openlogh.engine.turn.cqrs.memory.FleetSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerTurnSnapshot
 import com.openlogh.engine.turn.cqrs.memory.PlanetSnapshot
+import com.openlogh.engine.turn.cqrs.memory.UnitCrewSnapshot
 import com.openlogh.engine.turn.cqrs.port.WorldReadPort
 import com.openlogh.engine.turn.cqrs.port.WorldWritePort
 import com.openlogh.entity.Diplomacy
@@ -16,6 +17,7 @@ import com.openlogh.entity.Officer
 import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.FactionTurn
 import com.openlogh.entity.Planet
+import com.openlogh.entity.UnitCrew
 import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.OfficerRepository
@@ -23,6 +25,7 @@ import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.FactionTurnRepository
 import com.openlogh.repository.FleetRepository
+import com.openlogh.repository.UnitCrewRepository
 
 class JpaWorldPorts(
     private val sessionId: Long,
@@ -30,6 +33,7 @@ class JpaWorldPorts(
     private val planetRepository: PlanetRepository,
     private val factionRepository: FactionRepository,
     private val fleetRepository: FleetRepository,
+    private val unitCrewRepository: UnitCrewRepository,
     private val diplomacyRepository: DiplomacyRepository,
     private val officerTurnRepository: OfficerTurnRepository,
     private val factionTurnRepository: FactionTurnRepository,
@@ -59,6 +63,12 @@ class JpaWorldPorts(
             ?.takeIf { it.sessionId == sessionId }
             ?.let(::toFleetSnapshot)
 
+    override fun unitCrew(id: Long): UnitCrewSnapshot? =
+        unitCrewRepository.findById(id)
+            .orElse(null)
+            ?.takeIf { it.sessionId == sessionId }
+            ?.toSnapshot()
+
     override fun diplomacy(id: Long): DiplomacySnapshot? =
         diplomacyRepository.findById(id)
             .orElse(null)
@@ -76,6 +86,9 @@ class JpaWorldPorts(
 
     override fun allFleets(): Collection<FleetSnapshot> =
         fleetRepository.findBySessionId(sessionId).map(::toFleetSnapshot)
+
+    override fun allUnitCrews(): Collection<UnitCrewSnapshot> =
+        unitCrewRepository.findBySessionId(sessionId).map { it.toSnapshot() }
 
     override fun allDiplomacies(): Collection<DiplomacySnapshot> =
         diplomacyRepository.findBySessionId(sessionId).map(::toDiplomacySnapshot)
@@ -145,6 +158,17 @@ class JpaWorldPorts(
         fleetRepository.save(entity)
     }
 
+    override fun putUnitCrew(snapshot: UnitCrewSnapshot) {
+        val entity = unitCrewRepository.findById(snapshot.id).orElse(UnitCrew())
+        entity.id = snapshot.id
+        entity.sessionId = snapshot.sessionId
+        entity.fleetId = snapshot.fleetId
+        entity.officerId = snapshot.officerId
+        entity.slotRole = snapshot.slotRole
+        entity.assignedAt = snapshot.assignedAt
+        unitCrewRepository.save(entity)
+    }
+
     override fun putDiplomacy(snapshot: DiplomacySnapshot) {
         val entity = diplomacyRepository.findById(snapshot.id).orElse(Diplomacy())
         entity.applySnapshot(snapshot)
@@ -165,6 +189,10 @@ class JpaWorldPorts(
 
     override fun deleteFleet(id: Long) {
         fleetRepository.deleteById(id)
+    }
+
+    override fun deleteUnitCrew(id: Long) {
+        unitCrewRepository.deleteById(id)
     }
 
     override fun deleteDiplomacy(id: Long) {

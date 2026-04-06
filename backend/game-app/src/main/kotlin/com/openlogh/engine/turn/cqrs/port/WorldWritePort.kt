@@ -7,18 +7,21 @@ import com.openlogh.engine.turn.cqrs.memory.FleetSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerSnapshot
 import com.openlogh.engine.turn.cqrs.memory.OfficerTurnSnapshot
 import com.openlogh.engine.turn.cqrs.memory.PlanetSnapshot
+import com.openlogh.engine.turn.cqrs.memory.UnitCrewSnapshot
 
 interface WorldWritePort {
     fun putOfficer(snapshot: OfficerSnapshot)
     fun putPlanet(snapshot: PlanetSnapshot)
     fun putFaction(snapshot: FactionSnapshot)
     fun putFleet(snapshot: FleetSnapshot)
+    fun putUnitCrew(snapshot: UnitCrewSnapshot)
     fun putDiplomacy(snapshot: DiplomacySnapshot)
 
     fun deleteOfficer(id: Long)
     fun deletePlanet(id: Long)
     fun deleteFaction(id: Long)
     fun deleteFleet(id: Long)
+    fun deleteUnitCrew(id: Long)
     fun deleteDiplomacy(id: Long)
 
     fun setOfficerTurns(officerId: Long, turns: List<OfficerTurnSnapshot>)
