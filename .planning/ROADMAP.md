@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Entity Model Foundation** - Convert 5-stat to 8-stat system, rename entities to LOGH domain, DB migrations V28+
 - [ ] **Phase 2: Real-time Tick Engine** - Replace turn-based processing with 1-second server tick at 24x game speed
 - [ ] **Phase 3: Command Point System** - Implement dual PCP/MCP pools with independent recovery and cross-use penalty
-- [ ] **Phase 4: Position Card & Command Authority** - 77 position cards, command groups, authority gating, suggestion system
+- [x] **Phase 4: Position Card & Command Authority** - 77 position cards, command groups, authority gating, suggestion system (completed 2026-04-06)
 - [ ] **Phase 5: Organization & Fleet Structure** - 6 unit types with crew slots, population-military linkage
 - [ ] **Phase 6: Galaxy Map & Planet Model** - 80 star systems, route network, territory zones, fortress systems, galaxy map UI
 - [ ] **Phase 7: Rank, Merit & Personnel** - 11-tier rank ladder, merit points, promotion/demotion, appointment authority
@@ -89,13 +89,13 @@ Plans:
   3. Commands have real-time cooldowns (not turn-gated) that count down visibly to the player
   4. A lower-rank officer can submit a suggestion/proposal to a superior, and the superior can approve or reject it
   5. The command panel UI shows only commands available to the player's current position card
-**Plans:** 2/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 04-01-PLAN.md — PositionCard enum (77 cards), CommandGroup enum (7 groups), PositionCardRegistry, Flyway V32, Officer entity update
 - [x] 04-02-PLAN.md — Authority gating in CommandExecutor, real-time cooldowns (OffsetDateTime), command table filtering
 - [x] 04-03-PLAN.md — Proposal entity + Flyway V33, ProposalService (submit/approve/reject), ProposalController REST endpoints
-- [ ] 04-04-PLAN.md — Frontend command panel (card-filtered, grouped by command group), proposal panel UI, command store
+- [x] 04-04-PLAN.md — Frontend command panel (card-filtered, grouped by command group), proposal panel UI, command store
 
 ### Phase 5: Organization & Fleet Structure
 **Goal**: Military units are organized into 6 distinct types with correct crew slots and population-based formation limits
@@ -210,7 +210,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 12
 | 1. Entity Model Foundation | 0/8 | Planning complete | - |
 | 2. Real-time Tick Engine | 2/3 | In Progress|  |
 | 3. Command Point System | 0/TBD | Not started | - |
-| 4. Position Card & Command Authority | 2/4 | In Progress|  |
+| 4. Position Card & Command Authority | 4/4 | Complete   | 2026-04-06 |
 | 5. Organization & Fleet Structure | 0/TBD | Not started | - |
 | 6. Galaxy Map & Planet Model | 0/TBD | Not started | - |
 | 7. Rank, Merit & Personnel | 0/TBD | Not started | - |
