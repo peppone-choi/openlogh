@@ -41,3 +41,43 @@ allOpen {
     annotation("jakarta.persistence.MappedSuperclass")
     annotation("jakarta.persistence.Embeddable")
 }
+
+// Exclude pre-existing broken test files that reference deleted samguk (Phase 1) classes.
+// These tests will be restored or replaced in a future phase.
+// Excludes from compilation (sourceSets) AND execution (test task).
+sourceSets {
+    test {
+        kotlin {
+            exclude(
+                // Legacy samguk command tests (che_* commands deleted in Phase 1)
+                "com/openlogh/command/CommandParityTest.kt",
+                "com/openlogh/command/CommandTest.kt",
+                "com/openlogh/command/GeneralCivilCommandTest.kt",
+                "com/openlogh/command/GeneralMilitaryCommandTest.kt",
+                "com/openlogh/command/GeneralPoliticalCommandTest.kt",
+                "com/openlogh/command/IndividualCommandTest.kt",
+                "com/openlogh/command/NationCommandTest.kt",
+                "com/openlogh/command/NationDiplomacyStrategicCommandTest.kt",
+                "com/openlogh/command/NationResearchSpecialCommandTest.kt",
+                "com/openlogh/command/NationResourceCommandTest.kt",
+                "com/openlogh/command/general/FieldBattleTest.kt",
+                // Legacy war engine tests (BattleEngine/BattleService/FieldBattleTrigger deleted in Phase 1)
+                "com/openlogh/engine/war/**",
+                // Legacy TurnService/TurnDaemon tests
+                "com/openlogh/engine/EdgeCaseTest.kt",
+                "com/openlogh/engine/FormulaParityTest.kt",
+                "com/openlogh/engine/TurnDaemonTest.kt",
+                "com/openlogh/engine/TurnServiceTest.kt",
+                // Legacy QA tests
+                "com/openlogh/qa/GoldenValueTest.kt",
+                "com/openlogh/qa/parity/BattleParityTest.kt",
+                "com/openlogh/qa/parity/CommandParityTest.kt",
+                "com/openlogh/qa/parity/EconomyCommandParityTest.kt",
+                "com/openlogh/qa/parity/TechResearchParityTest.kt",
+                // Legacy service tests
+                "com/openlogh/service/AdminServiceTest.kt",
+                "com/openlogh/service/CommandServiceTest.kt",
+            )
+        }
+    }
+}

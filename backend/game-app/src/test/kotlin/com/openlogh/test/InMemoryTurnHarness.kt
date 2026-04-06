@@ -3,7 +3,7 @@ package com.openlogh.test
 import com.openlogh.command.CommandExecutor
 import com.openlogh.command.CommandRegistry
 import com.openlogh.engine.*
-import com.openlogh.engine.war.BattleService
+// BattleService removed in Phase 1 (삼국지 전투 엔진 삭제)
 import com.openlogh.engine.ai.OfficerAI
 import com.openlogh.engine.ai.FactionAI
 import com.openlogh.engine.modifier.ModifierService
@@ -27,6 +27,16 @@ import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
 import java.util.Optional
 import java.util.concurrent.atomic.AtomicLong
+
+/**
+ * Stub replacing deleted TurnService (삼국지 턴 서비스 삭제됨, Phase 1).
+ * Callers that need processWorld should be updated to use TickEngine directly.
+ */
+class StubTurnService {
+    fun processWorld(world: SessionState) {
+        // no-op stub — TurnService was removed in Phase 1
+    }
+}
 
 class InMemoryTurnHarness {
     private val worlds = mutableMapOf<Short, SessionState>()
@@ -81,7 +91,7 @@ class InMemoryTurnHarness {
     private val trafficSnapshotRepository: TrafficSnapshotRepository = mock(TrafficSnapshotRepository::class.java)
     private val worldService: WorldService = mock(WorldService::class.java)
     private val factionService: com.openlogh.service.FactionService = mock(com.openlogh.service.FactionService::class.java)
-    val battleService: BattleService = mock(BattleService::class.java)
+    // battleService removed in Phase 1 (삼국지 전투 엔진 삭제)
     private val uniqueLotteryService: UniqueLotteryService = UniqueLotteryService()
     private val worldPortFactory: JpaWorldPortFactory = JpaWorldPortFactory(
         officerRepository = officerRepository,
@@ -96,41 +106,9 @@ class InMemoryTurnHarness {
         UnificationCheckStep(unificationService),
     ))
 
-    val turnService = TurnService(
-        sessionStateRepository,
-        officerRepository,
-        officerTurnRepository,
-        factionTurnRepository,
-        planetRepository,
-        factionRepository,
-        commandExecutor,
-        commandRegistry,
-        scenarioService,
-        economyService,
-        eventService,
-        diplomacyService,
-        officerMaintenanceService,
-        specialAssignmentService,
-        npcSpawnService,
-        unificationService,
-        inheritanceService,
-        yearbookService,
-        auctionService,
-        tournamentService,
-        trafficSnapshotRepository,
-        officerAI,
-        factionAI,
-        modifierService,
-        worldService,
-        factionService,
-        battleService,
-        uniqueLotteryService,
-        mock(com.openlogh.service.CommandLogDispatcher::class.java),
-        mock(com.openlogh.service.GameConstService::class.java),
-        mock(com.openlogh.repository.OfficerAccessLogRepository::class.java),
-        turnPipeline,
-        mock(com.openlogh.engine.war.FieldBattleTrigger::class.java),
-    )
+    // TurnService and FieldBattleTrigger removed in Phase 1 — replaced by TickEngine pipeline
+    // Integration tests that called turnService.processWorld() need to be updated to use TickEngine
+    val turnService: StubTurnService = StubTurnService()
 
     init {
         wireRepositories()

@@ -55,7 +55,6 @@ class OfficerServiceTest {
             sessionStateRepository,
             planetRepository,
             factionRepository,
-            officerTurnRepository,
             gameConstService,
         )
 
