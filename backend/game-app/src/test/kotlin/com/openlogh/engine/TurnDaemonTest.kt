@@ -10,9 +10,9 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
 import java.time.OffsetDateTime
 
-class TurnDaemonTest {
+class TickDaemonTest {
 
-    private lateinit var daemon: TurnDaemon
+    private lateinit var daemon: TickDaemon
     private lateinit var turnService: TurnService
     private lateinit var turnCoordinator: TurnCoordinator
     private lateinit var realtimeService: RealtimeService
@@ -30,7 +30,7 @@ class TurnDaemonTest {
         sessionStateRepository = mock(SessionStateRepository::class.java)
         gameEventService = mock(GameEventService::class.java)
 
-        daemon = TurnDaemon(
+        daemon = TickDaemon(
             turnService,
             turnCoordinator,
             realtimeService,
@@ -87,7 +87,7 @@ class TurnDaemonTest {
         val world = createWorld(realtimeMode = false)
         `when`(sessionStateRepository.findByCommitSha("test-sha")).thenReturn(listOf(world))
 
-        val cqrsDaemon = TurnDaemon(
+        val cqrsDaemon = TickDaemon(
             turnService,
             turnCoordinator,
             realtimeService,
@@ -122,7 +122,7 @@ class TurnDaemonTest {
         daemon.tick()
 
         verify(turnService, never()).processWorld(anyNonNull())
-        assertEquals(TurnDaemon.DaemonState.PAUSED, daemon.getStatus())
+        assertEquals(TickDaemon.DaemonState.PAUSED, daemon.getStatus())
     }
 
     @Test

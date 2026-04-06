@@ -1,6 +1,6 @@
 {
   "version": "3.0",
-  "lastUpdated": "2026-04-06T09:04:36.780Z",
+  "lastUpdated": "2026-04-06T10:02:11.184Z",
   "activeFeatures": [
     "engine",
     "war",
@@ -61,7 +61,8 @@
     "scenario",
     "tactical",
     "victory",
-    "politics"
+    "politics",
+    "processing"
   ],
   "primaryFeature": "engine",
   "features": {
@@ -74,9 +75,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T07:03:03.192Z",
-        "lastUpdated": "2026-04-06T09:04:09.608Z"
+        "lastUpdated": "2026-04-06T09:36:20.430Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/test/kotlin/com/openlogh/engine/TickEngineTest.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/engine/TurnService.kt"
     },
     "war": {
       "phase": "do",
@@ -100,9 +101,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T07:03:46.614Z",
-        "lastUpdated": "2026-04-06T09:04:36.779Z"
+        "lastUpdated": "2026-04-06T09:34:57.240Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/test/kotlin/com/openlogh/service/ScenarioServiceTest.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/service/SelectNpcTokenService.kt"
     },
     "general": {
       "phase": "do",
@@ -243,9 +244,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T11:46:41.223Z",
-        "lastUpdated": "2026-04-06T05:48:15.697Z"
+        "lastUpdated": "2026-04-06T10:02:11.182Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/game/mail-panel.tsx"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/game/error-state.tsx"
     },
     "trigger": {
       "phase": "do",
@@ -295,9 +296,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T00:32:24.227Z",
-        "lastUpdated": "2026-04-06T07:59:53.362Z"
+        "lastUpdated": "2026-04-06T09:59:02.551Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/types/index.ts"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/top-bar.tsx"
     },
     "city": {
       "phase": "do",
@@ -505,9 +506,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T03:28:34.485Z",
-        "lastUpdated": "2026-03-24T03:28:34.485Z"
+        "lastUpdated": "2026-04-06T09:43:16.076Z"
       },
-      "lastFile": "/Users/apple/Desktop/opensamguk/frontend/src/app/(game)/page.tsx"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(game)/layout.tsx"
     },
     "3d-battle": {
       "phase": "do",
@@ -680,9 +681,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-05T09:28:39.148Z",
-        "lastUpdated": "2026-04-06T07:58:29.993Z"
+        "lastUpdated": "2026-04-06T09:40:56.415Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/controller/ChatController.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/controller/CommandController.kt"
     },
     "persist": {
       "phase": "do",
@@ -706,9 +707,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-05T11:02:12.579Z",
-        "lastUpdated": "2026-04-06T07:55:48.542Z"
+        "lastUpdated": "2026-04-06T09:39:42.977Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/entity/MessengerConnection.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/entity/FactionTurn.kt"
     },
     "repository": {
       "phase": "do",
@@ -719,9 +720,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-05T11:16:32.305Z",
-        "lastUpdated": "2026-04-06T07:59:22.672Z"
+        "lastUpdated": "2026-04-06T09:40:13.909Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/repository/OfficerRepository.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/repository/FactionTurnRepository.kt"
     },
     "cqrs": {
       "phase": "do",
@@ -865,6 +866,19 @@
         "lastUpdated": "2026-04-06T05:54:46.310Z"
       },
       "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(game)/politics/page.tsx"
+    },
+    "processing": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-06T10:00:59.878Z",
+        "lastUpdated": "2026-04-06T10:01:30.197Z"
+      },
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(game)/processing/page.tsx"
     }
   },
   "pipeline": {
@@ -875,7 +889,7 @@
   "session": {
     "startedAt": "2026-03-23T06:31:12.665Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-06T09:04:36.780Z"
+    "lastActivity": "2026-04-06T10:02:11.184Z"
   },
   "history": [
     {
@@ -7853,6 +7867,426 @@
     {
       "timestamp": "2026-04-06T09:04:36.780Z",
       "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:33:38.063Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:33:44.759Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:33:49.967Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:34:00.395Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:34:07.322Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:34:18.365Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:34:24.783Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:34:30.295Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:34:46.739Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:34:52.074Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:34:57.242Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:35:19.498Z",
+      "feature": "engine",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:36:20.432Z",
+      "feature": "engine",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:39:34.692Z",
+      "feature": "entity",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:39:42.978Z",
+      "feature": "entity",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:39:53.336Z",
+      "feature": "repository",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:40:13.910Z",
+      "feature": "repository",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:40:31.863Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:40:56.416Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:42:47.052Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:43:09.591Z",
+      "feature": "(game)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:43:16.077Z",
+      "feature": "(game)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:46:26.407Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:54:06.781Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:54:14.122Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:54:19.711Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:54:25.149Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:54:30.907Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:54:36.403Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:54:52.569Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:54:58.507Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:55:06.052Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:55:14.146Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:55:19.525Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:55:24.907Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:55:32.632Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:55:38.687Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:55:44.898Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:55:49.996Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:55:56.214Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:56:02.134Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:56:08.581Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:56:13.671Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:56:20.878Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:56:32.119Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:56:37.585Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:56:43.283Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:56:48.544Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:56:54.075Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:56:59.923Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:57:05.232Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:57:13.398Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:57:18.463Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:57:25.031Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:57:29.702Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:57:34.578Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:59:02.553Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:59:18.067Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:59:30.866Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:59:36.018Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T09:59:40.596Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:00:59.879Z",
+      "feature": "processing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:01:05.942Z",
+      "feature": "processing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:01:13.482Z",
+      "feature": "processing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:01:18.686Z",
+      "feature": "processing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:01:24.076Z",
+      "feature": "processing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:01:30.198Z",
+      "feature": "processing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:02:00.108Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:02:05.933Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T10:02:11.184Z",
+      "feature": "game",
       "phase": "do",
       "action": "updated"
     }

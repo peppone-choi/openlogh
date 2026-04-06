@@ -1,6 +1,6 @@
 package com.openlogh.controller
 
-import com.openlogh.engine.TurnDaemon
+import com.openlogh.engine.TickDaemon
 import com.openlogh.service.AdminAuthorizationService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/turns")
 class TurnController(
-    private val turnDaemon: TurnDaemon,
+    private val turnDaemon: TickDaemon,
     private val adminAuthorizationService: AdminAuthorizationService,
 ) {
     private companion object {

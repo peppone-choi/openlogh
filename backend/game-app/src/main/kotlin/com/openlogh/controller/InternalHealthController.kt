@@ -1,6 +1,6 @@
 package com.openlogh.controller
 
-import com.openlogh.engine.TurnDaemon
+import com.openlogh.engine.TickDaemon
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/internal")
 class InternalHealthController(
-    private val turnDaemon: TurnDaemon,
+    private val turnDaemon: TickDaemon,
 ) {
     @GetMapping("/health")
     fun health(): ResponseEntity<Map<String, String>> {

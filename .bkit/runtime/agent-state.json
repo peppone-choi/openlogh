@@ -1,25 +1,14 @@
 {
   "version": "1.0",
-  "enabled": true,
+  "enabled": false,
   "teamName": "",
   "feature": "engine",
   "pdcaPhase": "do",
   "orchestrationPattern": "leader",
   "ctoAgent": "opus",
-  "startedAt": "2026-04-06T09:03:03.382Z",
-  "lastUpdated": "2026-04-06T09:05:21.404Z",
-  "teammates": [
-    {
-      "name": "abcf029ac848ef6a5",
-      "role": "gsd-executor",
-      "model": "sonnet",
-      "status": "completed",
-      "currentTask": null,
-      "taskId": null,
-      "startedAt": "2026-04-06T09:03:03.384Z",
-      "lastActivityAt": "2026-04-06T09:05:21.401Z"
-    }
-  ],
+  "startedAt": "2026-04-06T09:30:48.540Z",
+  "lastUpdated": "2026-04-06T10:09:33.038Z",
+  "teammates": [],
   "progress": {
     "totalTasks": 0,
     "completedTasks": 0,

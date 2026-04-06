@@ -13,7 +13,7 @@ import java.time.OffsetDateTime
  * The legacy turn-based path has been removed — all worlds now use the TickEngine.
  */
 @Component
-class TurnDaemon(
+class TickDaemon(
     private val tickEngine: TickEngine,
     @Value("\${game.commit-sha:local}") private val processCommitSha: String,
     private val sessionStateRepository: SessionStateRepository,
@@ -32,7 +32,7 @@ class TurnDaemon(
     @Volatile
     private var requestId: String? = null
 
-    private val logger = LoggerFactory.getLogger(TurnDaemon::class.java)
+    private val logger = LoggerFactory.getLogger(TickDaemon::class.java)
 
     private fun transitionTo(newState: DaemonState, reason: String, reqId: String? = null) {
         val prev = state

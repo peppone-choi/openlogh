@@ -35,7 +35,7 @@ class TickEngine(
 
     /**
      * Process a single tick for the given world.
-     * Called once per second by TurnDaemon for realtime-mode sessions.
+     * Called once per second by TickDaemon for realtime-mode sessions.
      */
     fun processTick(world: SessionState) {
         // 1. Advance game clock

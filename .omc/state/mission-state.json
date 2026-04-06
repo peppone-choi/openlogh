@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-06T08:55:44.653Z",
+  "updatedAt": "2026-04-06T10:09:33.232Z",
   "missions": [
     {
       "id": "session:02f73c0e-d893-4bd9-897e-9dad606485a0:none",
@@ -103,15 +103,15 @@
       "name": "none",
       "objective": "Session mission",
       "createdAt": "2026-04-05T06:43:06.903Z",
-      "updatedAt": "2026-04-06T08:55:44.653Z",
+      "updatedAt": "2026-04-06T10:09:33.232Z",
       "status": "done",
-      "workerCount": 14,
+      "workerCount": 15,
       "taskCounts": {
-        "total": 14,
+        "total": 15,
         "pending": 0,
         "blocked": 0,
         "inProgress": 0,
-        "completed": 14,
+        "completed": 15,
         "failed": 0
       },
       "agents": [
@@ -254,25 +254,19 @@
           "latestUpdate": "completed",
           "completedSummary": null,
           "updatedAt": "2026-04-06T08:55:44.653Z"
+        },
+        {
+          "name": "gsd-executor:a9ac86a",
+          "role": "gsd-executor",
+          "ownership": "a9ac86a24637b3fbf",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-06T10:09:33.232Z"
         }
       ],
       "timeline": [
-        {
-          "id": "session-start:aff4cd2a6c3badd8a:2026-04-06T07:54:14.238Z",
-          "at": "2026-04-06T07:54:14.238Z",
-          "kind": "update",
-          "agent": "gsd-executor:aff4cd2",
-          "detail": "started gsd-executor:aff4cd2",
-          "sourceKey": "session-start:aff4cd2a6c3badd8a"
-        },
-        {
-          "id": "session-stop:aff4cd2a6c3badd8a:2026-04-06T08:01:42.207Z",
-          "at": "2026-04-06T08:01:42.207Z",
-          "kind": "completion",
-          "agent": "gsd-executor:aff4cd2",
-          "detail": "completed",
-          "sourceKey": "session-stop:aff4cd2a6c3badd8a"
-        },
         {
           "id": "session-start:a52833492fcab0df5:2026-04-06T08:42:28.689Z",
           "at": "2026-04-06T08:42:28.689Z",
@@ -288,6 +282,22 @@
           "agent": "gsd-executor:a528334",
           "detail": "completed",
           "sourceKey": "session-stop:a52833492fcab0df5"
+        },
+        {
+          "id": "session-start:a9ac86a24637b3fbf:2026-04-06T09:30:48.794Z",
+          "at": "2026-04-06T09:30:48.794Z",
+          "kind": "update",
+          "agent": "gsd-executor:a9ac86a",
+          "detail": "started gsd-executor:a9ac86a",
+          "sourceKey": "session-start:a9ac86a24637b3fbf"
+        },
+        {
+          "id": "session-stop:a9ac86a24637b3fbf:2026-04-06T10:09:33.232Z",
+          "at": "2026-04-06T10:09:33.232Z",
+          "kind": "completion",
+          "agent": "gsd-executor:a9ac86a",
+          "detail": "completed",
+          "sourceKey": "session-stop:a9ac86a24637b3fbf"
         }
       ]
     }
