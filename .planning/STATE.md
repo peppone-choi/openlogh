@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 02-gin7-command-system/02-01-PLAN.md
-last_updated: "2026-04-06T14:25:23.519Z"
+stopped_at: Completed 02-gin7-command-system/02-04-PLAN.md
+last_updated: "2026-04-06T14:32:24.982Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 38
-  completed_plans: 29
+  completed_plans: 30
   percent: 77
 ---
 
@@ -57,6 +57,7 @@ Progress: [████████░░] 77%
 | Phase 01-legacy-removal-ship-unit-foundation P04 | 8 | 2 tasks | 3 files |
 | Phase 01-legacy-removal-ship-unit-foundation P05 | 12 | 2 tasks | 9 files |
 | Phase 02-gin7-command-system P01 | 12 | 2 tasks | 2 files |
+| Phase 02-gin7-command-system P04 | 8 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,7 @@ Progress: [████████░░] 77%
 - [Phase 01-legacy-removal-ship-unit-foundation]: officerLevel >= 5 authority bypass fully removed (0 occurrences) — PositionCard-only authority from Plan 05 onwards
 - [Phase 02-gin7-command-system]: Gin7StubCommand uses single cpType: StatCategory constructor param rather than two separate subclasses — simpler, less duplication
 - [Phase 02-gin7-command-system]: 대기 registered as registerPcpStub — ensures ALWAYS_ALLOWED fallback works even if registry lookup is called
+- [Phase 02-gin7-command-system]: PoliticsCommands: all 12 use PCP pool (default, no override); IntelligenceCommands: all 14 override getCommandPoolType()=MCP
 
 ### Pending Todos
 
@@ -92,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T14:25:23.512Z
-Stopped at: Completed 02-gin7-command-system/02-01-PLAN.md
+Last session: 2026-04-06T14:32:16.004Z
+Stopped at: Completed 02-gin7-command-system/02-04-PLAN.md
 Resume file: None
