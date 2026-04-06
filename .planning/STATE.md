@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 03-tactical-battle-engine/03-02-PLAN.md
-last_updated: "2026-04-06T15:47:58.761Z"
+stopped_at: Completed 03-tactical-battle-engine/03-04-PLAN.md
+last_updated: "2026-04-06T16:02:04.838Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 43
-  completed_plans: 38
+  completed_plans: 39
   percent: 77
 ---
 
@@ -65,6 +65,7 @@ Progress: [████████░░] 77%
 | Phase 02-gin7-command-system P07 | 45 | 2 tasks | 6 files |
 | Phase 03-tactical-battle-engine P03 | 35 | 2 tasks | 6 files |
 | Phase 03-tactical-battle-engine P02 | 45 | 2 tasks | 7 files |
+| Phase 03-tactical-battle-engine P04 | 35 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,8 @@ Progress: [████████░░] 77%
 - [Phase 03-tactical-battle-engine]: BattleWebSocketController /retreat and /attack-target use officerId in payload (not Principal) — consistent with existing /energy and /stance
 - [Phase 03-tactical-battle-engine]: MissileWeaponSystem is stateless pure class — injected via TacticalBattleEngine constructor
 - [Phase 03-tactical-battle-engine]: DetectionService wraps DetectionEngine — precision>=0.5 OR 2+ detectors for confirmation
+- [Phase 03-tactical-battle-engine]: GroundBattleEngine is stateless pure class — injected inline in TacticalBattleEngine processTick, no Spring DI needed
+- [Phase 03-tactical-battle-engine]: GROUND_ASSAULT ConquestCommand returns success=false (ground battle starts) — conquest completion detected via GroundBattleState.isConquestComplete each tick
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T15:47:58.749Z
-Stopped at: Completed 03-tactical-battle-engine/03-02-PLAN.md
+Last session: 2026-04-06T16:02:04.823Z
+Stopped at: Completed 03-tactical-battle-engine/03-04-PLAN.md
 Resume file: None
