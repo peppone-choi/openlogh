@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useVictoryStore } from '@/stores/victoryStore';
-import { useGameStore } from '@/stores/gameStore';
+import { useWorldStore } from '@/stores/worldStore';
 import { VICTORY_CONDITION_LABELS, VICTORY_TIER_LABELS } from '@/types/victory';
 import { Trophy, Crown, Swords, Clock } from 'lucide-react';
 
@@ -15,7 +15,7 @@ const CONDITION_ICONS = {
 export default function VictoryPage() {
     const { victoryResult, rankings, isSessionEnded, fetchVictoryResult, fetchRankings } =
         useVictoryStore();
-    const worldId = useGameStore((s) => s.worldId);
+    const worldId = useWorldStore((s) => s.currentWorld?.id ?? null);
 
     useEffect(() => {
         if (worldId) {
