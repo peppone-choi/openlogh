@@ -1,5 +1,6 @@
 package com.openlogh.entity
 
+import com.openlogh.model.PositionCard
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
@@ -264,6 +265,10 @@ class Officer(
     var destY: Float? = null,
 
     @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "position_cards", columnDefinition = "jsonb", nullable = false)
+    var positionCards: MutableList<String> = mutableListOf("PERSONAL", "CAPTAIN"),
+
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "last_turn", columnDefinition = "jsonb", nullable = false)
     var lastTurn: MutableMap<String, Any> = mutableMapOf(),
 
@@ -280,4 +285,11 @@ class Officer(
 
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime = OffsetDateTime.now(),
-)
+) {
+    /** Returns position cards as typed enum values, skipping any unrecognized names. */
+    fun getPositionCardEnums(): List<PositionCard> =
+        positionCards.mapNotNull { runCatching { PositionCard.valueOf(it) }.getOrNull() }
+
+    /** Checks if this officer holds a specific position card. */
+    fun hasPositionCard(card: PositionCard): Boolean = card.name in positionCards
+}

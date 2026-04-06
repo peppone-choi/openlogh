@@ -273,6 +273,7 @@ class JpaWorldPorts(
         defenceTrain = snapshot.defenceTrain
         tournamentState = snapshot.tournamentState
         commandPoints = snapshot.commandPoints
+        positionCards = snapshot.positionCards.toMutableList()
         commandEndTime = snapshot.commandEndTime
         posX = snapshot.posX
         posY = snapshot.posY

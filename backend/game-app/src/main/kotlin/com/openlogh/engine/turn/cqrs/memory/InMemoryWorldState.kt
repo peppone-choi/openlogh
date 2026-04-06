@@ -94,6 +94,7 @@ data class OfficerSnapshot(
     var defenceTrain: Short,
     var tournamentState: Short,
     var commandPoints: Int,
+    var positionCards: MutableList<String>,
     var commandEndTime: OffsetDateTime?,
     var posX: Float,
     var posY: Float,

@@ -264,6 +264,7 @@ class TurnCoordinatorIntegrationTest {
             defenceTrain = 80,
             tournamentState = 0,
             commandPoints = 10,
+            positionCards = mutableListOf("PERSONAL", "CAPTAIN"),
             commandEndTime = null,
             posX = 0f,
             posY = 0f,
