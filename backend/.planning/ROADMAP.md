@@ -82,7 +82,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — V31 migration (pcp/mcp/pcp_max/mcp_max columns) + Officer entity + CpPoolConfig
 - [x] 03-02-PLAN.md — CpService (deduction, 2x cross-use, stat-based recovery) + BaseCommand pool type + DTO
-- [ ] 03-03-PLAN.md — Wire into RealtimeService/CommandService + frontend dual CP display
+- [x] 03-03-PLAN.md — Wire into RealtimeService/CommandService + frontend dual CP display
 
 ### Phase 4: Position Card & Command Authority
 **Goal**: Officers hold position cards that gate which commands they can execute, enabling the organizational simulation core
