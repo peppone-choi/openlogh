@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 03-tactical-battle-engine/03-03-PLAN.md
-last_updated: "2026-04-06T15:43:40.158Z"
+stopped_at: Completed 03-tactical-battle-engine/03-02-PLAN.md
+last_updated: "2026-04-06T15:47:58.761Z"
 last_activity: 2026-04-06
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 43
-  completed_plans: 37
+  completed_plans: 38
   percent: 77
 ---
 
@@ -64,6 +64,7 @@ Progress: [████████░░] 77%
 | Phase 02-gin7-command-system P06 | 10 | 2 tasks | 5 files |
 | Phase 02-gin7-command-system P07 | 45 | 2 tasks | 6 files |
 | Phase 03-tactical-battle-engine P03 | 35 | 2 tasks | 6 files |
+| Phase 03-tactical-battle-engine P02 | 45 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Progress: [████████░░] 77%
 - [Phase 03-tactical-battle-engine]: UnitStance.defenseModifier: NAVIGATION=1.0, ANCHORING=1.1, STATIONED=1.3, COMBAT=0.9
 - [Phase 03-tactical-battle-engine]: FortressGunType.fromPower() maps power threshold: >=10000=THOR_HAMMER, >=7000=GAIESBURGHER, >=3000=ARTEMIS, else=LIGHT_XRAY
 - [Phase 03-tactical-battle-engine]: BattleWebSocketController /retreat and /attack-target use officerId in payload (not Principal) — consistent with existing /energy and /stance
+- [Phase 03-tactical-battle-engine]: MissileWeaponSystem is stateless pure class — injected via TacticalBattleEngine constructor
+- [Phase 03-tactical-battle-engine]: DetectionService wraps DetectionEngine — precision>=0.5 OR 2+ detectors for confirmation
 
 ### Pending Todos
 
@@ -112,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T15:43:40.147Z
-Stopped at: Completed 03-tactical-battle-engine/03-03-PLAN.md
+Last session: 2026-04-06T15:47:58.749Z
+Stopped at: Completed 03-tactical-battle-engine/03-02-PLAN.md
 Resume file: None

@@ -39,10 +39,10 @@
 
 - [ ] **BATTLE-01**: 전투 개시/종료 조건 구현 (같은 그리드 적아 공존 시 자동 개시)
 - [ ] **BATTLE-02**: 에너지 배분 시스템 (BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR, 총합 제한)
-- [ ] **BATTLE-03**: 무기 시스템 구현 (빔/건/미사일/전투정, 사거리/위력/물자소비)
-- [ ] **BATTLE-04**: 진형 시스템 구현 (방추/함종별/혼성/삼열, 공격/방어/속도 보정)
-- [ ] **BATTLE-05**: 커맨드레인지서클 구현 (시간경과 확대, 발령시 0 리셋, 지휘스탯 확대율)
-- [ ] **BATTLE-06**: 색적 시스템 구현 (SENSOR 배분 기반, 거리/유닛종별 정밀도)
+- [x] **BATTLE-03**: 무기 시스템 구현 (빔/건/미사일/전투정, 사거리/위력/물자소비)
+- [x] **BATTLE-04**: 진형 시스템 구현 (방추/함종별/혼성/삼열, 공격/방어/속도 보정)
+- [x] **BATTLE-05**: 커맨드레인지서클 구현 (시간경과 확대, 발령시 0 리셋, 지휘스탯 확대율)
+- [x] **BATTLE-06**: 색적 시스템 구현 (SENSOR 배분 기반, 거리/유닛종별 정밀도)
 - [x] **BATTLE-07**: 요새포 시스템 구현 (토르해머/가이에스하켄, 사선 통과 명중, 아군 피격)
 - [ ] **BATTLE-08**: 지상전 구현 (육전대 강하, 지상전 박스 30유닛 제한, 행성타입별)
 - [ ] **BATTLE-09**: 행성/요새 점령 처리 (항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동)
@@ -137,10 +137,10 @@
 | CMD-09 | Phase 2 | Complete |
 | BATTLE-01 | Phase 3 | Pending |
 | BATTLE-02 | Phase 3 | Pending |
-| BATTLE-03 | Phase 3 | Pending |
-| BATTLE-04 | Phase 3 | Pending |
-| BATTLE-05 | Phase 3 | Pending |
-| BATTLE-06 | Phase 3 | Pending |
+| BATTLE-03 | Phase 3 | Complete |
+| BATTLE-04 | Phase 3 | Complete |
+| BATTLE-05 | Phase 3 | Complete |
+| BATTLE-06 | Phase 3 | Complete |
 | BATTLE-07 | Phase 3 | Complete |
 | BATTLE-08 | Phase 3 | Pending |
 | BATTLE-09 | Phase 3 | Pending |
