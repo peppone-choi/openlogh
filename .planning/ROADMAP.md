@@ -44,8 +44,16 @@ Plans:
   2. 커맨드 실행 시 CP 차감 → 대기시간 → 실행 → WebSocket 결과 브로드캐스트 흐름이 동작한다
   3. 7개 커맨드 그룹(작전/개인/지휘/병참/인사/정치/첩보) 81종이 모두 CommandRegistry에 등록된다
   4. 계급이 낮은 장교가 상급자에게 제안(제안커맨드)을 발행하고 승인/거부가 처리된다
-**Plans**: TBD
-**Research flag**: Phase 2 planning 전 `/gsd:research-phase` 권장 — 7개 그룹 × 커맨드별 구현 설계 필요
+**Plans**: 7 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — PositionCardRegistry gin7 매핑 교체 + Gin7CommandRegistry MCP/PCP 분리
+- [ ] 02-02-PLAN.md — 작전커맨드 16종 + 병참커맨드 6종 구현체
+- [ ] 02-03-PLAN.md — 개인커맨드 15종 + 인사커맨드 10종 구현체
+- [ ] 02-04-PLAN.md — 정치커맨드 12종 + 첩보커맨드 14종 구현체
+- [ ] 02-05-PLAN.md — 지휘커맨드 8종 구현체 + stub 전량 제거
+- [ ] 02-06-PLAN.md — 제안 시스템 (CommandProposal 엔티티 + 승인/거부 API)
+- [ ] 02-07-PLAN.md — 통합 테스트 (81종 등록 + 파이프라인 + 제안 시스템)
 
 ### Phase 3: 실시간 전술전 엔진
 **Goal**: 에너지 배분, 무기 시스템, 진형, 커맨드레인지서클, 색적, 요새포, 지상전을 포함한 gin7 전술전이 실시간으로 동작한다
@@ -114,7 +122,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. 레거시 제거 + 함종 유닛 기반 | 8/8 | Complete   | 2026-04-06 |
-| 2. gin7 81종 커맨드 시스템 | 0/TBD | Not started | - |
+| 2. gin7 81종 커맨드 시스템 | 0/7 | Not started | - |
 | 3. 실시간 전술전 엔진 | 0/TBD | Not started | - |
 | 4. 경제 시스템 | 0/TBD | Not started | - |
 | 5. AI 시스템 | 0/TBD | Not started | - |
