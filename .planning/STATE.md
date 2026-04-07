@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-04-07T08:47:39.450Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-04-07T08:56:34.401Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 18
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 85
-  completed_plans: 66
+  completed_plans: 67
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 08 (scenario-character-system) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-07
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 08 P01 | 9m | 2 tasks | 4 files |
+| Phase 08 P02 | 18min | 2 tasks | 43 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Recent decisions affecting current work:
 - [v2.1-Roadmap]: Command buffer pattern (ConcurrentLinkedQueue) replaces direct WebSocket-to-state mutation
 - [v2.1-Roadmap]: TacticalAI must be pure function operating only on TacticalBattleState — no DB access
 - [Phase 08]: TacticalCommand sealed class with 7 subtypes for exhaustive when() matching in command buffer drain
+- [Phase 08]: CommandRange object reused from model/ package for TacticalUnit field unification
+- [Phase 08]: Count-down cooldown pattern: stanceChangeTicksRemaining replaces ticksSinceStanceChange
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T08:47:39.443Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-04-07T08:56:34.394Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None

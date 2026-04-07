@@ -130,7 +130,7 @@
 Plans:
 - [x] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
 - [x] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
-- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
+- [x] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 
 ### Phase 9: 지휘권 분배 + 커맨드레인지서클
 **Goal**: 사령관이 함대를 분함대로 나누어 지휘하고, 커맨드레인지서클 내 유닛에만 명령이 전달되며, 통신 방해가 지휘 체계에 영향을 미친다
@@ -153,8 +153,8 @@ Plans:
   4. 모든 사령관 지휘 불가 시 지휘 체계가 붕괴하여 각 유닛이 독립 AI로 행동한다
 **Plans**: 3 plans
 Plans:
-- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
-- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
+- [x] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
+- [x] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
 - [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 
 ### Phase 11: 전술 AI

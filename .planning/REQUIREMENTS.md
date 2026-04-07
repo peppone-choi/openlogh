@@ -9,7 +9,7 @@ Requirements for milestone v2.1: 전술전 지휘체계 + AI. Each maps to roadm
 
 ### 엔진 통합 (ENGINE)
 
-- [ ] **ENGINE-01**: 듀얼 전술 엔진(TacticalBattleEngine + TacticalCombatEngine)이 단일 엔진으로 통합된다
+- [x] **ENGINE-01**: 듀얼 전술 엔진(TacticalBattleEngine + TacticalCombatEngine)이 단일 엔진으로 통합된다
 - [x] **ENGINE-02**: 커맨드 버퍼 패턴으로 tick 루프와 WebSocket 명령의 동시성이 보장된다
 - [x] **ENGINE-03**: 지휘 계층 데이터 모델(CommandHierarchy)이 전투 상태에 포함된다
 
@@ -85,7 +85,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENGINE-01 | Phase 8 | Pending |
+| ENGINE-01 | Phase 8 | Complete |
 | ENGINE-02 | Phase 8 | Complete |
 | ENGINE-03 | Phase 8 | Complete |
 | CMD-01 | Phase 9 | Pending |
