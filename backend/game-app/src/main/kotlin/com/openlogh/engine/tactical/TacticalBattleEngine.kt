@@ -85,6 +85,18 @@ data class TacticalUnit(
     /** 선회 중 여부 (ORBIT 커맨드) */
     var isOrbiting: Boolean = false,
 
+    // ── Phase 9: Command hierarchy fields ──
+    /** 이 유닛이 소속된 분함대장의 officerId (null = 사령관 직할) */
+    var subFleetCommanderId: Long? = null,
+    /** 마지막 명령을 수신한 tick 번호 (CRC 밖 자율행동 판단용) */
+    var lastCommandTick: Int = 0,
+    /** Officer rank level (populated at battle init from Officer.officerLevel, for priority ordering) */
+    val officerLevel: Int = 0,
+    /** Evaluation points (populated at battle init from Officer.evaluationPoints, for priority ordering) */
+    val evaluationPoints: Int = 0,
+    /** Merit points (populated at battle init from Officer.meritPoints, for priority ordering) */
+    val meritPoints: Int = 0,
+
     // ── Merged from TacticalCombatEngine ──
     /** 보급 물자 */
     var supplies: Int = 0,
@@ -161,6 +173,12 @@ data class TacticalBattleState(
 
     /** Pending conquest commands to be processed after command buffer drain */
     val pendingConquestCommands: MutableList<TacticalCommand.PlanetConquest> = mutableListOf(),
+
+    /** Connected player officer IDs for online status tracking (Phase 9: priority ordering) */
+    val connectedPlayerOfficerIds: MutableSet<Long> = mutableSetOf(),
+
+    /** Current tick counter (alias for tickCount, used by command hierarchy logic) */
+    var currentTick: Int = 0,
 )
 
 data class BattleTickEvent(
@@ -394,6 +412,12 @@ class TacticalBattleEngine(
             is TacticalCommand.PlanetConquest -> {
                 // PlanetConquest commands require service-level logic; store as pending
                 state.pendingConquestCommands.add(cmd)
+            }
+            is TacticalCommand.AssignSubFleet -> {
+                // Phase 9 Plan 03: full logic via CommandHierarchyService; stub for compilation
+            }
+            is TacticalCommand.ReassignUnit -> {
+                // Phase 9 Plan 03: full logic via CommandHierarchyService; stub for compilation
             }
         }
     }
