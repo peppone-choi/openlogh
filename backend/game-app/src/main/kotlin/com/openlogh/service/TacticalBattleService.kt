@@ -120,8 +120,20 @@ class TacticalBattleService(
         val state = activeBattles[battleId] ?: return
         val battle = tacticalBattleRepository.findById(battleId).orElse(null) ?: return
 
-        // Process tick
+        // Process tick (drains command buffer as step 0)
         engine.processTick(state)
+
+        // Process any pending conquest commands (require service-level logic)
+        val pendingConquests = state.pendingConquestCommands.toList()
+        state.pendingConquestCommands.clear()
+        for (cmd in pendingConquests) {
+            try {
+                @Suppress("DEPRECATION")
+                executeConquest(battleId, cmd.officerId, cmd.request)
+            } catch (e: Exception) {
+                log.warn("Failed to process conquest command in battle {}: {}", battleId, e.message)
+            }
+        }
 
         // Check for battle end
         val outcome = engine.checkBattleEnd(state)
@@ -143,8 +155,18 @@ class TacticalBattleService(
     // ── Player Commands ──
 
     /**
+     * Enqueue a tactical command for processing at next tick start.
+     * Thread-safe: ConcurrentLinkedQueue.offer() is lock-free.
+     */
+    fun enqueueCommand(battleId: Long, command: TacticalCommand) {
+        activeBattles[battleId]?.commandBuffer?.offer(command)
+            ?: log.warn("Cannot enqueue command: battle {} not found", battleId)
+    }
+
+    /**
      * Set energy allocation for a unit in battle.
      */
+    @Deprecated("Use enqueueCommand instead", ReplaceWith("enqueueCommand(battleId, TacticalCommand.SetEnergy(battleId, officerId, allocation))"))
     fun setEnergyAllocation(battleId: Long, officerId: Long, allocation: EnergyAllocation) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
@@ -161,6 +183,7 @@ class TacticalBattleService(
     /**
      * Set formation for a unit in battle.
      */
+    @Deprecated("Use enqueueCommand instead")
     fun setFormation(battleId: Long, officerId: Long, formation: Formation) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
@@ -176,6 +199,7 @@ class TacticalBattleService(
      * Set stance for a unit in battle.
      * gin7 rule: 태세 변경은 stanceChangeTicksRemaining <= 0 일 때만 가능 (10틱 쿨다운).
      */
+    @Deprecated("Use enqueueCommand instead")
     fun setStance(battleId: Long, officerId: Long, stance: UnitStance) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
@@ -196,6 +220,7 @@ class TacticalBattleService(
      * Set a specific attack target for a unit.
      * gin7 rule: 플레이어가 공격 대상 함대를 지정하면, 지정 대상이 살아있는 한 우선 공격.
      */
+    @Deprecated("Use enqueueCommand instead")
     fun setAttackTarget(battleId: Long, officerId: Long, targetFleetId: Long) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
@@ -210,6 +235,7 @@ class TacticalBattleService(
     /**
      * Initiate retreat for a unit. Requires WARP energy >= 50%.
      */
+    @Deprecated("Use enqueueCommand instead")
     fun retreat(battleId: Long, officerId: Long) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
@@ -231,6 +257,7 @@ class TacticalBattleService(
      * - GROUND_ASSAULT: groundUnitsEmbark > 0 확인 후 GroundBattleState 초기화
      * - 정밀폭격/무차별폭격: missileCount 소모 반영
      */
+    @Deprecated("Use enqueueCommand instead")
     fun executeConquest(battleId: Long, officerId: Long, request: ConquestRequest): ConquestResult {
         val state = activeBattles[battleId]
             ?: throw IllegalStateException("Battle $battleId not active")
@@ -331,6 +358,7 @@ class TacticalBattleService(
      * 전술 유닛 커맨드 11종 처리.
      * MOVE/TURN/STRAFE/REVERSE/ATTACK/FIRE/ORBIT/FORMATION_CHANGE/REPAIR/RESUPPLY/SORTIE
      */
+    @Deprecated("Use enqueueCommand instead")
     fun executeUnitCommand(battleId: Long, cmd: UnitCommandRequest) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == cmd.officerId && it.isAlive }

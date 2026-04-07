@@ -9,6 +9,7 @@ import com.openlogh.model.ShipSubtype
 import com.openlogh.model.TacticalWeaponType
 import com.openlogh.model.UnitStance
 import com.openlogh.service.ShipStatRegistry
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -148,6 +149,18 @@ data class TacticalBattleState(
      * null이면 지상전 미진행.
      */
     var groundBattleState: GroundBattleState? = null,
+
+    /** Command buffer: WebSocket handlers enqueue, tick loop drains (per D-03/D-04) */
+    val commandBuffer: ConcurrentLinkedQueue<TacticalCommand> = ConcurrentLinkedQueue(),
+
+    /** Command hierarchy for attacker side (per D-05, populated at battle init) */
+    var attackerHierarchy: CommandHierarchy? = null,
+
+    /** Command hierarchy for defender side (per D-05, populated at battle init) */
+    var defenderHierarchy: CommandHierarchy? = null,
+
+    /** Pending conquest commands to be processed after command buffer drain */
+    val pendingConquestCommands: MutableList<TacticalCommand.PlanetConquest> = mutableListOf(),
 )
 
 data class BattleTickEvent(
@@ -186,6 +199,7 @@ class TacticalBattleEngine(
         const val MORALE_DAMAGE_THRESHOLD = 20  // below this, combat effectiveness drops
         const val MISSILE_RANGE = 800.0    // TacticalWeaponType.MISSILE.baseRange * 100
         const val FIGHTER_RANGE = 600.0    // TacticalWeaponType.FIGHTER.baseRange * 100
+        const val STANCE_CHANGE_COOLDOWN = 10  // ticks between stance changes
     }
 
     /** Expose missile system for SORTIE command in TacticalBattleService. */
@@ -197,6 +211,9 @@ class TacticalBattleEngine(
     fun processTick(state: TacticalBattleState, rng: Random = Random): TacticalBattleState {
         state.tickEvents.clear()
         state.tickCount++
+
+        // Step 0: Drain command buffer (per D-03)
+        drainCommandBuffer(state)
 
         val aliveUnits = state.units.filter { it.isAlive }
 
@@ -329,6 +346,122 @@ class TacticalBattleEngine(
         }
 
         return null
+    }
+
+    // ── Command Buffer ──
+
+    /**
+     * Step 0 of processTick: drain all buffered commands and apply them.
+     * Called BEFORE any other tick processing (movement, detection, combat).
+     */
+    fun drainCommandBuffer(state: TacticalBattleState) {
+        var cmd = state.commandBuffer.poll()
+        while (cmd != null) {
+            applyCommand(cmd, state)
+            cmd = state.commandBuffer.poll()
+        }
+    }
+
+    private fun applyCommand(cmd: TacticalCommand, state: TacticalBattleState) {
+        val unit = state.units.find { it.officerId == cmd.officerId && it.isAlive } ?: return
+        when (cmd) {
+            is TacticalCommand.SetEnergy -> {
+                unit.energy = cmd.allocation
+                unit.commandRange = unit.commandRange.resetOnCommand()
+            }
+            is TacticalCommand.SetStance -> {
+                if (unit.stanceChangeTicksRemaining <= 0) {
+                    unit.stance = cmd.stance
+                    unit.stanceChangeTicksRemaining = STANCE_CHANGE_COOLDOWN
+                    unit.commandRange = unit.commandRange.resetOnCommand()
+                }
+            }
+            is TacticalCommand.SetFormation -> {
+                unit.formation = cmd.formation
+                unit.commandRange = unit.commandRange.resetOnCommand()
+            }
+            is TacticalCommand.Retreat -> {
+                unit.isRetreating = true
+                unit.commandRange = unit.commandRange.resetOnCommand()
+            }
+            is TacticalCommand.SetAttackTarget -> {
+                unit.targetFleetId = cmd.targetFleetId
+                unit.commandRange = unit.commandRange.resetOnCommand()
+            }
+            is TacticalCommand.UnitCommand -> {
+                applyUnitCommand(cmd, unit, state)
+            }
+            is TacticalCommand.PlanetConquest -> {
+                // PlanetConquest commands require service-level logic; store as pending
+                state.pendingConquestCommands.add(cmd)
+            }
+        }
+    }
+
+    private fun applyUnitCommand(cmd: TacticalCommand.UnitCommand, unit: TacticalUnit, state: TacticalBattleState) {
+        unit.commandRange = unit.commandRange.resetOnCommand()
+
+        when (cmd.command.uppercase()) {
+            "MOVE" -> {
+                val norm = sqrt(cmd.dirX * cmd.dirX + cmd.dirY * cmd.dirY).coerceAtLeast(0.001)
+                val spd = BASE_SPEED * cmd.speed.coerceIn(0.0, 2.0)
+                unit.velX = (cmd.dirX / norm) * spd
+                unit.velY = (cmd.dirY / norm) * spd
+            }
+            "TURN" -> {
+                val currentSpeed = sqrt(unit.velX * unit.velX + unit.velY * unit.velY)
+                val norm = sqrt(cmd.dirX * cmd.dirX + cmd.dirY * cmd.dirY).coerceAtLeast(0.001)
+                unit.velX = (cmd.dirX / norm) * currentSpeed
+                unit.velY = (cmd.dirY / norm) * currentSpeed
+            }
+            "STRAFE" -> {
+                unit.velY = cmd.dirY * BASE_SPEED
+            }
+            "REVERSE" -> {
+                unit.velX = -unit.velX
+                unit.velY = -unit.velY
+            }
+            "ATTACK", "FIRE" -> {
+                if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
+            }
+            "ORBIT" -> {
+                if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
+                unit.isOrbiting = true
+            }
+            "FORMATION_CHANGE" -> {
+                val formation = cmd.formation?.let { Formation.fromString(it) } ?: Formation.MIXED
+                unit.formation = formation
+            }
+            "REPAIR" -> {
+                if (unit.morale >= 5) {
+                    unit.morale -= 5
+                    val repairAmount = (unit.training / 100.0 * unit.maxHp * 0.05).toInt().coerceAtLeast(1)
+                    unit.hp = (unit.hp + repairAmount).coerceAtMost(unit.maxHp)
+                    state.tickEvents.add(BattleTickEvent("repair", sourceUnitId = unit.fleetId,
+                        value = repairAmount, detail = "${unit.officerName} 자함 수리 (+$repairAmount HP)"))
+                }
+            }
+            "RESUPPLY" -> {
+                val nearPlanet = unit.posX < 100.0 || unit.posX > 900.0
+                if (nearPlanet && unit.missileCount < 100) {
+                    val resupplyAmount = 20
+                    unit.missileCount = (unit.missileCount + resupplyAmount).coerceAtMost(100)
+                    state.tickEvents.add(BattleTickEvent("resupply", sourceUnitId = unit.fleetId,
+                        value = resupplyAmount, detail = "${unit.officerName} 미사일 보급 (+$resupplyAmount)"))
+                }
+            }
+            "SORTIE" -> {
+                val enemies = state.units.filter { it.side != unit.side && it.isAlive }
+                val target = enemies.minByOrNull {
+                    val dx = unit.posX - it.posX
+                    val dy = unit.posY - it.posY
+                    sqrt(dx * dx + dy * dy)
+                }
+                if (target != null) {
+                    missileSystem.processFighterAttack(unit, target, state)
+                }
+            }
+        }
     }
 
     // ── Private helpers ──
