@@ -141,6 +141,12 @@ Plans:
   2. 지휘관의 CRC 반경 내 유닛에만 명령이 전달되고, CRC 밖 유닛은 마지막 명령 유지 또는 AI 자율 행동한다
   3. 사령관이 서클 밖이면서 정지 중인 유닛을 실시간으로 재배정할 수 있다
   4. 통신 방해 상태에서 총사령관의 전군 명령이 차단된다
+**Plans**: 4 plans
+Plans:
+- [ ] 09-01-PLAN.md — 분함대 배정 데이터 모델 + CommandHierarchyService + CommandPriorityComparator
+- [ ] 09-02-PLAN.md — CrcValidator + OutOfCrcBehavior 순수 로직
+- [ ] 09-03-PLAN.md — 엔진 통합: CRC 게이트 + 서클 밖 행동 + 재배정 처리
+- [ ] 09-04-PLAN.md — 통신 방해 시스템 + WebSocket 엔드포인트
 
 ### Phase 10: 지휘 승계
 **Goal**: 사령관 부상/사망 시 지휘권이 규칙에 따라 승계되며, 체계 붕괴 시 유닛이 독립 AI로 전환된다
@@ -229,8 +235,8 @@ Plans:
 | 5. AI 시스템 | v2.0 | 3/3 | Complete | 2026-04-06 |
 | 6. 프론트엔드 통합 | v2.0 | 8/8 | Complete | 2026-04-06 |
 | 7. 시나리오 데이터 + 밸런싱 | v2.0 | 4/4 | Complete | 2026-04-06 |
-| 8. 엔진 통합 + 커맨드 버퍼 | v2.1 | 0/0 | Not started | - |
-| 9. 지휘권 분배 + CRC | v2.1 | 0/0 | Not started | - |
+| 8. 엔진 통합 + 커맨드 버퍼 | v2.1 | 3/3 | Complete | - |
+| 9. 지휘권 분배 + CRC | v2.1 | 0/4 | Planned | - |
 | 10. 지휘 승계 | v2.1 | 0/0 | Not started | - |
 | 11. 전술 AI | v2.1 | 0/0 | Not started | - |
 | 12. 작전 연동 | v2.1 | 0/0 | Not started | - |
