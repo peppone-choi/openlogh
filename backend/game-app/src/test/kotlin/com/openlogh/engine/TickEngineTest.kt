@@ -7,6 +7,7 @@ import com.openlogh.service.EmpirePoliticsService
 import com.openlogh.service.FezzanEndingService
 import com.openlogh.service.FezzanService
 import com.openlogh.service.GameEventService
+import com.openlogh.engine.ai.ScenarioEventAIService
 import com.openlogh.service.OfflinePlayerAIService
 import com.openlogh.service.ShipyardProductionService
 import com.openlogh.service.TacticalBattleService
@@ -41,6 +42,7 @@ class TickEngineTest {
             mock(ShipyardProductionService::class.java),
             mock(FleetSortieCostService::class.java),
             mock(OfflinePlayerAIService::class.java),
+            mock(ScenarioEventAIService::class.java),
         )
 
         // stub save to return the argument
