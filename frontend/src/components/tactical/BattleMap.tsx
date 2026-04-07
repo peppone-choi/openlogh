@@ -38,8 +38,8 @@ function generateStars(count: number, w: number, h: number) {
 
 export function BattleMap({
     units,
-    width = 800,
-    height = 480,
+    width = 1000,
+    height = 600,
     myOfficerId,
     selectedUnitId,
     onSelectUnit,

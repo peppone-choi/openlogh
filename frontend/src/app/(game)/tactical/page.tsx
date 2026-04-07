@@ -193,8 +193,8 @@ export default function TacticalPage() {
                         myOfficerId={myOfficer?.id}
                         selectedUnitId={selectedUnitId}
                         onSelectUnit={setSelectedUnitId}
-                        width={800}
-                        height={480}
+                        width={1000}
+                        height={600}
                     />
 
                     {/* MiniMap overlay — top-right */}
