@@ -444,6 +444,158 @@ class OfficerServiceTest {
     }
 
     @Test
+    fun `createOfficer_8stat_invalidTotal_throws`() {
+        val user = AppUser(
+            id = 10,
+            loginId = "user8stat",
+            displayName = "8스탯유저",
+            passwordHash = "encoded",
+            meta = mutableMapOf(),
+        )
+        val world = SessionState(
+            id = 1,
+            currentYear = 180,
+            currentMonth = 1,
+            tickSeconds = 300,
+            config = mutableMapOf("hiddenSeed" to "seed"),
+            meta = mutableMapOf(),
+        )
+
+        `when`(appUserRepository.findByLoginId("user8stat")).thenReturn(user)
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 10L)).thenReturn(emptyList())
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+
+        // Total = 51*7 + 44 = 357+44 = 401 (invalid)
+        val ex = assertThrows(IllegalArgumentException::class.java) {
+            service.createOfficer(
+                1L,
+                "user8stat",
+                CreateGeneralRequest(
+                    name = "팔스탯장수",
+                    statMode = "8stat",
+                    leadership = 51,
+                    strength = 51,
+                    intel = 51,
+                    politics = 51,
+                    charm = 51,
+                    command = 51,
+                    intelligence = 51,
+                    administration = 44,
+                    mobility = 51,
+                    attack = 51,
+                    defense = 51,
+                ),
+            )
+        }
+
+        assertTrue(ex.message?.contains("400") == true || ex.message?.contains("합계") == true)
+    }
+
+    @Test
+    fun `createOfficer_8stat_outOfRange_throws`() {
+        val user = AppUser(
+            id = 11,
+            loginId = "user8stat2",
+            displayName = "8스탯유저2",
+            passwordHash = "encoded",
+            meta = mutableMapOf(),
+        )
+        val world = SessionState(
+            id = 1,
+            currentYear = 180,
+            currentMonth = 1,
+            tickSeconds = 300,
+            config = mutableMapOf("hiddenSeed" to "seed"),
+            meta = mutableMapOf(),
+        )
+
+        `when`(appUserRepository.findByLoginId("user8stat2")).thenReturn(user)
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 11L)).thenReturn(emptyList())
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+
+        // Total = 10 + 65 + 65 + 65 + 65 + 65 + 65 + 0 = 400 but mobility=10 < 20
+        val ex = assertThrows(IllegalArgumentException::class.java) {
+            service.createOfficer(
+                1L,
+                "user8stat2",
+                CreateGeneralRequest(
+                    name = "범위위반장수",
+                    statMode = "8stat",
+                    leadership = 65,
+                    strength = 65,
+                    intel = 65,
+                    politics = 65,
+                    charm = 65,
+                    command = 65,
+                    intelligence = 65,
+                    administration = 65,
+                    mobility = 10,
+                    attack = 0,
+                    defense = 0,
+                ),
+            )
+        }
+
+        assertTrue(ex.message?.contains("20") == true || ex.message?.contains("범위") == true)
+    }
+
+    @Test
+    fun `createOfficer_8stat_valid_succeeds`() {
+        val user = AppUser(
+            id = 12,
+            loginId = "user8stat3",
+            displayName = "8스탯유저3",
+            passwordHash = "encoded",
+            meta = mutableMapOf(),
+        )
+        val world = SessionState(
+            id = 1,
+            currentYear = 180,
+            currentMonth = 1,
+            tickSeconds = 300,
+            config = mutableMapOf("hiddenSeed" to "seed"),
+            meta = mutableMapOf(),
+        )
+        val city = Planet(id = 10, sessionId = 1, name = "허창", level = 5, factionId = 0)
+
+        `when`(appUserRepository.findByLoginId("user8stat3")).thenReturn(user)
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
+        `when`(officerRepository.findBySessionIdAndUserId(1L, 12L)).thenReturn(emptyList())
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(emptyList())
+        `when`(officerRepository.findByNameAndSessionId("유효팔스탯", 1L)).thenReturn(null)
+        `when`(planetRepository.findById(10L)).thenReturn(Optional.of(city))
+
+        // All 8 stats in [20,95], total = 50*8 = 400
+        val general = service.createOfficer(
+            1L,
+            "user8stat3",
+            CreateGeneralRequest(
+                name = "유효팔스탯",
+                cityId = 10L,
+                statMode = "8stat",
+                leadership = 50,
+                strength = 50,
+                intel = 50,
+                politics = 50,
+                charm = 50,
+                command = 50,
+                intelligence = 50,
+                administration = 50,
+                mobility = 50,
+                attack = 50,
+                defense = 50,
+            ),
+        )
+
+        assertNotNull(general)
+        assertEquals(50.toShort(), general?.leadership)
+        assertEquals(50.toShort(), general?.command)
+        assertEquals(50.toShort(), general?.mobility)
+    }
+
+    @Test
     fun `createGeneral returns clear error when user not found`() {
         `when`(appUserRepository.findByLoginId("ghost")).thenReturn(null)
         `when`(appUserRepository.findByLoginIdIgnoreCase("ghost")).thenReturn(null)
