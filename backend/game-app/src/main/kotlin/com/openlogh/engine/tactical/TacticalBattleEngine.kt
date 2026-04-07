@@ -234,6 +234,9 @@ class TacticalBattleEngine(
         // Step 0: Drain command buffer (per D-03)
         drainCommandBuffer(state)
 
+        // Step 0.5: Process out-of-CRC units (Phase 9 Plan 03)
+        processOutOfCrcUnits(state)
+
         val aliveUnits = state.units.filter { it.isAlive }
 
         // 0. Update per-tick counters (stance cooldown counts down)
@@ -578,6 +581,28 @@ class TacticalBattleEngine(
                 if (target != null) {
                     missileSystem.processFighterAttack(unit, target, state)
                 }
+            }
+        }
+    }
+
+    /**
+     * Process out-of-CRC units: maintain last order or AI retreat (D-06).
+     * Called each tick AFTER command buffer drain and BEFORE movement processing.
+     */
+    private fun processOutOfCrcUnits(state: TacticalBattleState) {
+        for (unit in state.units) {
+            if (!unit.isAlive || unit.isRetreating) continue
+
+            val hierarchy = getHierarchyForUnit(unit, state) ?: continue
+            val commanderId = CommandHierarchyService.resolveCommanderForUnit(unit, hierarchy)
+            val commanderUnit = state.units.find { it.officerId == commanderId && it.isAlive }
+
+            // Skip if commander not found (edge case) or if unit IS the commander
+            if (commanderUnit == null || unit.officerId == commanderId) continue
+
+            // Check if unit is outside commander's CRC
+            if (!CrcValidator.isWithinCrc(commanderUnit, unit)) {
+                OutOfCrcBehavior.processOutOfCrcUnit(unit, commanderUnit, state.currentTick)
             }
         }
     }

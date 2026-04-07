@@ -474,6 +474,27 @@ class TacticalBattleService(
         state.pendingInjuryEvents.clear()
     }
 
+    // ── Player Connection Tracking (Phase 9 Plan 03) ──
+
+    /**
+     * Track player connection for priority-based hierarchy updates.
+     * Called from BattleWebSocketController on connect/disconnect events.
+     * Phase 14 frontend integration will wire the actual WebSocket handlers.
+     */
+    fun onPlayerConnected(battleId: Long, officerId: Long) {
+        val state = activeBattles[battleId] ?: return
+        state.connectedPlayerOfficerIds.add(officerId)
+        log.debug("Player {} connected to battle {}", officerId, battleId)
+    }
+
+    fun onPlayerDisconnected(battleId: Long, officerId: Long) {
+        val state = activeBattles[battleId] ?: return
+        state.connectedPlayerOfficerIds.remove(officerId)
+        log.debug("Player {} disconnected from battle {}", officerId, battleId)
+        // D-10: priority recalculation triggered on disconnect
+        // Succession queue will be re-evaluated at next hierarchy rebuild (flagship destruction, etc.)
+    }
+
     // ── Query Methods ──
 
     fun getActiveBattles(sessionId: Long): List<TacticalBattleDto> {

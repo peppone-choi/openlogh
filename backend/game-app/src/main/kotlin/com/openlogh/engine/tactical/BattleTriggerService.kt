@@ -226,23 +226,41 @@ class BattleTriggerService(
     companion object {
         /**
          * Build a CommandHierarchy for one side of a battle.
-         * Succession queue is ordered by rank descending (highest rank = first in line).
-         * CRC radius is initialized from the commander's commandRange.maxRange.
+         * Uses priority-based ordering via CommandHierarchyService.buildPriorityList:
+         *   online > rank > evaluation > merit > officerId (seniority).
+         * CRC radius initialized for ALL officers via CrcValidator.computeCrcRange.
          *
          * Static for testability (no Spring context needed).
+         *
+         * @param onlineOfficerIds set of currently connected player officer IDs (empty at battle init; updated via WebSocket)
          */
         fun buildCommandHierarchyStatic(
             leaderOfficerId: Long,
             units: List<TacticalUnit>,
             officerRanks: Map<Long, Int>,
+            onlineOfficerIds: Set<Long> = emptySet(),
         ): CommandHierarchy {
-            val sortedByRank = units.sortedByDescending { officerRanks[it.officerId] ?: 0 }
-            val commander = units.first { it.officerId == leaderOfficerId }
+            // Build priority list using CommandHierarchyService (Phase 9 Plan 03)
+            val officerData = units.map { u ->
+                OfficerPriorityData(
+                    officerId = u.officerId,
+                    rank = officerRanks[u.officerId] ?: u.officerLevel,
+                    evaluation = u.evaluationPoints,
+                    merit = u.meritPoints,
+                )
+            }
+            val priorityList = CommandHierarchyService.buildPriorityList(officerData, onlineOfficerIds)
+            val successionQueue = priorityList.map { it.officerId }.toMutableList()
+
+            // Initialize CRC for each officer based on command stat
+            val crcRadius = units.associate { u ->
+                u.officerId to CrcValidator.computeCrcRange(u.command).maxRange
+            }.toMutableMap()
 
             return CommandHierarchy(
                 fleetCommander = leaderOfficerId,
-                successionQueue = sortedByRank.map { it.officerId }.toMutableList(),
-                crcRadius = mutableMapOf(leaderOfficerId to commander.commandRange.maxRange),
+                successionQueue = successionQueue,
+                crcRadius = crcRadius,
             )
         }
     }
