@@ -84,6 +84,8 @@ export interface TacticalUnit {
     isRetreating: boolean;
     retreatProgress: number;
     unitType: string;
+    /** 기함부대 여부 — true면 △ 삼각형으로 표시, 없으면 unitType==='flagship'으로 판단 */
+    isFlagship?: boolean;
 }
 
 /** Tactical battle state */

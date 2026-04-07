@@ -3,24 +3,8 @@
 import { Group, RegularPolygon, Rect, Text, Circle } from 'react-konva';
 import type { TacticalUnit } from '@/types/tactical';
 
-type ShapeType = 'triangle' | 'square' | 'diamond';
-
-const SHIP_SHAPE: Record<string, ShapeType> = {
-    flagship: 'triangle',
-    battleship: 'square',
-    fast_battleship: 'square',
-    cruiser: 'square',
-    strike_cruiser: 'square',
-    engineering: 'square',
-    transport: 'square',
-    hospital: 'square',
-    landing: 'square',
-    civilian: 'square',
-    destroyer: 'diamond',
-    fighter_carrier: 'triangle',
-    torpedo_carrier: 'triangle',
-    carrier: 'triangle',
-};
+// 아이콘 규칙: △ 삼각형 = 기함부대(isFlagship=true)만, □ 사각형 = 나머지 전부
+// ◇ 마름모는 사용하지 않음 (제거됨 — Phase 06-08)
 
 const SHIP_LETTER: Record<string, string> = {
     flagship: '',
@@ -61,11 +45,11 @@ interface TacticalUnitIconProps {
 }
 
 export function TacticalUnitIcon({ unit, x, y, isSelected, onClick }: TacticalUnitIconProps) {
-    const shipClass = unit.unitType ?? 'battleship';
-    const shape: ShapeType = SHIP_SHAPE[shipClass] ?? 'square';
+    const shipClass = (unit.unitType ?? 'battleship').toLowerCase();
     const letter = SHIP_LETTER[shipClass] ?? '?';
     const fillColor = getFactionColor(unit);
-    const isFlagship = shipClass === 'flagship';
+    // △ 삼각형: 기함부대만 / □ 사각형: 나머지 전부
+    const isFlagship = unit.isFlagship === true || shipClass === 'flagship';
     const isDamaged = unit.maxShips > 0 && unit.ships < unit.maxShips * 0.5;
     const fillOpacity = isDamaged ? 0.5 : 1;
 
@@ -89,36 +73,24 @@ export function TacticalUnitIcon({ unit, x, y, isSelected, onClick }: TacticalUn
                 />
             )}
 
-            {/* Shape */}
-            {shape === 'triangle' && (
+            {/* △ 기함부대 */}
+            {isFlagship && (
                 <RegularPolygon
                     sides={3}
-                    radius={isFlagship ? 11 : 10}
+                    radius={11}
                     fill={fillColor}
                     stroke="white"
                     strokeWidth={0.5}
                     opacity={fillOpacity}
                 />
             )}
-            {shape === 'square' && (
+            {/* □ 나머지 전부 */}
+            {!isFlagship && (
                 <Rect
                     width={16}
                     height={16}
                     offsetX={8}
                     offsetY={8}
-                    fill={fillColor}
-                    stroke="white"
-                    strokeWidth={0.5}
-                    opacity={fillOpacity}
-                />
-            )}
-            {shape === 'diamond' && (
-                <Rect
-                    width={12}
-                    height={12}
-                    offsetX={6}
-                    offsetY={6}
-                    rotation={45}
                     fill={fillColor}
                     stroke="white"
                     strokeWidth={0.5}
