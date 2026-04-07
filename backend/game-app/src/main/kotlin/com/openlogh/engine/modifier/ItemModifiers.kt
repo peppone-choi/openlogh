@@ -3,8 +3,6 @@ package com.openlogh.engine.modifier
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.openlogh.engine.war.BattleTrigger
-import com.openlogh.engine.war.BattleTriggerRegistry
 import com.openlogh.model.CrewType
 import kotlin.math.floor
 
@@ -133,37 +131,11 @@ object ItemModifiers {
 
     fun getKillRice(code: String): Double = itemKillRice[code] ?: 1.0
 
-    fun getBattleTriggers(code: String): List<BattleTrigger> {
-        val meta = itemMeta[code] ?: return emptyList()
-        val triggerType = itemTriggerTypes[code] ?: return emptyList()
-        if (meta.consumable) {
-            val consumable = items[code] as? ConsumableItem
-            if (consumable?.effect == "battleTrain") {
-                return listOf(BattleTriggerRegistry.get("che_훈련Init")!!)
-            }
-            if (consumable?.effect == "battleSiege") {
-                return listOf(BattleTriggerRegistry.get("che_충차")!!)
-            }
-            return emptyList()
-        }
-        return when (triggerType) {
-            "snipe" -> listOf(BattleTriggerRegistry.get("che_저격")!!)
-            "rage" -> listOf(BattleTriggerRegistry.get("che_격노")!!)
-            "siege", "siegeSkill" -> listOf(BattleTriggerRegistry.get("che_공성")!!)
-            "intimidate" -> listOf(BattleTriggerRegistry.get("che_위압")!!)
-            "block" -> listOf(BattleTriggerRegistry.get("che_저지")!!)
-            "suppress" -> listOf(BattleTriggerRegistry.get("che_진압")!!)
-            "antiSnipe" -> listOf(BattleTriggerRegistry.get("che_부적")!!)
-            "plunder" -> listOf(BattleTriggerRegistry.get("che_약탈_try")!!, BattleTriggerRegistry.get("che_약탈_fire")!!)
-            "counterMagic" -> listOf(BattleTriggerRegistry.get("che_백우선반계")!!)
-            "siegeConsumable" -> listOf(BattleTriggerRegistry.get("che_충차")!!)
-            "charge" -> listOf(BattleTriggerRegistry.get("che_돌격")!!)
-            "demonSlayer" -> listOf(BattleTriggerRegistry.get("che_척사")!!)
-            "medicine" -> listOf(BattleTriggerRegistry.get("che_의술")!!)
-            "fortitude" -> listOf(BattleTriggerRegistry.get("che_견고")!!)
-            else -> emptyList()
-        }
-    }
+    /**
+     * Legacy battle trigger lookup -- stub.
+     * TODO: gin7 전술전 트리거 시스템으로 대체 예정. BattleTrigger/BattleTriggerRegistry 삭제됨.
+     */
+    fun getBattleTriggerType(code: String): String? = itemTriggerTypes[code]
 }
 
 data class ItemMeta(

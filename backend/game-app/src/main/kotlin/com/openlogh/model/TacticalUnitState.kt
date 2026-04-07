@@ -44,9 +44,10 @@ data class TacticalUnitState(
     val stanceChangeTicksRemaining: Int = 0,
 
     // Command range (expands over time based on command stat)
-    val commandRange: Double = 0.0,
-    val commandRangeMax: Double = 100.0,
+    val commandRangeCurrentRange: Double = 0.0,
+    val commandRangeMaxRange: Double = 100.0,
     val commandRangeExpansionRate: Double = 1.0,
+    val commandRangeHasCommandRange: Boolean = true,
 
     // Status flags
     val isAlive: Boolean = true,

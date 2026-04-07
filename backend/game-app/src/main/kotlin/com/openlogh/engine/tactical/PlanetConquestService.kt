@@ -1,8 +1,5 @@
 package com.openlogh.engine.tactical
 
-import com.openlogh.engine.war.CaptureProcessingInput
-import com.openlogh.engine.war.CaptureProcessingResult
-import com.openlogh.engine.war.PlanetCaptureProcessor
 import kotlin.random.Random
 
 /**

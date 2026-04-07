@@ -1,8 +1,11 @@
 package com.openlogh.engine.tactical
 
+import com.openlogh.model.CommandRange
+import com.openlogh.model.DetectionCapability
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
 import com.openlogh.model.InjuryEvent
+import com.openlogh.model.ShipSubtype
 import com.openlogh.model.TacticalWeaponType
 import com.openlogh.model.UnitStance
 import com.openlogh.service.ShipStatRegistry
@@ -50,9 +53,7 @@ data class TacticalUnit(
     var formation: Formation = Formation.MIXED,
 
     // Command range: expands based on command stat, resets on new order
-    var commandRange: Double = 0.0,
-    var commandRangeMax: Double = 100.0,
-    var ticksSinceLastOrder: Int = 0,
+    var commandRange: CommandRange = CommandRange(),
 
     // Status
     var isAlive: Boolean = true,
@@ -69,20 +70,35 @@ data class TacticalUnit(
     /** 미사일 잔탄 수 */
     var missileCount: Int = 100,
     /** 함선 서브타입 (battleship/cruiser/destroyer 등 세부 구분) */
-    var shipSubtype: String = "",
+    var shipSubtype: ShipSubtype? = null,
     /** 기함 여부 */
     var isFlagship: Boolean = false,
     /** 탑재 지상부대 수 */
     var groundUnitsEmbark: Int = 0,
     /** 스파르타니안 속도 디버프 잔여 틱 */
     var fighterSpeedDebuffTicks: Int = 0,
-    /** 마지막 태세 변경 이후 경과 틱 (쿨다운 관리) */
-    var ticksSinceStanceChange: Int = 0,
+    /** 태세 변경 쿨다운 잔여 틱 (0 이하이면 변경 가능) */
+    var stanceChangeTicksRemaining: Int = 0,
     /** 플레이어 지정 공격 대상 함대 ID (null=자동 선택) */
     var targetFleetId: Long? = null,
     /** 선회 중 여부 (ORBIT 커맨드) */
     var isOrbiting: Boolean = false,
-)
+
+    // ── Merged from TacticalCombatEngine ──
+    /** 보급 물자 */
+    var supplies: Int = 0,
+    /** Weapon cooldowns: weaponType -> ticks remaining */
+    var weaponCooldowns: MutableMap<TacticalWeaponType, Int> = mutableMapOf(),
+    /** Active debuffs: type -> ticks remaining */
+    var debuffs: MutableMap<String, Int> = mutableMapOf(),
+    /** Detection capability of this unit */
+    var detectionCapability: DetectionCapability = DetectionCapability(
+        baseRange = 5.0, basePrecision = 0.5, evasionRating = 0.2,
+    ),
+) {
+    /** Unit is stopped (zero velocity) */
+    val isStopped: Boolean get() = velX == 0.0 && velY == 0.0
+}
 
 enum class BattleSide { ATTACKER, DEFENDER }
 
@@ -184,9 +200,11 @@ class TacticalBattleEngine(
 
         val aliveUnits = state.units.filter { it.isAlive }
 
-        // 0. Update per-tick counters
+        // 0. Update per-tick counters (stance cooldown counts down)
         for (unit in aliveUnits) {
-            unit.ticksSinceStanceChange++
+            if (unit.stanceChangeTicksRemaining > 0) {
+                unit.stanceChangeTicksRemaining--
+            }
         }
 
         // 1. Update command range for all units
@@ -316,11 +334,8 @@ class TacticalBattleEngine(
     // ── Private helpers ──
 
     private fun updateCommandRange(unit: TacticalUnit) {
-        unit.ticksSinceLastOrder++
-        // commandRangeMax scales linearly with command stat: command=50 → 100, command=100 → 200
-        unit.commandRangeMax = (unit.command / 50.0) * 100.0
-        val growthRate = COMMAND_RANGE_GROWTH_RATE * (unit.command / 50.0)
-        unit.commandRange = (unit.commandRange + growthRate).coerceAtMost(unit.commandRangeMax)
+        // CommandRange.tick() handles expansion toward maxRange
+        unit.commandRange = unit.commandRange.tick()
     }
 
     private fun processMovement(unit: TacticalUnit, state: TacticalBattleState, allUnits: List<TacticalUnit>) {
@@ -405,9 +420,10 @@ class TacticalBattleEngine(
         val stanceAttack = unit.stance.attackModifier
 
         // Resolve per-subtype base damage from ShipStatRegistry (fallback to hardcoded constants)
-        val subtypeStat = if (!unit.shipSubtype.isNullOrBlank()) {
-            shipStatRegistry?.getShipStat(unit.shipSubtype, "empire")
-                ?: shipStatRegistry?.getShipStat(unit.shipSubtype, "alliance")
+        val subtypeName = unit.shipSubtype?.name
+        val subtypeStat = if (subtypeName != null) {
+            shipStatRegistry?.getShipStat(subtypeName, "empire")
+                ?: shipStatRegistry?.getShipStat(subtypeName, "alliance")
         } else null
         val beamBaseDamage = subtypeStat?.beamPower?.takeIf { it > 0 }?.toDouble() ?: BEAM_BASE_DAMAGE
         val gunBaseDamage  = subtypeStat?.gunPower?.takeIf { it > 0 }?.toDouble()  ?: GUN_BASE_DAMAGE

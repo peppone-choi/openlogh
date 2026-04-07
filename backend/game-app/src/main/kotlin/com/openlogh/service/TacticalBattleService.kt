@@ -151,8 +151,7 @@ class TacticalBattleService(
             ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
 
         unit.energy = allocation
-        unit.commandRange = 0.0  // Reset command range on new order
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()  // Reset command range on new order
 
         log.debug("Officer {} set energy allocation in battle {}: B={} G={} S={} E={} W={} SE={}",
             officerId, battleId, allocation.beam, allocation.gun, allocation.shield,
@@ -168,29 +167,27 @@ class TacticalBattleService(
             ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
 
         unit.formation = formation
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
         log.debug("Officer {} set formation to {} in battle {}", officerId, formation.name, battleId)
     }
 
     /**
      * Set stance for a unit in battle.
-     * gin7 rule: 태세 변경은 10틱(ticksSinceStanceChange >= 10) 쿨다운 필요.
+     * gin7 rule: 태세 변경은 stanceChangeTicksRemaining <= 0 일 때만 가능 (10틱 쿨다운).
      */
     fun setStance(battleId: Long, officerId: Long, stance: UnitStance) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
             ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
 
-        require(unit.ticksSinceStanceChange >= 10) {
-            "태세 변경 쿨다운 중 (현재 ${unit.ticksSinceStanceChange}틱, 10틱 필요)"
+        require(unit.stanceChangeTicksRemaining <= 0) {
+            "태세 변경 쿨다운 중 (잔여 ${unit.stanceChangeTicksRemaining}틱)"
         }
 
         unit.stance = stance
-        unit.ticksSinceStanceChange = 0
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.stanceChangeTicksRemaining = 10
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
         log.debug("Officer {} changed stance to {} in battle {}", officerId, stance.name, battleId)
     }
@@ -205,8 +202,7 @@ class TacticalBattleService(
             ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
 
         unit.targetFleetId = targetFleetId
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
         log.debug("Officer {} set attack target fleet {} in battle {}", officerId, targetFleetId, battleId)
     }
@@ -265,8 +261,7 @@ class TacticalBattleService(
         }
 
         val result = planetConquestService.executeConquest(request)
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
         // 미사일 소모 반영
         if (result.missilesConsumed > 0) {
@@ -342,8 +337,7 @@ class TacticalBattleService(
             ?: throw IllegalArgumentException("Officer ${cmd.officerId} not found in battle $battleId")
 
         // 모든 커맨드는 commandRange 리셋
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
         when (cmd.command.uppercase()) {
             "MOVE" -> {
@@ -507,7 +501,7 @@ class TacticalBattleService(
         morale = unit.morale,
         energy = EnergyAllocation.toMap(unit.energy),
         formation = unit.formation.name,
-        commandRange = unit.commandRange,
+        commandRange = unit.commandRange.currentRange,
         isAlive = unit.isAlive,
         isRetreating = unit.isRetreating,
         retreatProgress = unit.retreatProgress,
