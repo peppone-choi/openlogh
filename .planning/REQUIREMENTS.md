@@ -79,8 +79,8 @@
 
 ### 시나리오 데이터 (SCEN)
 
-- [ ] **SCEN-01**: 10개 시나리오 초기 데이터 (인물 배치, 함대 편성, 행성 상태)
-- [ ] **SCEN-02**: LOGH 원작 캐릭터 데이터 (8스탯, 성격, 계급, 직무카드)
+- [x] **SCEN-01**: 10개 시나리오 초기 데이터 (인물 배치, 함대 편성, 행성 상태)
+- [x] **SCEN-02**: LOGH 원작 캐릭터 데이터 (8스탯, 성격, 계급, 직무카드)
 - [x] **SCEN-03**: 커스텀 캐릭터 생성 시스템 (8스탯 배분, 진영 선택)
 
 ### 밸런싱/테스트 (TEST)
@@ -165,8 +165,8 @@
 | FE-06 | Phase 6 | Pending |
 | FE-07 | Phase 6 | Complete |
 | FE-08 | Phase 6 | Complete |
-| SCEN-01 | Phase 7 | Pending |
-| SCEN-02 | Phase 7 | Pending |
+| SCEN-01 | Phase 7 | Complete |
+| SCEN-02 | Phase 7 | Complete |
 | SCEN-03 | Phase 7 | Complete |
 | TEST-01 | Phase 7 | Complete |
 | TEST-02 | Phase 7 | Complete |
