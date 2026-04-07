@@ -103,7 +103,7 @@ export default function TroopPage() {
                             units={fleets[activeTab].units}
                             sessionId={currentWorld.id}
                             officerName={myOfficer.name}
-                            rankTitle={myOfficer.rankTitle}
+                            rankTitle={myOfficer.officerLevelText ?? `Lv.${myOfficer.officerLevel}`}
                             onRefresh={fetchFleets}
                         />
                     )}

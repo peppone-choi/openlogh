@@ -1,40 +1,89 @@
-# 오픈삼국 (OpenSamguk)
+# Open LOGH (오픈 은하영웅전설)
 
-웹 기반 삼국지 전략 시뮬레이션 게임.
+웹 기반 은하영웅전설 다인원 온라인 전략 시뮬레이션 게임.
 
-삼국시대를 배경으로 한 턴 기반 전략 게임으로, 장수를 선택하고 내정·외교·전투를 통해 천하통일을 이루는 것이 목표입니다. 멀티플레이어 환경에서 NPC와 플레이어가 함께 경쟁하며, 실시간 WebSocket 기반 턴 진행과 채팅을 지원합니다.
+은하영웅전설VII(gin7, 2004 BOTHTEC)을 웹 기반으로 재구현한 프로젝트입니다. 플레이어는 은하제국 또는 자유행성동맹의 장교로 참가하여 조직 내에서 협력하며 진영의 승리를 목표로 합니다. 직무권한카드 기반 커맨드 시스템으로 계급 구조 안에서 명령/제안/인사/정치를 수행하며, 원작의 라인하르트나 양웬리의 입장을 체험할 수 있습니다.
+
+## 주요 특징
+
+- **조직 시뮬레이션**: 직무권한카드 기반 81종 커맨드 시스템 (작전/개인/지휘/병참/인사/정치/첩보)
+- **실시간 전술전**: 에너지 배분(6채널), 무기 시스템(빔/건/미사일/전투정), 진형, 커맨드레인지서클, 색적, 요새포, 지상전
+- **함종 시스템**: 11함종 x I~VIII 서브타입 (88종 상세 스탯), 진영별 고유 함종
+- **경제 시스템**: 행성 자원, 조병창 자동생산, 세율/납입, 페잔 차관
+- **AI 시스템**: 성격 기반 NPC AI, 진영 AI, 시나리오 이벤트 (쿠데타/내전)
+- **10개 시나리오**: LOGH 원작 기반 시나리오 + 커스텀 캐릭터 생성 (8스탯 배분)
 
 ## 기술 스택
 
 | 계층         | 기술                                 |
 | ------------ | ------------------------------------ |
-| 백엔드       | Spring Boot 3, Kotlin                |
-| 프론트엔드   | Next.js 15, React 19                 |
+| 백엔드       | Spring Boot 3, Kotlin 2.1            |
+| 프론트엔드   | Next.js 16, React 19, TypeScript     |
+| 3D/2D        | React Three Fiber, React Konva       |
 | 데이터베이스 | PostgreSQL 16                        |
 | 캐시         | Redis 7                              |
-| 실시간 통신  | WebSocket (STOMP)                    |
+| 실시간 통신  | WebSocket (STOMP), 1초 tick (24배속)  |
 | 배포         | Docker Compose, GitHub Actions, GHCR |
 
 ## 저장소 구성
 
 ```text
-opensamguk/
+openlogh/
 ├── backend/                  # Spring Boot 멀티모듈
-│   ├── gateway-app/          #   인증·라우팅 게이트웨이
-│   ├── game-app/             #   게임 엔진·턴 처리·API
-│   └── shared/               #   공유 모듈
+│   ├── gateway-app/          #   인증·라우팅 게이트웨이 (port 8080)
+│   ├── game-app/             #   게임 엔진·전투·커맨드·경제·AI (port 9001+)
+│   └── shared/               #   공유 모듈 (DTO, 엔티티, 보안)
 ├── frontend/                 # Next.js 앱
+│   └── src/
+│       ├── components/       #   게임 UI 컴포넌트
+│       │   ├── galaxy/       #     은하맵 (React Konva)
+│       │   ├── tactical/     #     전술전 (R3F + Konva)
+│       │   └── game/         #     전략 게임 UI
+│       ├── stores/           #   Zustand 상태관리
+│       └── types/            #   gin7 도메인 타입
+├── docs/                     # 게임 설계 문서 + 참조 자료
+│   ├── REWRITE_PROMPT.md     #   gin7 전면 재작성 스펙
+│   ├── reference/            #   gin4 EX 위키, 시나리오 상세
+│   ├── scenarios.json        #   10개 시나리오 데이터
+│   └── star_systems.json     #   80개 성계 데이터
 ├── nginx/                    # Reverse proxy 설정
-├── docs/                     # 아키텍처·패러티 문서
-├── legacy-core/              # 레거시 PHP 참조 코드
-├── docker-compose.yml        # GHCR 이미지 기반 실행 구성
+├── docker-compose.yml        # 로컬 개발 환경
 └── README.md
 ```
 
-## 관련 저장소
+## 게임 시스템
 
-- **배포**: [opensamguk-deploy](https://github.com/peppone-choi/opensamguk-deploy)
-- **이미지 에셋**: [opensamguk-image](https://github.com/peppone-choi/opensamguk-image)
+### 부대 편성
+
+| 부대 | 규모 | 인원 |
+|------|------|------|
+| 단독함 | 기함 1척 | 1명 |
+| 함대 | 60유닛 (18,000척) | 사령관+부사령관+참모장+참모6+부관 = 10명 |
+| 순찰대 | 3유닛 (900척) | 사령관+부사령관+부관 = 3명 |
+| 수송함대 | 수송함20+전투함3유닛 | 사령관+부사령관+부관 = 3명 |
+| 지상부대 | 양륙함3+육전대3유닛 | 사령관 1명 |
+| 행성수비대 | 육전대 10유닛 | 지휘관 1명 |
+
+편성 제한: 인구 10억당 함대/수송함대 1, 순찰대/지상부대 6
+
+### 장교 스탯 (8종)
+
+| 스탯 | 설명 | CP 그룹 |
+|------|------|---------|
+| 통솔 (leadership) | 인재 활용, 함대 최대 사기 | PCP |
+| 정치 (politics) | 시민 지지 획득 | PCP |
+| 운영 (administration) | 행성 통치, 사무 관리 | PCP |
+| 정보 (intelligence) | 정보 수집/분석, 첩보 | PCP |
+| 지휘 (command) | 부대 지휘 능력 | MCP |
+| 기동 (mobility) | 함대 이동/기동 지휘 | MCP |
+| 공격 (attack) | 공격 지휘 능력 | MCP |
+| 방어 (defense) | 방어 지휘 능력 | MCP |
+
+### 승리 조건
+
+- 적 수도 성계 점령
+- 적 정규군 보유 성계 3개 이하 (수도 포함)
+- 시간 제한 도달 시 인구 비교
 
 ## 로컬 개발 실행
 
@@ -81,60 +130,35 @@ cd frontend
 pnpm build
 ```
 
-### 공통 검증 파이프라인
-
-```bash
-# 1회 설치: 커밋 훅 등록
-./scripts/verify/install-hooks.sh
-
-# 커밋 전 빠른 검증
-./verify pre-commit
-
-# CI와 동일한 전체 검증
-./verify ci
-```
-
 ## Docker 배포
 
-운영 배포는 배포 전용 저장소([opensamguk-deploy](https://github.com/peppone-choi/opensamguk-deploy))를 사용합니다.
+운영 배포는 배포 전용 저장소를 사용합니다.
 
 ```bash
-git clone https://github.com/peppone-choi/opensamguk-deploy.git
-cd opensamguk-deploy
+git clone https://github.com/peppone-choi/openlogh-deploy.git
+cd openlogh-deploy
 cp .env.example .env
 docker compose pull
 docker compose up -d
 ```
 
-배포 스택에는 `bootstrap` 컨테이너가 포함되며, DB 마이그레이션을 1회 수행한 뒤 종료합니다.
-`gateway`는 환경변수(`ADMIN_LOGIN_ID`, `ADMIN_PASSWORD` 등)를 사용해 초기 어드민 계정을 생성/갱신합니다.
+## 참조 문서
 
-## 이미지 CDN 설정
-
-기본 CDN:
-
-```
-https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-image@master/
-```
-
-환경변수 `NEXT_PUBLIC_IMAGE_CDN_BASE`로 변경 가능합니다.
-
----
+- `docs/REWRITE_PROMPT.md` — gin7 전면 재작성 상세 스펙
+- `docs/reference/gin4ex_wiki.md` — gin4 EX 위키 요약
+- `docs/reference/unit_composition.md` — 부대 편성 규칙
+- `/Users/apple/Downloads/gin7manualsaved.pdf` — gin7 공식 매뉴얼 (101페이지)
 
 ## 크레딧 & 감사
 
-오픈삼국은 **[Hide_D](https://storage.hided.net/gitea/devsam)** 님의 삼국지 웹 게임 프로젝트를 제작 배경으로 삼아 탄생했습니다.
-
-Hide_D 님이 오랜 기간 쌓아온 게임 설계, 시나리오 데이터, 전투 시스템, NPC AI, 턴 엔진 등의 방대한 구현물이 없었다면 이 프로젝트는 시작조차 어려웠을 것입니다. 게임 로직의 깊이와 세밀함, 그리고 수백 명의 장수 데이터를 정성스럽게 구축해 주신 노력에 깊은 존경과 감사를 드립니다.
-
-### 원본 프로젝트
+Open LOGH는 **[Hide_D](https://storage.hided.net/gitea/devsam)** 님의 삼국지 웹 게임 프로젝트를 기반으로 탄생했습니다. Hide_D 님이 오랜 기간 쌓아온 게임 설계, 시나리오 데이터, 전투 시스템, NPC AI, 턴 엔진 등의 방대한 구현물이 없었다면 이 프로젝트는 시작조차 어려웠을 것입니다.
 
 | 프로젝트            | 설명                      | 링크                                            |
 | ------------------- | ------------------------- | ----------------------------------------------- |
 | **devsam/core**     | 원본 삼국지 웹 게임 (PHP) | https://storage.hided.net/gitea/devsam/core     |
 | **devsam/core2026** | 차세대 버전               | https://storage.hided.net/gitea/devsam/core2026 |
 
-오픈삼국은 위 프로젝트의 게임 메커니즘과 데이터를 참조하여, Spring Boot(Kotlin) + Next.js 기술 스택으로 재구현한 프로젝트입니다.
+은하영웅전설VII(gin7)의 게임 메카닉스를 참조하여 Spring Boot(Kotlin) + Next.js 기술 스택으로 재구현한 프로젝트입니다.
 
 ## 라이선스
 
