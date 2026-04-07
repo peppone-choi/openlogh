@@ -126,7 +126,11 @@
   1. TacticalCombatEngine(engine/war/)이 제거 또는 비활성화되고 TacticalBattleEngine 하나만 전술전을 처리한다
   2. WebSocket으로 수신된 전술 명령이 ConcurrentLinkedQueue에 버퍼링되어 tick 시작 시점에 일괄 처리된다 (직접 상태 변경 없음)
   3. TacticalBattleState에 CommandHierarchy(사령관-유닛 매핑, 승계 대기열)가 포함되어 전투 초기화 시 자동 생성된다
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
+- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
+- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 
 ### Phase 9: 지휘권 분배 + 커맨드레인지서클
 **Goal**: 사령관이 함대를 분함대로 나누어 지휘하고, 커맨드레인지서클 내 유닛에만 명령이 전달되며, 통신 방해가 지휘 체계에 영향을 미친다
@@ -147,7 +151,11 @@
   2. 사령관 사망(기함 격침) 시 30틱 공백 후 사전 지명자가 승계하며, 지명자 부재/사망 시 차순위 계급자가 자동 승계한다
   3. 분함대장 지휘 불가 시 해당 유닛이 사령관 직할로 복귀한다
   4. 모든 사령관 지휘 불가 시 지휘 체계가 붕괴하여 각 유닛이 독립 AI로 행동한다
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
+- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
+- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 
 ### Phase 11: 전술 AI
 **Goal**: 오프라인/NPC 유닛이 작전 목적과 성격에 따라 자동 전투를 수행하며, 위협 평가 기반 퇴각과 에너지/진형 자동 조정이 동작한다
@@ -158,7 +166,11 @@
   2. 성격 특성(AGGRESSIVE/DEFENSIVE 등)에 따라 교전 거리, 퇴각 임계값, 공격 대상 선택이 달라진다
   3. HP<20% 또는 사기<30% 조건에서 AI가 퇴각 판단을 실행한다
   4. AI가 상황에 따라 에너지 배분, 진형, 태세를 자동 변경하고 집중/분산 공격을 전환한다
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
+- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
+- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 
 ### Phase 12: 작전 연동
 **Goal**: 전략 게임의 작전계획이 전술전 AI 행동을 결정하고, 작전 참가 부대가 공적 보상을 받으며, 발령-도달로 작전이 시작된다
@@ -168,7 +180,11 @@
   1. 전략 게임에서 발령한 작전계획(점령/방어/소탕)의 목적이 전술전 진입 시 AI 기본 행동(TAI-01)에 자동 전달된다
   2. 작전에 참가한 부대가 전투 종료 후 비참가 부대 대비 공적 보너스를 받는다
   3. 발령된 부대가 목표 성계에 도달하면 작전이 자동 시작된다
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
+- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
+- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 
 ### Phase 13: 전략 AI
 **Goal**: AI 진영이 전쟁 상태에서 자동으로 작전계획을 수립하고 전력 평가에 따라 적절한 작전 유형을 선택한다
@@ -177,7 +193,11 @@
 **Success Criteria** (what must be TRUE):
   1. AI 진영이 교전 중일 때 FactionAI가 자동으로 작전계획(점령/방어/소탕)을 생성한다
   2. 자기 진영 대비 적 전력이 약한 성계에는 점령, 위협받는 자기 성계에는 방어, 침입 함대에는 소탕 작전이 선택된다
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
+- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
+- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 
 ### Phase 14: 프론트엔드 통합
 **Goal**: 전술전 지휘체계의 모든 백엔드 기능이 프론트엔드에서 시각적으로 표현되고 조작 가능하다
@@ -189,7 +209,11 @@
   3. 현재 로그인한 장교의 지휘권에 해당하지 않는 유닛의 명령 버튼이 비활성화된다
   4. 지휘 승계 발생 시 "지휘 승계 중" 카운트다운과 기함 격침 플래시가 표시된다
   5. 색적 범위 밖의 적 유닛이 안개 효과로 숨겨진다
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
+- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
+- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 **UI hint**: yes
 
 ## Progress
