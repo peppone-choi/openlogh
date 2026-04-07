@@ -1,183 +1,125 @@
-# Requirements: Open LOGH v2.0
+# Requirements: Open LOGH v2.1
 
-**Defined:** 2026-04-06
-**Core Value:** gin7의 핵심인 "조직 시뮬레이션" — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
+**Defined:** 2026-04-07
+**Core Value:** gin7 조직 시뮬레이션 — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
 
-## v2.0 Requirements
+## v2.1 Requirements
 
-### 레거시 제거 (LEGACY)
+Requirements for milestone v2.1: 전술전 지휘체계 + AI. Each maps to roadmap phases.
 
-- [ ] **LEGACY-01**: 삼국지 93개 커맨드(농지개간, 상업투자, 징병 등) 완전 제거
-- [ ] **LEGACY-02**: 병종 상성 시스템(보병/궁병/기병) 완전 제거
-- [ ] **LEGACY-03**: 삼국지 수치비교 자동전투 로직 제거
-- [x] **LEGACY-04**: 삼국지 경제 로직(농업/상업 수치) 제거
-- [x] **LEGACY-05**: 삼국지 아이템(무기/서적/말) 제거
-- [x] **LEGACY-06**: 삼국지 NPC 데이터(general_pool.json) 제거
+### 엔진 통합 (ENGINE)
 
-### 함종/유닛 시스템 (SHIP)
+- [ ] **ENGINE-01**: 듀얼 전술 엔진(TacticalBattleEngine + TacticalCombatEngine)이 단일 엔진으로 통합된다
+- [ ] **ENGINE-02**: 커맨드 버퍼 패턴으로 tick 루프와 WebSocket 명령의 동시성이 보장된다
+- [ ] **ENGINE-03**: 지휘 계층 데이터 모델(CommandHierarchy)이 전투 상태에 포함된다
 
-- [x] **SHIP-01**: 11함종 × I~VIII 서브타입 함정 유닛 구현 (ship_stats JSON 기반, 300척 단위)
-- [x] **SHIP-02**: 진영별 함종 차이 구현 (제국: 고속전함/뇌격정모함, 동맹: 타격순항함)
-- [x] **SHIP-03**: 기함 유닛 구현 (고유명 기함 + 범용기함, 계급별 결정)
-- [x] **SHIP-04**: 육전대 유닛 구현 (장갑병/장갑유탄병/경장육전병, ground_unit_stats.json 기반)
-- [x] **SHIP-05**: 함정 유닛 상세 스탯 구현 (장갑/실드/무기/속도/승무원/물자적재량)
-- [x] **SHIP-06**: 승조원 수련도 시스템 (엘리트/베테란/노멀/그린 4단계)
+### 지휘권 분배 (CMD)
 
-### 커맨드 시스템 (CMD)
+- [ ] **CMD-01**: 사령관이 함대 내 60유닛을 부사령관/참모에게 분함대로 배정할 수 있다
+- [ ] **CMD-02**: 지휘권 우선순위(온라인→계급→평가→공적)가 자동 적용된다
+- [ ] **CMD-03**: 커맨드레인지서클 내 유닛에만 명령이 전달된다
+- [ ] **CMD-04**: 서클 밖 유닛은 마지막 명령을 유지하거나 AI 자율 행동한다
+- [ ] **CMD-05**: 사령관이 실시간으로 유닛을 재배정할 수 있다 (서클 밖 + 정지 조건)
+- [ ] **CMD-06**: 통신 방해 시 총사령관의 전군 명령이 불가능하다
 
-- [x] **CMD-01**: 작전커맨드 16종 구현 (워프항행~육전대철수)
-- [x] **CMD-02**: 개인커맨드 15종 구현 (원거리이동~기함구매)
-- [x] **CMD-03**: 지휘커맨드 8종 구현 (작전계획~수송중지)
-- [x] **CMD-04**: 병참커맨드 6종 구현 (완전수리~할당)
-- [x] **CMD-05**: 인사커맨드 10종 구현 (승진~봉토직할)
-- [x] **CMD-06**: 정치커맨드 12종 구현 (야회~통치목표)
-- [x] **CMD-07**: 첩보커맨드 14종 구현 (일제수색~귀환공작)
-- [x] **CMD-08**: 실시간 커맨드 실행 파이프라인 (CP차감→대기시간→실행→결과)
-- [x] **CMD-09**: 직무권한카드 기반 커맨드 게이팅 (commands.json 연동)
+### 지휘 승계 (SUCC)
 
-### 전술전 엔진 (BATTLE)
+- [ ] **SUCC-01**: 사령관이 사전에 후계자를 지명할 수 있다
+- [ ] **SUCC-02**: 사령관 부상 시 지휘력이 저하되며, 이 시점에 후계자를 지명하여 지휘권을 위임할 수 있다
+- [ ] **SUCC-03**: 사령관 사망(기함 격침/전사) 시 30틱 공백 후 사전 지명된 후계자가 승계한다
+- [ ] **SUCC-04**: 사전 지명자가 없거나 지명자도 사망한 경우 차순위 계급자가 자동 승계한다
+- [ ] **SUCC-05**: 분함대장 지휘 불가 시 해당 유닛이 사령관 직할로 복귀한다
+- [ ] **SUCC-06**: 모든 사령관 지휘 불가 시 지휘 체계가 붕괴하여 각 유닛이 독립 AI로 행동한다
 
-- [ ] **BATTLE-01**: 전투 개시/종료 조건 구현 (같은 그리드 적아 공존 시 자동 개시)
-- [ ] **BATTLE-02**: 에너지 배분 시스템 (BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR, 총합 제한)
-- [x] **BATTLE-03**: 무기 시스템 구현 (빔/건/미사일/전투정, 사거리/위력/물자소비)
-- [x] **BATTLE-04**: 진형 시스템 구현 (방추/함종별/혼성/삼열, 공격/방어/속도 보정)
-- [x] **BATTLE-05**: 커맨드레인지서클 구현 (시간경과 확대, 발령시 0 리셋, 지휘스탯 확대율)
-- [x] **BATTLE-06**: 색적 시스템 구현 (SENSOR 배분 기반, 거리/유닛종별 정밀도)
-- [x] **BATTLE-07**: 요새포 시스템 구현 (토르해머/가이에스하켄, 사선 통과 명중, 아군 피격)
-- [x] **BATTLE-08**: 지상전 구현 (육전대 강하, 지상전 박스 30유닛 제한, 행성타입별)
-- [x] **BATTLE-09**: 행성/요새 점령 처리 (항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동)
-- [ ] **BATTLE-10**: 태세 시스템 (항행/정박/주류/전투 4종, 각각 공격/색적/사기 보정)
-- [x] **BATTLE-11**: 전사/부상 시스템 (기함 격침→부상→귀환성 워프)
-- [x] **BATTLE-12**: 전술 유닛 커맨드 (이동/회전/평행이동/반전/공격/사격/공전/대열/수리/보급/출격)
+### 전술 AI (TAI)
 
-### 경제 시스템 (ECON)
+- [ ] **TAI-01**: 오프라인/NPC 유닛이 작전 목적 기반 기본 행동을 수행한다 (점령→행성이동, 방어→현위치수비, 소탕→적추격)
+- [ ] **TAI-02**: 성격(PersonalityTrait) 기반으로 전술 차이가 발생한다 (AGGRESSIVE→공격적, DEFENSIVE→방어적)
+- [ ] **TAI-03**: 위협 평가 기반 퇴각 판단이 작동한다 (HP<20%, 사기<30%)
+- [ ] **TAI-04**: 에너지 배분/진형/태세가 상황에 따라 자동 조정된다
+- [ ] **TAI-05**: 집중공격/분산공격 전략이 적용된다
 
-- [x] **ECON-01**: 행성 자원 시스템 (인구/생산/교역/치안/지지도/궤도방어/요새방어)
-- [x] **ECON-02**: 조병창 자동생산 (행성별 자동생산 품목, 지배권 이전까지 계속)
-- [x] **ECON-03**: 세율/납입률 시스템 (행성별 세수→진영 자금, 90일 주기 징수)
-- [x] **ECON-04**: 행성/부대 창고 시스템 (행성창고↔부대창고 간 이동)
-- [x] **ECON-05**: 페잔 차관 시스템 (일시불 차관, 이자 10%/분기, 미상환 시 페잔 엔딩)
-- [x] **ECON-06**: 함대 출격 비용 (출격 중 함대 수 비례 자금 소모, 운영력 절감)
+### 작전 연동 (OPS)
 
-### AI 시스템 (AI)
+- [ ] **OPS-01**: 전략 게임의 작전계획(점령/방어/소탕) 목적이 전술전 AI 기본 행동을 결정한다
+- [ ] **OPS-02**: 작전에 참가한 부대만 공적 보너스를 받는다
+- [ ] **OPS-03**: 발령된 부대가 목표 성계 도달 시 작전이 시작된다
 
-- [x] **AI-01**: 성격 기반 행동 시스템 (5종 PersonalityTrait 가중치 의사결정)
-- [x] **AI-02**: 오프라인 플레이어 자동 행동 (플레이어 스탯으로 AI 가동)
-- [x] **AI-03**: 진영 AI (작전수립, 예산 배분, 인사 자동 처리)
-- [x] **AI-04**: 시나리오 이벤트 AI (쿠데타 조건 감지, 내전 트리거)
+### 전략 AI (SAI)
+
+- [ ] **SAI-01**: 전술전 진입 시 AI가 작전계획을 자동 수립한다
+- [ ] **SAI-02**: 전력 평가 기반으로 작전 유형(점령/방어/소탕)을 선택한다
 
 ### 프론트엔드 (FE)
 
-- [x] **FE-01**: 은하맵 재작성 (도트스타일 성계 아이콘, 진영 색상 기반 5단계 음영)
-- [x] **FE-02**: 전술전 전략맵 UI (도형 아이콘 △□◇, 커맨드레인지서클, 정보패널)
-- [x] **FE-03**: 전투 접근전 뷰 (상하 2분할, 상단 연출뷰+하단 전술맵, React Three Fiber)
-- [x] **FE-04**: 전략 게임 화면 (성계맵 확대, 정보뷰, 직무권한카드 탭, 동스폿 캐릭터)
-- [x] **FE-05**: 커맨드 실행 UI (직무권한카드→커맨드 목록→CP표시→실시간 실행)
-- [ ] **FE-06**: 함대/행성 관리 UI (부대 편성, 승조원, 창고, 자원, 시설, 조병창)
-- [x] **FE-07**: 정치 UI (제국 쿠데타/귀족, 동맹 의회/선거, 페잔 차관/정보)
-- [x] **FE-08**: 삼국지 UI 잔재 완전 제거 (city/nation/troop 용어, 컴포넌트)
+- [ ] **FE-01**: 전술맵에 커맨드레인지서클이 시각화된다
+- [ ] **FE-02**: 분함대 배정 패널에서 유닛을 배정/해제할 수 있다
+- [ ] **FE-03**: 지휘권에 따라 명령 가능 UI가 제한된다
+- [ ] **FE-04**: 지휘 승계 시 시각적 피드백이 표시된다
+- [ ] **FE-05**: 안개(fog-of-war) 효과가 적용된다
 
-### 시나리오 데이터 (SCEN)
+## Future Requirements
 
-- [x] **SCEN-01**: 10개 시나리오 초기 데이터 (인물 배치, 함대 편성, 행성 상태)
-- [x] **SCEN-02**: LOGH 원작 캐릭터 데이터 (8스탯, 성격, 계급, 직무카드)
-- [x] **SCEN-03**: 커스텀 캐릭터 생성 시스템 (8스탯 배분, 진영 선택)
+Deferred to future release. Tracked but not in current roadmap.
 
-### 밸런싱/테스트 (TEST)
+### 성능 최적화
 
-- [x] **TEST-01**: 함종 간 밸런스 검증 (88 서브타입 전투 시뮬레이션)
-- [x] **TEST-02**: 커맨드 CP 비용/대기시간 밸런싱
-- [x] **TEST-03**: 경제 밸런스 (세율/생산/소비 순환)
-- [x] **TEST-04**: 통합 테스트 (전술전→경제→인사 연동)
-
-## v3.0 Requirements (Deferred)
-
-### 고급 기능
-
-- **ADV-01**: 특수장비 시스템 (원작 설정 기반)
-- **ADV-02**: 관세 시스템 (교역 품목별 관세율)
-- **ADV-03**: 제국/동맹 예산 분리 (군무성+통수본부)
-- **ADV-04**: 시나리오 이벤트 스크립팅 (쿠데타/내전 상세)
-- **ADV-05**: 승리 화면 4단계 평가 (결정적/한정적/국지적/패배)
+- **PERF-01**: WebSocket 델타 브로드캐스팅으로 대역폭 최적화
+- **PERF-02**: 공간 해싱으로 O(N^2) 탐지/사거리 쿼리 최적화
 
 ## Out of Scope
 
+Explicitly excluded. Documented to prevent scope creep.
+
 | Feature | Reason |
 |---------|--------|
-| 모바일 앱 | 웹 우선, 모바일 이후 |
-| 음성 채팅 | 복잡도 과다, 텍스트 채팅으로 충분 |
-| 3D 함선 모델링 | 스프라이트/로우폴리로 대체, 성능 우선 |
-| 페잔 플레이어블 | gin7 매뉴얼 기준 NPC 전용 |
-| 실시간 음성 지휘 | 외부 디스코드 연동으로 대체 |
+| 전술전 리플레이 시스템 | 복잡도 높음, 핵심 가치와 무관 |
+| 유닛별 미세 조종 (개별 이동 경로) | gin7 설계 철학에 반함 — 조직 시뮬레이션이 핵심 |
+| 멀티플레이어 음성 채팅 | 인프라 비용 과다, 텍스트 통신으로 충분 |
+| 모바일 전술맵 UI | 웹 우선, 모바일은 후순위 |
 
 ## Traceability
 
+Which phases cover which requirements. Updated during roadmap creation.
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LEGACY-01 | Phase 1 | Pending |
-| LEGACY-02 | Phase 1 | Pending |
-| LEGACY-03 | Phase 1 | Pending |
-| LEGACY-04 | Phase 1 | Complete |
-| LEGACY-05 | Phase 1 | Complete |
-| LEGACY-06 | Phase 1 | Complete |
-| SHIP-01 | Phase 1 | Complete |
-| SHIP-02 | Phase 1 | Complete |
-| SHIP-03 | Phase 1 | Complete |
-| SHIP-04 | Phase 1 | Complete |
-| SHIP-05 | Phase 1 | Complete |
-| SHIP-06 | Phase 1 | Complete |
-| CMD-01 | Phase 2 | Complete |
-| CMD-02 | Phase 2 | Complete |
-| CMD-03 | Phase 2 | Complete |
-| CMD-04 | Phase 2 | Complete |
-| CMD-05 | Phase 2 | Complete |
-| CMD-06 | Phase 2 | Complete |
-| CMD-07 | Phase 2 | Complete |
-| CMD-08 | Phase 2 | Complete |
-| CMD-09 | Phase 2 | Complete |
-| BATTLE-01 | Phase 3 | Pending |
-| BATTLE-02 | Phase 3 | Pending |
-| BATTLE-03 | Phase 3 | Complete |
-| BATTLE-04 | Phase 3 | Complete |
-| BATTLE-05 | Phase 3 | Complete |
-| BATTLE-06 | Phase 3 | Complete |
-| BATTLE-07 | Phase 3 | Complete |
-| BATTLE-08 | Phase 3 | Complete |
-| BATTLE-09 | Phase 3 | Complete |
-| BATTLE-10 | Phase 3 | Pending |
-| BATTLE-11 | Phase 3 | Complete |
-| BATTLE-12 | Phase 3 | Complete |
-| ECON-01 | Phase 4 | Complete |
-| ECON-02 | Phase 4 | Complete |
-| ECON-03 | Phase 4 | Complete |
-| ECON-04 | Phase 4 | Complete |
-| ECON-05 | Phase 4 | Complete |
-| ECON-06 | Phase 4 | Complete |
-| AI-01 | Phase 5 | Complete |
-| AI-02 | Phase 5 | Complete |
-| AI-03 | Phase 5 | Complete |
-| AI-04 | Phase 5 | Complete |
-| FE-01 | Phase 6 | Complete |
-| FE-02 | Phase 6 | Complete |
-| FE-03 | Phase 6 | Complete |
-| FE-04 | Phase 6 | Complete |
-| FE-05 | Phase 6 | Complete |
-| FE-06 | Phase 6 | Pending |
-| FE-07 | Phase 6 | Complete |
-| FE-08 | Phase 6 | Complete |
-| SCEN-01 | Phase 7 | Complete |
-| SCEN-02 | Phase 7 | Complete |
-| SCEN-03 | Phase 7 | Complete |
-| TEST-01 | Phase 7 | Complete |
-| TEST-02 | Phase 7 | Complete |
-| TEST-03 | Phase 7 | Complete |
-| TEST-04 | Phase 7 | Complete |
+| ENGINE-01 | — | Pending |
+| ENGINE-02 | — | Pending |
+| ENGINE-03 | — | Pending |
+| CMD-01 | — | Pending |
+| CMD-02 | — | Pending |
+| CMD-03 | — | Pending |
+| CMD-04 | — | Pending |
+| CMD-05 | — | Pending |
+| CMD-06 | — | Pending |
+| SUCC-01 | — | Pending |
+| SUCC-02 | — | Pending |
+| SUCC-03 | — | Pending |
+| SUCC-04 | — | Pending |
+| SUCC-05 | — | Pending |
+| SUCC-06 | — | Pending |
+| TAI-01 | — | Pending |
+| TAI-02 | — | Pending |
+| TAI-03 | — | Pending |
+| TAI-04 | — | Pending |
+| TAI-05 | — | Pending |
+| OPS-01 | — | Pending |
+| OPS-02 | — | Pending |
+| OPS-03 | — | Pending |
+| SAI-01 | — | Pending |
+| SAI-02 | — | Pending |
+| FE-01 | — | Pending |
+| FE-02 | — | Pending |
+| FE-03 | — | Pending |
+| FE-04 | — | Pending |
+| FE-05 | — | Pending |
 
 **Coverage:**
-- v2.0 requirements: 51 total
-- Mapped to phases: 51
-- Unmapped: 0
+- v2.1 requirements: 30 total
+- Mapped to phases: 0
+- Unmapped: 30 ⚠️
 
 ---
-*Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 — traceability filled by roadmapper*
+*Requirements defined: 2026-04-07*
+*Last updated: 2026-04-07 after initial definition*
