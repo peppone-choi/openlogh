@@ -1,13 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Stage, Layer, Rect } from 'react-konva';
+import { Stage, Layer, Rect, Circle } from 'react-konva';
 import type Konva from 'konva';
 import { useGalaxyStore } from '@/stores/galaxyStore';
+import { FACTION_SHADES } from '@/types/galaxy';
 import { StarSystemNode } from './StarSystemNode';
 import { StarRouteEdge } from './StarRouteEdge';
 import { StarSystemDetailPanel } from './StarSystemDetailPanel';
 import { StarField } from './StarField';
+import { FleetPositionMarker } from './FleetPositionMarker';
 
 interface GalaxyMapProps {
     sessionId: number;
@@ -38,6 +40,10 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
     const selectSystem = useGalaxyStore((s) => s.selectSystem);
     const hoverSystem = useGalaxyStore((s) => s.hoverSystem);
     const getSystem = useGalaxyStore((s) => s.getSystem);
+    const fleetPositions = useGalaxyStore((s) => s.fleetPositions);
+    const selectedFleetId = useGalaxyStore((s) => s.selectedFleetId);
+    const selectFleet = useGalaxyStore((s) => s.selectFleet);
+    const getReachableStars = useGalaxyStore((s) => s.getReachableStars);
 
     // Fetch data on mount
     useEffect(() => {
@@ -115,6 +121,33 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
         }
         return set;
     }, [selectedSystemId, systemsById]);
+
+    // Find the star system that contains the selected fleet (for movement range)
+    const selectedFleetStarId = useMemo(() => {
+        if (selectedFleetId == null) return null;
+        for (const [starIdStr, fleets] of Object.entries(fleetPositions)) {
+            if (fleets.some((f) => f.fleetId === selectedFleetId)) {
+                return Number(starIdStr);
+            }
+        }
+        return null;
+    }, [selectedFleetId, fleetPositions]);
+
+    // Movement range: systems reachable within 2 hops from selected fleet's star
+    const movementRangeStars = useMemo(() => {
+        if (selectedFleetStarId == null) return new Set<number>();
+        return getReachableStars(selectedFleetStarId, 2);
+    }, [selectedFleetStarId, getReachableStars]);
+
+    // Get faction color of selected fleet for movement range highlight
+    const selectedFleetFactionId = useMemo(() => {
+        if (selectedFleetId == null) return null;
+        for (const fleets of Object.values(fleetPositions)) {
+            const fleet = fleets.find((f) => f.fleetId === selectedFleetId);
+            if (fleet) return fleet.factionId;
+        }
+        return null;
+    }, [selectedFleetId, fleetPositions]);
 
     // Wheel zoom with pointer tracking
     const handleWheel = useCallback(
@@ -235,6 +268,40 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
                     })}
                 </Layer>
 
+                {/* Movement range highlight layer — semi-transparent circles for reachable systems */}
+                {movementRangeStars.size > 0 && (
+                    <Layer listening={false}>
+                        {Array.from(movementRangeStars).map((starId) => {
+                            const sys = systemsById[starId];
+                            if (!sys) return null;
+                            const factionColor =
+                                selectedFleetFactionId === 1
+                                    ? FACTION_SHADES.empire[4]
+                                    : selectedFleetFactionId === 2
+                                      ? FACTION_SHADES.alliance[4]
+                                      : selectedFleetFactionId === 3
+                                        ? FACTION_SHADES.fezzan[4]
+                                        : selectedFleetFactionId === 4
+                                          ? FACTION_SHADES.rebel[4]
+                                          : FACTION_SHADES.neutral[4];
+                            return (
+                                <Circle
+                                    key={`range-${starId}`}
+                                    x={toCanvasX(sys.x)}
+                                    y={toCanvasY(sys.y)}
+                                    radius={20}
+                                    fill={factionColor}
+                                    opacity={0.1}
+                                    stroke={factionColor}
+                                    strokeWidth={1}
+                                    strokeOpacity={0.4}
+                                    perfectDrawEnabled={false}
+                                />
+                            );
+                        })}
+                    </Layer>
+                )}
+
                 {/* Star systems layer */}
                 <Layer>
                     {systems.map((system) => (
@@ -253,6 +320,31 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
                             }
                         />
                     ))}
+                </Layer>
+
+                {/* Fleet markers layer */}
+                <Layer>
+                    {systems.map((system) => {
+                        const fleets = fleetPositions[system.mapStarId];
+                        if (!fleets || fleets.length === 0) return null;
+                        const cx = toCanvasX(system.x);
+                        const cy = toCanvasY(system.y);
+                        return fleets.map((fleet, idx) => (
+                            <FleetPositionMarker
+                                key={`fleet-${fleet.fleetId}`}
+                                x={cx}
+                                y={cy}
+                                fleet={fleet}
+                                index={idx}
+                                isSelected={selectedFleetId === fleet.fleetId}
+                                onClick={(fleetId) => {
+                                    selectFleet(
+                                        selectedFleetId === fleetId ? null : fleetId
+                                    );
+                                }}
+                            />
+                        ));
+                    })}
                 </Layer>
             </Stage>
 

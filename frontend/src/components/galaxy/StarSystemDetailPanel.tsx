@@ -2,9 +2,9 @@
 
 import type { StarSystem } from '@/types/galaxy';
 import {
-    getFactionColor,
     isFortress,
     FORTRESS_NAMES,
+    FACTION_SHADES,
 } from '@/types/galaxy';
 import { useGalaxyStore } from '@/stores/galaxyStore';
 
@@ -18,18 +18,29 @@ function getFactionLabel(system: StarSystem): string {
     return '공백지';
 }
 
+/** Get bright faction color for badge rendering */
+function getFleetFactionColor(factionId: number): string {
+    if (factionId === 1) return FACTION_SHADES.empire[4];
+    if (factionId === 2) return FACTION_SHADES.alliance[4];
+    if (factionId === 3) return FACTION_SHADES.fezzan[4];
+    if (factionId === 4) return FACTION_SHADES.rebel[4];
+    return FACTION_SHADES.neutral[4];
+}
+
 export function StarSystemDetailPanel({
     system,
     onClose,
 }: StarSystemDetailPanelProps) {
     const selectSystem = useGalaxyStore((s) => s.selectSystem);
     const getConnectedSystems = useGalaxyStore((s) => s.getConnectedSystems);
+    const fleetPositions = useGalaxyStore((s) => s.fleetPositions);
 
     if (!system) return null;
 
     const color = system.factionColor || '#444444';
     const hasFortress = isFortress(system);
     const connectedSystems = getConnectedSystems(system.mapStarId);
+    const stationedFleets = fleetPositions[system.mapStarId] ?? [];
 
     return (
         <div
@@ -165,6 +176,58 @@ export function StarSystemDetailPanel({
                     </div>
                 </div>
             )}
+
+            {/* 주둔 함대 (Stationed fleets) */}
+            {stationedFleets.length > 0 && (
+                <div className="mb-3">
+                    <p className="mb-1.5 text-xs font-medium text-gray-400">
+                        주둔 함대
+                    </p>
+                    <div className="space-y-1">
+                        {stationedFleets.map((fleet) => {
+                            const fleetColor = getFleetFactionColor(fleet.factionId);
+                            return (
+                                <div
+                                    key={fleet.fleetId}
+                                    className="flex items-center justify-between rounded bg-gray-800/70 px-2 py-1.5 text-xs"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span
+                                            className="inline-block h-2 w-2 rounded-full"
+                                            style={{
+                                                backgroundColor: fleetColor,
+                                                boxShadow: `0 0 4px ${fleetColor}80`,
+                                            }}
+                                        />
+                                        <span className="font-medium text-gray-200">
+                                            {fleet.officerName}
+                                        </span>
+                                    </div>
+                                    <span className="text-gray-400">
+                                        {fleet.ships.toLocaleString()}척
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* 행성 정보 (Planet info grid) */}
+            <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded bg-gray-800/70 px-2 py-1.5">
+                    <span className="text-gray-500">생산력</span>
+                    <p className="font-medium text-gray-200">
+                        {system.level * 100}
+                    </p>
+                </div>
+                <div className="rounded bg-gray-800/70 px-2 py-1.5">
+                    <span className="text-gray-500">행성 수</span>
+                    <p className="font-medium text-gray-200">
+                        {system.planetCount}
+                    </p>
+                </div>
+            </div>
 
             {/* Connected systems */}
             {connectedSystems.length > 0 && (
