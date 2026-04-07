@@ -1,5 +1,12 @@
 // Galaxy map types for star system visualization
 
+export interface FleetPosition {
+    fleetId: number;
+    officerName: string;
+    ships: number;
+    factionId: number;
+}
+
 export interface StarSystem {
     id: number;
     mapStarId: number;
@@ -15,6 +22,8 @@ export interface StarSystem {
     factionName: string;
     /** Faction color hex from DB — directly used for map rendering */
     factionColor: string;
+    /** Control strength 0-100, drives shade selection (100 = full control) */
+    controlStrength?: number;
     fortressType: FortressType;
     fortressGunPower: number;
     fortressGunRange: number;
@@ -23,6 +32,8 @@ export interface StarSystem {
     planetCount: number;
     /** Planet names within this star system (from static data or API) */
     planets: string[];
+    /** Fleets stationed at this star system */
+    fleetPositions?: FleetPosition[];
 }
 
 export type FortressType =
@@ -42,6 +53,51 @@ export interface GalaxyMap {
     systems: StarSystem[];
     routes: StarRoute[];
     factionTerritories: Record<number, number[]>;
+}
+
+/**
+ * 5-shade faction color palettes for control-strength-based rendering.
+ * shade index = Math.floor(controlStrength / 20), clamped 0-4
+ * shade 0 = darkest (weak control), 4 = brightest (full control)
+ */
+export const FACTION_SHADES = {
+    empire:   ['#0a1233', '#1a2d66', '#2244aa', '#3355cc', '#4466ff'] as const,
+    alliance: ['#330a0a', '#661a1a', '#aa2222', '#cc3333', '#ff4444'] as const,
+    neutral:  ['#1a1a1a', '#333333', '#555555', '#777777', '#999999'] as const,
+    fezzan:   ['#1a1509', '#332a12', '#665421', '#997a30', '#ccaa44'] as const,
+    rebel:    ['#1a0d00', '#331a00', '#663300', '#994d00', '#cc6600'] as const,
+} as const;
+
+export type FactionShadeKey = keyof typeof FACTION_SHADES;
+
+/** Resolve 5-shade color from factionId + controlStrength */
+export function getFactionShadeColor(
+    factionId: number | null | undefined,
+    factionType: string | null | undefined,
+    controlStrength: number | null | undefined
+): string {
+    const strength = controlStrength ?? 50;
+    const idx = Math.min(4, Math.max(0, Math.floor(strength / 20)));
+
+    const key = resolveFactionShadeKey(factionId, factionType);
+    return FACTION_SHADES[key][idx];
+}
+
+function resolveFactionShadeKey(
+    factionId: number | null | undefined,
+    factionType: string | null | undefined
+): FactionShadeKey {
+    const type = factionType?.toLowerCase();
+    if (type === 'empire') return 'empire';
+    if (type === 'alliance') return 'alliance';
+    if (type === 'fezzan') return 'fezzan';
+    if (type === 'rebel') return 'rebel';
+    // Fallback by factionId numeric code
+    if (factionId === 1) return 'empire';
+    if (factionId === 2) return 'alliance';
+    if (factionId === 3) return 'fezzan';
+    if (factionId === 4) return 'rebel';
+    return 'neutral';
 }
 
 /**

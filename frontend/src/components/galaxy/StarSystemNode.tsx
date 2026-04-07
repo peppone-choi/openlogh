@@ -2,7 +2,7 @@
 
 import { Group, Circle, Rect, Text } from 'react-konva';
 import type { StarSystem } from '@/types/galaxy';
-import { getFactionColor, isFortress } from '@/types/galaxy';
+import { getFactionShadeColor, isFortress } from '@/types/galaxy';
 import { FortressIndicator } from './FortressIndicator';
 
 interface StarSystemNodeProps {
@@ -55,7 +55,12 @@ export function StarSystemNode({
     onHover,
 }: StarSystemNodeProps) {
     const r = getStarRadius(system.level);
-    const color = system.factionColor || '#444444';
+    // Use 5-shade faction color based on controlStrength; fall back to factionColor or neutral
+    const color = getFactionShadeColor(
+        system.factionId,
+        null,
+        system.controlStrength
+    ) || system.factionColor || '#444444';
     const palette = getDotPaletteFromHex(color);
     const hasFortress = isFortress(system);
 
