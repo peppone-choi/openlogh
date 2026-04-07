@@ -128,8 +128,8 @@
   3. TacticalBattleState에 CommandHierarchy(사령관-유닛 매핑, 승계 대기열)가 포함되어 전투 초기화 시 자동 생성된다
 **Plans**: 3 plans
 Plans:
-- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
-- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
+- [x] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
+- [x] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
 - [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 
 ### Phase 9: 지휘권 분배 + 커맨드레인지서클

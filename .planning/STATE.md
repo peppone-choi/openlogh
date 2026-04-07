@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
-status: planning
-stopped_at: Phase 8 context gathered
-last_updated: "2026-04-07T07:19:20.274Z"
-last_activity: 2026-04-07 — Roadmap created for v2.1
+status: executing
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-04-07T08:47:39.450Z"
+last_activity: 2026-04-07
 progress:
   total_phases: 18
   completed_phases: 11
-  total_plans: 82
-  completed_plans: 65
+  total_plans: 85
+  completed_plans: 66
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** gin7 조직 시뮬레이션 — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 8 — 엔진 통합 + 커맨드 버퍼
+**Current focus:** Phase 08 — scenario-character-system
 
 ## Current Position
 
-Phase: 8 of 14 (엔진 통합 + 커맨드 버퍼)
-Plan: 0 of 0 in current phase (not yet planned)
-Status: Ready to plan
-Last activity: 2026-04-07 — Roadmap created for v2.1
+Phase: 08 (scenario-character-system) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 08 P01 | 9m | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,7 @@ Recent decisions affecting current work:
 - [v2.1-Roadmap]: Dual engine (TacticalBattleEngine + TacticalCombatEngine) must be resolved in Phase 8 before any hierarchy code
 - [v2.1-Roadmap]: Command buffer pattern (ConcurrentLinkedQueue) replaces direct WebSocket-to-state mutation
 - [v2.1-Roadmap]: TacticalAI must be pure function operating only on TacticalBattleState — no DB access
+- [Phase 08]: TacticalCommand sealed class with 7 subtypes for exhaustive when() matching in command buffer drain
 
 ### Pending Todos
 
@@ -80,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T07:19:20.247Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-scenario-character-system/08-CONTEXT.md
+Last session: 2026-04-07T08:47:39.443Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None
