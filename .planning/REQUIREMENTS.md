@@ -75,7 +75,7 @@
 - [x] **FE-05**: 커맨드 실행 UI (직무권한카드→커맨드 목록→CP표시→실시간 실행)
 - [ ] **FE-06**: 함대/행성 관리 UI (부대 편성, 승조원, 창고, 자원, 시설, 조병창)
 - [x] **FE-07**: 정치 UI (제국 쿠데타/귀족, 동맹 의회/선거, 페잔 차관/정보)
-- [ ] **FE-08**: 삼국지 UI 잔재 완전 제거 (city/nation/troop 용어, 컴포넌트)
+- [x] **FE-08**: 삼국지 UI 잔재 완전 제거 (city/nation/troop 용어, 컴포넌트)
 
 ### 시나리오 데이터 (SCEN)
 
@@ -164,7 +164,7 @@
 | FE-05 | Phase 6 | Complete |
 | FE-06 | Phase 6 | Pending |
 | FE-07 | Phase 6 | Complete |
-| FE-08 | Phase 6 | Pending |
+| FE-08 | Phase 6 | Complete |
 | SCEN-01 | Phase 7 | Pending |
 | SCEN-02 | Phase 7 | Pending |
 | SCEN-03 | Phase 7 | Pending |

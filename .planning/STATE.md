@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06-05-PLAN.md
-last_updated: "2026-04-07T02:51:35.534Z"
+stopped_at: Completed 06-08-PLAN.md
+last_updated: "2026-04-07T03:10:13.712Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 12
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 59
-  completed_plans: 54
+  completed_plans: 56
   percent: 77
 ---
 
@@ -79,6 +79,7 @@ Progress: [████████░░] 77%
 | Phase 06 P03 | 25 | 2 tasks | 6 files |
 | Phase 06 P07 | 25 | 2 tasks | 5 files |
 | Phase 06 P05 | 35 | 2 tasks | 6 files |
+| Phase 06 P08 | 25 | 2 tasks | 53 files |
 
 ## Accumulated Context
 
@@ -141,6 +142,8 @@ Progress: [████████░░] 77%
 - [Phase 06]: Tab navigation allows cross-faction politics viewing; own faction tab marked with dot indicator
 - [Phase 06-05]: Used REST as authoritative command execution; WebSocket publish is fire-and-forget supplement
 - [Phase 06-05]: Officer cast via unknown to bypass legacy General alias in officerStore
+- [Phase 06]: Samguk 3D map (map-3d/) deleted entirely; gin7 uses 2D galaxy map
+- [Phase 06]: Tactical icon rule: isFlagship → △, all others → □, ◇ removed per user feedback
 
 ### Pending Todos
 
@@ -154,6 +157,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T02:51:35.525Z
-Stopped at: Completed 06-05-PLAN.md
+Last session: 2026-04-07T03:10:13.703Z
+Stopped at: Completed 06-08-PLAN.md
 Resume file: None
