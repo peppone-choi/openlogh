@@ -329,6 +329,16 @@ class TacticalBattleEngine(
             }
         }
 
+        // 5.7 Tick jamming countdown + source-gone check (D-14)
+        state.attackerHierarchy?.let { h ->
+            CommunicationJamming.tickJamming(h)
+            CommunicationJamming.clearJammingIfSourceGone(h, state.units)
+        }
+        state.defenderHierarchy?.let { h ->
+            CommunicationJamming.tickJamming(h)
+            CommunicationJamming.clearJammingIfSourceGone(h, state.units)
+        }
+
         // 6. Morale effects
         for (unit in aliveUnits.filter { it.isAlive }) {
             updateMorale(unit, state)
@@ -394,6 +404,17 @@ class TacticalBattleEngine(
             applyReassignUnit(cmd, state)
             return
         }
+        // TriggerJamming targets enemy hierarchy -- no unit lookup needed
+        if (cmd is TacticalCommand.TriggerJamming) {
+            val targetHierarchy = when (cmd.targetSide) {
+                BattleSide.ATTACKER -> state.attackerHierarchy
+                BattleSide.DEFENDER -> state.defenderHierarchy
+            }
+            if (targetHierarchy != null) {
+                CommunicationJamming.applyJamming(targetHierarchy, cmd.officerId, cmd.durationTicks)
+            }
+            return
+        }
 
         val unit = state.units.find { it.officerId == cmd.officerId && it.isAlive } ?: return
 
@@ -401,6 +422,11 @@ class TacticalBattleEngine(
         val hierarchy = getHierarchyForUnit(unit, state)
         if (hierarchy != null && !CrcValidator.isCommandReachable(cmd, unit, hierarchy, state.units)) {
             return  // Command blocked by CRC -- unit maintains last order
+        }
+
+        // Jamming gate: blocks fleet commander's fleet-wide orders when jammed (D-13)
+        if (hierarchy != null && CommunicationJamming.isFleetWideCommandBlocked(cmd, unit, hierarchy)) {
+            return  // Command blocked by communication jamming
         }
 
         // Update lastCommandTick on successful command delivery
@@ -441,6 +467,9 @@ class TacticalBattleEngine(
                 // Handled above; exhaustive when requires this branch
             }
             is TacticalCommand.ReassignUnit -> {
+                // Handled above; exhaustive when requires this branch
+            }
+            is TacticalCommand.TriggerJamming -> {
                 // Handled above; exhaustive when requires this branch
             }
         }

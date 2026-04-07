@@ -86,4 +86,12 @@ sealed class TacticalCommand {
         val unitId: Long,
         val newSubCommanderId: Long?,  // null = return to fleet commander direct control
     ) : TacticalCommand()
+
+    /** Communication jamming trigger (Phase 9: enemy ability blocks fleet-wide orders, D-12) */
+    data class TriggerJamming(
+        override val battleId: Long,
+        override val officerId: Long,  // the jammer (enemy officer)
+        val targetSide: BattleSide,    // which side gets jammed
+        val durationTicks: Int = CommunicationJamming.JAMMING_DEFAULT_DURATION_TICKS,
+    ) : TacticalCommand()
 }
