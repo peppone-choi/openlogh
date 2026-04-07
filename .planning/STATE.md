@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-04-07T02:46:40.663Z"
+stopped_at: Completed 06-07-PLAN.md
+last_updated: "2026-04-07T02:49:01.298Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 12
   completed_phases: 9
   total_plans: 59
-  completed_plans: 52
+  completed_plans: 53
   percent: 77
 ---
 
@@ -77,6 +77,7 @@ Progress: [████████░░] 77%
 | Phase 06-frontend-integration P02 | 15 | 2 tasks | 6 files |
 | Phase 06 P04 | 20 | 2 tasks | 5 files |
 | Phase 06 P03 | 25 | 2 tasks | 6 files |
+| Phase 06 P07 | 25 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,8 @@ Progress: [████████░░] 77%
 - [Phase 06]: BattleCloseView uses inline styles (not Tailwind) for panel components adjacent to R3F Canvas context
 - [Phase 06]: Used unitType field from TacticalUnit instead of shipClass for gin7 icon mapping
 - [Phase 06]: BattleMap converted from SVG to React Konva for gin7 dot-style rendering
+- [Phase 06]: Used nationId fallback for General type since OfficerStore returns General not Officer DTO
+- [Phase 06]: Tab navigation allows cross-faction politics viewing; own faction tab marked with dot indicator
 
 ### Pending Todos
 
@@ -148,6 +151,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T02:46:40.651Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-04-07T02:49:01.290Z
+Stopped at: Completed 06-07-PLAN.md
 Resume file: None
