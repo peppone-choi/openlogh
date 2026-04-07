@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06-04-PLAN.md
-last_updated: "2026-04-07T02:45:12.100Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-04-07T02:46:40.663Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 12
   completed_phases: 9
   total_plans: 59
-  completed_plans: 51
+  completed_plans: 52
   percent: 77
 ---
 
@@ -76,6 +76,7 @@ Progress: [████████░░] 77%
 | Phase 05-ai-system P03 | 35 | 2 tasks | 5 files |
 | Phase 06-frontend-integration P02 | 15 | 2 tasks | 6 files |
 | Phase 06 P04 | 20 | 2 tasks | 5 files |
+| Phase 06 P03 | 25 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,8 @@ Progress: [████████░░] 77%
 - [Phase 06-frontend-integration]: FACTION_SHADES added to galaxy.ts — single source of truth for 5-shade palette used by both Konva and HTML layers
 - [Phase 06-frontend-integration]: fetchFleetPositions is non-blocking (catches errors silently) — map works without fleet data
 - [Phase 06]: BattleCloseView uses inline styles (not Tailwind) for panel components adjacent to R3F Canvas context
+- [Phase 06]: Used unitType field from TacticalUnit instead of shipClass for gin7 icon mapping
+- [Phase 06]: BattleMap converted from SVG to React Konva for gin7 dot-style rendering
 
 ### Pending Todos
 
@@ -145,6 +148,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T02:45:05.249Z
-Stopped at: Completed 06-04-PLAN.md
+Last session: 2026-04-07T02:46:40.651Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None
