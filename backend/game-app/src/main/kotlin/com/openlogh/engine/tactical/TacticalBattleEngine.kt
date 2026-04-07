@@ -229,6 +229,7 @@ class TacticalBattleEngine(
     fun processTick(state: TacticalBattleState, rng: Random = Random): TacticalBattleState {
         state.tickEvents.clear()
         state.tickCount++
+        state.currentTick = state.tickCount  // Sync currentTick for CRC/hierarchy logic
 
         // Step 0: Drain command buffer (per D-03)
         drainCommandBuffer(state)
@@ -381,7 +382,27 @@ class TacticalBattleEngine(
     }
 
     private fun applyCommand(cmd: TacticalCommand, state: TacticalBattleState) {
+        // Sub-fleet assignment commands bypass CRC (administrative, not tactical)
+        if (cmd is TacticalCommand.AssignSubFleet) {
+            applyAssignSubFleet(cmd, state)
+            return
+        }
+        if (cmd is TacticalCommand.ReassignUnit) {
+            applyReassignUnit(cmd, state)
+            return
+        }
+
         val unit = state.units.find { it.officerId == cmd.officerId && it.isAlive } ?: return
+
+        // CRC gate: check if command can reach the target unit (Phase 9 Plan 03)
+        val hierarchy = getHierarchyForUnit(unit, state)
+        if (hierarchy != null && !CrcValidator.isCommandReachable(cmd, unit, hierarchy, state.units)) {
+            return  // Command blocked by CRC -- unit maintains last order
+        }
+
+        // Update lastCommandTick on successful command delivery
+        unit.lastCommandTick = state.currentTick
+
         when (cmd) {
             is TacticalCommand.SetEnergy -> {
                 unit.energy = cmd.allocation
@@ -414,10 +435,83 @@ class TacticalBattleEngine(
                 state.pendingConquestCommands.add(cmd)
             }
             is TacticalCommand.AssignSubFleet -> {
-                // Phase 9 Plan 03: full logic via CommandHierarchyService; stub for compilation
+                // Handled above; exhaustive when requires this branch
             }
             is TacticalCommand.ReassignUnit -> {
-                // Phase 9 Plan 03: full logic via CommandHierarchyService; stub for compilation
+                // Handled above; exhaustive when requires this branch
+            }
+        }
+    }
+
+    // ── Phase 9: Command Hierarchy helpers ──
+
+    /**
+     * Resolve the CommandHierarchy for a unit based on its side.
+     */
+    private fun getHierarchyForUnit(unit: TacticalUnit, state: TacticalBattleState): CommandHierarchy? {
+        return when (unit.side) {
+            BattleSide.ATTACKER -> state.attackerHierarchy
+            BattleSide.DEFENDER -> state.defenderHierarchy
+        }
+    }
+
+    /**
+     * Process AssignSubFleet command: fleet commander assigns units to a sub-commander.
+     * Validates via CommandHierarchyService before mutating hierarchy.
+     */
+    private fun applyAssignSubFleet(cmd: TacticalCommand.AssignSubFleet, state: TacticalBattleState) {
+        val commanderUnit = state.units.find { it.officerId == cmd.officerId && it.isAlive } ?: return
+        val hierarchy = getHierarchyForUnit(commanderUnit, state) ?: return
+
+        // Only fleet commander can assign (validated in CommandHierarchyService)
+        val crewOfficerIds = state.units
+            .filter { it.side == commanderUnit.side && it.isAlive }
+            .map { it.officerId }
+            .toSet()
+
+        val error = CommandHierarchyService.validateSubFleetAssignment(
+            hierarchy, cmd.officerId, cmd.subCommanderId, cmd.unitIds, crewOfficerIds,
+        )
+        if (error != null) return  // silently reject invalid assignment
+
+        val subUnit = state.units.find { it.officerId == cmd.subCommanderId && it.isAlive } ?: return
+        CommandHierarchyService.assignSubFleet(
+            hierarchy, cmd.subCommanderId, subUnit.officerName, subUnit.officerLevel,
+            cmd.unitIds, state.units,
+        )
+    }
+
+    /**
+     * Process ReassignUnit command: fleet commander reassigns a unit between sub-fleets.
+     * CMD-05 condition: unit must be outside CRC AND stopped.
+     */
+    private fun applyReassignUnit(cmd: TacticalCommand.ReassignUnit, state: TacticalBattleState) {
+        val commanderUnit = state.units.find { it.officerId == cmd.officerId && it.isAlive } ?: return
+        val hierarchy = getHierarchyForUnit(commanderUnit, state) ?: return
+        if (cmd.officerId != hierarchy.fleetCommander) return  // only fleet commander
+
+        val targetUnit = state.units.find { it.fleetId == cmd.unitId && it.isAlive } ?: return
+
+        // CMD-05 condition: unit must be outside CRC AND stopped
+        val isOutsideCrc = !CrcValidator.isWithinCrc(commanderUnit, targetUnit)
+        val isStopped = targetUnit.isStopped
+        if (!isOutsideCrc || !isStopped) return  // reject if conditions not met
+
+        // Reassign: remove from current sub-fleet, assign to new one (or direct)
+        if (cmd.newSubCommanderId != null) {
+            val newCommander = state.units.find { it.officerId == cmd.newSubCommanderId && it.isAlive } ?: return
+            CommandHierarchyService.assignSubFleet(
+                hierarchy, cmd.newSubCommanderId, newCommander.officerName, newCommander.officerLevel,
+                listOf(cmd.unitId), state.units,
+            )
+        } else {
+            // Return to fleet commander direct: remove from all sub-fleets
+            targetUnit.subFleetCommanderId = null
+            hierarchy.subCommanders.values.forEach { sf ->
+                if (cmd.unitId in sf.unitIds) {
+                    val updated = sf.copy(unitIds = sf.unitIds - cmd.unitId)
+                    hierarchy.subCommanders[sf.commanderId] = updated
+                }
             }
         }
     }
