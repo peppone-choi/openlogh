@@ -100,4 +100,59 @@ object SuccessionService {
     fun getActiveCommander(hierarchy: CommandHierarchy): Long {
         return hierarchy.activeCommander ?: hierarchy.fleetCommander
     }
+
+    /**
+     * Start vacancy countdown when a commander's flagship is destroyed (SUCC-03).
+     * Sets vacancyStartTick to currentTick. Called from engine step 5 on flagship destruction.
+     */
+    fun startVacancy(hierarchy: CommandHierarchy, destroyedOfficerId: Long, currentTick: Int) {
+        val activeCmd = getActiveCommander(hierarchy)
+        if (destroyedOfficerId == activeCmd) {
+            hierarchy.vacancyStartTick = currentTick
+        }
+    }
+
+    /**
+     * Check if 30-tick vacancy has expired.
+     * @return true if vacancy is active AND currentTick - vacancyStartTick >= VACANCY_DURATION_TICKS
+     */
+    fun isVacancyExpired(hierarchy: CommandHierarchy, currentTick: Int): Boolean {
+        if (hierarchy.vacancyStartTick < 0) return false
+        return (currentTick - hierarchy.vacancyStartTick) >= VACANCY_DURATION_TICKS
+    }
+
+    /**
+     * Find the next valid successor: designated first, then rank-ordered queue (SUCC-03/04).
+     * Skips dead officers (checks aliveOfficerIds set).
+     * @return officerId of next successor, or null if no one is available
+     */
+    fun findNextSuccessor(hierarchy: CommandHierarchy, aliveOfficerIds: Set<Long>): Long? {
+        // Priority 1: designated successor (SUCC-03)
+        hierarchy.designatedSuccessor?.let { designated ->
+            if (designated in aliveOfficerIds) return designated
+        }
+        // Priority 2: rank-ordered succession queue (SUCC-04)
+        // successionQueue is already sorted by rank descending at battle init
+        for (candidateId in hierarchy.successionQueue) {
+            if (candidateId in aliveOfficerIds && candidateId != getActiveCommander(hierarchy)) {
+                return candidateId
+            }
+        }
+        return null
+    }
+
+    /**
+     * Execute succession: transfer command to successor officer (SUCC-03/04).
+     * Resets vacancy, sets activeCommander, clears designatedSuccessor.
+     * @return the new commander's officerId, or null if no successor found (-> command breakdown)
+     */
+    fun executeSuccession(hierarchy: CommandHierarchy, aliveOfficerIds: Set<Long>): Long? {
+        val successor = findNextSuccessor(hierarchy, aliveOfficerIds) ?: return null
+        hierarchy.activeCommander = successor
+        hierarchy.vacancyStartTick = -1
+        hierarchy.designatedSuccessor = null
+        hierarchy.commandDelegated = false
+        hierarchy.injuryCapabilityModifier = 1.0  // new commander starts at full capability
+        return successor
+    }
 }
