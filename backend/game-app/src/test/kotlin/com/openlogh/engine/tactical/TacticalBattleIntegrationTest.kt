@@ -1,5 +1,6 @@
 package com.openlogh.engine.tactical
 
+import com.openlogh.model.CommandRange
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
 import com.openlogh.model.UnitStance
@@ -73,7 +74,7 @@ class TacticalBattleIntegrationTest {
             factionId = 1L, side = BattleSide.ATTACKER,
             posX = 100.0, posY = 300.0,
             hp = 1000, maxHp = 1000, ships = 300, maxShips = 300,
-            commandRange = 50.0,  // 이미 확대된 상태
+            commandRange = CommandRange(currentRange = 50.0),  // 이미 확대된 상태
         )
         val state = TacticalBattleState(
             battleId = 1L, starSystemId = 100L,
@@ -82,11 +83,9 @@ class TacticalBattleIntegrationTest {
 
         // 에너지 배분 변경 시뮬레이션 (TacticalBattleService.setEnergyAllocation 동작)
         unit.energy = EnergyAllocation(beam = 30, gun = 25, shield = 20, engine = 15, warp = 5, sensor = 5)
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
-        assertEquals(0.0, unit.commandRange)
-        assertEquals(0, unit.ticksSinceLastOrder)
+        assertEquals(0.0, unit.commandRange.currentRange)
     }
 
     @Test
