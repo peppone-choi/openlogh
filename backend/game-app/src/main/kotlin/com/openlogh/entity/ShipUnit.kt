@@ -35,7 +35,7 @@ class ShipUnit(
 
     /** 함대 내 부대 번호 (0~7). 0번이 사령관 직할 부대. */
     @Column(name = "slot_index", nullable = false)
-    var slotIndex: Int = 0,
+    var slotIndex: Short = 0,
 
     // ── 함종 정보 ──────────────────────────────────────────────
     /** 함종 (ShipClass enum의 name). 예: "BATTLESHIP" */
