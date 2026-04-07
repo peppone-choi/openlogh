@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06-07-PLAN.md
-last_updated: "2026-04-07T02:49:01.298Z"
+stopped_at: Completed 06-05-PLAN.md
+last_updated: "2026-04-07T02:51:35.534Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 12
   completed_phases: 9
   total_plans: 59
-  completed_plans: 53
+  completed_plans: 54
   percent: 77
 ---
 
@@ -78,6 +78,7 @@ Progress: [████████░░] 77%
 | Phase 06 P04 | 20 | 2 tasks | 5 files |
 | Phase 06 P03 | 25 | 2 tasks | 6 files |
 | Phase 06 P07 | 25 | 2 tasks | 5 files |
+| Phase 06 P05 | 35 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -138,6 +139,8 @@ Progress: [████████░░] 77%
 - [Phase 06]: BattleMap converted from SVG to React Konva for gin7 dot-style rendering
 - [Phase 06]: Used nationId fallback for General type since OfficerStore returns General not Officer DTO
 - [Phase 06]: Tab navigation allows cross-faction politics viewing; own faction tab marked with dot indicator
+- [Phase 06-05]: Used REST as authoritative command execution; WebSocket publish is fire-and-forget supplement
+- [Phase 06-05]: Officer cast via unknown to bypass legacy General alias in officerStore
 
 ### Pending Todos
 
@@ -151,6 +154,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T02:49:01.290Z
-Stopped at: Completed 06-07-PLAN.md
+Last session: 2026-04-07T02:51:35.525Z
+Stopped at: Completed 06-05-PLAN.md
 Resume file: None
