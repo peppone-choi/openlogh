@@ -163,8 +163,8 @@ Plans:
 - [x] 10-02-PLAN.md — 전술전 엔진 + 요새포 시스템 (tactical combat)
 - [x] 10-03-PLAN.md — WebSocket 전투 컨트롤러 + REST API (tactical combat)
 - [x] 10-04-PLAN.md — 프론트엔드 전술전 UI (tactical combat)
-- [ ] 10-05-PLAN.md — 후계자 지명 + 부상 지휘력 저하 + 위임 (SUCC-01, SUCC-02)
-- [ ] 10-06-PLAN.md — 30틱 공백 + 자동 승계 + 분함대 복귀 (SUCC-03, SUCC-04, SUCC-05)
+- [x] 10-05-PLAN.md — 후계자 지명 + 부상 지휘력 저하 + 위임 (SUCC-01, SUCC-02)
+- [x] 10-06-PLAN.md — 30틱 공백 + 자동 승계 + 분함대 복귀 (SUCC-03, SUCC-04, SUCC-05)
 - [ ] 10-07-PLAN.md — 지휘 체계 붕괴 + 독립 AI 전환 (SUCC-06)
 
 ### Phase 11: 전술 AI
@@ -241,7 +241,7 @@ Plans:
 | 7. 시나리오 데이터 + 밸런싱 | v2.0 | 4/4 | Complete | 2026-04-06 |
 | 8. 엔진 통합 + 커맨드 버퍼 | v2.1 | 3/3 | Complete | - |
 | 9. 지휘권 분배 + CRC | v2.1 | 0/4 | Planned | - |
-| 10. 지휘 승계 | v2.1 | 4/7 | In Progress | - |
+| 10. 지휘 승계 | v2.1 | 6/7 | In Progress|  |
 | 11. 전술 AI | v2.1 | 0/0 | Not started | - |
 | 12. 작전 연동 | v2.1 | 0/0 | Not started | - |
 | 13. 전략 AI | v2.1 | 0/0 | Not started | - |
