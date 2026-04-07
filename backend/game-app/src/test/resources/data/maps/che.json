@@ -1,0 +1,23 @@
+{
+    "name": "che",
+    "regions": {
+        "1": "테스트지역"
+    },
+    "cities": [
+        {
+            "id": 1,
+            "name": "테스트성계",
+            "level": 5,
+            "region": 1,
+            "population": 100000,
+            "agriculture": 2000,
+            "commerce": 2000,
+            "security": 2000,
+            "defence": 3000,
+            "wall": 1000,
+            "x": 100,
+            "y": 100,
+            "connections": []
+        }
+    ]
+}
