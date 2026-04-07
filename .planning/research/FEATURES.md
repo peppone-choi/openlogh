@@ -1,276 +1,281 @@
-# Feature Research
+# Feature Landscape
 
-**Domain:** Web-based MMO strategy game — gin7 (은하영웅전설 VII) mechanics rewrite
-**Researched:** 2026-04-06
-**Confidence:** HIGH (primary source: gin7 manual, REWRITE_PROMPT.md, ship_stats JSON, commands.json)
+**Domain:** Tactical command chain + AI for gin7-based web MMO strategy game
+**Researched:** 2026-04-07
+**Milestone:** v2.1 — Tactical Command Chain + AI
+**Confidence:** HIGH (gin7 manual primary source, codebase verified)
 
-> This document covers **new features only** for the v2.0 gin7 rewrite milestone.
-> Already-built systems (entity models, CP system, PositionCard registry, tick engine, galaxy map,
-> rank system, scenario framework, chat, victory conditions) are excluded.
+## Table Stakes
 
----
+Features that gin7 players expect. Missing = the "organizational simulation" core value is broken.
 
-## Category Map
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| Operation plan to tactical AI linkage | gin7 manual p.37-38: operation purpose (capture/defend/sweep) determines tactical behavior. Without it, AI units fight aimlessly. | Med | Existing `OperationPlanCommand`, `TacticalBattleEngine` | OperationPlanCommand stores plan in `nation.meta["operationPlan"]` but nothing reads it during battle. Bridge needed. |
+| Unit command distribution (10 officers to 60 units) | gin7 manual p.46: units auto-assigned by priority (online > rank > evaluation > merit). This IS the organizational simulation. | High | `CrewSlotRole` (10 roles exist), `TacticalUnit`, `TacticalBattleState` | Most complex feature. Must handle 6 unit types with different crew counts (fleet=10, patrol=3, transport=3, ground=1, garrison=1, solo=0). |
+| Command range circle mechanics | gin7 manual p.46-47: flagship CRC expands over time, resets to 0 on command issue. Only units inside CRC receive orders. | Med | `CommandRange` model exists with tick/reset/isInRange. `TacticalUnit.commandRange` fields exist. | Core model already built. Need: per-officer CRC (not just per-unit), CRC gating on command dispatch, UI circle visualization. |
+| Command succession on flagship destruction | gin7 manual implies: flagship destroyed then command gap then next-rank auto-promotion. Current code does instant `maxByOrNull { it.ships }` which is wrong. | Med | `TacticalBattleEngine` line 248-258 (existing flagship_transfer logic) | Must change from "biggest ships" to "rank-based with 30-tick gap". Gap period = units on last command or AI autonomous. |
+| Tactical AI for offline/NPC units | Without AI, offline player units and NPC fleets just sit still or do basic chase-closest-enemy. gin7 expects intelligent behavior. | High | `PersonalityTrait` (5 types exist), `UtilityScorer`, `TacticalBattleEngine.processMovement` | Current movement is hardcoded "chase closest enemy". Need mission-based + personality-based behavior. |
+| Command range circle UI visualization | Players MUST see the CRC on the tactical map to understand why their commands are not reaching units. | Low | Frontend tactical map (SVG-based), WebSocket broadcast | Without visual feedback, the CRC mechanic is invisible and frustrating. |
 
-Features are organized by the 6 subsystems called out in the research brief:
+## Differentiators
 
-| # | Category | Label |
-|---|----------|-------|
-| 1 | Ship class / subtype combat system | `[SHIP]` |
-| 2 | Authority-card based command system | `[CMD]` |
-| 3 | Real-time tactical space battle engine | `[BATTLE]` |
-| 4 | Planet economy & arsenal auto-production | `[ECON]` |
-| 5 | Faction AI for large-scale strategy | `[AI]` |
-| 6 | Retro tactical UI (dot icons, 3D grid) | `[UI]` |
+Features that go beyond gin7 baseline and make Open LOGH stand out. Not strictly expected but highly valued.
 
----
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| Real-time command delegation/reassignment | gin7 manual p.46: commanders can reassign unit ownership mid-battle (target must be outside other CRC + stopped). Enables dynamic tactical reorganization. | Med | Unit command distribution, CRC mechanics | Condition checking (outside other CRC + stopped) is the tricky part. Elegant when it works -- lets players adapt to battlefield chaos. |
+| Personality-driven tactical variety | AGGRESSIVE officers charge, CAUTIOUS ones maintain distance, DEFENSIVE ones hold position. Creates emergent "character" feel matching LOGH source material. | Med | `PersonalityTrait` weights exist, Tactical AI | Existing weight system for strategic AI can be extended to tactical decisions. Reinhard vs Yang feel. |
+| Communication jamming effects | When comms are jammed, supreme commander cannot issue fleet-wide orders. Forces distributed decision-making. | Low | CRC mechanics, detection system | Simple flag on TacticalBattleState. High drama potential. |
+| Concentrated/distributed attack strategies | AI chooses focus-fire (high command officers) vs spread damage (low command officers) based on personality and situation. | Low | Tactical AI, target selection | Current targeting is closest-enemy only. Adding strategic target selection is low-effort, high-impact. |
+| Strategic AI auto-operation-planning | AI factions automatically create operation plans before tactical battles, giving NPC fleets purposeful behavior. | Med | `FactionAI`, `OperationPlanCommand` | Current FactionAI picks war actions randomly from a list. Needs intelligent operation plan creation. |
+| Sub-fleet formation commands | Vice-commander and staff officers can issue independent formation/energy commands to their assigned units. | Med | Unit command distribution, CRC per officer | Multiplayer coordination feature -- each crew member manages their sub-fleet independently. |
+| Battle replay with command chain visualization | Post-battle replay showing which officer commanded which units, CRC expansion/contraction, succession events. | High | All tactical features, frontend replay system | Excellent for learning and community sharing. Defer to later milestone. |
 
-## Feature Landscape
+## Anti-Features
 
-### Table Stakes (Users Expect These)
+Features to explicitly NOT build in this milestone.
 
-Features gin7 MMO players assume exist. Missing these = product feels broken/unplayable.
-
-| Feature | Category | Why Expected | Complexity | Builds On Existing? | Notes |
-|---------|----------|--------------|------------|----------------------|-------|
-| 11-class ship unit system (전함/순양함/구축함 etc.) | `[SHIP]` | Core unit of combat — without typed ships there is no game | HIGH | YES — ShipClass(11종), ShipSubtype(22종) enums exist; needs ShipUnit entity + stats wiring | ship_stats_empire/alliance JSON already has 88 subtypes per faction; need DB entity + service layer |
-| Ship subtype combat stats (armor/shield/beam/gun/missile per subtype) | `[SHIP]` | Fleet combat damage would be uniform without per-subtype stats | HIGH | YES — JSON data exists; needs ShipStatService to load and apply | front/side/rear armor differentiation is a gin7 hallmark |
-| Flagship system (기함) — unique named + generic rank-based | `[SHIP]` | Every officer needs a flagship; it is their identity & survives destruction | MEDIUM | YES — flagship_code field on Officer; needs FlagshipEntity + purchase flow | Named flagships (히페리온, 바르바로사 등) are high-value items; generic ones auto-assigned by rank |
-| Ground unit system (육전대 — 3 types) | `[SHIP]` | Planet capture is impossible without landing troops | MEDIUM | YES — GroundUnitType(3종) enum exists; needs GroundUnit entity | ground_unit_stats.json covers 11 unit types |
-| 81-command gin7 command system (realtime, not turn-queued) | `[CMD]` | Current registry runs 93 Three Kingdoms commands — product is broken for LOGH | HIGH | YES — PositionCard(82종), CommandGroup(7종), CP system all built; needs 81 command implementations replacing the 93 Three Kingdoms ones | commands.json fully defines all 81; this is the single biggest backlog item |
-| PositionCard gating enforcement (커맨드 실행 전 직무카드 검증) | `[CMD]` | Cards are meaningless unless they gate actual commands | MEDIUM | YES — CommandGating infrastructure exists; needs wiring to new 81 commands | Currently gating Three Kingdoms commands |
-| Real-time command execution (no turn queue) | `[CMD]` | gin7 is realtime MMO — turn reservation UI is a Three Kingdoms artifact | MEDIUM | YES — tick engine runs at 1s/24 game-sec; waitTime + duration per command already in commands.json | Replaces existing turn-reservation queue |
-| Tactical battle grid (2D star-system map with unit icons) | `[BATTLE]` | Without a visual tactical layer the space-battle is invisible | HIGH | YES — TacticalBattle entity + BattleTriggerService exist; needs full engine | Core of the game experience |
-| Energy allocation system (BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR 6-channel, sum=100) | `[BATTLE]` | gin7's energy panel is the player's primary tactical lever | HIGH | YES — EnergyAllocation(6채널) enum exists; needs real-time allocation state + combat effect wiring | Real-time slider UI feeds into per-tick damage/defense calculations |
-| Weapon system (beam/gun/missile with range & supply consumption) | `[BATTLE]` | No weapon diversity = no tactical decisions | HIGH | YES — ship stats JSON has beam/gun/missile damage + consumeSupply per subtype | Missiles are supply-limited (critical supply pressure mechanic) |
-| Formation system (방추/함종별/혼성/삼열) | `[BATTLE]` | gin7 has 4 formations with attack/defense/speed trade-offs | MEDIUM | YES — Formation(4종) enum exists; needs formation bonus service | Determines combat modifier stack |
-| Command Range Circle (커맨드레인지서클) | `[BATTLE]` | Unique gin7 mechanic — expands over time, resets on order, commander stat determines rate | HIGH | YES — CommandRange type exists; needs real-time state per fleet unit | Key differentiator from generic RTS; builds directly on command stat |
-| Planet auto-production (조병창 자동생산) | `[ECON]` | Without auto-production, fleets cannot be rebuilt after losses | HIGH | NEW entity needed — Arsenal/Shipyard production queue | Runs on tick; produces ship units + ground units; continues until planet changes ownership |
-| Planet resource system (population/production/commerce/security/approval/ orbital_defense/fortress) | `[ECON]` | Fields exist on Planet entity but are not driven by any economic logic | MEDIUM | YES — all fields exist on Planet; needs EconomyTickService | Current logic is Three Kingdoms-based |
-| Tax & budget cycle (세금 90일마다, 진영 자금) | `[ECON]` | Without a money cycle the faction treasury makes no sense | MEDIUM | YES — Faction.funds exists; needs TaxService with quarterly schedule | Tax collected at game turns 1/1, 4/1, 7/1, 10/1 |
-| Faction treasury split (제국: 군무성+통수본부, 동맹: 국방예산) | `[ECON]` | Empire has dual budget — unified treatment is historically wrong | MEDIUM | YES — Faction entity; needs BudgetAllocation sub-entity | Empire faction_type='empire' determines split |
-| Retro dot-icon unit display (△기함, □전함, ◇구축함 with faction color) | `[UI]` | gin7 visual identity — immediately signals this is an LOGH game | MEDIUM | YES — React Konva galaxy map exists; needs tactical canvas layer | Empire=#4466ff, Alliance=#ff4444; must not use 3D models for unit icons |
-| Tactical map info panel (진영명/UC일자/작전명/사령관+계급/공적/물자) | `[UI]` | Players need situational awareness in battle | MEDIUM | NEW frontend component | Right-side panel with star-system minimap in orange/black |
-| Energy allocation slider panel (6-channel, realtime) | `[UI]` | Primary tactical input for the player during battle | MEDIUM | NEW frontend component | Must update energy allocation state via WebSocket in real-time |
-| Strategic game screen (직무권한카드 탭 + 8-stat panel + chat) | `[UI]` | Main out-of-battle interface — currently shows Three Kingdoms UI | HIGH | YES — entities all exist; entirely new frontend layout | Replaces city-basic-card, general-basic-card, turn-reservation UI |
-
----
-
-### Differentiators (Competitive Advantage)
-
-Features that set Open LOGH apart from generic space strategy MMOs. These directly serve the "organisation simulation" core value.
-
-| Feature | Category | Value Proposition | Complexity | Builds On Existing? | Notes |
-|---------|----------|-------------------|------------|----------------------|-------|
-| Organisation simulation via PositionCard hierarchy | `[CMD]` | Lets players live the experience of Reinhard or Yang — issuing orders, proposing strategy, rising through ranks. No other web MMO does this at this fidelity | HIGH | YES — 82 cards, 7 groups, CommandGating all built | The reason this project exists; every other feature serves this |
-| Cross-rank command proposal system (제안 시스템) | `[CMD]` | Junior officers can propose to superiors; superiors can reject/approve — mirrors gin7 org dynamics | HIGH | NEW — needs Proposal entity + approval workflow | Keeps lower-rank players engaged even when they lack direct authority |
-| Faction-type political mechanics (쿠데타/귀족 vs 의회/선거 vs 차관/정보) | `[CMD]` | Each of the 3 factions (Empire/Alliance/Fezzan) has a distinct political minigame | HIGH | YES — CoupPhase, CouncilSeat, Election, FezzanLoan entities exist | Requires dedicated UI per faction type |
-| Unique fortress mechanic (토르해머/가이에스하켄, ally-fire possible) | `[BATTLE]` | Fortress cannon that hits every unit in its firing lane including friendlies creates extreme tactical tension | HIGH | YES — FortressType(4종) enum exists | Overkill damage values (토르해머=10,000 vs battleship armor ~200) demand entirely different tactics |
-| Detection/stealth system (색적 — SENSOR allocation + electronic warfare) | `[BATTLE]` | Fog-of-war driven by SENSOR energy creates real information asymmetry | HIGH | YES — DetectionInfo type, SENSOR channel exists | Detection precision varies by unit type and range; electronic warfare can block detection |
-| Supply pressure (미사일 소비 — limited ammo forces fleet management) | `[BATTLE]` | Running out of missiles mid-battle is a catastrophic risk that demands logistics planning | MEDIUM | YES — ship stats have consumeSupply per weapon; needs supply tracking per fleet | Without this, battles become DPS races with no logistics dimension |
-| Ground combat (육전대 강하 + 행성타입별 규칙) | `[BATTLE]` | Planet capture requires ground troops — naval supremacy alone is insufficient | HIGH | YES — GroundUnit infrastructure partially exists | Planet terrain type restricts which units can participate |
-| Planet capture command set (항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동) | `[BATTLE]` | 6 capture options with different cost/reward trade-offs create meaningful choice | MEDIUM | NEW — needs PlanetCaptureService wired to TacticalBattle | Table in REWRITE_PROMPT.md defines exact approval/economy/defense effects per command |
-| Fezzan loan system (차관 — failure = Fezzan ending) | `[ECON]` | Borrowing from Fezzan is a high-risk lever; default triggers a specific losing ending | MEDIUM | YES — FezzanLoan entity exists; needs loan cycle + default condition | Adds long-term economic risk that generic strategy MMOs lack |
-| Population-based unit cap (인구 10억 = 함대 1 + 순찰대 6) | `[ECON]` | Territory loss has direct military consequence — very rare in web MMOs | MEDIUM | YES — Planet.population exists; needs PopulationCapService | Makes planet defence economically critical, not just strategic |
-| 3D grid close-combat view (접근전 — React Three Fiber, proportional block size) | `[UI]` | Visual spectacle moment when fleets engage; block size = ship count makes losses visible | HIGH | YES — React Three Fiber/Drei deps already in package.json | Upper panel = encounter cinematic; lower panel = 3D tactical overview |
-| Personality-driven AI officers (5 traits × stat weights) | `[AI]` | NPC officers behave as distinct personalities, not uniform bots | MEDIUM | YES — PersonalityTrait(5종), OfflinePlayerAIService exist; needs decision logic replacement | Offline players must feel like credible subordinates/rivals |
-
----
-
-### Anti-Features (Explicitly Exclude)
-
-Features that appear useful but would harm the project's focus or fidelity.
-
-| Feature | Category | Why Requested | Why Problematic | Alternative |
-|---------|----------|---------------|-----------------|-------------|
-| Turn-reservation queue (커맨드 예약) | `[CMD]` | Familiar from Three Kingdoms origin code | gin7 is realtime MMO; turn queues break the direct-command feel that is central to the PositionCard system | Real-time waitTime + duration per command (already defined in commands.json) |
-| Three Kingdoms troop type (병종) combat | `[SHIP]` | Still in codebase | Wrong game universe; rock-paper-scissors troop counters contradict LOGH ship combat | Remove entirely — ship class system replaces it |
-| Generic RTS unit production queue (click-to-build) | `[ECON]` | Common in strategy games | gin7 arsenals auto-produce without player micro; player controls fleet deployment not individual ship construction | Arsenal auto-production tick service (set-and-forget, not click-to-build) |
-| Full 3D ship models for every unit in tactical map | `[UI]` | Looks impressive | Performance-prohibitive at 2,000 concurrent users; gin7 original uses dot/block icons which is part of its identity | Dot icons on 2D tactical canvas; 3D blocks only in close-combat view (proportional, no detailed models) |
-| Per-ship HP tracking (개별 함선 HP) | `[BATTLE]` | Granularity seems realistic | gin7 operates at 유닛(300척) granularity; tracking 18,000 individual ships is computationally and UX-unworkable | Unit-level HP pool representing 300 ships; ship count decreases as HP depletes |
-| Generic admin CRUD panel for game data | `[UI]` | Easy to build | Breaks immersion; players want an in-universe UI | Scenario selection screen + character creation screen matching gin7 visual style |
-| Real-money microtransactions or gacha | `[SHIP]` | Common monetization | Would undermine the "earn rank through gameplay" progression which is the identity of the game | Merit-based flagship purchase using in-game evaluation points only |
-| Multi-faction simultaneous player control | `[AI]` | "Let me play all sides" | Destroys the organisation simulation; you are one officer in one faction | One officer, one faction, one role — faction switching only possible via defection command (망명) |
-
----
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Player-controlled individual ship movement | gin7 is about commanding fleets, not micromanaging ships. Individual ship control breaks the organizational simulation core value. | Units move as groups under officer command. Player gives high-level orders (advance, retreat, hold). |
+| Complex formation editor | Tempting to let players design custom formations. Adds massive complexity for marginal gameplay value. | Use the 4 existing formations (wedge/by-class/mixed/three-column). Personality can bias formation choice. |
+| AI learning/ML-based tactical decisions | ML models are unpredictable, hard to debug, and overkill for this game's scale. | Use utility-scoring approach (extending existing `UtilityScorer` pattern). Deterministic, debuggable, personality-driven. |
+| Real-time voice/video communication | Scope creep. Text chat + command system is sufficient for tactical coordination. | Existing ChatService (3 scopes) + command chain is the communication mechanism. |
+| Per-tick CRC recalculation with physics | Simulating radio wave propagation, interference, etc. Over-engineering a simple radius check. | Linear expansion rate based on command stat. Reset to 0 on order. Binary in/out check. Already implemented correctly in `CommandRange.kt`. |
+| Automated unit type conversion mid-battle | Allowing fleets to split/merge during tactical combat. Breaks gin7's pre-battle organization model. | Organization is locked at battle start. Only command reassignment (which officer controls which units) changes during battle. |
 
 ## Feature Dependencies
 
 ```
-[ShipUnit entity + stats]
-    └──required by──> [Tactical battle engine]
-    └──required by──> [Arsenal auto-production]
-    └──required by──> [Fleet management UI]
+Operation Plan --> Tactical AI Linkage
+  |
+  v
+Unit Command Distribution (10 officers --> 60 units)
+  |
+  +---> Command Range Circle (per-officer CRC gating)
+  |       |
+  |       +---> CRC UI Visualization
+  |       |
+  |       +---> Real-time Command Delegation (requires CRC + stopped check)
+  |
+  +---> Command Succession (flagship destruction --> 30-tick gap --> auto-promote)
+  |
+  +---> Tactical AI Behaviors (offline/NPC units)
+          |
+          +---> Personality-driven Variety
+          |
+          +---> Concentrated/Distributed Attack
+          |
+          +---> Communication Jamming
 
-[gin7 81-command implementations]
-    └──required by──> [PositionCard gating enforcement]
-    └──required by──> [Real-time command execution]
-    └──required by──> [Strategic game screen — card tab]
-
-[PositionCard gating enforcement]
-    └──required by──> [Organisation simulation / proposal system]
-    └──required by──> [Faction political mechanics]
-
-[Tactical battle engine (grid + units)]
-    └──required by──> [Energy allocation system]
-    └──required by──> [Formation system]
-    └──required by──> [Command Range Circle]
-    └──required by──> [Detection/stealth system]
-    └──required by──> [Supply pressure mechanic]
-    └──required by──> [Fortress cannon mechanic]
-    └──required by──> [Ground combat]
-    └──required by──> [Planet capture command set]
-
-[Planet resource system (EconomyTickService)]
-    └──required by──> [Arsenal auto-production]
-    └──required by──> [Tax & budget cycle]
-    └──required by──> [Population-based unit cap]
-    └──required by──> [Fezzan loan system]
-
-[Tax & budget cycle]
-    └──required by──> [Faction treasury split (Empire dual budget)]
-
-[Tactical battle engine]
-    └──required by──> [Dot-icon tactical UI (2D)]
-    └──required by──> [Energy allocation panel (UI)]
-    └──required by──> [3D close-combat view (React Three Fiber)]
-
-[Flagship system]
-    └──enhances──> [Command Range Circle] (flagship stat drives expansion rate)
-    └──enhances──> [Tactical UI] (flagship icon is distinct △ in battle)
-
-[Personality-driven AI]
-    └──requires──> [gin7 command system] (AI executes same 81 commands)
-    └──requires──> [Fleet management / ShipUnit] (AI needs units to command)
-
-[Detection system]
-    └──conflicts with──> [Full 3D models] (dot icons required for detection ambiguity to work visually)
+Strategic AI Enhancement (FactionAI auto-planning)
+  |
+  v
+Operation Plan --> Tactical AI Linkage (feeds into above chain)
 ```
 
-### Dependency Notes
+**Critical path:** Unit Command Distribution must come first -- CRC, succession, and tactical AI all depend on knowing which officer controls which units.
 
-- **ShipUnit requires before battle engine:** You cannot compute damage without subtype stats. ShipUnit entity creation is the hard prerequisite for all combat work.
-- **81-command system requires before political mechanics:** PositionCard gating on faction-specific political commands (쿠데타, 선거, 차관) cannot function until the 81-command implementations replace the current Three Kingdoms 93 commands.
-- **EconomyTickService before arsenal:** Arsenal auto-production is a special case of the economy tick; planet resource logic must be solid before layering auto-production on top.
-- **2D tactical grid before 3D close-combat:** The 3D close-combat view (React Three Fiber) is a cosmetic layer on top of the 2D tactical state. Build 2D battle logic first; 3D is a frontend-only enhancement that reads the same battle state.
-- **Detection conflicts with 3D ship models:** If every unit has a detailed 3D model, detection ambiguity (you cannot tell enemy unit type until SENSOR range is high enough) is impossible to represent visually. Dot icons with type revealed only at close range is the correct UX.
+## Detailed Feature Specifications
 
----
+### 1. Operation Plan to Tactical Battle Integration
 
-## MVP Definition
+**gin7 manual (p.37-38):** Operation plans define 3 purposes:
+- **Capture (占領作戦):** Capture enemy star system. Tactical AI: advance aggressively toward planet.
+- **Defend (防衛作戦):** Hold own star system for a period. Tactical AI: hold position, prioritize survival.
+- **Sweep (掃討作戦):** Destroy enemy units in a grid. Tactical AI: hunt and pursue enemy fleets. Only proposable against solo ships.
 
-This milestone is a full rewrite, not a greenfield MVP. The following phasing applies within the v2.0 milestone.
+**What exists:**
+- `OperationPlanCommand` stores plan in `nation.meta["operationPlan"]` with name, scale, year, month
+- `OperationCancelCommand` exists
+- `TacticalBattleService.startBattle()` creates battles but has no operation plan awareness
+- Operation plan duration: 30 in-game days, then expires (gin7 p.38)
 
-### Phase A — Remove Three Kingdoms, Wire Ship System (unblock everything)
+**What's needed:**
+- Enrich operation plan data: add `purpose` (CAPTURE/DEFEND/SWEEP), `targetStarSystemId`, `assignedFleetIds`
+- `TacticalBattleState` needs `operationPurpose` field
+- `BattleTriggerService` must check if fleets are part of an active operation when triggering battle
+- Tactical AI reads `operationPurpose` to set base behavior mode
+- Merit point bonus for operation-aligned actions (gin7: bonus points for acting within operation plan)
+- Separate roles for plan creation vs issuing (gin7 p.38: planner and issuer are different positions)
 
-- [ ] Delete 93 Three Kingdoms commands from CommandRegistry — unblocks all command work
-- [ ] Create ShipUnit entity (session_id FK, fleet_id FK, ship_class, subtype, current_count, stats snapshot) — unblocks battle engine
-- [ ] Load ship_stats JSON into ShipStatRepository — unblocks combat calculations
-- [ ] Flagship entity + rank-based auto-assignment — unblocks fleet creation
-- [ ] GroundUnit entity (3 types from ground_unit_stats.json) — unblocks planet capture
-- [ ] Remove Three Kingdoms frontend components (city-basic-card, general-basic-card, turn queue UI)
+**Complexity:** Medium. Data flow extension, not new system.
 
-### Phase B — Command System (organisation simulation backbone)
+### 2. Unit Command Distribution
 
-- [ ] Implement all 81 gin7 commands in CommandRegistry, wired to PositionCard gating
-- [ ] Real-time execution pipeline (waitTime countdown → execute → result broadcast via WebSocket)
-- [ ] Proposal system entity + approval workflow (제안 시스템)
-- [ ] Strategic game screen frontend (직무카드 탭 + 8-stat panel + chat)
+**gin7 manual (p.46):** On tactical battle entry, units auto-assigned to crew members by priority:
+1. Online player characters
+2. Higher rank
+3. More evaluation points
+4. More merit points
 
-### Phase C — Battle Engine (core gameplay loop)
+**What exists:**
+- `CrewSlotRole` enum: 10 roles (COMMANDER through ADJUTANT)
+- `UnitCrew` entity links officers to fleet crew slots
+- `TacticalUnit` has `officerId` but this is the fleet commander, not per-unit commander
+- No concept of "sub-fleet" or per-unit officer assignment in tactical battle
 
-- [ ] Tactical battle grid: 2D Konva canvas, dot icons per unit type, faction colours
-- [ ] Energy allocation state per fleet (real-time BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR sliders)
-- [ ] Weapon damage engine: beam (range-optimal), gun, missile (supply-consuming)
-- [ ] Formation bonuses service (4 formations)
-- [ ] Command Range Circle: expand per tick, reset on order issue, commander.command stat rate
-- [ ] Detection/stealth: SENSOR allocation → detection radius; unit type + range → precision
-- [ ] Supply tracking per fleet (missiles deplete, affect combat power)
-- [ ] Fortress cannon: firing lane calculation, ally-fire possible
-- [ ] Ground combat: landing turn, terrain restriction, garrison vs landing unit combat
-- [ ] Planet capture command set (6 options with differential effects on approval/economy/defense)
-- [ ] 3D close-combat view (React Three Fiber): block units + encounter cinematic panel
+**What's needed:**
+- New model: `TacticalCommandAssignment` mapping each unit index (0-59) to a commanding officer
+- Distribution algorithm: sort officers by priority, round-robin assign units
+- COMMANDER gets unassigned remainder (direct command)
+- Each officer's assigned units obey only that officer's CRC
+- WebSocket commands must include `officerId` to validate authority over target units
+- Frontend: show which units belong to which officer (color coding or grouping)
+- Different distribution for different unit types: fleet (10 officers, 60 units), patrol (3 officers, 3 units), etc.
 
-### Phase D — Economy & AI
+**Complexity:** High. Touches battle initialization, command dispatch, CRC, AI, and frontend.
 
-- [ ] EconomyTickService: planet resource tick (population, production, commerce, security, approval)
-- [ ] Arsenal auto-production: per-planet ship/ground unit queue, tick-driven
-- [ ] Tax cycle: quarterly collection, faction treasury credit
-- [ ] Empire dual budget split (군무성 / 통수본부)
-- [ ] Population-based unit cap enforcement
-- [ ] Fezzan loan system: borrow, quarterly interest, default → Fezzan ending trigger
-- [ ] Personality-driven AI: replace Three Kingdoms decision logic with stat-weighted, trait-modified command selection
-- [ ] Faction-level AI: automatic budget allocation + personnel decisions for NPC factions
+### 3. Command Range Circle Mechanics
 
-### Future Consideration (v2.1+)
+**gin7 manual (p.46-47):**
+- CRC radius expands over time toward max (determined by flagship capability)
+- Expansion rate based on officer's "command" (指揮) stat
+- Resets to 0 every time a command is issued
+- Units outside CRC max range: continue current command, halt when command ends
+- Units with low morale (panicking): CRC has no effect (cannot receive orders)
+- Solo ships have no CRC
+- Commands take 0-20 seconds to process after being issued (gin7 p.47)
 
-- [ ] Full scenario initial data for all 10 scenarios (인물 배치 + 이벤트 트리거) — data-heavy, can iterate after mechanics work
-- [ ] Faction political full UI (쿠데타 UI, 의회 선거 UI, 페잔 정보 UI) — mechanics can launch before dedicated UI
-- [ ] Balance pass (fleet sizes, economic rates, CP costs) — requires playtest data
+**What exists:**
+- `CommandRange` model: has `tick()`, `resetOnCommand()`, `isInRange()`, `isInMaxRange()` -- all correct
+- `TacticalUnit.commandRange`, `commandRangeMax`, `ticksSinceLastOrder` fields
+- `TacticalBattleEngine.updateCommandRange()` updates per tick -- but applies to units, not per-officer
 
----
+**What's needed:**
+- Shift CRC from per-unit to per-officer (each of the 10 crew members has their own CRC)
+- New model: `OfficerTacticalState` with CRC, position (tied to flagship unit position), assigned unit indices
+- Command dispatch: validate target unit is within issuing officer's CRC before accepting command
+- Command processing delay: 0-20 tick delay before command takes effect (gin7 p.47)
+- Panicking units (morale below threshold): exempt from CRC commands
+- Frontend: draw CRC circle centered on each officer's flagship position
 
-## Feature Prioritization Matrix
+**Complexity:** Medium. Core model exists. Main work is per-officer separation and command gating.
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Remove Three Kingdoms commands + ShipUnit entity | HIGH | MEDIUM | P1 |
-| 81 gin7 commands (command system) | HIGH | HIGH | P1 |
-| Tactical battle grid (2D dot icons) | HIGH | HIGH | P1 |
-| Energy allocation (BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR) | HIGH | MEDIUM | P1 |
-| Planet resource tick + arsenal auto-production | HIGH | MEDIUM | P1 |
-| Strategic game screen frontend | HIGH | HIGH | P1 |
-| Weapon system (beam/gun/missile + supply pressure) | HIGH | MEDIUM | P1 |
-| Formation bonuses | MEDIUM | LOW | P2 |
-| Command Range Circle | MEDIUM | MEDIUM | P2 |
-| Detection/stealth | MEDIUM | HIGH | P2 |
-| Flagship system | MEDIUM | MEDIUM | P2 |
-| Ground combat + planet capture commands | MEDIUM | HIGH | P2 |
-| Fortress cannon mechanic | MEDIUM | MEDIUM | P2 |
-| Tax & budget cycle | MEDIUM | LOW | P2 |
-| Personality-driven AI | MEDIUM | MEDIUM | P2 |
-| 3D close-combat view (React Three Fiber) | HIGH | HIGH | P2 |
-| Proposal system (제안) | HIGH | MEDIUM | P2 |
-| Fezzan loan system | MEDIUM | LOW | P2 |
-| Population-based unit cap | LOW | LOW | P2 |
-| Faction AI (full auto) | LOW | HIGH | P3 |
-| Political UI (쿠데타/선거/페잔) | MEDIUM | HIGH | P3 |
-| Full scenario data (10 scenarios) | HIGH | HIGH | P3 |
+### 4. Command Succession
 
-**Priority key:**
-- P1: Must have — game is broken/unplayable without it
-- P2: Should have — game works but feels incomplete
-- P3: Nice to have — defer until P1+P2 complete and playtested
+**gin7 manual implied + v2.1 scope doc:**
+- Flagship destroyed -> 30-tick command gap (no CRC, units autonomous)
+- After gap: next officer by rank auto-inherits supreme command
+- Sub-fleet commander destroyed -> their units revert to fleet commander's direct control
+- All commanders destroyed -> command chain collapse, each unit runs independent AI
 
----
+**What exists:**
+- `TacticalBattleEngine` lines 248-258: on flagship destruction, picks replacement by `maxByOrNull { it.ships }` (WRONG -- should be rank-based)
+- `BattleTickEvent("flagship_transfer")` event type exists
+- `InjuryEvent` created on flagship destruction
 
-## Competitor / Reference Analysis
+**What's needed:**
+- Replace ship-count selection with rank-based selection (matching gin7 priority: rank > evaluation > merit)
+- Add 30-tick `commandGapRemaining` counter per side to `TacticalBattleState`
+- During gap: no new commands accepted for that side, units execute last command or fall to AI
+- After gap: promote next officer, reset their CRC, broadcast succession event
+- Sub-fleet commander loss: simpler -- reassign their units to COMMANDER
+- Total collapse detection: all officers with command role destroyed -> set `isCommandCollapsed` flag
 
-| Feature | gin4 EX (单机, 턴제) | Generic Space MMO | Open LOGH Approach |
-|---------|---------------------|-------------------|--------------------|
-| Ship types | 8종, no subtypes | Varies, usually 3-5 | 11종 × I–VIII subtypes per faction, full stats per subtype |
-| Command system | 25 strategic commands, turn-based | Cooldown-based skills | 81 commands, PositionCard-gated, realtime wait+duration |
-| Battle | Turn-based 12-turn structure | Auto-resolve or simple RTS | Realtime tick, energy allocation, 6-channel player control |
-| Economy | Manual 내정 commands | Click-to-build queues | Auto-production tick, no micro; tax cycle is macro-level |
-| AI officers | Personality types, stat-weighted | Generic bots | gin7 personalityTrait system + offline player AI |
-| UI style | DOS-era dot icons + colour blocks | Modern 3D or isometric | Faithful dot icons (gin7 retro identity) + optional 3D close-combat layer |
-| Org simulation | Proposal system (제안), ranks | None — individual play | Full PositionCard hierarchy, cross-rank proposal/approval |
+**Complexity:** Medium. Straightforward state machine but must integrate with CRC and AI systems.
 
----
+### 5. Real-time Command Delegation/Reassignment
+
+**gin7 manual (p.46):** Commanders can change unit ownership mid-battle. Conditions:
+- Target unit must NOT be inside another flagship's CRC
+- Target unit must be fully stopped (no active command being executed)
+
+**What exists:** Nothing -- no mid-battle unit reassignment mechanism.
+
+**What's needed:**
+- New WebSocket command type: `REASSIGN_UNIT` with params (unitIndex, newOfficerId)
+- Validation: check unit is outside all other officer CRCs, check unit velocity is zero
+- Update `TacticalCommandAssignment` mapping
+- Broadcast reassignment event to all battle participants
+- Frontend: drag-and-drop or select-and-assign UI for unit reassignment
+
+**Complexity:** Medium. Dependent on CRC and command distribution being complete.
+
+### 6. Tactical AI Behaviors
+
+**What exists:**
+- `PersonalityTrait` (5 types: AGGRESSIVE, DEFENSIVE, BALANCED, POLITICAL, CAUTIOUS)
+- `PersonalityWeights` with stat multipliers per trait
+- `UtilityScorer` for strategic command selection
+- `TacticalBattleEngine.processMovement()`: hardcoded "move toward closest enemy, maintain optimal range"
+
+**What's needed -- Behavior layers (evaluated per tick for each AI-controlled unit):**
+
+**Layer 1: Mission behavior (from operation purpose)**
+- CAPTURE: move toward planet position, engage blockers, prioritize advance
+- DEFEND: hold position near planet, engage approaching enemies, do not pursue
+- SWEEP: actively hunt enemy units, pursue retreating enemies
+- NO_MISSION: default balanced behavior
+
+**Layer 2: Personality modifiers**
+- AGGRESSIVE: lower retreat threshold (HP<10% instead of 20%), prefer close range, energy bias to BEAM/GUN
+- DEFENSIVE: higher retreat threshold (HP<30%), prefer long range, energy bias to SHIELD
+- CAUTIOUS: avoid engagement unless numeric advantage, prefer missile range, high SENSOR allocation
+- POLITICAL: no tactical modifier (political officers rarely command tactically)
+- BALANCED: no modifier, use mission behavior as-is
+
+**Layer 3: Threat assessment**
+- Calculate local threat ratio: (enemy ships in range) / (friendly ships in range)
+- Threat > 2.0: consider retreat regardless of personality
+- Morale < 30: force retreat (gin7 rule: morale 20 below = combat ineffective, already in engine)
+- HP < personality-adjusted threshold: retreat
+
+**Layer 4: Automatic adjustments**
+- Energy allocation: shift based on range to nearest enemy (far=ENGINE, mid=BEAM, close=GUN+SHIELD)
+- Formation: select based on personality + situation (AGGRESSIVE=wedge, DEFENSIVE=three-column)
+- Stance: COMBAT when enemies nearby, NAVIGATION when moving to objective
+- Target selection: AGGRESSIVE=focus weakest enemy, CAUTIOUS=focus most threatening, DEFENSIVE=focus closest
+
+**Complexity:** High. This is the largest single feature. Use utility-scoring approach (extending existing `UtilityScorer` pattern) rather than behavior trees for consistency with codebase.
+
+### 7. Strategic AI Enhancement for Tactical Battle Entry
+
+**What exists:**
+- `FactionAI.decideNationAction()`: picks war actions randomly (`급습`, `의병모집`, `필사즉생`)
+- `OfficerAI.decideAndExecute()`: large decision tree for NPC officers (ported from legacy PHP)
+- No connection between strategic AI and operation planning
+
+**What's needed:**
+- `FactionAI`: when at war, create operation plans with appropriate purpose based on situation analysis
+  - Losing territory: DEFEND operations for threatened systems
+  - Strong position: CAPTURE operations for weak enemy systems
+  - Enemy solo ships raiding: SWEEP operations
+- `OfficerAI`: when assigned to operation, move toward target system (existing movement logic can be reused)
+- Fleet composition selection: AI picks appropriate fleet types for operation (ground troops for CAPTURE, etc.)
+
+**Complexity:** Medium. Extends existing AI infrastructure, no new systems needed.
+
+## MVP Recommendation
+
+**Prioritize in this order:**
+
+1. **Unit Command Distribution** -- Foundation that everything else depends on. Without knowing which officer controls which units, CRC/succession/AI cannot function.
+
+2. **Command Range Circle (per-officer)** -- The core mechanic that makes organizational simulation feel real in tactical combat. Already partially implemented.
+
+3. **Operation Plan to Tactical Linkage** -- Gives AI units a purpose. Without this, AI is aimless.
+
+4. **Tactical AI Behaviors** -- Makes NPC/offline units feel alive. Depends on 1-3.
+
+5. **Command Succession** -- Important for drama and gameplay consequence, but works as a simple fallback without it (current code just picks replacement immediately).
+
+6. **Real-time Command Delegation** -- Nice to have, enhances multiplayer coordination, but the game functions without it.
+
+**Defer to future milestone:**
+- Battle replay visualization: High effort, low urgency.
+- Communication jamming: Cool feature but not core. Add after base chain works.
+- Strategic AI auto-planning: NPC factions can use random operations temporarily.
 
 ## Sources
 
-- `docs/REWRITE_PROMPT.md` — Primary specification (gin7 manual synthesis, weapon tables, planet capture table, economy rules, UI specifications) — HIGH confidence
-- `backend/shared/src/main/resources/data/commands.json` — 81-command canonical definition with CP costs, wait times, durations — HIGH confidence
-- `backend/shared/src/main/resources/data/ship_stats_empire.json` — 88 empire subtype stats — HIGH confidence
-- `backend/shared/src/main/resources/data/ship_stats_alliance.json` — 88 alliance subtype stats — HIGH confidence
-- `backend/shared/src/main/resources/data/ground_unit_stats.json` — 11 ground unit type stats — HIGH confidence
-- `docs/reference/unit_composition.md` — Fleet/patrol/transport/landing force composition rules — HIGH confidence
-- `docs/reference/gin4ex_wiki.md` — gin4 EX reference (gin7 base mechanics) — HIGH confidence
-- `.planning/PROJECT.md` — Current milestone scope and already-built system inventory — HIGH confidence
-- `CLAUDE.md` — Domain mapping, stat definitions, ship classes, rank system — HIGH confidence
-
----
-
-*Feature research for: Open LOGH — gin7 web MMO game logic rewrite*
-*Researched: 2026-04-06*
+- gin7 Official Manual (101 pages PDF) -- pages 37-38 (operation plans), 45-47 (tactical battle, command range circle, unit command) -- PRIMARY SOURCE, HIGH confidence
+- [Chain of command in cooperative agents for RTS games](https://link.springer.com/article/10.1007/s40692-018-0119-8) -- hierarchical AI command patterns
+- [Hierarchical control of multi-agent RL in RTS games](https://www.sciencedirect.com/science/article/abs/pii/S0957417421010897) -- multi-level decision making
+- [Total War Shogun 2 Morale System](https://shogun2-encyclopedia.com/how_to_play/052_enc_manual_battle_conflict_morale.html) -- command radius, morale break, officer death mechanics
+- [Total War Leadership/Morale](https://totalwarwarhammer.fandom.com/wiki/Leadership) -- general death causing army rout, succession mechanics
+- [Behavior Trees for Modern Game AI](https://www.wayline.io/blog/rediscovering-behavior-trees-ai-tool) -- BT vs utility scoring for tactical AI
+- [Discovering optimal strategy through behavior tree evolution](https://link.springer.com/article/10.1007/s10479-021-04225-7) -- BT-based tactical combat AI
+- [Designing AI for Turn-Based Strategy Games](https://www.gamedeveloper.com/design/designing-ai-algorithms-for-turn-based-strategy-games) -- utility scoring architecture
+- Existing codebase analysis: `CommandRange.kt`, `TacticalBattleEngine.kt`, `PersonalityTrait.kt`, `UtilityScorer.kt`, `OfficerAI.kt`, `FactionAI.kt`, `CrewSlotRole.kt` -- HIGH confidence

@@ -1,17 +1,17 @@
 # Project Research Summary
 
-**Project:** Open LOGH — gin7 (은하영웅전설 VII) 게임 로직 전면 재작성
-**Domain:** Web-based Multiplayer Strategy MMO (Spring Boot 3 + Next.js 15)
-**Researched:** 2026-04-06
+**Project:** Open LOGH v2.1 — Tactical Command Chain & AI
+**Domain:** Real-time tactical command hierarchy + AI integration into existing gin7-faithful web MMO strategy game
+**Researched:** 2026-04-07
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Open LOGH is a web-based multiplayer strategy MMO that faithfully re-implements gin7 (은하영웅전설 VII, BOTHTEC 2004) as an online game. The core value is "organisation simulation" — players join as officers in either the Galactic Empire or the Free Planets Alliance, operate within a strict military hierarchy enforced by a position-card authority system (직무권한카드), and cooperate (or compete) within their faction to achieve victory. The existing codebase (forked from OpenSamguk) already contains substantial infrastructure — tick engine, WebSocket event pipeline, STOMP channels, entity model, CP system, PositionCard registry, scenario framework — but the game logic layer is still Three Kingdoms (삼국지) throughout. This rewrite replaces that logic with gin7 mechanics without disturbing the architectural skeleton.
+Open LOGH v2.1 is a brownfield milestone adding gin7's organizational simulation mechanics to the existing tactical battle engine. The codebase already contains most of the necessary infrastructure — `CommandRange`, `PersonalityTrait`, `UtilityScorer`, and a working tick-based `TacticalBattleEngine` — but these components were built in isolation and are not yet wired together into a command hierarchy. The core work is integration and extension of existing systems, not greenfield construction. Crucially, zero new library dependencies are needed: all spatial math, state machines, and AI logic are implementable with Kotlin stdlib and the existing Spring Boot 3 stack.
 
-The recommended approach is a sequential 7-phase rewrite that mirrors the dependency graph of gin7 systems: (1) strip out Three Kingdoms and establish the ship unit foundation, (2) build the 81-command gin7 authority system, (3) implement the real-time tactical battle engine, (4) add the economy and AI layers, and (5) rebuild the frontend. The stack requires only 3 new dependencies (`@react-three/postprocessing`, `hibernate-types-60`, `@radix-ui/react-slider`) — everything else reuses the existing, confirmed-working technology. No new renderer, no new game engine, no GraphQL — the existing Spring Boot/Kotlin + Next.js/TypeScript stack is sufficient for all planned features.
+The recommended approach builds features in strict dependency order: command chain data model first (everything else depends on knowing which officer controls which units), then authority enforcement and succession mechanics, then tactical AI behavior, then strategic AI enhancement, and finally frontend visualization. The critical dependency chain is: Unit Command Distribution -> Command Range Circle (per-officer) -> Operation Plan Linkage -> Tactical AI -> Command Succession -> Delegation. Skipping this order causes rework.
 
-The critical risk is the layered nature of the legacy codebase: Three Kingdoms artifacts (commands, economy logic, battle engine, authority fallbacks) are woven through every service. Two patterns in particular must be eliminated early or they will undermine the entire gin7 system: the `officerLevel >= 5` authority bypass in `CommandExecutor.kt` (which makes PositionCards irrelevant), and the disconnected `runMonthlyPipeline()` in `TickEngine.kt` (which means the economy system will never fire). Both of these are confirmed code-level issues, not theoretical risks. The migration sequence must treat "remove legacy" and "wire new system" as inseparable steps — partial substitution leaves the codebase in a broken intermediate state that is harder to debug than either extreme.
+The dominant risk is the dual-engine problem: the codebase contains two tactical engines (`TacticalBattleEngine` in `engine/tactical/` wired to production, `TacticalCombatEngine` in `engine/war/` with richer models but not connected to anything). A decision on engine strategy must be made before any v2.1 code is written; building on the wrong engine wastes the entire milestone. Secondary risks are WebSocket broadcast storms when hierarchy data is added to per-tick payloads, and race conditions between the tick loop and WebSocket command handlers during flagship succession — both solvable with delta broadcasting and a command buffer pattern respectively.
 
 ---
 
@@ -19,157 +19,133 @@ The critical risk is the layered nature of the legacy codebase: Three Kingdoms a
 
 ### Recommended Stack
 
-The existing stack is production-grade and correct for this domain. Zero architectural changes to the multi-JVM process model (gateway-app + game-app), WebSocket STOMP pipeline, or database layer are required. The only stack additions are three narrow libraries that fill specific capability gaps: bloom/glow post-processing for the 3D battle view, JSONB column support for arsenal production queues and command state, and an accessible range slider for the energy allocation panel.
+No new dependencies. The entire v2.1 feature set builds on the existing `build.gradle.kts` and `package.json`. Spatial range checks use `kotlin.math.sqrt` on a grid with at most 120 units — no spatial index library is justified. The 4-state succession machine uses a Kotlin `sealed class` — no Spring Statemachine. Tactical AI uses utility scoring extending the existing `UtilityScorer`/`PersonalityWeights` pattern — no behavior tree library. Command hierarchy serializes as JSONB alongside the existing `TacticalBattleState` — no new tables needed for the hierarchy itself.
 
-**Core technologies (existing — do not replace):**
-- Spring Boot 3 / Kotlin 2.1.0: Backend framework — already in production, all new services extend it
-- Spring WebSocket + STOMP: Real-time event delivery — existing channels (`/topic/world/{id}/events`, `/topic/world/{id}/tactical-battle/{id}`) are extended, not replaced
-- PostgreSQL 16 + Flyway (V1–V44 done): Persistent state — new work starts at V45
-- Redis 7: Session cache and connected-client tracking only — tactical battle state stays in-memory (ConcurrentHashMap), never Redis
-- Next.js 15 + React 19 + Zustand: Frontend — Zustand stores batch WebSocket tick events to avoid per-event re-renders
-- React Konva: 2D tactical map (dot-style unit icons) — already used for galaxy map, correct tool for 2D battle grid
-- React Three Fiber + Drei + Three.js 0.183: 3D close-combat view — existing `SeasonEffects.tsx` particle pattern is directly reusable
+The only schema changes required are: (1) a new `OperationPlan` entity (V45+ Flyway migration) to connect strategic operation plans to tactical battle initialization, and (2) two columns on `tactical_battle` (`operation_plan_id`, `operation_objective`).
 
-**New additions (3 only):**
-- `@react-three/postprocessing ^2.16`: Bloom glow on BEAM laser lines in 3D battle view — wraps proven postprocessing library, compatible with RTF 9.5.0
-- `com.vladmihalcea:hibernate-types-60:2.21.1`: `@Type(JsonType)` for JSONB columns (arsenal queues, command state) — required for Hibernate 6 / Spring Boot 3
-- `@radix-ui/react-slider ^1.2`: Energy allocation panel sliders — consistent with existing Radix UI usage
+**Core technologies (all existing — do not add to):**
+- `kotlin.math` + Kotlin `sealed class`: Spatial distance checks and 4-state succession FSM — replaces need for any external library
+- `TacticalBattleEngine` + `TickEngine`: Existing 1-second tick loop with stateless engine pattern — extend by injecting `CommandChainManager` and `TacticalAI` as dependencies
+- `CommandRange.kt`: Per-officer circle model with `tick()`, `resetOnCommand()`, `isInRange()` — already correct API, needs to shift from per-unit to per-officer scope
+- `PersonalityTrait` + `PersonalityWeights`: 5 personality types with stat multipliers — reuse for tactical AI behavior modifiers
+- `UnitCrew` + `CrewSlotRole`: 10-slot crew structure (COMMANDER through ADJUTANT) — already models the fleet command hierarchy foundation
+- React Three Fiber + `@stomp/stompjs`: Existing frontend stack handles CRC circle rendering and WebSocket command chain updates with no additions
 
 ### Expected Features
 
-**Must have (table stakes — game is broken without these):**
-- 11-class ship unit system (전함/순양함/구축함 etc.) with 88 per-faction subtypes — ship_stats JSON already exists, ShipUnit entity needed
-- 81-command gin7 authority system replacing 93 Three Kingdoms commands — commands.json fully defines all 81 with CP costs and wait/duration times
-- Real-time tactical battle grid: 2D Konva canvas with dot-style unit icons (△기함, □전함, ◇구축함), faction colors (Empire #4466ff, Alliance #ff4444)
-- Energy allocation system: 6-channel BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR sliders, sum must equal 100, real-time WebSocket update
-- Planet auto-production (조병창): tick-driven ship/ground unit queue — no player micro, set-and-forget
-- Weapon system: beam (range-optimal), gun, missile (supply-consuming, critical constraint)
-- Strategic game screen frontend: PositionCard tab + 8-stat panel + chat — replaces Three Kingdoms city/general cards
+**Must have (table stakes — missing breaks the organizational simulation core value):**
+- Unit command distribution: 60 units split among 10 crew members by priority (online > rank > evaluation > merit)
+- Command range circle mechanics (per-officer): flagship CRC expands over time, resets to 0 on command issue, gates which units can receive orders
+- Operation plan to tactical AI linkage: gin7 p.37-38 operation purpose (CAPTURE/DEFEND/SWEEP) determines tactical AI behavior
+- Tactical AI for offline/NPC units: mission-objective-driven + personality-modulated behavior
+- Command succession on flagship destruction: 30-tick vacancy gap then rank-based auto-promotion (replace current `maxByOrNull { it.ships }`)
+- CRC UI visualization: players must see command circles to understand why orders are not reaching units
 
-**Should have (competitive differentiators):**
-- Command Range Circle (커맨드레인지서클): expands per tick, resets on order, rate = commander stat — unique gin7 mechanic
-- Cross-rank proposal system (제안): junior officers propose to superiors for approval — org simulation backbone
-- Detection/stealth via SENSOR allocation: fog-of-war creates information asymmetry
-- Ground combat + 6 planet capture options (항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동) with differential effects
-- Fortress cannon mechanic (토르해머): fires across entire lane including friendlies — extreme tactical tension
-- Personality-driven AI (5 trait types, stat-weighted utility scoring) — offline players behave as credible subordinates
-- Fezzan loan system: borrow funds with quarterly interest; default triggers Fezzan ending condition
-- 3D close-combat view (React Three Fiber): proportional unit blocks + beam effects + explosion particles
+**Should have (differentiators):**
+- Real-time command delegation/reassignment mid-battle (conditions: target unit outside CRC + stopped)
+- Personality-driven tactical variety (AGGRESSIVE charges, CAUTIOUS holds distance — Reinhard vs Yang feel)
+- Concentrated/distributed attack target selection based on personality and situation
+- Strategic AI auto-operation-planning (FactionAI creates operation plans when at war)
+- Sub-fleet formation commands per sub-commander (independent energy/formation per officer)
+- Communication jamming effects (supreme commander cannot issue fleet-wide orders)
 
-**Defer to v2.1+:**
-- Full scenario data for all 10 scenarios (data-heavy, mechanics must work first)
-- Dedicated political faction UI (쿠데타 UI, 의회 선거 UI, 페잔 정보 UI)
-- Balance pass (fleet sizes, economic rates, CP costs) — requires playtest data
-
-**Explicit anti-features (never implement):**
-- Turn-reservation queue (삼국지 artifact) — gin7 uses real-time wait+duration, not queuing
-- Per-ship HP tracking — gin7 operates at unit granularity (300 ships/unit)
-- Full 3D ship models for every unit — performance-prohibitive at 2,000 concurrent; dot icons are gin7 identity
-- Click-to-build production queues — gin7 arsenals auto-produce, no micro
+**Defer to future milestone:**
+- Battle replay with command chain visualization (high effort, low urgency)
+- AI learning or ML-based tactical decisions (overkill; use utility scoring)
+- Player-controlled individual ship movement (breaks organizational simulation core value)
+- Complex custom formation editor (4 existing formations are sufficient)
 
 ### Architecture Approach
 
-The existing multi-JVM architecture (gateway-app:8080 → game-app:9001+) with ConcurrentHashMap-based in-memory tactical battle state is the correct pattern. The TickEngine's 1-second tick (= 24 game-seconds) already handles all periodic processing; gin7 systems plug into it via `runMonthlyPipeline()` (currently wired to nothing — this is Pitfall 3). Tactical battle state must remain in JVM memory (never Redis) to avoid serialisation overhead on the 1-second tick cycle. Frontend WebSocket events must be batched in Zustand stores (not applied as direct React state) to avoid per-tick re-renders.
+New components are injected into the existing tick loop as stateless dependencies — the same pattern already used for `MissileWeaponSystem`, `DetectionService`, and `FortressGunSystem`. `CommandChainManager` is inserted at tick step 1.5 (after per-unit command range update, before movement). `TacticalAI` is inserted at tick step 4.5 (after combat). The strategic AI (`AiCommandBridge`) and tactical AI (`TacticalAI`) are kept completely separate systems — strategic AI uses `CommandExecutor` with CP/cooldown/PositionCard validation; tactical AI directly mutates in-memory `TacticalBattleState`. Crossing this boundary is the most common architectural mistake in this domain.
 
-**Major components (new or significantly modified):**
-1. `Gin7CommandRegistry` — 81 gin7 commands in 7 group packages, replaces `CommandRegistry` via Spring `@Primary`
-2. `ShipUnit` entity (V46 migration) — 300-ship unit with class, subtype, missile stock, flagship flag; linked to Fleet via FK
-3. `ShipStatRegistry` — loads ship_stats_empire/alliance JSON into memory; injected into TacticalBattleService at battle init
-4. `Gin7EconomyService` — replaces Three Kingdoms `EconomyService`; wired into `TickEngine.runMonthlyPipeline()` for tax, fleet maintenance, Fezzan interest
-5. Extended `TacticalBattleEngine` — adds missile weapon system, detection matrix, 5-phase tactical turn, ground battle state
-6. New WebSocket channels: `/app/battle/{sessionId}/{battleId}/energy`, `/formation`, `/retreat`, `/attack-target`, `/planet-conquest`; topic channels separated per `battleId` (not session-wide)
-7. Frontend tactical UI — split canvas: RTF 3D (close-combat view top) + React Konva 2D (tactical grid bottom); lazy-loaded to avoid dual WebGL context memory spike
-
-**Build order (dependency-driven):**
-Entity → Repository → Service → Command → Controller; tactical engine after ShipUnit; economy after command system; frontend after each backend system stabilises.
+**Major components (new):**
+1. `CommandChainManager` — resolves authority (who commands whom), manages succession timers, handles unit reassignment; stateless, injected into `TacticalBattleEngine`
+2. `SubFleetAssignment` — distributes 60 units among 10 crew members at battle initialization in `BattleTriggerService`
+3. `CommandSuccessionService` — 30-tick vacancy state machine on flagship destruction; replaces current instant `maxByOrNull { it.ships }` logic
+4. `TacticalAI` — per-tick NPC/offline unit decisions (energy, stance, formation, target, retreat) driven by `MissionObjective` + `PersonalityTrait`; pure function, no DB access
+5. `ThreatAssessment` — evaluates retreat conditions, target selection, energy recommendations per AI-controlled unit per tick
+6. `BattleWebSocketController` authority gate — validates `officerId` against `CommandChainManager.canCommand()` before accepting any tactical command; new endpoints `/delegate` and `/fleet-order`
+7. Frontend `CommandRangeCircle.tsx` (modified) — renders one circle per commander officer, not per unit; new sub-fleet assignment panel shows hierarchy
 
 ### Critical Pitfalls
 
-1. **CommandRegistry mass test destruction** — 93 Three Kingdoms commands are referenced by dozens of tests by string key. Strategy: register gin7 stub commands first, update `CommandParityTest` expected set to gin7 81-command list (RED), then implement to GREEN. Never delete before stubs exist.
+1. **Dual engine divergence** — `TacticalCombatEngine` (`engine/war/`) has richer models including `CommandRange` and `CommandAuthority` but is NOT wired to production. `TacticalBattleEngine` (`engine/tactical/`) IS wired. Avoid: decide engine strategy before writing any code; port `CommandRange`/`CommandAuthority` models into the live `engine/tactical/` pipeline; delete or deprecate the unused engine immediately.
 
-2. **`officerLevel >= 5` authority bypass persists** — confirmed at 7+ locations in `CommandExecutor.kt`, `CommandService.kt`, `BattleService.kt`, etc. This bypass makes PositionCards irrelevant. Must be fully removed after gin7 81-command `requiredCards` mapping is complete. Verification: `grep -r "officerLevel >= 5"` must return 0.
+2. **WebSocket broadcast storm** — adding command hierarchy data to every 1-second full-state broadcast inflates payloads 30-50%. At 2,000 spectators per battle this becomes ~20MB/s outbound per battle. Avoid: delta broadcasting (only changed units per tick), separate command chain event channel for infrequent hierarchy events, broadcast full state every 5 ticks not every tick.
 
-3. **`TickEngine.runMonthlyPipeline()` is disconnected** — confirmed via code inspection: line 126-136 has TODO comment, `EconomyService.processMonthly()` is never called from the tick. Any economy implementation will silently do nothing until this wire is connected. Wire it as the first task of Phase 5.
+3. **Flagship destruction race condition** — WebSocket commands arrive asynchronously and mutate `TacticalBattleState` concurrently with the tick loop. During the 30-tick vacancy period, commands targeting the dead commander cause silent failures or double-succession. Avoid: command buffer pattern — WebSocket commands go into a `ConcurrentLinkedQueue` per battle, drained at the start of each tick; no direct state mutation from WebSocket handlers.
 
-4. **Missile system absent from TacticalBattleEngine** — only BEAM and GUN channels implemented; missile has no handler and `suppliesRemaining` is not tracked on TacticalUnit. Without this, planet bombardment commands have no resource constraint. Implement missile weapon system before planet conquest commands.
+4. **O(N^2) command range checks per tick** — 10 commanders * 60 units = 600 distance calculations per fleet per tick, stacked on the existing detection O(N^2). Avoid: compare `distanceSquared` vs `range * range` (skip `sqrt`); cache static sub-fleet assignments (only recompute in-range checks, not who-commands-whom); stagger recalculation across even/odd ticks.
 
-5. **`BattleEngine.kt` (Three Kingdoms) and `TacticalBattleEngine.kt` coexist** — two battle engines create routing ambiguity during migration. Plan the deletion list at Phase 1 start; do not allow both to route production traffic simultaneously.
-
-6. **Ship subtype stats hardcoded in TacticalBattleEngine** — `BEAM_BASE_DAMAGE = 30.0`, `GUN_BASE_DAMAGE = 40.0` are constants; 88-subtype JSON stats are never injected into TacticalUnit. All subtypes fight with identical power. Fix at Phase 2 alongside ShipUnit entity creation.
-
-7. **STOMP battle channel not scoped to battleId** — broadcasting all tactical events on the session-wide channel sends every battle's events to all 2,000 clients. Redesign channels to `/topic/world/{sessionId}/tactical-battle/{battleId}` (already the correct topic path in code, confirm subscription management on frontend).
+5. **Tactical AI accessing repositories** — injecting `OfficerRepository` or `FleetRepository` into `TacticalAI` for per-tick queries blocks the tick engine with DB I/O. Avoid: `TacticalAI` must be a pure function operating only on `TacticalBattleState`; all officer/fleet data loaded once at battle start by `BattleTriggerService`.
 
 ---
 
 ## Implications for Roadmap
 
-Based on the dependency graph surfaced by all four research files, a 7-phase roadmap is recommended. Phases 1–3 are strictly sequential (each unblocks the next). Phases 4 and 5 can be parallelised partially (battle engine and economy are independent). Phase 6 (AI) requires Phase 3's command system. Phase 7 (frontend) can be developed incrementally alongside each backend phase.
+The feature dependency chain dictates a 6-phase structure. The critical constraint is that unit command distribution must be fully working before CRC gating, succession, and AI can function correctly. Phases 4 and 5 can be parallelized if capacity allows.
 
-### Phase 1: Three Kingdoms Removal + Ship Unit Foundation
-**Rationale:** Every downstream system depends on gin7 entities and a clean command registry. Partial cleanup leaves two coexisting game universes, making all subsequent development unreliable. This is the prerequisite phase for everything.
-**Delivers:** `ShipUnit` entity (V45–V46 migrations), `ShipStatRegistry`, `Gin7CommandRegistry` shell (stub implementations), deletion of 93 Three Kingdoms commands and `BattleEngine.kt`/`FieldBattleService.kt`, deletion of Three Kingdoms frontend components
-**Addresses:** FEATURES.md Phase A items (ship unit system, ground unit entity, flagship entity)
-**Avoids:** Pitfall 1 (test destruction via stub-first TDD), Pitfall 5 (two battle engines coexisting)
+### Phase 1: Engine Unification + Command Chain Data Model
 
-### Phase 2: gin7 81-Command System
-**Rationale:** The PositionCard authority hierarchy is the core product value. All other game actions are commands; none work correctly until the 81-command system replaces the Three Kingdoms registry.
-**Delivers:** All 81 gin7 commands implemented and PositionCard-gated, real-time execution pipeline (waitTime → execute → WebSocket broadcast), `officerLevel >= 5` bypass fully removed, strategic game screen frontend (직무카드 탭 + 8-stat panel)
-**Addresses:** FEATURES.md Phase B items (command system, proposal system, strategic UI)
-**Avoids:** Pitfall 2 (authority bypass), standard verification: `grep "officerLevel >= 5"` = 0 results
-**Research flag:** Needs phase-level research for the 7 command group implementations (operations 16, personal 15, commander 8, logistics 6, personnel 10, politics 12, intelligence 14) — complex domain-specific logic, not standard patterns
+**Rationale:** The dual-engine problem is a pre-existing structural issue that must be resolved before any hierarchy code is written. Every subsequent phase builds on the data structures and concurrency patterns defined here. Getting the data model wrong here requires rewriting all later phases.
+**Delivers:** Resolved engine strategy (port `CommandRange`/`CommandAuthority` from `engine/war/` into `engine/tactical/` pipeline, deprecate `TacticalCombatEngine`); `CommandAuthority`, `CommandChain`, `PendingSuccession` data classes; `SubFleetAssignment` priority-sort logic; `OperationPlan` entity + V45+ Flyway migration; `TacticalBattleState` and `TacticalUnit` extended with `commanderId`, `unitSlotIndex`, `isUncontrolled` fields; command buffer pattern (`ConcurrentLinkedQueue`) replacing direct WebSocket-to-state mutation; `TacticalBattleSimulator` deterministic test harness.
+**Addresses:** Unit command distribution foundation, operation plan entity (enables AI linkage in Phase 3)
+**Avoids:** Pitfall 1 (dual engine), Pitfall 3 (race condition), Pitfall 10 (testing gaps)
 
-### Phase 3: Real-Time Tactical Battle Engine
-**Rationale:** Battle is the core gameplay loop. The energy allocation, formation, detection, missile, and planet capture systems all depend on a working tactical engine. The 2D tactical grid must be solid before the 3D close-combat view is added.
-**Delivers:** 2D Konva tactical grid with dot-style unit icons, energy allocation WebSocket real-time state, weapon damage engine (beam/gun/missile + supply tracking), formation bonuses, Command Range Circle, detection/stealth, fortress cannon, ground combat, 6 planet capture commands, 3D close-combat view (React Three Fiber + `@react-three/postprocessing`)
-**Addresses:** FEATURES.md Phase C items
-**Avoids:** Pitfall 4 (missile system before planet capture), Pitfall 6 (STOMP channels scoped per battleId), Pitfall 7 (88 subtype stats injected from ShipStatRegistry, not hardcoded constants)
-**Uses stack:** `@react-three/postprocessing` (bloom), React Konva (2D grid), `@radix-ui/react-slider` (energy sliders)
-**Research flag:** Needs research for ground combat terrain rules (행성타입별 지상전 규칙) and 5-phase tactical turn structure — gin7 manual is primary source but implementation choices need validation
+### Phase 2: CommandChainManager + Authority Enforcement + Succession
 
-### Phase 4: Economy System
-**Rationale:** Planet economy and arsenal auto-production provide the strategic resource loop that gives battles meaning. Fezzan loan system adds long-term risk. This phase is independent of Phase 3 and can be developed in parallel once Phase 2 is complete.
-**Delivers:** `Gin7EconomyService` wired into `TickEngine.runMonthlyPipeline()`, planet resource tick, arsenal auto-production (tick-driven), quarterly tax cycle, Empire dual budget split (군무성/통수본부), Fezzan loan + default ending trigger, population-based unit cap, `hibernate-types-60` JSONB for arsenal queues
-**Addresses:** FEATURES.md Phase D economy items
-**Avoids:** Pitfall 3 (wire `runMonthlyPipeline()` as first task — confirmed currently disconnected), economy-in-command-handler antipattern (all periodic processing goes through tick, never command handlers)
-**Research flag:** Standard tick integration pattern — no research needed; the TickEngine integration point is confirmed in codebase
+**Rationale:** Once data structures exist, wiring authority checks into the tick loop and WebSocket layer makes command hierarchy a live runtime concept. Succession state machine belongs here because it uses the same authority data structures.
+**Delivers:** `CommandChainManager` with `canCommand()`, `tick()` (circle expansion), `processDestruction()` (30-tick delay), `reassignUnits()` (with precondition checks); authority gate on all `TacticalBattleService` command methods; new WebSocket endpoints `/delegate` and `/fleet-order`; rank-based succession replacing current `maxByOrNull { it.ships }`; `CommandChain` persisted to Redis on change for crash recovery; delta broadcasting designed (full broadcast every 5 ticks, command chain changes on separate channel).
+**Addresses:** CRC mechanics (per-officer), command succession, real-time delegation
+**Avoids:** Pitfall 2 (broadcast storm — delta strategy applied here), Pitfall 4 (O(N^2) — `distanceSquared` and staggered recalculation), Pitfall 6 (hierarchy persistence to Redis), Pitfall 8 (latency cascade — flat propagation for direct player commands), Pitfall 9 (unified tactical command DTO schema), Pitfall 12 (hardcoded flagship selection)
 
-### Phase 5: AI System
-**Rationale:** AI officers must use the same 81-command system as human players. This phase requires Phase 2 complete. Faction-level AI provides credible NPC factions for single-faction sessions.
-**Delivers:** Personality-driven AI (5 trait types × stat-weighted utility scoring, not behavior trees), replacing Three Kingdoms AI decision logic; faction-level AI (budget allocation + personnel decisions, round-robin per tick); NPC AI (100-tick batch scheduling); AI integrated into TickEngine via 10-tick/100-tick intervals
-**Addresses:** FEATURES.md Phase D AI items
-**Avoids:** NPC AI O(n) per tick performance trap — slot-based scheduling groups NPCs, processes 1 group per tick
+### Phase 3: Tactical AI
 
-### Phase 6: Frontend Integration and Polish
-**Rationale:** Frontend can be developed incrementally alongside backend phases, but a dedicated integration pass is needed to ensure the full strategic game screen, all WebSocket subscriptions, and the retro UI aesthetic are coherent.
-**Delivers:** Complete strategic game screen (직무권한카드 탭, 8-stat panel, proposal system UI, chat), tactical battle UI (split 2D/3D canvas, linked energy sliders, command range circle display, detection fog overlay), galaxy map enhanced with fleet position and movement range highlight, retro monospace font (Space Mono via `next/font/google`), Three Kingdoms frontend component removal verified
-**Avoids:** Pitfall 8 (React Three Fiber + Konva dual mount — lazy loading required), UX pitfall: linked slider auto-rebalancing, command wait/duration display in both real-time seconds and game-time format
+**Rationale:** Depends on Phase 2 knowing which units are NPC/uncontrolled. `TacticalAI` reads `MissionObjective` from battle state (populated by Phase 1's `OperationPlan` entity) and `PersonalityTrait` from officer data loaded at battle start.
+**Delivers:** `TacticalAI` service (pure function, no DB); `ThreatAssessment` (retreat/target/energy decisions); `TacticalPersonalityModifier` (maps existing `PersonalityTrait` to tactical-specific parameters — engagement distance, retreat threshold, formation preference, target prioritization); tiered AI evaluation frequency (CRITICAL every tick, ACTIVE every 3-5 ticks, IDLE every 10-20 ticks); wired into `TacticalBattleEngine` at tick step 4.5.
+**Addresses:** Tactical AI for offline/NPC units, personality-driven variety, concentrated/distributed attack, communication jamming
+**Avoids:** Pitfall 5 (AI frequency starvation — tiered evaluation), Pitfall 7 (mixing strategic/tactical AI — separate service boundary), Pitfall 11 (personality weight mismatch — new `TacticalPersonalityModifier` separate from strategic `PersonalityWeights`)
 
-### Phase 7: Scenario Data and Balance
-**Rationale:** Mechanics must be proven before populating scenario initial data. Balance tuning requires playtest data.
-**Delivers:** Full initial data for all 10 scenarios (인물 배치 + 이벤트 트리거), balance adjustments to ship stats / CP costs / economic rates based on playtesting, dedicated faction political UI (쿠데타, 선거, 페잔 정보)
-**Addresses:** FEATURES.md v2.1+ deferred items
-**Research flag:** Scenario data is data engineering (gin7 manual reference), not code research — no research-phase needed
+### Phase 4: Strategic AI Enhancement
+
+**Rationale:** `FactionAI` improvement is independent of tactical AI (it runs at strategic tick cadence, every 100 ticks) but feeds operation plans into the tactical AI system built in Phase 3. Can be parallelized with Phase 5 if capacity allows.
+**Delivers:** `FactionAI` auto-creates operation plans when at war (CAPTURE for weak enemy systems, DEFEND for threatened own systems, SWEEP for raider fleets); `OfficerAI` moves assigned officers toward operation targets using existing movement logic; fleet composition selection appropriate for operation type.
+**Addresses:** Strategic AI auto-operation-planning (differentiator feature); ensures NPC factions fight purposefully after v2.1 ships
+
+### Phase 5: WebSocket Broadcast Optimization
+
+**Rationale:** Must be in production before scale testing. Delta broadcasting is designed in Phase 2 but implemented here as a focused pass. Batches well with Phase 4 as a stability consolidation step before frontend work.
+**Delivers:** Delta-only unit state broadcasts for intermediate ticks (full state every 5 ticks); separate `/topic/world/{sessionId}/battle/chain` topic for command hierarchy change events (infrequent, event-driven, not per-tick); fog-of-war filtering applied to tick broadcast (~50% payload reduction — only send detected enemies); ZGC JVM flag (`-XX:+UseZGC`) added to game-app startup for short-lived message object GC.
+**Addresses:** Scale requirement (2,000 concurrent spectators per battle)
+**Avoids:** Pitfall 2 (broadcast storm — full implementation of delta strategy)
+
+### Phase 6: Frontend Integration
+
+**Rationale:** All backend contracts must be stable before UI work to avoid churn from changing DTOs and broadcast formats. Phase 6 is the final integration pass — individual UI components can be prototyped earlier, but this phase hardens them against the stable backend.
+**Delivers:** `CommandRangeCircle.tsx` rewritten to render per-commander circles (centered on officer's flagship position, color-coded by sub-fleet); sub-fleet assignment panel showing crew hierarchy with officer names and unit counts; authority-aware command controls (buttons disabled when logged-in officer lacks authority over target units); succession visual feedback ("지휘 승계 중" countdown indicator, flash on flagship destruction); unit color/opacity coding by sub-fleet (out-of-range units dimmed); `CommandChainInfo` and `CommandAuthorityInfo` type extensions in `tactical.ts`.
+**Addresses:** CRC UI visualization (table stakes), sub-fleet formation commands (differentiator)
+**Avoids:** UI built on unstable backend contracts
 
 ### Phase Ordering Rationale
 
-- **Phases 1 → 2 → 3 are strictly sequential:** ShipUnit entity is required before tactical combat can calculate damage; 81-command registry is required before PositionCard gating can function; 2D tactical grid must work before 3D is layered on
-- **Phase 4 can overlap Phase 3:** Economy tick integration is independent of battle engine
-- **Phase 5 requires Phase 2 complete:** AI must execute gin7 commands via the same validated path as humans
-- **Phase 6 overlaps all:** Frontend can be built incrementally against each API as it stabilises, with a final integration pass
-- **Phase 7 is truly last:** Balance tuning requires a playable game to test against
+- Phase 1 before all others because data structures are the foundation; dual-engine resolution unblocks everything.
+- Phase 2 before Phase 3 because tactical AI must know which units are NPC/uncontrolled — that requires the command chain to be live in the tick loop.
+- Phase 3 before Phase 4 because strategic AI operation planning feeds the `MissionObjective` that tactical AI reads; building the consumer before the producer wastes effort.
+- Phase 5 before Phase 6 because broadcast payload format must be stable before frontend subscription code is written.
+- Phase 6 last because all backend DTOs and channel topics must be finalized.
 
 ### Research Flags
 
-Phases needing deeper research during planning:
-- **Phase 2 (Commands):** 81-command specification per group needs per-command implementation design — complex domain logic, reference: `commands.json` + `docs/REWRITE_PROMPT.md`. Recommend `/gsd:research-phase` before planning Phase 2 tasks.
-- **Phase 3 (Battle):** Ground combat terrain rules and 5-phase tactical turn structure have implementation ambiguities not fully resolved in current documentation. Recommend research on gin7 manual section covering 육전대 지상전 and 전술전 5단계.
+Phases likely needing deeper research during planning:
+- **Phase 1 (engine unification):** The exact model differences between `TacticalCombatEngine.TacticalUnit` and `TacticalBattleEngine.TacticalUnit` require a field-by-field comparison to scope the port accurately. Porting scope is unclear without a detailed diff of both engines. Recommend running the diff at Phase 1 kickoff before task estimation.
+- **Phase 2 (WebSocket authority + concurrency):** The interaction between the command buffer pattern, Spring STOMP's `@MessageMapping` task executor, and the existing `ConcurrentHashMap<Long, TacticalBattleState>` needs concurrency design review. Whether command queue drain should happen on the tick thread or the STOMP dispatcher thread has correctness implications.
 
-Phases with standard patterns (no research needed):
-- **Phase 1:** Entity migration and registry cleanup — well-documented Spring Boot patterns, confirmed codebase structure
-- **Phase 4:** Economy tick wiring — TickEngine integration point is confirmed and documented in code comments
-- **Phase 5:** Utility AI scoring — straightforward Kotlin implementation, no library research needed
-- **Phase 6:** Frontend components — existing patterns in codebase, all libraries confirmed
-- **Phase 7:** Scenario data — data entry from gin7 manual, not engineering research
+Phases with standard patterns (skip research-phase):
+- **Phase 3 (Tactical AI):** The utility scoring pattern is proven in `UtilityScorer.kt`. Tiered AI frequency is a well-documented game-dev pattern. Extension is mechanical.
+- **Phase 4 (Strategic AI):** `FactionAI` and `OfficerAI` infrastructure exists. Auto-operation-planning is a rule-based conditional extension.
+- **Phase 5 (Broadcast optimization):** Delta broadcasting and fog-of-war filtering are well-documented. The implementation follows the existing `detectionMatrix` pattern.
+- **Phase 6 (Frontend):** Circle rendering in R3F and Konva follow existing patterns in `CommandRangeCircle.tsx` and `BattleMap.tsx`.
 
 ---
 
@@ -177,44 +153,40 @@ Phases with standard patterns (no research needed):
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Existing stack verified via direct package.json + build.gradle.kts inspection; 3 new additions verified against peer dependency compatibility |
-| Features | HIGH | Primary sources: `commands.json` (81 commands), `ship_stats_empire/alliance.json` (88 subtypes), `docs/REWRITE_PROMPT.md` (gin7 spec), `docs/reference/gin4ex_wiki.md` |
-| Architecture | HIGH | Direct code inspection of CommandRegistry.kt, TickEngine.kt, TacticalBattleEngine.kt, TacticalBattleService.kt, EconomyService.kt, Fleet.kt |
-| Pitfalls | HIGH | All 7 critical pitfalls confirmed via line-level code inspection — not theoretical risks |
+| Stack | HIGH | Verified against actual `build.gradle.kts` and `package.json`. No new dependencies confirmed by direct code analysis. |
+| Features | HIGH | gin7 manual (101-page PDF) is the primary source. Pages 37-38, 45-47 directly specify command range circle, operation plans, unit command distribution priority. Codebase cross-referenced for what already exists vs. what is missing. |
+| Architecture | HIGH | Based on direct analysis of 15+ production Kotlin files. Component boundaries derived from what is actually wired in `TickEngine`, `TacticalBattleService`, and `TacticalBattleEngine`. Dual-engine finding is a concrete structural observation, not inference. |
+| Pitfalls | HIGH | Dual-engine problem is a concrete structural finding. Race condition is observable from the `ConcurrentHashMap` + direct mutation pattern. Broadcast storm is calculable from unit count * field count * subscriber count. Performance estimates based on actual unit counts (60 per fleet, 120 per battle). |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Ground combat terrain rules:** REWRITE_PROMPT.md defines 6 capture commands and their effects on approval/economy/defense, but the exact per-planet-type terrain restrictions for 육전대 강하 are not fully codified. Address during Phase 3 planning via gin7 manual cross-reference.
-- **Ship subtype stat balance:** 88 subtypes × 2 factions = 176 stat sets exist in JSON but have never been playtested in the web MMO context. The data is trusted as correct per gin7 original, but scaling to web MMO economics may require adjustment. Flag for Phase 7 balance pass.
-- **Concurrent session performance:** The 2,000 concurrent user target is stated in CLAUDE.md. The `CommandExecutor.buildConstraintEnv()` O(n) query bottleneck (Pitfall: confirmed) and O(n²) tactical unit distance calculation become critical above 200 users/session and 20 units/battle respectively. Performance validation should be planned before Phase 3 production deployment.
-- **Flyway V45+ migration sequencing:** Three Kingdoms column removals involve FK dependency chains. Each migration file must verify `pg_constraint` dependencies before issuing DROP COLUMN. This is a procedural gap, not a knowledge gap — enforce via migration review checklist.
+- **Engine merge scope:** Exact field differences between `TacticalCombatEngine.TacticalUnit` and `TacticalBattleEngine.TacticalUnit` need a diff before Phase 1 estimation is accurate. Run the comparison at Phase 1 kickoff.
+- **OperationPlan entity design:** `OperationPlanCommand` currently stores plan metadata in `nation.meta` JSONB (not a first-class entity). Phase 1 must decide: new `operation_plan` table (cleaner for querying, requires migration) vs. enriched JSONB structure (less migration, harder to query). Recommend new table.
+- **CRC rendering layer:** Frontend uses both `BattleMap.tsx` (SVG/Konva) and `TacticalMapR3F.tsx` (Three.js/R3F). `CommandRangeCircle.tsx` is a Konva component. The authoritative tactical map rendering layer must be confirmed before Phase 6 UI work to avoid building circles in the wrong renderer.
+- **Online player detection for succession priority:** gin7 succession priority is (online > rank > evaluation > merit). `TacticalBattleState` does not currently track which player `officerId` values are connected via WebSocket. A `connectedOfficerIds: Set<Long>` field must be maintained in `TacticalBattleService` and passed to `CommandChainManager.processDestruction()`.
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- `docs/REWRITE_PROMPT.md` — gin7 manual synthesis, weapon tables, planet capture table, economy rules, UI specifications
-- `backend/shared/src/main/resources/data/commands.json` — 81-command canonical definition with CP costs, wait times, durations
-- `backend/shared/src/main/resources/data/ship_stats_empire.json` / `ship_stats_alliance.json` — 88-subtype combat stats per faction
-- `backend/shared/src/main/resources/data/ground_unit_stats.json` — 11 ground unit type stats
-- Direct codebase inspection: `CommandRegistry.kt`, `CommandExecutor.kt`, `TickEngine.kt`, `TacticalBattleEngine.kt`, `TacticalBattleService.kt`, `EconomyService.kt`, `Fleet.kt`, `BattleEngine.kt`
-- `frontend/package.json`, `backend/game-app/build.gradle.kts` — confirmed current package versions
-- `CLAUDE.md` — domain mapping, stat definitions, ship classes, rank system, architecture decisions
+- **gin7 Official Manual (101-page PDF)** — p.37-38 (operation plans: purpose/scale/duration/merit bonuses), p.45-47 (tactical battle entry, command range circle mechanics, unit command distribution, assignment priority) — authoritative gin7 domain rules
+- **Direct codebase analysis** — `TacticalBattleEngine.kt`, `TacticalCombatEngine.kt`, `TacticalBattleService.kt`, `BattleWebSocketController.kt`, `CommandRange.kt`, `CommandAuthority.kt`, `UtilityScorer.kt`, `PersonalityTrait.kt`, `AiCommandBridge.kt`, `FactionAI.kt`, `OfficerAI.kt`, `TickEngine.kt`, `BattleTriggerService.kt`, `UnitCrew.kt`, `CrewSlotRole.kt`, `UnitType.kt`, `tactical.ts`, `CommandRangeCircle.tsx` — all HIGH confidence, directly read
+- **v2.1 milestone scope** (project memory `project_v21_milestone_scope.md`) — feature requirements
 
 ### Secondary (MEDIUM confidence)
-- `@react-three/postprocessing` pmndrs GitHub — RTF 9.x + Three.js 0.160+ compatibility via package peer deps
-- `com.vladmihalcea:hibernate-types-60` docs — Hibernate 6 / Spring Boot 3 compatibility via package naming convention
-- `docs/reference/unit_composition.md` — fleet/patrol/transport/landing force composition rules
-- `docs/reference/gin4ex_wiki.md` — gin4 EX reference (gin7 base mechanics)
-- `.planning/PROJECT.md` — current milestone scope and already-built system inventory
+- [Chain of command in cooperative agents for RTS games](https://link.springer.com/article/10.1007/s40692-018-0119-8) — hierarchical AI command patterns, command depth latency effects
+- [Hierarchical control of multi-agent RL in RTS games](https://www.sciencedirect.com/science/article/abs/pii/S0957417421010897) — multi-level decision making, strategic-to-tactical handoff
+- [Total War Shogun 2 Morale System](https://shogun2-encyclopedia.com/how_to_play/052_enc_manual_battle_conflict_morale.html) — command radius mechanics, general death and succession patterns
+- [Spring WebSocket STOMP scaling](https://websocket.org/guides/frameworks/spring-boot/) — broadcast storm prevention, GC tuning for message objects
 
 ### Tertiary (LOW confidence)
-- gin7 ground combat terrain rules: partially specified in REWRITE_PROMPT.md, full rules require gin7 manual reference — validate during Phase 3 planning
-- Web MMO performance at 2,000 concurrent users: theoretical scaling analysis based on code patterns, not load-tested
+- [RTS devlog: Optimizing for 1000 units](https://www.gamedev.net/blogs/entry/2274556-rts-devlog-7-optimizing-performance-for-1000-units/) — spatial partitioning strategies (LOW: designed for 10x the unit count of this project)
+- [AI for large numbers of RTS units](https://gamedev.net/forums/topic/698291-ai-for-large-numbers-of-rts-like-units/) — tiered AI frequency patterns (LOW: scaled for larger unit counts than 120)
 
 ---
-*Research completed: 2026-04-06*
+
+*Research completed: 2026-04-07*
 *Ready for roadmap: yes*

@@ -1,566 +1,741 @@
-# Architecture Patterns
+# Architecture Patterns: v2.1 Tactical Command Chain + AI Integration
 
-**Domain:** gin7 게임 로직 전면 재작성 — 기존 multi-JVM 아키텍처 통합
-**Researched:** 2026-04-06
-**Sources:** 실제 코드베이스 직접 분석 (CommandRegistry.kt, TickEngine.kt, TacticalBattleEngine.kt, TacticalBattleService.kt, CommandExecutor.kt, EconomyService.kt, Fleet.kt, ShipyardProductionService.kt, commands.json, PROJECT.md, REWRITE_PROMPT.md)
-
----
-
-## 현재 아키텍처 요약 (통합 기준점)
-
-```
-Browser
-  │ WebSocket (STOMP) + HTTP
-  ▼
-gateway-app:8080
-  │ HTTP proxy (WebFlux)
-  ▼
-game-app:9001+
-  ├── TickDaemon (1초 tick = 24게임초)
-  │   └── TickEngine.processTick(world)
-  │       ├── realtimeService.processCompletedCommands()    ← 커맨드 완료 처리
-  │       ├── realtimeService.regenerateCommandPoints()     ← 300틱마다 CP 회복
-  │       ├── advanceMonth() + runMonthlyPipeline()         ← 월 경계 처리
-  │       └── processPolitics()                             ← 쿠데타/선거/차관/페잔
-  │
-  ├── CommandExecutor (CQRS 커맨드 dispatch)
-  │   ├── PositionCard 권한 체크
-  │   ├── CP 차감
-  │   ├── Cooldown 체크
-  │   └── CommandRegistry → 커맨드 실행 → 엔티티 저장
-  │
-  ├── TacticalBattleService
-  │   ├── activeBattles: ConcurrentHashMap<Long, TacticalBattleState>  ← 전부 in-memory
-  │   ├── TacticalBattleEngine (순수 함수 엔진, stateless)
-  │   └── broadcast → /topic/world/{sessionId}/tactical-battle/{battleId}
-  │
-  └── EconomyService.processMonthly()  ← 월마다 실행
-      └── preUpdateMonthly / postUpdateMonthly
-```
-
-**핵심 불변사항**: session_id FK 격리, JPA 엔티티 저장, Redis 캐시, STOMP WebSocket 토픽 구조 유지.
+**Domain:** gin7 전술전 지휘체계 + 전술/전략 AI -- 기존 TacticalBattleEngine/WebSocket/AI 시스템 확장
+**Researched:** 2026-04-07
+**Sources:** 실제 코드베이스 직접 분석 (TacticalBattleEngine.kt, BattleWebSocketController.kt, TacticalBattleService.kt, CommandRange.kt, TacticalUnitState.kt, UtilityScorer.kt, AiCommandBridge.kt, OfficerAI.kt, FactionAI.kt, PersonalityTrait.kt, TickEngine.kt, BattleTriggerService.kt, Fleet.kt, UnitType.kt, CrewSlotRole.kt, CommandRangeCircle.tsx, tactical.ts)
 
 ---
 
-## 1. 전술전 엔진 — 배틀 상태 관리 전략
+## Current Architecture Baseline
 
-### 현재 구현 (유지)
+### What Already Exists (DO NOT REBUILD)
 
-`TacticalBattleService`는 이미 올바른 패턴을 채택하고 있다:
+```
+TickEngine.processTick(world)            -- 1초 tick = 24 game-seconds
+  |
+  +-- tacticalBattleService.processSessionBattles(sessionId)
+       |
+       +-- for each activeBattle:
+            engine.processTick(state)    -- TacticalBattleEngine (stateless, pure)
+            engine.checkBattleEnd(state) -- returns BattleOutcome?
+            broadcastBattleState()       -- STOMP -> /topic/world/{sid}/tactical-battle/{bid}
 
-```kotlin
-// 현재: game-app JVM 메모리에서 처리 (올바름)
-private val activeBattles = ConcurrentHashMap<Long, TacticalBattleState>()
+TacticalBattleService:
+  activeBattles: ConcurrentHashMap<Long, TacticalBattleState>  -- ALL in-memory
+  engine: TacticalBattleEngine (stateless engine with subsystems)
+
+TacticalBattleEngine.processTick(state):
+  1. updateCommandRange(unit)       -- commandRange grows per tick, resets on order
+  2. processMovement(unit)          -- move toward nearest enemy (no command chain)
+  3. detectionService.update()      -- SENSOR-based detection matrix
+  4. processCombat(unit)            -- BEAM/GUN/MISSILE/FIGHTER damage
+  5. fortressGunSystem              -- fortress gun fire
+  6. Remove destroyed units         -- flagship destruction -> injury + replacement
+  7. Ground battle tick             -- GroundBattleEngine
+  8. updateMorale(unit)             -- morale effects
+
+BattleWebSocketController:
+  /energy, /stance, /retreat, /attack-target, /planet-conquest, /unit-command
+  -- ALL use officerId in payload (no command chain filtering)
+
+AI System:
+  UtilityScorer (pure object)       -- scores CommandGroups by officer stats + personality
+  AiCommandBridge (@Service)        -- ranks candidates, executes top-3 via CommandExecutor
+  FactionAI (@Service)              -- strategic faction-level decisions (war, assignment, etc.)
+  PersonalityTrait (5 types)        -- AGGRESSIVE/DEFENSIVE/BALANCED/POLITICAL/CAUTIOUS
+  OfflinePlayerAIService            -- processes offline players every 100 ticks
+
+CommandRange model:
+  currentRange, maxRange, expansionRate, hasCommandRange
+  tick() -> expand toward max
+  resetOnCommand() -> set to 0
+  isInRange(distance) -> boolean
+
+Frontend:
+  CommandRangeCircle.tsx            -- Konva animated circle (expanding + max boundary)
+  BattleMap.tsx                     -- dot-style rendering
+  tactical.ts types                 -- TacticalUnit has commandRange field
 ```
 
-`TacticalBattleState`는 매 틱 변하는 실시간 데이터(posX/Y, velX/Y, hp, energy, commandRange)를 담으며 **DB/Redis로 내보내지 않는다.** 이 패턴은 gin7 전술전에서도 그대로 유지한다.
+### Critical Observation: What Is MISSING
 
-### 상태별 스토리지 전략
+The current architecture has these gaps that v2.1 must fill:
 
-| 상태 유형 | 스토리지 | 이유 |
-|-----------|----------|------|
-| 유닛 실시간 위치/속도/HP | `ConcurrentHashMap<Long, TacticalBattleState>` (JVM 메모리) | 매 틱 변경, 레이턴시 0 필요 |
-| 에너지 배분 (BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR) | 동일 (in-memory TacticalUnit.energy) | 실시간 변경, 브로드캐스트만 필요 |
-| 진형 설정 | 동일 | 전투 중 변경 가능 |
-| 미사일 재고 | 동일 (TacticalUnit.missileCount: Int 추가 필요) | 틱마다 소모 |
-| 요새포 상태 | 동일 (TacticalBattleState.fortressGun*) | 이미 구현됨 |
-| 전투 결과/전사/공적 | PostgreSQL (TacticalBattle + 새 CasualtyRecord 엔티티) | 영속화 필요 |
-| 전투 중 지상전 상태 | in-memory (GroundBattleState, TacticalBattleState 하위) | 전투 범위 내 |
-| 전투 이력 (재생용) | PostgreSQL (BattleTickSnapshot, 100틱마다 스냅샷) | 재접속 대응 |
-| 색적(탐지) 정보 | in-memory (DetectionMatrix per battle) | 매 틱 재계산 |
+1. **No command chain hierarchy** -- every officer controls their own unit directly. No concept of "commander issues order to subordinate units."
+2. **No sub-fleet assignment** -- 60 units in a fleet are not split among the 10 crew members.
+3. **No authorization check in WebSocket controller** -- any officerId in payload can control any unit. No "is this officer the commander of this unit?" check.
+4. **Movement AI is primitive** -- `processMovement()` just chases the nearest enemy. No mission-objective-driven behavior.
+5. **No command succession** -- flagship destruction replaces isFlagship to the largest-ships unit, but there is no delay, no chain-of-command logic, and no "units lose control" period.
+6. **No tactical AI** -- NPC/offline units in battle have no behavior at all. The AI system (UtilityScorer/AiCommandBridge) only handles strategic commands, not tactical actions.
+7. **CommandRange exists per-unit but is not used for command authority** -- it resets on ANY order to that unit, but does not gate whether a commander can reach subordinate units.
 
-**Redis는 배틀 상태에 사용하지 않는다.** Redis 직렬화 오버헤드가 1초 틱 사이클에서 병목이 된다. Redis는 현재 사용처(세션 캐시, 연결된 클라이언트 추적)를 유지한다.
+---
 
-### TacticalBattleState 확장 (신규 필드)
+## Recommended Architecture: New Components
 
-```kotlin
-// 기존 TacticalUnit에 추가할 필드
-var missileCount: Int = 100          // 미사일 재고 (소모형)
-var shipSubtype: String = ""         // ShipSubtype 코드 (전투 스탯 결정)
-var isFlagship: Boolean = false      // 기함 여부
-var flagshipCode: String = ""        // 고유기함 코드 (빌헬미나 등)
-var groundUnitsEmbark: Int = 0       // 탑재 육전대 수
-var detectionRadius: Double = 0.0   // SENSOR 배분 기반 탐지 반경
+### Component Boundary Map
 
-// 기존 TacticalBattleState에 추가할 필드
-val groundBattleState: GroundBattleState? = null   // 행성 지상전 (별도 박스)
-val detectionMatrix: MutableMap<Long, Set<Long>>   // officerId → 탐지된 적 unitId set
-var currentPhase: TacticalPhase = TacticalPhase.MOVEMENT  // 보급/이동/수색/교전/점령
+```
+NEW COMPONENTS (create from scratch):
+  engine/tactical/command/
+    |-- CommandChainManager.kt         -- core: who commands whom, authority resolution
+    |-- SubFleetAssignment.kt          -- 60 units split among 10 crew members
+    |-- CommandSuccessionService.kt    -- flagship death -> delay -> auto-successor
+    |-- CommandAuthority.kt            -- data class: officerId, assignedUnitIndices, commandRange
+  engine/tactical/ai/
+    |-- TacticalAI.kt                  -- entry point: decide actions for NPC/offline units
+    |-- TacticalAIBehavior.kt          -- mission-objective-driven behaviors
+    |-- ThreatAssessment.kt            -- evaluate threats, decide retreat
+    |-- TacticalPersonalityModifier.kt -- personality -> tactical preferences
+  dto/
+    |-- CommandChainDtos.kt            -- WebSocket DTOs for delegation/reassignment
+
+MODIFIED COMPONENTS (extend existing):
+  TacticalBattleEngine.kt             -- inject CommandChainManager into tick loop
+  TacticalBattleService.kt            -- add sub-fleet mgmt, authority checks, AI tick
+  BattleWebSocketController.kt        -- add delegation endpoints, authority filtering
+  BattleTriggerService.kt             -- build command chain on battle init
+  TacticalBattleState                  -- add commandChain field
+  TacticalUnit                         -- add commanderId, subFleetId fields
+  CommandRangeCircle.tsx               -- show per-commander circles (not per-unit)
+  tactical.ts                          -- add commanderId, subFleetId to TacticalUnit type
 ```
 
 ---
 
-## 2. CommandRegistry 마이그레이션 전략
+## Component 1: CommandChainManager
 
-### 현재 문제
-
-`CommandRegistry.kt`에 93개 삼국지 커맨드가 `init {}` 블록에 직접 등록되어 있다. `commands.json`의 gin7 81종은 문서용으로만 존재하며 실제로 연결되지 않았다.
-
-### 마이그레이션 방법: 병렬 레지스트리 → 단계적 교체
-
-**단계 1: 커맨드 분리 (기존 코드 보존)**
-
-```
-CommandRegistry (기존, 삼국지 93종)  ← 삭제 대상
-Gin7CommandRegistry (신규, gin7 81종) ← 새로 작성
-```
-
-`Gin7CommandRegistry`는 `commands.json`의 7개 그룹을 그대로 반영하는 구조로 작성한다:
+**Purpose:** Resolves "who can command whom" at every tick. This is the heart of v2.1.
 
 ```kotlin
-@Component
-class Gin7CommandRegistry {
-    // 7개 CommandGroup 각각 별도 맵
-    private val operationsCommands   = mutableMapOf<String, OfficerCommandFactory>()  // 16종
-    private val personalCommands     = mutableMapOf<String, OfficerCommandFactory>()  // 15종
-    private val commanderCommands    = mutableMapOf<String, OfficerCommandFactory>()  // 8종
-    private val logisticsCommands    = mutableMapOf<String, OfficerCommandFactory>()  // 6종
-    private val personnelCommands    = mutableMapOf<String, OfficerCommandFactory>()  // 10종
-    private val politicsCommands     = mutableMapOf<String, OfficerCommandFactory>()  // 12종
-    private val intelligenceCommands = mutableMapOf<String, OfficerCommandFactory>()  // 14종
+// engine/tactical/command/CommandChainManager.kt
+
+/**
+ * Manages the command hierarchy within a tactical battle.
+ *
+ * Hierarchy:
+ *   FleetCommander (사령관, CrewSlotRole.COMMANDER)
+ *     +-- ViceCommander (부사령관) -> assigned unit indices
+ *     +-- ChiefOfStaff (참모장) -> assigned unit indices
+ *     +-- StaffOfficer1..6 -> assigned unit indices
+ *     +-- Adjutant (부관) -> no units (aide only)
+ *     +-- Unassigned units -> commander's direct control
+ *
+ * Each sub-commander has their OWN CommandRange circle.
+ * Commander can only issue orders to units within their circle.
+ * Units outside all circles continue last command or fall to AI.
+ */
+data class CommandAuthority(
+    val officerId: Long,
+    val crewSlotRole: CrewSlotRole,
+    val assignedUnitIndices: Set<Int>,   // slot indices within fleet (0..59)
+    val commandRange: CommandRange,       // this officer's own command range circle
+    val isAlive: Boolean = true,
+    val isOnline: Boolean = false,        // player online status
+    val rankPriority: Int = 0,           // for succession: rank -> eval -> merit
+)
+
+class CommandChainManager {
+
+    /**
+     * Build initial command chain from Fleet crew roster.
+     * Called once at battle start by BattleTriggerService.
+     */
+    fun buildChain(
+        fleetId: Long,
+        crewMembers: List<CrewMember>,     // officer + slot role
+        totalUnitCount: Int,
+        onlineOfficerIds: Set<Long>,
+    ): CommandChain
+
+    /**
+     * Check: can this officer issue a command to this unit?
+     * Returns true if:
+     *   1. Officer is the assigned commander of this unit's sub-fleet
+     *   2. The unit is within the officer's current command range circle
+     */
+    fun canCommand(chain: CommandChain, officerId: Long, unitIndex: Int, unitPosition: Position): Boolean
+
+    /**
+     * Process flagship destruction.
+     * Returns updated chain with succession delay applied.
+     * - destroyed officer's units become uncontrolled for SUCCESSION_DELAY ticks
+     * - after delay, next-in-line officer inherits units
+     */
+    fun processDestruction(
+        chain: CommandChain, destroyedOfficerId: Long, currentTick: Int,
+    ): CommandChain
+
+    /**
+     * Reassign units between sub-commanders.
+     * Preconditions: target unit must be outside all other command circles + stationary.
+     */
+    fun reassignUnits(
+        chain: CommandChain, fromOfficerId: Long, toOfficerId: Long, unitIndices: Set<Int>,
+        unitPositions: Map<Int, Position>,
+    ): CommandChain
+
+    /**
+     * Per-tick update: expand all command range circles, check succession timers.
+     */
+    fun tick(chain: CommandChain, currentTick: Int): CommandChain
+}
+
+data class CommandChain(
+    val fleetId: Long,
+    val side: BattleSide,
+    val authorities: Map<Long, CommandAuthority>,  // officerId -> authority
+    val successionQueue: List<Long>,               // ordered by rank/eval/merit
+    val pendingSuccessions: List<PendingSuccession>,
+)
+
+data class PendingSuccession(
+    val destroyedOfficerId: Long,
+    val successorOfficerId: Long,
+    val activateAtTick: Int,             // currentTick + SUCCESSION_DELAY (30 ticks)
+    val orphanedUnitIndices: Set<Int>,   // units without commander during delay
+)
+
+companion object {
+    const val SUCCESSION_DELAY_TICKS = 30  // 30 seconds real-time
 }
 ```
 
-**단계 2: CommandExecutor를 Gin7CommandRegistry로 교체**
-
-`CommandExecutor`는 생성자 주입으로 `CommandRegistry`를 받으므로, `Gin7CommandRegistry`가 동일 인터페이스를 구현하면 Spring DI로 교체된다. `@Primary` 어노테이션 활용.
-
-**단계 3: ALWAYS_ALLOWED_COMMANDS 갱신**
-
-현재 `setOf("휴식", "Nation휴식", "NPC능동", "CR건국", "CR맹훈련")`를 gin7 기준으로 교체:
-```kotlin
-private val ALWAYS_ALLOWED_COMMANDS = setOf("대기") // gin7의 기본 휴식 커맨드
-```
-
-**단계 4: 커맨드별 PositionCard 매핑 갱신**
-
-`PositionCardRegistry`의 카드→커맨드 매핑 테이블을 gin7 81종에 맞게 재작성. 기존 82종 카드 코드는 유지하되, 커맨드 연결만 교체한다.
-
-### 커맨드 실행 흐름 (변경 없음)
-
-```
-WebSocket /app/command/{sessionId}/execute
-  → CommandController
-  → CommandExecutor.executeOfficerCommand()
-      ├── PositionCard 권한 체크 (유지)
-      ├── CP 차감 (PCP/MCP, 유지)
-      ├── Cooldown 체크 (유지)
-      └── Gin7CommandRegistry → 커맨드 run() → 엔티티 저장
-```
-
-실시간 실행 패턴(턴 예약 없음, CP 차감 → 대기시간 → 실행)은 기존 `preReqTurn`/`postReqTurn` 쿨다운 메커니즘으로 표현된다. `waitTime` = `preReqTurn`, `duration` = `postReqTurn`으로 매핑.
-
----
-
-## 3. 경제 틱 — TickEngine 통합 전략
-
-### 현재 TickEngine 처리 구조
-
-```
-processTick(world)
-  ├── 매 틱: processCompletedCommands()
-  ├── 300틱: regenerateCommandPoints()
-  ├── 월 경계(108,000틱): advanceMonth() + runMonthlyPipeline()  ← 경제 처리 위치
-  └── 매 틱: processPolitics()
-```
-
-`runMonthlyPipeline()`은 현재 로그+브로드캐스트만 하고 있다. 이 지점에 경제 시스템을 연결한다.
-
-### gin7 경제 틱 통합
+### Integration Point: TacticalBattleState
 
 ```kotlin
-private fun runMonthlyPipeline(world: SessionState) {
-    // 기존 브로드캐스트 유지
-    gameEventService.broadcastTurnAdvance(...)
+// Add to TacticalBattleState:
+data class TacticalBattleState(
+    // ... existing fields ...
 
-    // gin7 경제 파이프라인 추가
-    val sessionId = world.id.toLong()
+    /** Command chains per fleet (one per side, or one per fleet if multi-fleet) */
+    val commandChains: MutableMap<Long, CommandChain> = mutableMapOf(),
+)
 
-    // 1. 조병창 자동생산 (매월)
-    shipyardProductionService.runProduction(sessionId)
+// Add to TacticalUnit:
+data class TacticalUnit(
+    // ... existing fields ...
 
-    // 2. 세금 처리 (3개월마다: 1/1, 4/1, 7/1, 10/1)
-    if (world.currentMonth.toInt() in listOf(1, 4, 7, 10)) {
-        gin7EconomyService.processTaxCollection(sessionId)
-    }
+    /** The officerId of this unit's current commander (not necessarily the same as officerId) */
+    var commanderId: Long = 0,
 
-    // 3. 함대 운영비 차감 (매월)
-    gin7EconomyService.processFleetMaintenance(sessionId)
+    /** Sub-fleet slot index within the fleet (0..59) */
+    var unitSlotIndex: Int = 0,
 
-    // 4. 시설 유지비 차감 (매월)
-    gin7EconomyService.processFacilityMaintenance(sessionId)
-
-    // 5. 페잔 차관 이자 (3개월마다)
-    if (world.currentMonth.toInt() in listOf(1, 4, 7, 10)) {
-        fezzanService.processLoanQuarterly(sessionId)
-    }
-}
-```
-
-**기존 EconomyService는 삼국지 로직을 포함하므로 `Gin7EconomyService`로 대체한다.** 기존 `EconomyService`의 `processMonthly()` 호출은 `runMonthlyPipeline()`에서 제거하고 `Gin7EconomyService`로 교체.
-
-### gin7 경제 모델 핵심 데이터 흐름
-
-```
-Planet.production + Planet.commerce
-  ↓ (매월)
-Planet.taxRevenue 계산 (세율 × 경제력)
-  ↓
-Faction.funds += taxRevenue (제국: 군무성/통수본부 분리)
-  ↓
-Faction.funds -= fleetMaintenanceCost (출격 중 함대 수 × 비용)
-Faction.funds -= facilityMaintenanceCost (조병창/체재기지/방위기지)
-  ↓
-FezzanLoan 이자 처리 (못 갚으면 fezzanEndingService.checkAndTrigger)
-```
-
----
-
-## 4. 함선 유닛 엔티티 — 기존 Fleet/Officer 연결
-
-### 현재 Fleet 엔티티 구조
-
-```kotlin
-Fleet {
-    id, sessionId, leaderOfficerId, factionId, name,
-    unitType: String = "FLEET",     // UnitType enum 코드
-    maxUnits: Int = 60,             // 최대 부대 수
-    currentUnits: Int = 0,          // 현재 부대 수
-    maxCrew: Int = 10,              // 최대 승조원 수 (참모 포함)
-    planetId: Long?,                // 현재 위치
-    meta: MutableMap<String, Any>,  // 유연 필드
-}
-```
-
-`Fleet`은 함대 조직 단위다. 함선 유닛(ShipUnit)은 `Fleet` 내 부대(UnitCrew/Slot)에 배속된다.
-
-### 신규 ShipUnit 엔티티 (V45 마이그레이션)
-
-```kotlin
-@Entity @Table(name = "ship_unit")
-class ShipUnit(
-    @Id @GeneratedValue
-    var id: Long = 0,
-
-    @Column(name = "session_id") var sessionId: Long = 0,
-    @Column(name = "fleet_id") var fleetId: Long = 0,          // 소속 Fleet
-    @Column(name = "slot_index") var slotIndex: Int = 0,        // 함대 내 부대 번호 (0~7)
-
-    // 함종 정보
-    @Column(name = "ship_class") var shipClass: String = "BATTLESHIP",     // ShipClassType enum
-    @Column(name = "ship_subtype") var shipSubtype: String = "TYPE_I",     // ShipSubtype enum
-
-    // 전투 수치 (ship_stats JSON에서 로드)
-    @Column var shipCount: Int = 0,         // 현재 함수 (300 단위)
-    @Column var maxShipCount: Int = 300,    // 최대 함수
-    @Column var armor: Int = 0,             // 장갑
-    @Column var shield: Int = 0,            // 실드
-    @Column var weaponPower: Int = 0,       // 무기 위력
-    @Column var speed: Int = 0,             // 속도
-    @Column var crewCapacity: Int = 0,      // 승무원 용량
-    @Column var supplyCapacity: Int = 0,    // 물자 적재량
-
-    // 상태
-    @Column var morale: Short = 50,
-    @Column var training: Short = 50,
-    @Column(name = "missile_stock") var missileStock: Int = 100,
-    @Column var stance: String = "CRUISE",  // UnitStance: NAVIGATION/DOCK/CRUISE/COMBAT
-
-    // 기함 정보
-    @Column(name = "is_flagship") var isFlagship: Boolean = false,
-    @Column(name = "flagship_code") var flagshipCode: String = "",
-
-    // 지상부대
-    @Column(name = "ground_unit_type") var groundUnitType: String = "",  // GroundUnitType
-    @Column(name = "ground_unit_count") var groundUnitCount: Int = 0,
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    var meta: MutableMap<String, Any> = mutableMapOf(),
+    /** Whether this unit is currently uncontrolled (succession gap) */
+    var isUncontrolled: Boolean = false,
 )
 ```
 
-### Fleet → ShipUnit 관계
-
-```
-Fleet (함대 조직)
-  ├── leaderOfficerId → Officer (사령관)
-  ├── UnitCrew[] (슬롯: 참모/부관/부사령관 등)
-  └── ShipUnit[] (부대 0~7번, fleetId FK)
-       └── 각 ShipUnit: 300척 단위, 함종+서브타입 결정
-```
-
-`Officer.ships` 필드(현재 총 함선 수)는 함대 사령관의 기함 부대(`SlotIndex=0`) ShipUnit의 합산으로 계산되도록 점진 마이그레이션한다.
-
 ---
 
-## 5. 프론트엔드 WebSocket 채널 전략
+## Component 2: TacticalBattleEngine Tick Loop Modification
 
-### 현재 채널 구조 (유지)
-
-```
-/topic/world/{sessionId}/events          ← 전략 게임 이벤트 (브로드캐스트)
-/topic/world/{sessionId}/tactical-battle/{battleId}  ← 전술전 틱 브로드캐스트
-/app/command/{sessionId}/execute         ← 커맨드 실행 (단방향)
-```
-
-`TacticalBattleService.broadcastBattleState()`는 이미 `/topic/world/{sessionId}/tactical-battle/{battleId}`로 전송 중이다.
-
-### 신규 채널 (추가 필요)
+**The existing tick loop must be extended, not replaced.** Insert command chain processing at step 1.5 (after command range update, before movement).
 
 ```
-/topic/world/{sessionId}/battle-view/{battleId}
-    └── 전술맵 전체 상태 (저주파, 5초마다) — 전략 화면 미니맵용
-
-/app/battle/{sessionId}/{battleId}/energy
-    └── 에너지 배분 변경 (클라이언트 → 서버)
-
-/app/battle/{sessionId}/{battleId}/formation
-    └── 진형 변경
-
-/app/battle/{sessionId}/{battleId}/retreat
-    └── 퇴각 명령
-
-/app/battle/{sessionId}/{battleId}/attack-target
-    └── 공격 대상 지정 (교전 턴)
-
-/app/battle/{sessionId}/{battleId}/planet-conquest
-    └── 행성 점령 커맨드 (항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동)
-
-/topic/world/{sessionId}/economy
-    └── 월간 경제 처리 결과 브로드캐스트 (세수/생산/유지비)
+CURRENT TICK LOOP:                    NEW TICK LOOP:
+1. updateCommandRange(unit)           1. updateCommandRange(unit)
+                                      1.5 commandChainManager.tick(chain)
+                                          -- expand all commander circles
+                                          -- process pending successions
+                                          -- update unit.isUncontrolled flags
+2. processMovement(unit)              2. processMovement(unit)
+                                          -- IF unit.isUncontrolled: tacticalAI.decideMovement()
+                                          -- IF unit has commander in range: follow orders
+                                          -- IF unit out of range: continue last command
+3. detectionService.update()          3. detectionService.update()
+4. processCombat(unit)                4. processCombat(unit)
+                                      4.5 tacticalAI.processNpcActions(state)
+                                          -- NPC/offline units: energy/stance/target decisions
+5. fortress gun                       5. fortress gun
+6. remove destroyed units             6. remove destroyed units
+   -- flagship replacement                -- commandChainManager.processDestruction()
+7. ground battle                      7. ground battle
+8. morale                             8. morale
 ```
 
-### 프론트엔드 화면별 채널 구독
+**Key architectural decision:** The TacticalBattleEngine remains stateless. CommandChainManager is injected as a dependency, same pattern as MissileWeaponSystem, DetectionService, etc.
 
-| 화면 | 구독 채널 | 갱신 주기 |
-|------|-----------|----------|
-| 전략 게임 화면 | `/topic/world/{id}/events` | 틱 브로드캐스트 간격 |
-| 전술전 전체 맵 | `/topic/world/{id}/tactical-battle/{bid}` | 매 틱 (1초) |
-| 전투 연출 뷰 (접근전) | 동일 채널 (events 필터링) | 매 틱 |
-| 은하맵 | `/topic/world/{id}/events` + REST | 틱 브로드캐스트 |
-
----
-
-## 6. AI 처리 부하 분산
-
-### 현재 AI 구조
-
-`OfflinePlayerAIService` — 오프라인 플레이어의 커맨드를 자동 실행. `FezzanAiService` — 페잔 AI 자체 행동. 둘 다 TickEngine에서 호출된다.
-
-### gin7 AI 아키텍처
-
-```
-TickEngine.processTick()
-  └── (매 10틱) aiScheduler.processAiTick(sessionId, world.tickCount)
-       ├── OfflinePlayerAiService (오프라인 플레이어 대행, 기존 패턴 유지)
-       │   └── 성격 기반 커맨드 선택 → CommandExecutor.executeOfficerCommand()
-       ├── FactionAiService (진영 AI: 작전수립/예산/인사)
-       │   └── 10틱마다 1개 진영 AI 처리 (라운드 로빈)
-       └── NpcAiService (NPC 개인 행동)
-           └── 100틱마다 일괄 처리
-```
-
-**부하 분산 원칙:**
-- AI는 매 틱 전부 실행하지 않는다. 10틱/100틱 인터벌로 나눈다.
-- 진영 AI는 라운드 로빈으로 1틱에 1진영만 처리 (`world.tickCount % factionCount`).
-- 커맨드 실행은 기존 `CommandExecutor`를 재사용 — AI와 플레이어가 동일 검증 경로를 통과한다.
-- 전술전 중 AI 처리: 에너지 배분 결정만 in-memory 업데이트 (DB 접근 없음).
-
----
-
-## 컴포넌트 경계 (신규 vs 수정)
-
-### 신규 생성 컴포넌트
-
-| 컴포넌트 | 위치 | 목적 |
-|----------|------|------|
-| `Gin7CommandRegistry` | `command/` | gin7 81종 커맨드 등록 |
-| `command/operations/` 패키지 | `command/operations/` | 작전커맨드 16종 구현체 |
-| `command/personal/` 패키지 | `command/personal/` | 개인커맨드 15종 |
-| `command/commander/` 패키지 | `command/commander/` | 지휘커맨드 8종 |
-| `command/logistics/` 패키지 | `command/logistics/` | 병참커맨드 6종 |
-| `command/personnel/` 패키지 | `command/personnel/` | 인사커맨드 10종 |
-| `command/politics/` 패키지 | `command/politics/` | 정치커맨드 12종 |
-| `command/intelligence/` 패키지 | `command/intelligence/` | 첩보커맨드 14종 |
-| `ShipUnit` 엔티티 | `entity/ShipUnit.kt` | 함정 유닛 (300척 단위) |
-| `ShipUnitRepository` | `repository/` | ShipUnit CRUD |
-| `ShipStatRegistry` | `service/` | ship_stats JSON 로드/조회 |
-| `Gin7EconomyService` | `engine/` | gin7 경제 로직 |
-| `FleetFormationService` | `service/` | 함대 편성 규칙 |
-| `FactionAiService` | `service/ai/` | 진영 AI 의사결정 |
-| `TacticalPhaseService` | `engine/tactical/` | 전술 턴 5단계 관리 |
-| `GroundBattleEngine` | `engine/tactical/` | 지상전 박스 처리 |
-| `PlanetConquestService` | `engine/tactical/` | 점령 커맨드 6종 |
-| `DetectionService` | `engine/tactical/` | 색적/탐지 계산 |
-| `MissileWeaponSystem` | `engine/tactical/` | 미사일 소모형 무기 |
-| `FlagshipService` | `service/` | 기함 구매/배정/계급 연동 |
-| V45~V5x Flyway 마이그레이션 | `resources/db/migration/` | ShipUnit 테이블 + 삼국지 필드 제거 |
-
-### 기존 수정 컴포넌트
-
-| 컴포넌트 | 변경 내용 |
-|----------|---------|
-| `CommandRegistry` | `@Primary` 제거 또는 삭제. Gin7CommandRegistry로 교체 |
-| `CommandExecutor` | `CommandRegistry` → `Gin7CommandRegistry` 의존성 교체. ALWAYS_ALLOWED_COMMANDS 갱신 |
-| `TickEngine` | `runMonthlyPipeline()` 에 `Gin7EconomyService` 연결. AI 스케줄러 추가 |
-| `TacticalBattleService` | `TacticalUnit`에 missileCount/shipSubtype/isFlagship 필드 대응. 새 채널 추가 |
-| `TacticalBattleEngine` | 미사일 무기 시스템 추가. 색적 계산 연동. 진형 4종 보정값 gin7 수치로 교체 |
-| `TacticalBattleState` | groundBattleState, detectionMatrix, currentPhase 필드 추가 |
-| `TacticalBattleController` (WebSocket) | 신규 배틀 채널 `/app/battle/**` 엔드포인트 추가 |
-| `Fleet` | `meta` JSON에 flagship_code, formation, stance 저장 (V45 이전은 meta 활용) |
-| `EconomyService` | 삼국지 로직 제거. gin7 세율/조병창/운영비 로직으로 교체 |
-| `ShipyardProductionService` | 기존 구조 유지. ShipClassType 다양화. 진영별 생산 품목 구분 |
-
-### 삭제 대상 컴포넌트
-
-| 컴포넌트 | 이유 |
-|----------|------|
-| `command/general/DomesticCommand.kt` 내 삼국지 커맨드들 | 농지개간/상업투자/징병 등 삼국지 전용 |
-| `command/nation/` 내 삼국지 국가 커맨드들 | 칭제/선양/천자맞이 등 삼국지 전용 |
-| `engine/war/BattleEngine.kt`, `FieldBattleService.kt` | 삼국지 수치비교 자동전투 |
-| `engine/war/GroundBattleEngine.kt` (기존) | 삼국지 지상전 로직 (gin7 버전으로 대체) |
-
----
-
-## 신규 API 엔드포인트
-
-### REST (game-app 직접 또는 gateway 프록시)
-
-```
-POST /api/{sessionId}/battles/start
-     body: { starSystemId, attackerFleetIds[], defenderFleetIds[] }
-
-GET  /api/{sessionId}/battles/active
-GET  /api/{sessionId}/battles/{battleId}
-
-POST /api/{sessionId}/fleets/{fleetId}/ship-units
-     body: { shipClass, shipSubtype, shipCount }
-
-GET  /api/{sessionId}/fleets/{fleetId}/ship-units
-
-POST /api/{sessionId}/officers/{officerId}/flagship
-     body: { flagshipCode }
-
-GET  /api/{sessionId}/economy/status
-     ← 진영별 자금/세율/조병창 현황
-
-POST /api/{sessionId}/economy/tax-rate
-     body: { planetId, taxRate }
-```
-
-### WebSocket (STOMP)
-
-```
-/app/command/{sessionId}/execute          (기존 유지)
-/app/battle/{sessionId}/{battleId}/energy
-/app/battle/{sessionId}/{battleId}/formation
-/app/battle/{sessionId}/{battleId}/retreat
-/app/battle/{sessionId}/{battleId}/attack-target
-/app/battle/{sessionId}/{battleId}/planet-conquest
+```kotlin
+class TacticalBattleEngine(
+    private val missileSystem: MissileWeaponSystem = MissileWeaponSystem(),
+    private val fortressGunSystem: FortressGunSystem = FortressGunSystem(),
+    private val detectionService: DetectionService = DetectionService(),
+    private val shipStatRegistry: ShipStatRegistry? = null,
+    // NEW:
+    private val commandChainManager: CommandChainManager = CommandChainManager(),
+    private val tacticalAI: TacticalAI = TacticalAI(),
+)
 ```
 
 ---
 
-## 빌드 순서 (의존성 기반)
+## Component 3: BattleWebSocketController Authority Gate
 
-의존성 방향: 엔티티 → 리포지토리 → 서비스 → 커맨드 → 컨트롤러
+**Current problem:** Any officerId in a WebSocket payload can control any unit. No permission check.
 
+**Solution:** Add an authority check layer between the WebSocket controller and TacticalBattleService.
+
+```kotlin
+// In TacticalBattleService, modify ALL command methods:
+
+fun setEnergyAllocation(battleId: Long, officerId: Long, allocation: EnergyAllocation) {
+    val state = activeBattles[battleId] ?: throw ...
+
+    // NEW: find which units this officer can control
+    val controllableUnits = findControllableUnits(state, officerId)
+    val unit = controllableUnits.find { it.officerId == officerId }
+        ?: throw IllegalArgumentException("Officer $officerId has no authority in battle $battleId")
+
+    // If this officer is a sub-commander, apply to ALL assigned units:
+    val targetUnits = if (isSubCommander(state, officerId)) {
+        getAssignedUnits(state, officerId)
+    } else {
+        listOf(unit)
+    }
+
+    for (u in targetUnits) {
+        u.energy = allocation
+        u.commandRange = 0.0
+        u.ticksSinceLastOrder = 0
+    }
+}
 ```
-1단계: 삼국지 제거 + DB 스키마 정리
-   └── V45 마이그레이션: crewType/병종 컬럼 제거
-   └── 삼국지 커맨드 구현체 파일 삭제 (CommandRegistry 비움)
-   └── BattleEngine/FieldBattleService 삼국지 로직 제거
 
-2단계: ShipUnit 엔티티 + 함선 스탯
-   └── V46 마이그레이션: ship_unit 테이블 생성
-   └── ShipUnit 엔티티 + ShipUnitRepository
-   └── ShipStatRegistry (JSON 로드)
-   └── Fleet 엔티티 meta 필드 활용 또는 V47 신규 컬럼 추가
+### New WebSocket Endpoints
 
-3단계: gin7 커맨드 시스템
-   └── Gin7CommandRegistry (빈 껍데기 먼저)
-   └── CommandExecutor → Gin7CommandRegistry 연결
-   └── 커맨드 그룹별 구현체 (operations → personal → commander → logistics → personnel → politics → intelligence 순)
-   └── PositionCardRegistry 커맨드 매핑 갱신
+```kotlin
+// BattleWebSocketController -- NEW endpoints:
 
-4단계: 전술전 엔진 확장
-   └── TacticalUnit 신규 필드 추가
-   └── MissileWeaponSystem
-   └── DetectionService (SENSOR 기반 색적)
-   └── TacticalPhaseService (5단계 턴)
-   └── GroundBattleEngine (gin7 지상전)
-   └── PlanetConquestService (점령 6종)
-   └── 신규 WebSocket 채널 추가
+/** 유닛 재배정 (사령관 -> 참모에게 유닛 위임) */
+@MessageMapping("/battle/{sessionId}/{battleId}/delegate")
+fun delegateUnits(payload: DelegateUnitsRequest)
 
-5단계: 경제 시스템
-   └── Gin7EconomyService
-   └── TickEngine.runMonthlyPipeline() 연결
-   └── FleetMaintenance 로직
-   └── FezzanLoan 쿼터리 처리 (기존 fezzanService 확장)
+/** 전군 명령 (사령관이 모든 유닛에 명령) */
+@MessageMapping("/battle/{sessionId}/{battleId}/fleet-order")
+fun fleetOrder(payload: FleetOrderRequest)
 
-6단계: AI 시스템
-   └── FactionAiService
-   └── NpcAiService 성격 기반 로직
-   └── TickEngine AI 스케줄러 연결
+// DTOs:
+data class DelegateUnitsRequest(
+    val commanderOfficerId: Long,       // must be fleet commander
+    val targetOfficerId: Long,           // sub-commander to receive units
+    val unitSlotIndices: List<Int>,      // which units to delegate
+)
 
-7단계: 프론트엔드 (각 백엔드 시스템 완성 후)
-   └── 전술전 UI (TacticalBattleEngine 완성 후)
-   └── 전략 게임 화면 (커맨드 시스템 완성 후)
-   └── 경제 UI (Gin7EconomyService 완성 후)
+data class FleetOrderRequest(
+    val commanderOfficerId: Long,
+    val orderType: String,               // ADVANCE/RETREAT/HOLD/ATTACK_TARGET
+    val targetX: Double = 0.0,
+    val targetY: Double = 0.0,
+    val targetFleetId: Long? = null,
+)
 ```
 
 ---
 
-## 패턴: 전술전 틱과 전략 틱 분리
+## Component 4: Tactical AI
 
-gin7의 핵심 설계: 전략 게임(1틱=24게임초)과 전술전(1틱=1전술초)은 **별도 루프**다.
+**Architecture:** The tactical AI is a NEW system, separate from the existing strategic AI (UtilityScorer/AiCommandBridge). It operates entirely within the tactical battle tick loop and never touches the database.
+
+```kotlin
+// engine/tactical/ai/TacticalAI.kt
+
+class TacticalAI {
+
+    /**
+     * Called once per tick for all NPC/offline units in the battle.
+     * Pure function: reads state, returns list of actions to apply.
+     */
+    fun decideActions(
+        state: TacticalBattleState,
+        npcUnitIds: Set<Long>,          // fleetIds of NPC/offline units
+        missionObjective: MissionObjective,
+    ): List<TacticalAction>
+}
+
+enum class MissionObjective {
+    CAPTURE,        // 점령 -> move toward planet, aggressive
+    DEFEND,         // 방어 -> hold position, defensive
+    SWEEP,          // 소탕 -> pursue enemies, aggressive
+    RETREAT_ORDER,  // 전면 퇴각
+    AUTONOMOUS,     // 지휘체계 붕괴 -> survival mode
+}
+
+sealed class TacticalAction {
+    data class SetEnergy(val fleetId: Long, val allocation: EnergyAllocation) : TacticalAction()
+    data class SetStance(val fleetId: Long, val stance: UnitStance) : TacticalAction()
+    data class SetTarget(val fleetId: Long, val targetFleetId: Long) : TacticalAction()
+    data class Move(val fleetId: Long, val dirX: Double, val dirY: Double) : TacticalAction()
+    data class Retreat(val fleetId: Long) : TacticalAction()
+    data class ChangeFormation(val fleetId: Long, val formation: Formation) : TacticalAction()
+}
+```
+
+### Personality -> Tactical Behavior Mapping
+
+Reuses existing `PersonalityTrait` enum. No new enum needed.
 
 ```
-TickDaemon (1초 interval)
-  └── TickEngine.processTick(world)       ← 전략 게임 틱
-      └── TacticalBattleService.processSessionBattles(sessionId)
-           └── 각 activeBattle에 대해 TacticalBattleEngine.processTick()
-                                          ← 전술전 틱 (동일 스레드, 동기)
+AGGRESSIVE:
+  - Energy bias: beam=30, gun=25, shield=10, engine=20, warp=5, sensor=10
+  - Formation preference: WEDGE
+  - Retreat threshold: HP < 10%, morale < 15%
+  - Target selection: weakest enemy (finish kills)
+  - Stance: COMBAT early
+
+DEFENSIVE:
+  - Energy bias: beam=15, gun=15, shield=30, engine=15, warp=15, sensor=10
+  - Formation preference: THREE_COLUMN
+  - Retreat threshold: HP < 30%, morale < 40%
+  - Target selection: closest enemy (minimize exposure)
+  - Stance: STATIONED when possible
+
+BALANCED:
+  - Default energy allocation
+  - Formation: MIXED
+  - Standard thresholds
+
+CAUTIOUS:
+  - Energy bias: beam=15, gun=10, shield=25, engine=15, warp=15, sensor=20
+  - Formation: BY_CLASS
+  - Retreat threshold: HP < 25%, morale < 35%
+  - Target selection: detected enemies only (high sensor weight)
+
+POLITICAL:
+  - Treated as BALANCED in tactical (no political advantage in battle)
 ```
 
-현재 구현이 이미 올바른 구조다. `processSessionBattles()`가 TickEngine에서 호출되고 있으며, 전술전 틱이 전략 틱 내부에서 처리된다. 이 패턴을 유지하되 전술전 내 5단계 턴(보급/이동/수색/교전/점령) 진행을 `TacticalPhaseService`가 관리한다.
+### Threat Assessment
 
-**주의**: 전술전이 길어질 경우 전략 틱이 1초를 초과할 수 있다. 대규모 전투(유닛 50개 이상) 시에는 전술전 틱을 별도 `@Scheduled(fixedDelay=100)` 루프로 분리하는 것을 3단계 완성 후 검토한다.
+```kotlin
+// engine/tactical/ai/ThreatAssessment.kt
+
+object ThreatAssessment {
+
+    /**
+     * Should this unit retreat?
+     * Based on HP ratio, morale, nearby enemy count, personality.
+     */
+    fun shouldRetreat(unit: TacticalUnit, state: TacticalBattleState, trait: PersonalityTrait): Boolean
+
+    /**
+     * Select best target from detected enemies.
+     * Personality affects preference: weakest vs closest vs highest-value.
+     */
+    fun selectTarget(
+        unit: TacticalUnit,
+        detectedEnemies: List<TacticalUnit>,
+        trait: PersonalityTrait,
+    ): TacticalUnit?
+
+    /**
+     * Evaluate energy allocation based on situation.
+     * Close range -> more beam/gun. Long range -> more engine/sensor.
+     * Low HP -> more shield/warp.
+     */
+    fun recommendEnergy(
+        unit: TacticalUnit,
+        nearestEnemyDist: Double,
+        trait: PersonalityTrait,
+    ): EnergyAllocation
+}
+```
 
 ---
 
-## 안티패턴 경고
+## Component 5: Command Succession
 
-### 금지: 전술전 상태를 Redis에 저장
-TacticalBattleState를 Redis에 저장하면 직렬화/역직렬화 오버헤드가 1초 틱 사이클에서 병목이 된다. activeBattles ConcurrentHashMap 패턴을 유지한다. Redis는 세션/연결 관리에만 사용.
+### Data Flow on Flagship Destruction
 
-### 금지: CommandRegistry에 gin7/삼국지 커맨드 혼재
-마이그레이션 과도기에도 두 레지스트리를 동일 파일에 공존시키지 않는다. Gin7CommandRegistry를 별도 파일로 분리하고 Spring @Primary로 교체한다.
+```
+CURRENT (line 248 TacticalBattleEngine.kt):
+  flagship destroyed -> immediately replace with largest-ships unit
+  NO delay, NO command chain impact
 
-### 금지: 경제 로직을 커맨드 핸들러에서 직접 처리
-세금/생산/유지비는 TickEngine의 runMonthlyPipeline에서만 처리한다. 커맨드는 즉시 효과(물자배분, 보충 등)만 처리하고 주기적 경제 처리는 틱에 위임한다.
+NEW:
+  flagship destroyed
+    -> CommandChainManager.processDestruction(chain, officerId, tick)
+       -> orphanedUnitIndices = destroyed officer's assigned units
+       -> PendingSuccession created (activateAtTick = tick + 30)
+       -> orphaned units marked isUncontrolled = true
+    -> During 30-tick gap:
+       -> orphaned units run TacticalAI.AUTONOMOUS behavior
+       -> no player can control them
+    -> After 30 ticks:
+       -> successor officer inherits orphaned units
+       -> successor's command range resets to 0 (must expand again)
+       -> units become controllable again
+```
 
-### 금지: ShipUnit 전투 스탯을 Officer 엔티티에 직접 저장
-함선 스탯(장갑/실드/무기)은 ShipUnit + ShipStatRegistry에서 관리한다. Officer 엔티티는 8스탯(개인 능력치)만 보유한다.
+### Succession Priority Resolution
+
+```kotlin
+fun resolveSuccessor(chain: CommandChain, destroyedOfficerId: Long): Long? {
+    // Priority: online > rank > evaluation point > merit
+    return chain.successionQueue
+        .filter { it != destroyedOfficerId }
+        .filter { chain.authorities[it]?.isAlive == true }
+        .sortedWith(compareByDescending<Long> { chain.authorities[it]?.isOnline == true }
+            .thenByDescending { chain.authorities[it]?.rankPriority ?: 0 })
+        .firstOrNull()
+}
+```
+
+### All-commanders-destroyed Edge Case
+
+```
+If ALL officers in succession queue are destroyed:
+  -> CommandChain enters COLLAPSED state
+  -> ALL units in this fleet run TacticalAI.AUTONOMOUS
+  -> No player can issue orders to this fleet
+  -> Units act independently based on personality
+  -> This is the "지휘체계 붕괴" scenario from gin7
+```
 
 ---
 
-## 신규 엔티티 요약
+## Component 6: Mission Objective Connection (Strategic -> Tactical)
 
-| 엔티티 | 테이블 | 용도 | 기존 관계 |
-|--------|--------|------|----------|
-| `ShipUnit` | `ship_unit` | 부대 단위 함선 (300척) | Fleet FK, Officer FK |
-| `FlagshipRecord` | `flagship_record` | 기함 소유/이력 | Officer FK |
-| `Gin7EconomyRecord` | `economy_record` | 월간 경제 처리 이력 | Faction FK, SessionState FK |
-| `GroundBattle` | `ground_battle` (선택) | 지상전 결과 영속화 | TacticalBattle FK |
+**How 작전계획 connects to tactical AI:**
 
-기존 수정 엔티티: `Fleet` (meta 확장), `Planet` (삼국지 전용 컬럼 V45에서 제거), `Officer` (삼국지 전용 필드 제거).
+The strategic game's operation plan (점령/방어/소탕) is already decided before the battle starts. The connection point is `BattleTriggerService.buildInitialState()`.
+
+```kotlin
+// Modify BattleTriggerService.buildInitialState():
+
+fun buildInitialState(battle: TacticalBattle): TacticalBattleState {
+    // ... existing unit construction ...
+
+    // NEW: resolve mission objective from strategic operation plan
+    val missionObjective = resolveMissionObjective(battle)
+
+    return TacticalBattleState(
+        // ... existing fields ...
+        missionObjective = missionObjective,         // NEW
+        commandChains = buildCommandChains(battle),   // NEW
+    )
+}
+
+private fun resolveMissionObjective(battle: TacticalBattle): MissionObjective {
+    // Check if there's an active operation plan targeting this star system
+    val operationPlan = operationPlanRepository.findActiveByStarSystem(
+        battle.sessionId, battle.starSystemId
+    )
+    return when (operationPlan?.objective) {
+        "점령" -> MissionObjective.CAPTURE
+        "방어" -> MissionObjective.DEFEND
+        "소탕" -> MissionObjective.SWEEP
+        else -> MissionObjective.CAPTURE  // default: assume offensive
+    }
+}
+```
+
+**Note:** OperationPlan entity does not exist yet. It needs a DB migration (V45+) and a new entity. This is a dependency that must be built in Phase 1 before the tactical AI can use mission objectives.
 
 ---
 
-## 출처
+## Data Flow: Complete Tick with Command Chain
 
-- 코드 직접 분석: `CommandRegistry.kt`, `CommandExecutor.kt`, `TickEngine.kt`, `TacticalBattleEngine.kt`, `TacticalBattleService.kt`, `EconomyService.kt`, `Fleet.kt`, `ShipyardProductionService.kt`
-- 도메인 명세: `docs/REWRITE_PROMPT.md`, `.planning/PROJECT.md`, `CLAUDE.md`
-- 데이터: `backend/shared/src/main/resources/data/commands.json`
+```
+TickEngine.processTick(world)
+  |
+  +-- tacticalBattleService.processSessionBattles(sessionId)
+       |
+       +-- for each activeBattle:
+            |
+            +-- 1. engine.processTick(state)
+            |    |
+            |    +-- 1.0 updateCommandRange(unit)  -- per-unit (existing)
+            |    +-- 1.5 commandChainManager.tick(chain)
+            |    |        -- expand all commander circles
+            |    |        -- process pending successions (30-tick delays)
+            |    |        -- update isUncontrolled flags
+            |    +-- 2.0 processMovement(unit)
+            |    |        -- controlled units: follow last order
+            |    |        -- uncontrolled units: tacticalAI basic movement
+            |    +-- 2.5 detectionService.update()
+            |    +-- 3.0 processCombat(unit)
+            |    +-- 4.0 tacticalAI.processNpcActions(state)
+            |    |        -- all NPC/offline: energy/stance/target/retreat
+            |    +-- 5.0 fortressGun, destroyUnits, groundBattle, morale
+            |    |
+            |    +-- 5.5 ON DESTRUCTION:
+            |             commandChainManager.processDestruction() instead of simple replacement
+            |
+            +-- 2. broadcastBattleState()
+                 -- includes commandChains in broadcast for UI
+```
+
+---
+
+## Frontend Changes
+
+### TacticalUnit Type Extension
+
+```typescript
+// tactical.ts additions:
+export interface TacticalUnit {
+    // ... existing fields ...
+    commanderId?: number;        // officerId of commanding officer
+    unitSlotIndex?: number;      // 0..59 within fleet
+    isUncontrolled?: boolean;    // succession gap
+    subFleetLabel?: string;      // "제2분함대" etc for display
+}
+
+export interface CommandChainInfo {
+    fleetId: number;
+    authorities: CommandAuthorityInfo[];
+    isCollapsed: boolean;
+}
+
+export interface CommandAuthorityInfo {
+    officerId: number;
+    officerName: string;
+    crewSlotRole: string;
+    assignedUnitCount: number;
+    commandRange: number;
+    commandRangeMax: number;
+    isAlive: boolean;
+    isOnline: boolean;
+}
+```
+
+### CommandRangeCircle.tsx Changes
+
+Current: renders one circle per unit.
+New: render one circle per **commander** (officer who has assigned units).
+
+```
+Per commander in CommandChain:
+  - Animated expanding circle (existing component, reused)
+  - Centered on the commander's flagship unit position
+  - Only show for the player's own fleet (or spectator mode)
+  - Color: brighter for own, dimmer for enemy (if detected)
+  - Units outside circle: render with dimmed opacity to indicate "out of command"
+```
+
+### New UI: Sub-Fleet Assignment Panel
+
+```
++----------------------------------+
+| 함대 지휘구조                      |
++----------------------------------+
+| 사령관: 라인하르트 (직할 40유닛)     |
+|   부사령관: 키르히아이스 (10유닛)    |
+|   참모장: 오베르슈타인 (0유닛)      |
+|   참모1: 비텐펠트 (5유닛)          |
+|   참모2: 미텐마이어 (5유닛)         |
++----------------------------------+
+| [유닛 재배정] [전군 명령]           |
++----------------------------------+
+```
+
+---
+
+## Scalability Consideration
+
+### Performance Impact of Command Chain
+
+| Concern | Current (no chain) | With chain | Mitigation |
+|---------|-------------------|------------|------------|
+| Per-tick processing | O(n) units | O(n) units + O(k) commanders | k is at most 10 per fleet -- negligible |
+| Memory per battle | ~1KB per unit | +~200 bytes per unit (commanderId, etc) | Negligible for 120 units max |
+| WebSocket payload | units[] only | units[] + commandChains[] | commandChains is small (~1KB), send every 5 ticks not every tick |
+| AI decisions | None in battle | O(m) NPC units per tick | m decisions are simple conditionals, no DB access |
+| Succession events | Instant | 30-tick delay state | One PendingSuccession object per death |
+
+**Verdict:** No performance risk. The command chain adds O(k) work where k<=10 commanders, and the tactical AI is pure in-memory computation with no I/O.
+
+### When to Consider Separation
+
+If a single battle exceeds 100 units per side (200 total), consider moving the tactical battle tick to a separate `@Scheduled(fixedDelay=100)` loop. This is NOT needed for v2.1 -- the current synchronous approach within TickEngine handles 60+60 units comfortably.
+
+---
+
+## Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Command Chain in Database
+**What:** Persisting CommandChain to PostgreSQL or Redis every tick.
+**Why bad:** Command chain changes every tick (range expansion). DB writes per tick destroy performance.
+**Instead:** Keep CommandChain in-memory within TacticalBattleState. Only persist the final state when battle ends.
+
+### Anti-Pattern 2: Tactical AI Accessing Repositories
+**What:** TacticalAI calling OfficerRepository or FleetRepository during battle ticks.
+**Why bad:** DB queries inside the 1-second tick loop block the entire TickEngine.
+**Instead:** TacticalAI is a pure function that operates on TacticalBattleState only. All officer/fleet data is loaded once at battle start by BattleTriggerService.
+
+### Anti-Pattern 3: Mixing Strategic and Tactical AI
+**What:** Having AiCommandBridge (strategic) call tactical actions, or TacticalAI issue strategic commands.
+**Why bad:** Strategic commands go through CommandExecutor with CP/cooldown/PositionCard validation. Tactical actions are immediate in-memory mutations. Mixing them creates validation confusion.
+**Instead:** Two completely separate AI systems:
+  - Strategic: AiCommandBridge -> CommandExecutor -> DB (every 100 ticks)
+  - Tactical: TacticalAI -> TacticalBattleState mutations (every tick, in-memory only)
+
+### Anti-Pattern 4: One CommandRange per Unit
+**What:** Keeping the current pattern where every TacticalUnit has its own commandRange.
+**Why bad:** In gin7, command range belongs to the COMMANDER, not to individual units. A commander's circle covers all their assigned units.
+**Instead:** TacticalUnit keeps commandRange for backward compat (own unit control), but the AUTHORITY check uses the commander's CommandAuthority.commandRange. The per-unit commandRange becomes "time since last order" only for the unit's own direct pilot (solo ships).
+
+### Anti-Pattern 5: Broadcasting Full CommandChain Every Tick
+**What:** Including the full CommandChain object in every 1-second tick broadcast.
+**Why bad:** CommandChain is mostly static between orders. Wastes bandwidth.
+**Instead:** Broadcast CommandChain only on changes (delegation, succession, destruction). Include only commandRange values in tick broadcast (small delta updates).
+
+---
+
+## Suggested Build Order
+
+Dependencies between components dictate this order:
+
+```
+Phase 1: Command Chain Data Model (no behavior yet)
+  - CommandAuthority, CommandChain, PendingSuccession data classes
+  - SubFleetAssignment: logic for splitting 60 units among crew
+  - OperationPlan entity + V45 migration (for mission objective)
+  - Modify BattleTriggerService.buildInitialState() to build chains
+  - Modify TacticalBattleState + TacticalUnit with new fields
+  WHY FIRST: Everything else depends on these data structures.
+
+Phase 2: CommandChainManager (authority + succession)
+  - canCommand() authority check
+  - tick() for circle expansion
+  - processDestruction() with 30-tick delay
+  - reassignUnits() with precondition checks
+  - Modify TacticalBattleEngine to call commandChainManager.tick()
+  WHY SECOND: WebSocket auth and AI both depend on command chain logic.
+
+Phase 3: WebSocket Authority Gate
+  - Modify TacticalBattleService command methods to check canCommand()
+  - Add /delegate and /fleet-order endpoints
+  - Add error responses for unauthorized commands
+  WHY THIRD: Must validate command chain before AI can work alongside players.
+
+Phase 4: Tactical AI
+  - TacticalAI core: mission-objective-driven behavior
+  - ThreatAssessment: retreat/target/energy decisions
+  - TacticalPersonalityModifier: personality -> tactical preferences
+  - Wire into TacticalBattleEngine tick loop (step 4.5)
+  WHY FOURTH: Requires command chain (Phase 2) to know which units are NPC/uncontrolled.
+
+Phase 5: Strategic AI Enhancement
+  - FactionAI: auto-create operation plans when at war
+  - AiCommandBridge: connect operation plan to BattleTriggerService
+  WHY FIFTH: Builds on tactical AI. Operation plans feed mission objectives.
+
+Phase 6: Frontend Integration
+  - CommandRangeCircle.tsx: per-commander circles
+  - Sub-fleet assignment panel
+  - Authority-aware command controls (disable buttons for units you cannot command)
+  - Succession visual feedback (flash, "지휘 승계 중" indicator)
+  WHY LAST: All backend must be stable before UI work.
+```
+
+---
+
+## Sources
+
+- Direct code analysis of all files listed at top
+- gin7 manual references: p.37-38 (작전계획), p.46 (기함/지휘권/커맨드레인지서클)
+- v2.1 milestone scope from project memory
+- Existing v2.0 ARCHITECTURE.md research (previous milestone)
