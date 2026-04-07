@@ -11,9 +11,6 @@ import { subscribeWebSocket } from '@/lib/websocket';
 import type { FrontInfoResponse } from '@/types';
 import { MapViewer } from '@/components/game/map-viewer';
 import { CommandPanel } from '@/components/game/command-panel';
-import { CityBasicCard } from '@/components/game/city-basic-card';
-import { NationBasicCard } from '@/components/game/nation-basic-card';
-import { GeneralBasicCard } from '@/components/game/general-basic-card';
 import { LoadingState } from '@/components/game/loading-state';
 import { Button } from '@/components/ui/8bit/button';
 import { toast } from 'sonner';
@@ -267,20 +264,7 @@ export function GameDashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-                    <div className="space-y-2">
-                        <CityBasicCard city={frontInfo?.city ?? null} region={frontInfo?.city?.region} />
-                        <NationBasicCard nation={frontInfo?.nation ?? null} global={global} />
-                    </div>
-                    <div>
-                        <GeneralBasicCard
-                            general={frontInfo?.general ?? null}
-                            nation={frontInfo?.nation ?? null}
-                            turnTerm={global?.turnTerm}
-                            lastExecuted={global?.lastExecuted}
-                        />
-                    </div>
-                </div>
+                {/* gin7 행성/장교 상세는 /city, /general 페이지에서 확인 */}
             </div>
 
             {/* ===== Record Zone ===== */}

@@ -14,15 +14,7 @@ import { CompactTooltip } from '@/components/game/map-tooltips';
 import { getInterceptionMarkers } from '@/lib/interception-utils';
 import type { PublicCachedMapResponse } from '@/types';
 import { buildUnitMarkers } from '@/components/game/unit-markers';
-import dynamic from 'next/dynamic';
-import { useMap3d } from '@/hooks/useMap3d';
-import { MapModeToggle } from '@/components/game/map-mode-toggle';
-
-// SSR 방지: Three.js는 클라이언트만
-const Map3dScene = dynamic(
-    () => import('@/components/game/map-3d').then((m) => m.Map3dScene),
-    { ssr: false },
-);
+// map-3d 및 Map3dScene 제거 (Phase 06-08 삼국지 3D 맵 정리)
 
 interface MapViewerProps {
     /** Mode 1: auto-load from gameStore */
@@ -72,16 +64,11 @@ export function MapViewer({
         return worldMapCode?.trim() || 'che';
     }, [mapCodeProp, isPublicMode, publicData?.mapCode, currentWorld?.config]);
 
-    const { mapMode } = useMap3d();
-
     useEffect(() => {
-        // 3D 모드에서는 public 모드(로그인/로비)에서도 맵 데이터 필요
         if (!isPublicMode && worldId != null) {
             loadMap(mapCode);
-        } else if (isPublicMode && mapMode === '3d') {
-            loadMap(mapCode);
         }
-    }, [mapCode, loadMap, isPublicMode, worldId, mapMode]);
+    }, [mapCode, loadMap, isPublicMode, worldId]);
 
     const nationMap = useMemo(() => new Map((nations ?? []).map((n) => [n.id, n])), [nations]);
     const emperorCityId = useMemo(() => (generals ?? []).find((g) => g.npcState === 10)?.cityId ?? -1, [generals]);
@@ -208,38 +195,14 @@ export function MapViewer({
         return buildUnitMarkers(generals, myOfficer.nationId, nationColorMap);
     }, [isPublicMode, generals, myOfficer, nationColorMap]);
 
-    const cities3d = useMemo(() => mapData?.cities ?? [], [mapData]);
-
     if (!isPublicMode && !mapData) {
         return (
             <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">지도 로딩중...</div>
         );
     }
 
-    if (mapMode === '3d') {
-        return (
-            <div className="relative w-full" style={{ aspectRatio: '700 / 500' }}>
-                <MapModeToggle />
-                <Map3dScene
-                    mapCode={mapCode}
-                    cities={cities3d}
-                    renderCities={renderCities}
-                    season={season}
-                    onCityClick={(cityId) => {
-                        // 3D에서는 CityModel 내부에서 이미 stopPropagation 처리
-                        const fakeEvent = { stopPropagation: () => {} } as React.MouseEvent;
-                        handleCityClick(cityId, fakeEvent);
-                    }}
-                    unitMarkers={unitMarkers}
-                    compact={compact}
-                />
-            </div>
-        );
-    }
-
     return (
         <div className="relative h-full w-full">
-            <MapModeToggle />
             <MapCanvas
             cities={renderCities}
             mapCode={mapCode}

@@ -1408,22 +1408,7 @@ export interface GeneralLogResult {
     logs: GeneralLogEntry[];
 }
 
-// 3D Map types
-export type MapRenderMode = '2d' | '3d';
-
-export interface Map3dConfig {
-    mode: MapRenderMode;
-    quality: 'low' | 'medium' | 'high';
-    showDecorations: boolean;
-    showLabels: boolean;
-    showNationOverlay: boolean;
-}
-
-export type SpotModelType = 'naval' | 'camp' | 'gate' | 'tribal';
-export type CityModelType = 'small' | 'medium' | 'large' | 'grand';
-export type UnitModelType = 'infantry' | 'archer' | 'cavalry' | 'chariot' | 'special' | 'navy';
-export type TerrainType = 'grass' | 'mountain' | 'forest' | 'water' | 'desert';
-
+// 은하 지도 타입
 export interface LocationConfig {
     type: 'spot' | 'city';
     model: string;

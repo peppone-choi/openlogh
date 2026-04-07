@@ -9,9 +9,7 @@ import { useOfficerStore } from '@/stores/officerStore';
 import { useWorldStore } from '@/stores/worldStore';
 import type { City, CommandArg, General, Nation } from '@/types';
 import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
-import { CrewTypeBrowser } from './crew-type-browser';
-import { EquipmentBrowser } from './equipment-browser';
-import { DeploymentSelector } from './deployment-selector';
+// CrewTypeBrowser, EquipmentBrowser, DeploymentSelector removed (삼국지 컴포넌트 삭제 — Phase 06-08)
 import { MapViewer } from './map-viewer';
 
 /** Arg schema for each command that requires user input */
@@ -546,40 +544,8 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
         return null;
     }
 
-    // Use rich crew type browser for recruitment commands
-    if (actionCode === '징병' || actionCode === '모병') {
-        return (
-            <CrewTypeBrowser
-                commandName={actionCode}
-                onSubmit={(crewTypeCode, amount) => {
-                    onSubmit({ crewType: crewTypeCode, amount });
-                }}
-            />
-        );
-    }
-
-    // Use rich equipment browser for 장비매매
-    if (actionCode === '장비매매') {
-        return (
-            <EquipmentBrowser
-                commandName={actionCode}
-                onSubmit={(itemType, itemCode) => {
-                    onSubmit({ itemType, itemCode });
-                }}
-            />
-        );
-    }
-
-    // Use rich deployment selector for 발령
-    if (actionCode === '발령') {
-        return (
-            <DeploymentSelector
-                onSubmit={(generalId, cityId) => {
-                    onSubmit({ destGeneralID: generalId, destCityID: cityId });
-                }}
-            />
-        );
-    }
+    // 모병/징병: 함종 + 수량 선택 (표준 select UI로 처리)
+    // 장비매매/발령: 표준 ArgField 처리로 fall-through
 
     const setValue = (key: string, val: string) => {
         setValuesByCommand((prev) => ({
