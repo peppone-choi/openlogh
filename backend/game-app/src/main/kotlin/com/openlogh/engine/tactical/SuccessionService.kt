@@ -100,4 +100,35 @@ object SuccessionService {
     fun getActiveCommander(hierarchy: CommandHierarchy): Long {
         return hierarchy.activeCommander ?: hierarchy.fleetCommander
     }
+
+    /**
+     * Find the next available successor from the succession queue (SUCC-03).
+     *
+     * Checks designated successor first, then walks the queue in order.
+     * Only officers present in aliveOfficerIds are considered.
+     *
+     * @return the officer ID of the next successor, or null if none available
+     */
+    fun findNextSuccessor(hierarchy: CommandHierarchy, aliveOfficerIds: Set<Long>): Long? {
+        // Check designated successor first
+        hierarchy.designatedSuccessor?.let { designated ->
+            if (designated in aliveOfficerIds) return designated
+        }
+        // Walk succession queue in rank order
+        return hierarchy.successionQueue.firstOrNull { it in aliveOfficerIds }
+    }
+
+    /**
+     * Check if command is completely broken: active commander dead AND no successor available (SUCC-06).
+     * This is the terminal state — all units must transition to independent AI.
+     *
+     * @return true if the active commander is not in aliveOfficerIds AND findNextSuccessor returns null
+     */
+    fun isCommandBroken(hierarchy: CommandHierarchy, aliveOfficerIds: Set<Long>): Boolean {
+        val activeCmd = getActiveCommander(hierarchy)
+        // If active commander is still alive, command is not broken
+        if (activeCmd in aliveOfficerIds) return false
+        // Active commander is dead — check if anyone can succeed
+        return findNextSuccessor(hierarchy, aliveOfficerIds) == null
+    }
 }

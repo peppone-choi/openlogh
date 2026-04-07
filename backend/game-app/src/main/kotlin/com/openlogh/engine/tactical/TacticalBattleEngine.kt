@@ -315,6 +315,9 @@ class TacticalBattleEngine(
             }
         }
 
+        // 5.4: Check for command breakdown (SUCC-06)
+        processCommandBreakdown(state)
+
         // 5.5 Ground battle tick (Plan 03-04)
         state.groundBattleState?.let { groundState ->
             val groundEngine = GroundBattleEngine()
@@ -672,6 +675,41 @@ class TacticalBattleEngine(
             // Check if unit is outside commander's CRC
             if (!CrcValidator.isWithinCrc(commanderUnit, unit)) {
                 OutOfCrcBehavior.processOutOfCrcUnit(unit, commanderUnit, state.currentTick)
+            }
+        }
+    }
+
+    /**
+     * Detect command breakdown and transition all units to independent AI (SUCC-06).
+     * Called after processSuccession() — if succession failed (no successor found),
+     * all alive units on that side fall back to OutOfCrcBehavior.
+     */
+    private fun processCommandBreakdown(state: TacticalBattleState) {
+        val aliveOfficerIds = state.units
+            .filter { it.isAlive }
+            .map { it.officerId }
+            .toSet()
+
+        listOf(
+            BattleSide.ATTACKER to state.attackerHierarchy,
+            BattleSide.DEFENDER to state.defenderHierarchy,
+        ).forEach { (side, hierarchy) ->
+            if (hierarchy == null) return@forEach
+            if (!SuccessionService.isCommandBroken(hierarchy, aliveOfficerIds)) return@forEach
+
+            // Command is broken — apply OutOfCrcBehavior to all alive units on this side
+            val affectedUnits = state.units.filter { it.isAlive && it.side == side && !it.isRetreating }
+            for (unit in affectedUnits) {
+                // Pass null as commanderUnit since there is no commander
+                // This means: HP<30% retreat, else maintain last velocity
+                OutOfCrcBehavior.processOutOfCrcUnit(unit, null, state.currentTick)
+            }
+
+            // Broadcast once per tick only if there are affected units
+            if (affectedUnits.isNotEmpty()) {
+                state.tickEvents.add(BattleTickEvent("command_broken_ai",
+                    value = affectedUnits.size,
+                    detail = "${side.name} 지휘 체계 붕괴 — ${affectedUnits.size}개 유닛 독립 AI 행동"))
             }
         }
     }
