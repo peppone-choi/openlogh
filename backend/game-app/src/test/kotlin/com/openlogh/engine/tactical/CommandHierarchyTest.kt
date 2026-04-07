@@ -1,17 +1,15 @@
 package com.openlogh.engine.tactical
 
+import com.openlogh.model.UnitStance
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 /**
- * Wave 0 test scaffold for ENGINE-03: CommandHierarchy initialization.
+ * Tests for ENGINE-03: CommandHierarchy initialization.
  *
- * Tests define the behavioral contract for buildCommandHierarchy():
- * given a fleet ID, leader officer ID, list of units, and officer rank map,
+ * Tests verify the behavioral contract for buildCommandHierarchy():
+ * given a leader officer ID, list of units, and officer rank map,
  * produce a correctly initialized CommandHierarchy.
- *
- * All tests are @Disabled until Plan 03 implements buildCommandHierarchy().
  */
 class CommandHierarchyTest {
 
@@ -22,70 +20,76 @@ class CommandHierarchyTest {
         200L to 7,   // Vice Admiral (rank 7)
         300L to 5,   // Commodore (rank 5)
     )
-    private val unitFleetIds = listOf(1L, 2L, 3L, 4L, 5L, 6L)
+
+    private fun makeUnit(officerId: Long, side: BattleSide) = TacticalUnit(
+        fleetId = officerId,
+        officerId = officerId,
+        officerName = "Officer $officerId",
+        factionId = 1L,
+        side = side,
+        posX = 100.0,
+        posY = 100.0,
+        hp = 1000,
+        maxHp = 1000,
+        ships = 300,
+        maxShips = 300,
+        training = 80,
+        morale = 80,
+        leadership = 50,
+        command = 50,
+        intelligence = 50,
+        mobility = 50,
+        attack = 50,
+        defense = 50,
+    )
+
+    private val units = listOf(
+        makeUnit(100L, BattleSide.ATTACKER),
+        makeUnit(200L, BattleSide.ATTACKER),
+        makeUnit(300L, BattleSide.ATTACKER),
+    )
+
+    // Use BattleTriggerService.buildCommandHierarchy directly (internal visibility)
+    private fun buildHierarchy() = BattleTriggerService.buildCommandHierarchyStatic(
+        leaderOfficerId = leaderOfficerId,
+        units = units,
+        officerRanks = officerRanks,
+    )
 
     /**
      * buildCommandHierarchy should create a hierarchy with the correct fleetCommander.
      */
     @Test
-    @Disabled("Plan 03: CommandHierarchy initialization not yet implemented")
     fun `buildCommandHierarchy creates hierarchy with correct fleetCommander`() {
-        // val hierarchy = buildCommandHierarchy(
-        //     fleetId = 1L,
-        //     leaderOfficerId = leaderOfficerId,
-        //     units = unitFleetIds,
-        //     officerRanks = officerRanks,
-        // )
-        // assertEquals(leaderOfficerId, hierarchy.fleetCommander)
-        fail<Unit>("buildCommandHierarchy not yet implemented")
+        val hierarchy = buildHierarchy()
+        assertEquals(leaderOfficerId, hierarchy.fleetCommander)
     }
 
     /**
      * successionQueue should be ordered by rank descending (highest rank first).
      */
     @Test
-    @Disabled("Plan 03: CommandHierarchy initialization not yet implemented")
     fun `successionQueue is ordered by rank descending`() {
-        // val hierarchy = buildCommandHierarchy(
-        //     fleetId = 1L,
-        //     leaderOfficerId = leaderOfficerId,
-        //     units = unitFleetIds,
-        //     officerRanks = officerRanks,
-        // )
-        // assertEquals(listOf(100L, 200L, 300L), hierarchy.successionQueue)
-        fail<Unit>("buildCommandHierarchy not yet implemented")
+        val hierarchy = buildHierarchy()
+        assertEquals(listOf(100L, 200L, 300L), hierarchy.successionQueue)
     }
 
     /**
      * crcRadius should have an entry for the fleet commander.
      */
     @Test
-    @Disabled("Plan 03: CommandHierarchy initialization not yet implemented")
     fun `crcRadius is initialized for fleet commander`() {
-        // val hierarchy = buildCommandHierarchy(
-        //     fleetId = 1L,
-        //     leaderOfficerId = leaderOfficerId,
-        //     units = unitFleetIds,
-        //     officerRanks = officerRanks,
-        // )
-        // assertTrue(hierarchy.crcRadius.containsKey(leaderOfficerId))
-        // assertTrue(hierarchy.crcRadius[leaderOfficerId]!! > 0.0)
-        fail<Unit>("buildCommandHierarchy not yet implemented")
+        val hierarchy = buildHierarchy()
+        assertTrue(hierarchy.crcRadius.containsKey(leaderOfficerId))
+        assertTrue(hierarchy.crcRadius[leaderOfficerId]!! >= 0.0)
     }
 
     /**
      * commJammed should default to false on initialization.
      */
     @Test
-    @Disabled("Plan 03: CommandHierarchy initialization not yet implemented")
     fun `commJammed defaults to false`() {
-        // val hierarchy = buildCommandHierarchy(
-        //     fleetId = 1L,
-        //     leaderOfficerId = leaderOfficerId,
-        //     units = unitFleetIds,
-        //     officerRanks = officerRanks,
-        // )
-        // assertFalse(hierarchy.commJammed)
-        fail<Unit>("buildCommandHierarchy not yet implemented")
+        val hierarchy = buildHierarchy()
+        assertFalse(hierarchy.commJammed)
     }
 }

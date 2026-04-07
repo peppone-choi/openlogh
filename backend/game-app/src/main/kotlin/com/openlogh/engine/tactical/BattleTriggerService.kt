@@ -180,6 +180,22 @@ class BattleTriggerService(
         val fortressGunCooldown = starSystem?.fortressGunCooldown ?: 0
         val fortressFactionId = starSystem?.factionId ?: 0
 
+        // Build CommandHierarchy per side (per D-06)
+        val attackerUnits = units.filter { it.side == BattleSide.ATTACKER }
+        val defenderUnits = units.filter { it.side == BattleSide.DEFENDER }
+
+        val attackerHierarchy = if (attackerUnits.isNotEmpty()) {
+            val commander = attackerUnits.first()
+            val officerRanks = attackerUnits.associate { it.officerId to getOfficerRank(it.officerId) }
+            buildCommandHierarchy(commander.officerId, attackerUnits, officerRanks)
+        } else null
+
+        val defenderHierarchy = if (defenderUnits.isNotEmpty()) {
+            val commander = defenderUnits.first()
+            val officerRanks = defenderUnits.associate { it.officerId to getOfficerRank(it.officerId) }
+            buildCommandHierarchy(commander.officerId, defenderUnits, officerRanks)
+        } else null
+
         return TacticalBattleState(
             battleId = battle.id,
             starSystemId = battle.starSystemId,
@@ -188,6 +204,46 @@ class BattleTriggerService(
             fortressGunRange = fortressGunRange,
             fortressGunCooldown = fortressGunCooldown,
             fortressFactionId = fortressFactionId,
+            attackerHierarchy = attackerHierarchy,
+            defenderHierarchy = defenderHierarchy,
         )
+    }
+
+    /**
+     * Build a CommandHierarchy for one side of a battle.
+     * Delegates to the companion object static method for testability.
+     */
+    internal fun buildCommandHierarchy(
+        leaderOfficerId: Long,
+        units: List<TacticalUnit>,
+        officerRanks: Map<Long, Int>,
+    ): CommandHierarchy = buildCommandHierarchyStatic(leaderOfficerId, units, officerRanks)
+
+    private fun getOfficerRank(officerId: Long): Int {
+        return officerRepository.findById(officerId).orElse(null)?.officerLevel?.toInt() ?: 0
+    }
+
+    companion object {
+        /**
+         * Build a CommandHierarchy for one side of a battle.
+         * Succession queue is ordered by rank descending (highest rank = first in line).
+         * CRC radius is initialized from the commander's commandRange.maxRange.
+         *
+         * Static for testability (no Spring context needed).
+         */
+        fun buildCommandHierarchyStatic(
+            leaderOfficerId: Long,
+            units: List<TacticalUnit>,
+            officerRanks: Map<Long, Int>,
+        ): CommandHierarchy {
+            val sortedByRank = units.sortedByDescending { officerRanks[it.officerId] ?: 0 }
+            val commander = units.first { it.officerId == leaderOfficerId }
+
+            return CommandHierarchy(
+                fleetCommander = leaderOfficerId,
+                successionQueue = sortedByRank.map { it.officerId }.toMutableList(),
+                crcRadius = mutableMapOf(leaderOfficerId to commander.commandRange.maxRange),
+            )
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.openlogh.controller
 
 import com.openlogh.engine.tactical.ConquestCommand
 import com.openlogh.engine.tactical.ConquestRequest
+import com.openlogh.engine.tactical.TacticalCommand
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.UnitStance
 import com.openlogh.service.TacticalBattleService
@@ -51,7 +52,7 @@ class BattleWebSocketController(
                 warp = payload.warp,
                 sensor = payload.sensor,
             )
-            tacticalBattleService.setEnergyAllocation(battleId, payload.officerId, allocation)
+            tacticalBattleService.enqueueCommand(battleId, TacticalCommand.SetEnergy(battleId, payload.officerId, allocation))
         } catch (e: Exception) {
             log.error("Error updating energy for battle {} officer {}: {}", battleId, payload.officerId, e.message)
         }
@@ -71,7 +72,7 @@ class BattleWebSocketController(
     ) {
         try {
             val stance = UnitStance.fromString(payload.stance)
-            tacticalBattleService.setStance(battleId, payload.officerId, stance)
+            tacticalBattleService.enqueueCommand(battleId, TacticalCommand.SetStance(battleId, payload.officerId, stance))
         } catch (e: Exception) {
             log.error("Error updating stance for battle {} officer {}: {}", battleId, payload.officerId, e.message)
         }
@@ -91,7 +92,7 @@ class BattleWebSocketController(
         @Payload payload: RetreatRequest,
     ) {
         try {
-            tacticalBattleService.retreat(battleId, payload.officerId)
+            tacticalBattleService.enqueueCommand(battleId, TacticalCommand.Retreat(battleId, payload.officerId))
         } catch (e: Exception) {
             log.error("Error processing retreat for battle {} officer {}: {}", battleId, payload.officerId, e.message)
         }
@@ -110,7 +111,7 @@ class BattleWebSocketController(
         @Payload payload: AttackTargetRequest,
     ) {
         try {
-            tacticalBattleService.setAttackTarget(battleId, payload.officerId, payload.targetFleetId)
+            tacticalBattleService.enqueueCommand(battleId, TacticalCommand.SetAttackTarget(battleId, payload.officerId, payload.targetFleetId))
         } catch (e: Exception) {
             log.error("Error setting attack target for battle {} officer {}: {}", battleId, payload.officerId, e.message)
         }
@@ -151,7 +152,7 @@ class BattleWebSocketController(
                 militaryWorkPoint = payload.militaryWorkPoint,
                 intelWorkPoint = payload.intelWorkPoint,
             )
-            tacticalBattleService.executeConquest(battleId, payload.officerId, req)
+            tacticalBattleService.enqueueCommand(battleId, TacticalCommand.PlanetConquest(battleId, payload.officerId, req))
         } catch (e: Exception) {
             log.error("Error processing planet conquest for battle {} officer {}: {}",
                 battleId, payload.officerId, e.message)
@@ -172,7 +173,16 @@ class BattleWebSocketController(
         @Payload payload: UnitCommandRequest,
     ) {
         try {
-            tacticalBattleService.executeUnitCommand(battleId, payload)
+            tacticalBattleService.enqueueCommand(battleId, TacticalCommand.UnitCommand(
+                battleId = battleId,
+                officerId = payload.officerId,
+                command = payload.command,
+                dirX = payload.dirX,
+                dirY = payload.dirY,
+                speed = payload.speed,
+                targetFleetId = payload.targetFleetId,
+                formation = payload.formation,
+            ))
         } catch (e: Exception) {
             log.error("Error executing unit command {} for battle {} officer {}: {}",
                 payload.command, battleId, payload.officerId, e.message)
