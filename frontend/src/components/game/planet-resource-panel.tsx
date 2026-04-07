@@ -1,6 +1,6 @@
 'use client';
 
-import type { Planet } from '@/types';
+import type { Planet } from '@/types/planet';
 import { SHIP_CLASS_NAMES } from './fleet-unit-card';
 
 interface ShipyardQueueEntry {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import type { Fleet, FleetUnit, Formation } from '@/types';
+import type { Fleet, FleetUnit, Formation } from '@/types/fleet';
 import { FleetUnitCard } from './fleet-unit-card';
 
 // 진형 한국어 이름 매핑

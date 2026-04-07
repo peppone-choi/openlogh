@@ -1796,8 +1796,10 @@ export interface ChatCommandRequest {
     targetOfficerId?: number;
 }
 
-// Re-export gin7 domain types
-export type { Fleet, FleetUnit, ShipClass, Formation } from './fleet';
-export type { Officer, OfficerStat } from './officer';
-export type { Gin7Planet } from './planet';
-export type { Gin7Command, CommandGroup } from './command';
+// Re-export gin7 domain types (prefixed to avoid conflicts with legacy types)
+export type { FleetUnit, ShipClass, Formation, UnitStance, FleetSummary } from './fleet';
+export type { Fleet as Gin7Fleet } from './fleet';
+export type { OfficerStat, RankTitle, OfficerSummary } from './officer';
+export type { Officer as Gin7Officer } from './officer';
+export type { Planet as Gin7Planet, Faction as Gin7Faction, FactionType } from './planet';
+export type { CommandEntry, CommandGroup, CpType, CpPool, CommandProposal } from './command';

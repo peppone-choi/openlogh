@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { FleetCompositionPanel } from '@/components/game/fleet-composition-panel';
-import type { Fleet, FleetUnit } from '@/types';
+import type { Fleet, FleetUnit } from '@/types/fleet';
 
 interface FleetWithUnits {
     fleet: Fleet;
@@ -103,7 +103,7 @@ export default function TroopPage() {
                             units={fleets[activeTab].units}
                             sessionId={currentWorld.id}
                             officerName={myOfficer.name}
-                            rankTitle={myOfficer.officerLevelText ?? `Lv.${myOfficer.officerLevel}`}
+                            rankTitle={`Lv.${myOfficer.officerLevel}`}
                             onRefresh={fetchFleets}
                         />
                     )}
