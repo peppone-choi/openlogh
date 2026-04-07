@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
-status: executing
-stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-04-07T11:56:03.947Z"
+status: verifying
+stopped_at: Completed 09-04-PLAN.md
+last_updated: "2026-04-07T12:04:42.030Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 18
   completed_phases: 13
   total_plans: 85
-  completed_plans: 71
+  completed_plans: 72
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 Phase: 09 (strategic-commands) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 09 P01 | 7min | 2 tasks | 7 files |
 | Phase 09 P02 | 8min | 2 tasks | 5 files |
 | Phase 09 P03 | 6min | 2 tasks | 4 files |
+| Phase 09 P04 | 6min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,8 @@ Recent decisions affecting current work:
 - [Phase 09]: CRC formula: maxRange=50+cmd*3, expansionRate=0.5+cmd/100 for tunable CRC behavior
 - [Phase 09]: Self-commands always bypass CRC; HP<30% triggers AI retreat at 80% speed; 120-tick stuck limit triggers move-toward-commander
 - [Phase 09]: Administrative commands (AssignSubFleet, ReassignUnit) bypass CRC -- organizational, not tactical
+- [Phase 09]: TriggerJamming uses early-return bypass in applyCommand before unit lookup since jammer is enemy officer
+- [Phase 09]: Jamming tick processing at step 5.7 (after destruction) so source-gone check sees current tick deaths
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T11:56:03.939Z
-Stopped at: Completed 09-03-PLAN.md
+Last session: 2026-04-07T12:04:42.021Z
+Stopped at: Completed 09-04-PLAN.md
 Resume file: None

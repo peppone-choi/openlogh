@@ -20,7 +20,7 @@ Requirements for milestone v2.1: 전술전 지휘체계 + AI. Each maps to roadm
 - [x] **CMD-03**: 커맨드레인지서클 내 유닛에만 명령이 전달된다
 - [x] **CMD-04**: 서클 밖 유닛은 마지막 명령을 유지하거나 AI 자율 행동한다
 - [x] **CMD-05**: 사령관이 실시간으로 유닛을 재배정할 수 있다 (서클 밖 + 정지 조건)
-- [ ] **CMD-06**: 통신 방해 시 총사령관의 전군 명령이 불가능하다
+- [x] **CMD-06**: 통신 방해 시 총사령관의 전군 명령이 불가능하다
 
 ### 지휘 승계 (SUCC)
 
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMD-03 | Phase 9 | Complete |
 | CMD-04 | Phase 9 | Complete |
 | CMD-05 | Phase 9 | Complete |
-| CMD-06 | Phase 9 | Pending |
+| CMD-06 | Phase 9 | Complete |
 | SUCC-01 | Phase 10 | Pending |
 | SUCC-02 | Phase 10 | Pending |
 | SUCC-03 | Phase 10 | Pending |
