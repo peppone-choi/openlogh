@@ -13,8 +13,8 @@ import kotlin.random.Random
 @Service
 class FactionAI(
     private val worldPortFactory: JpaWorldPortFactory,
-) {
-    fun decideNationAction(nation: Faction, world: SessionState, rng: Random): String {
+) : FactionAIPort {
+    override fun decideNationAction(nation: Faction, world: SessionState, rng: Random): String {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
         val nationCities = ports.planetsByFaction(nation.id).map { it.toEntity() }
