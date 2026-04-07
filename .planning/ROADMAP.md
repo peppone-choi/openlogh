@@ -143,8 +143,8 @@ Plans:
   4. 통신 방해 상태에서 총사령관의 전군 명령이 차단된다
 **Plans**: 4 plans
 Plans:
-- [ ] 09-01-PLAN.md — 분함대 배정 데이터 모델 + CommandHierarchyService + CommandPriorityComparator
-- [ ] 09-02-PLAN.md — CrcValidator + OutOfCrcBehavior 순수 로직
+- [x] 09-01-PLAN.md — 분함대 배정 데이터 모델 + CommandHierarchyService + CommandPriorityComparator
+- [x] 09-02-PLAN.md — CrcValidator + OutOfCrcBehavior 순수 로직
 - [ ] 09-03-PLAN.md — 엔진 통합: CRC 게이트 + 서클 밖 행동 + 재배정 처리
 - [ ] 09-04-PLAN.md — 통신 방해 시스템 + WebSocket 엔드포인트
 

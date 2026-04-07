@@ -15,8 +15,8 @@ Requirements for milestone v2.1: 전술전 지휘체계 + AI. Each maps to roadm
 
 ### 지휘권 분배 (CMD)
 
-- [ ] **CMD-01**: 사령관이 함대 내 60유닛을 부사령관/참모에게 분함대로 배정할 수 있다
-- [ ] **CMD-02**: 지휘권 우선순위(온라인→계급→평가→공적)가 자동 적용된다
+- [x] **CMD-01**: 사령관이 함대 내 60유닛을 부사령관/참모에게 분함대로 배정할 수 있다
+- [x] **CMD-02**: 지휘권 우선순위(온라인→계급→평가→공적)가 자동 적용된다
 - [ ] **CMD-03**: 커맨드레인지서클 내 유닛에만 명령이 전달된다
 - [ ] **CMD-04**: 서클 밖 유닛은 마지막 명령을 유지하거나 AI 자율 행동한다
 - [ ] **CMD-05**: 사령관이 실시간으로 유닛을 재배정할 수 있다 (서클 밖 + 정지 조건)
@@ -88,8 +88,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENGINE-01 | Phase 8 | Complete |
 | ENGINE-02 | Phase 8 | Complete |
 | ENGINE-03 | Phase 8 | Complete |
-| CMD-01 | Phase 9 | Pending |
-| CMD-02 | Phase 9 | Pending |
+| CMD-01 | Phase 9 | Complete |
+| CMD-02 | Phase 9 | Complete |
 | CMD-03 | Phase 9 | Pending |
 | CMD-04 | Phase 9 | Pending |
 | CMD-05 | Phase 9 | Pending |
