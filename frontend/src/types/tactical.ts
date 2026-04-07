@@ -105,6 +105,9 @@ export interface TacticalBattle {
     units: TacticalUnit[];
 }
 
+/** Unit stance (v2.1 Phase 8) */
+export type UnitStance = 'AGGRESSIVE' | 'DEFENSIVE' | 'EVASIVE' | 'HOLD';
+
 /** Battle tick event */
 export interface BattleTickEvent {
     type: string;
@@ -119,6 +122,8 @@ export interface BattleTickBroadcast {
     battleId: number;
     tickCount: number;
     phase: BattlePhase;
+    /** Current tick phase within battle processing (e.g. MOVEMENT, COMBAT) */
+    currentPhase?: string;
     units: TacticalUnit[];
     events: BattleTickEvent[];
     result?: string;
@@ -128,9 +133,16 @@ export interface BattleTickBroadcast {
 export interface BattleCommand {
     battleId: number;
     officerId: number;
-    commandType: 'energy' | 'formation' | 'retreat';
+    commandType: 'energy' | 'formation' | 'retreat' | 'stance' | 'attack-target' | 'unit-command';
     energy?: EnergyAllocation;
     formation?: Formation;
+    stance?: UnitStance;
+    targetFleetId?: number;
+    /** Unit command fields (v2.1) */
+    unitCommand?: string;
+    dirX?: number;
+    dirY?: number;
+    speed?: number;
 }
 
 /** Default balanced energy allocation */

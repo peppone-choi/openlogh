@@ -26,5 +26,11 @@ export function buildBattleCommandPayload(command: BattleCommand): string {
         commandType: command.commandType,
         energy: command.energy,
         formation: command.formation,
+        stance: command.stance,
+        targetFleetId: command.targetFleetId,
+        unitCommand: command.unitCommand,
+        dirX: command.dirX,
+        dirY: command.dirY,
+        speed: command.speed,
     });
 }
