@@ -77,6 +77,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | 유닛별 미세 조종 (개별 이동 경로) | gin7 설계 철학에 반함 — 조직 시뮬레이션이 핵심 |
 | 멀티플레이어 음성 채팅 | 인프라 비용 과다, 텍스트 통신으로 충분 |
 | 모바일 전술맵 UI | 웹 우선, 모바일은 후순위 |
+| AI 학습/ML 기반 전술 판단 | 과도한 복잡도, utility scoring으로 충분 |
 
 ## Traceability
 
@@ -84,42 +85,42 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENGINE-01 | — | Pending |
-| ENGINE-02 | — | Pending |
-| ENGINE-03 | — | Pending |
-| CMD-01 | — | Pending |
-| CMD-02 | — | Pending |
-| CMD-03 | — | Pending |
-| CMD-04 | — | Pending |
-| CMD-05 | — | Pending |
-| CMD-06 | — | Pending |
-| SUCC-01 | — | Pending |
-| SUCC-02 | — | Pending |
-| SUCC-03 | — | Pending |
-| SUCC-04 | — | Pending |
-| SUCC-05 | — | Pending |
-| SUCC-06 | — | Pending |
-| TAI-01 | — | Pending |
-| TAI-02 | — | Pending |
-| TAI-03 | — | Pending |
-| TAI-04 | — | Pending |
-| TAI-05 | — | Pending |
-| OPS-01 | — | Pending |
-| OPS-02 | — | Pending |
-| OPS-03 | — | Pending |
-| SAI-01 | — | Pending |
-| SAI-02 | — | Pending |
-| FE-01 | — | Pending |
-| FE-02 | — | Pending |
-| FE-03 | — | Pending |
-| FE-04 | — | Pending |
-| FE-05 | — | Pending |
+| ENGINE-01 | Phase 8 | Pending |
+| ENGINE-02 | Phase 8 | Pending |
+| ENGINE-03 | Phase 8 | Pending |
+| CMD-01 | Phase 9 | Pending |
+| CMD-02 | Phase 9 | Pending |
+| CMD-03 | Phase 9 | Pending |
+| CMD-04 | Phase 9 | Pending |
+| CMD-05 | Phase 9 | Pending |
+| CMD-06 | Phase 9 | Pending |
+| SUCC-01 | Phase 10 | Pending |
+| SUCC-02 | Phase 10 | Pending |
+| SUCC-03 | Phase 10 | Pending |
+| SUCC-04 | Phase 10 | Pending |
+| SUCC-05 | Phase 10 | Pending |
+| SUCC-06 | Phase 10 | Pending |
+| TAI-01 | Phase 11 | Pending |
+| TAI-02 | Phase 11 | Pending |
+| TAI-03 | Phase 11 | Pending |
+| TAI-04 | Phase 11 | Pending |
+| TAI-05 | Phase 11 | Pending |
+| OPS-01 | Phase 12 | Pending |
+| OPS-02 | Phase 12 | Pending |
+| OPS-03 | Phase 12 | Pending |
+| SAI-01 | Phase 13 | Pending |
+| SAI-02 | Phase 13 | Pending |
+| FE-01 | Phase 14 | Pending |
+| FE-02 | Phase 14 | Pending |
+| FE-03 | Phase 14 | Pending |
+| FE-04 | Phase 14 | Pending |
+| FE-05 | Phase 14 | Pending |
 
 **Coverage:**
 - v2.1 requirements: 30 total
-- Mapped to phases: 0
-- Unmapped: 30 ⚠️
+- Mapped to phases: 30
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after initial definition*
+*Last updated: 2026-04-07 after roadmap creation*

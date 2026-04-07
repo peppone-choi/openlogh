@@ -1,20 +1,39 @@
-# Roadmap: Open LOGH v2.0 — gin7 게임 로직 전면 재작성
+# Roadmap: Open LOGH
 
-## Overview
+## Milestones
 
-삼국지 기반 게임 로직을 gin7 매뉴얼 기준으로 전면 재작성한다. 레거시 제거와 함종 기반 유닛 시스템 확립(Phase 1)에서 시작해, 직무권한카드 기반 81종 커맨드 시스템(Phase 2), 실시간 전술전 엔진(Phase 3), 경제 시스템(Phase 4), AI 시스템(Phase 5), 프론트엔드 전면 재작성(Phase 6), 시나리오 데이터 및 밸런싱(Phase 7) 순으로 진행한다. 각 페이즈는 다음 페이즈의 전제조건이며, Phase 4는 Phase 3과 병렬 진행 가능하다.
+- ✅ **v2.0 gin7 게임 로직 전면 재작성** - Phases 1-7 (shipped 2026-04-06)
+- 🚧 **v2.1 전술전 지휘체계 + AI** - Phases 8-14 (in progress)
 
 ## Phases
 
-- [x] **Phase 1: 레거시 제거 + 함종 유닛 기반** - 삼국지 잔재 완전 제거 및 gin7 ShipUnit 엔티티 수립 (completed 2026-04-06)
-- [ ] **Phase 2: gin7 81종 커맨드 시스템** - 직무권한카드 기반 커맨드 전면 재구현
-- [ ] **Phase 3: 실시간 전술전 엔진** - 에너지/무기/진형/색적/요새포/지상전 구현
-- [x] **Phase 4: 경제 시스템** - 행성자원/조병창/세율/차관 경제 루프 구현 (completed 2026-04-06)
-- [ ] **Phase 5: AI 시스템** - 성격 기반 NPC AI 및 진영 AI 구현
-- [ ] **Phase 6: 프론트엔드 통합** - 은하맵/전술전 UI/전략게임 화면 전면 재작성
-- [ ] **Phase 7: 시나리오 데이터 + 밸런싱** - 10개 시나리오 데이터 및 균형 조정
+<details>
+<summary>v2.0 gin7 게임 로직 전면 재작성 (Phases 1-7) - SHIPPED 2026-04-06</summary>
+
+- [x] **Phase 1: 레거시 제거 + 함종 유닛 기반** - 삼국지 잔재 완전 제거 및 gin7 ShipUnit 엔티티 수립
+- [x] **Phase 2: gin7 81종 커맨드 시스템** - 직무권한카드 기반 커맨드 전면 재구현
+- [x] **Phase 3: 실시간 전술전 엔진** - 에너지/무기/진형/색적/요새포/지상전 구현
+- [x] **Phase 4: 경제 시스템** - 행성자원/조병창/세율/차관 경제 루프 구현
+- [x] **Phase 5: AI 시스템** - 성격 기반 NPC AI 및 진영 AI 구현
+- [x] **Phase 6: 프론트엔드 통합** - 은하맵/전술전 UI/전략게임 화면 전면 재작성
+- [x] **Phase 7: 시나리오 데이터 + 밸런싱** - 10개 시나리오 데이터 및 균형 조정
+
+</details>
+
+### v2.1 전술전 지휘체계 + AI
+
+- [ ] **Phase 8: 엔진 통합 + 커맨드 버퍼** - 듀얼 전술 엔진 통합, 커맨드 버퍼 동시성 보장, 지휘 계층 데이터 모델 수립
+- [ ] **Phase 9: 지휘권 분배 + 커맨드레인지서클** - 분함대 배정, 우선순위 기반 지휘권, CRC 명령 전달, 통신 방해
+- [ ] **Phase 10: 지휘 승계** - 후계자 지명, 부상/사망 구분, 30틱 공백, 자동 승계, 체계 붕괴
+- [ ] **Phase 11: 전술 AI** - 작전 목적 기반 AI 행동, 성격 기반 전술, 위협 평가, 에너지/진형 자동 조정
+- [ ] **Phase 12: 작전 연동** - 작전계획-전술전 연결, 작전 참가 부대 공적 보너스, 발령-도달 시작
+- [ ] **Phase 13: 전략 AI** - 진영 AI 자동 작전 수립, 전력 평가 기반 작전 유형 선택
+- [ ] **Phase 14: 프론트엔드 통합** - CRC 시각화, 분함대 패널, 권한 기반 UI 제한, 승계 피드백, 안개 효과
 
 ## Phase Details
+
+<details>
+<summary>v2.0 Phase Details (Phases 1-7)</summary>
 
 ### Phase 1: 레거시 제거 + 함종 유닛 기반
 **Goal**: 삼국지 게임 로직이 완전히 제거되고 gin7 함종/유닛 엔티티가 전투와 커맨드의 기반으로 작동한다
@@ -22,143 +41,174 @@
 **Requirements**: LEGACY-01, LEGACY-02, LEGACY-03, LEGACY-04, LEGACY-05, LEGACY-06, SHIP-01, SHIP-02, SHIP-03, SHIP-04, SHIP-05, SHIP-06
 **Success Criteria** (what must be TRUE):
   1. CommandRegistry에 삼국지 커맨드가 0개 존재한다 (gin7 stub 81종으로 대체됨)
-  2. ShipUnit 엔티티가 DB에 존재하며 11함종 × 서브타입 스탯이 ship_stats JSON에서 로드된다
+  2. ShipUnit 엔티티가 DB에 존재하며 11함종 x 서브타입 스탯이 ship_stats JSON에서 로드된다
   3. 기함/육전대 유닛이 Fleet에 연결 가능하며 승조원 수련도 4단계가 적용된다
   4. 삼국지 병종 상성 및 수치비교 전투 로직이 코드베이스에 존재하지 않는다
   5. `grep -r "officerLevel >= 5"` 결과가 0이거나 stub 대체가 완료된 상태이다
-**Plans**: 5 plans
-
-Plans:
-- [x] 01-01-PLAN.md — Gin7CommandRegistry stub (81종) + 삼국지 커맨드 파일 삭제
-- [x] 01-02-PLAN.md — 삼국지 전투엔진 삭제 (BattleEngine/BattleService/GroundBattleEngine)
-- [x] 01-03-PLAN.md — EconomyService 삼국지 로직 제거 + processMonthly() stub
-- [x] 01-04-PLAN.md — ShipUnit 엔티티 + V45 DB 마이그레이션 + ShipUnitRepository
-- [x] 01-05-PLAN.md — ShipStatRegistry (JSON 로드) + ShipUnitService + officerLevel >= 5 전량 제거
+**Plans**: 5 plans (complete)
 
 ### Phase 2: gin7 81종 커맨드 시스템
 **Goal**: 직무권한카드 기반 81종 gin7 커맨드가 실시간 실행 파이프라인을 통해 동작하며 삼국지 권한 우회가 완전히 제거된다
 **Depends on**: Phase 1
 **Requirements**: CMD-01, CMD-02, CMD-03, CMD-04, CMD-05, CMD-06, CMD-07, CMD-08, CMD-09
 **Success Criteria** (what must be TRUE):
-  1. 플레이어가 직무권한카드를 통해서만 해당 커맨드 그룹에 접근할 수 있다 (officerLevel >= 5 우회 0건)
-  2. 커맨드 실행 시 CP 차감 → 대기시간 → 실행 → WebSocket 결과 브로드캐스트 흐름이 동작한다
-  3. 7개 커맨드 그룹(작전/개인/지휘/병참/인사/정치/첩보) 81종이 모두 CommandRegistry에 등록된다
-  4. 계급이 낮은 장교가 상급자에게 제안(제안커맨드)을 발행하고 승인/거부가 처리된다
-**Plans**: 7 plans
-
-Plans:
-- [x] 02-01-PLAN.md — PositionCardRegistry gin7 매핑 교체 + Gin7CommandRegistry MCP/PCP 분리
-- [x] 02-02-PLAN.md — 작전커맨드 16종 + 병참커맨드 6종 구현체
-- [x] 02-03-PLAN.md — 개인커맨드 15종 + 인사커맨드 10종 구현체
-- [x] 02-04-PLAN.md — 정치커맨드 12종 + 첩보커맨드 14종 구현체
-- [x] 02-05-PLAN.md — 지휘커맨드 8종 구현체 + stub 전량 제거
-- [x] 02-06-PLAN.md — 제안 시스템 (CommandProposal 엔티티 + 승인/거부 API)
-- [ ] 02-07-PLAN.md — 통합 테스트 (81종 등록 + 파이프라인 + 제안 시스템)
+  1. 플레이어가 직무권한카드를 통해서만 해당 커맨드 그룹에 접근할 수 있다
+  2. 커맨드 실행 시 CP 차감 -> 대기시간 -> 실행 -> WebSocket 결과 브로드캐스트 흐름이 동작한다
+  3. 7개 커맨드 그룹 81종이 모두 CommandRegistry에 등록된다
+  4. 계급이 낮은 장교가 상급자에게 제안을 발행하고 승인/거부가 처리된다
+**Plans**: 7 plans (complete)
 
 ### Phase 3: 실시간 전술전 엔진
 **Goal**: 에너지 배분, 무기 시스템, 진형, 커맨드레인지서클, 색적, 요새포, 지상전을 포함한 gin7 전술전이 실시간으로 동작한다
-**Depends on**: Phase 1, Phase 2 (일부 전술 커맨드는 CMD 시스템 필요)
-**Requirements**: BATTLE-01, BATTLE-02, BATTLE-03, BATTLE-04, BATTLE-05, BATTLE-06, BATTLE-07, BATTLE-08, BATTLE-09, BATTLE-10, BATTLE-11, BATTLE-12
+**Depends on**: Phase 1, Phase 2
+**Requirements**: BATTLE-01 through BATTLE-12
 **Success Criteria** (what must be TRUE):
-  1. 같은 그리드에 적아 유닛이 공존하면 전투가 자동 개시되고, 종료 조건 달성 시 정상 종료된다
-  2. BEAM/GUN/SHIELD/ENGINE/WARP/SENSOR 6채널 에너지 슬라이더 합계가 100을 유지하며 WebSocket으로 실시간 반영된다
-  3. 빔/건/미사일(물자소비) 무기가 사거리/위력/보정에 따라 피해를 계산하고 88 서브타입 스탯이 적용된다
-  4. 커맨드레인지서클이 tick 경과에 따라 확대되고 명령 발령 시 0으로 리셋된다
-  5. 육전대 강하 후 지상전이 시작되며 6종 행성 점령 방식(항복권고/정밀폭격/무차별폭격/육전대강하/점거/선동)이 각기 다른 결과를 낸다
-**Plans**: 5 plans
-
-Plans:
-- [x] 03-01-PLAN.md — TacticalUnit 확장 + 태세/에너지 WebSocket 채널 + 자동 전투 개시
-- [x] 03-02-PLAN.md — 미사일/전투정 무기 시스템 + BEAM 사거리 곡선 + 색적 DetectionService
-- [x] 03-03-PLAN.md — 요새포 4종 FortressGunSystem + 전투 REST API + 퇴각/공격대상 채널
-- [x] 03-04-PLAN.md — 지상전 박스(30유닛 제한) + 행성 점령 6종 PlanetConquestService
-- [x] 03-05-PLAN.md — 기함 격침→부상→귀환성 워프 + 전술 커맨드 11종 + 통합 테스트
-**UI hint**: yes
+  1. 적아 유닛 공존 시 전투 자동 개시, 종료 조건 달성 시 정상 종료
+  2. 6채널 에너지 슬라이더 합계 100 유지, WebSocket 실시간 반영
+  3. 빔/건/미사일 무기 사거리/위력/보정 피해 계산, 88 서브타입 스탯 적용
+  4. 커맨드레인지서클 tick 확대, 명령 발령 시 0 리셋
+  5. 지상전 및 6종 행성 점령 방식 동작
+**Plans**: 5 plans (complete)
 
 ### Phase 4: 경제 시스템
-**Goal**: 행성 자원 생산, 조병창 자동생산, 세율/납입, 창고 이동, 페잔 차관이 TickEngine의 월별 파이프라인을 통해 순환된다
-**Depends on**: Phase 2 (커맨드 시스템으로 경제 커맨드 실행)
-**Requirements**: ECON-01, ECON-02, ECON-03, ECON-04, ECON-05, ECON-06
+**Goal**: 행성 자원 생산, 조병창, 세율/납입, 창고 이동, 페잔 차관이 월별 파이프라인을 통해 순환된다
+**Depends on**: Phase 2
+**Requirements**: ECON-01 through ECON-06
 **Success Criteria** (what must be TRUE):
-  1. TickEngine.runMonthlyPipeline()이 Gin7EconomyService를 호출하여 90일 주기 세수가 진영 자금에 반영된다
-  2. 행성 조병창이 tick마다 자동으로 함선/지상유닛을 생산하며 플레이어 조작 없이 지속된다
+  1. 90일 주기 세수가 진영 자금에 반영된다
+  2. 행성 조병창이 tick마다 자동 생산한다
   3. 행성창고와 부대창고 간 자원 이동이 가능하다
-  4. 페잔 차관 이후 미상환 시 페잔 엔딩 조건이 트리거된다
-**Plans**: 5 plans
-
-Plans:
-- [x] 04-01-PLAN.md — Gin7EconomyService (세율 징수 + 행성자원 성장) + TickEngine wiring
-- [x] 04-02-PLAN.md — ShipyardProductionService gin7 확장 + TickEngine 주기적 호출
-- [x] 04-03-PLAN.md — 행성↔부대창고 transfer/return API (WarehouseService + WarehouseController)
-- [x] 04-04-PLAN.md — 페잔 차관 엔딩 트리거 (FezzanEndingService) + 함대 출격비용 (FleetSortieCostService)
-- [x] 04-05-PLAN.md — 경제 시스템 통합 테스트 (ECON-01~06 전체 검증)
+  4. 페잔 차관 미상환 시 페잔 엔딩이 트리거된다
+**Plans**: 5 plans (complete)
 
 ### Phase 5: AI 시스템
-**Goal**: 오프라인 플레이어와 NPC가 gin7 81종 커맨드 시스템을 통해 성격 기반으로 행동하며, 진영 AI가 예산/인사/작전을 자율 처리한다
-**Depends on**: Phase 2 (AI는 동일한 커맨드 파이프라인 사용)
-**Requirements**: AI-01, AI-02, AI-03, AI-04
+**Goal**: 오프라인 플레이어와 NPC가 성격 기반으로 행동하며, 진영 AI가 자율 처리한다
+**Depends on**: Phase 2
+**Requirements**: AI-01 through AI-04
 **Success Criteria** (what must be TRUE):
-  1. 오프라인 상태의 플레이어 캐릭터가 해당 플레이어의 스탯과 성격 가중치에 따라 커맨드를 자동 실행한다
-  2. 진영 AI가 예산 배분과 인사 처리를 자율적으로 수행하며 NPC 진영이 독립적으로 행동 가능하다
-  3. 쿠데타 조건이 감지되면 시나리오 이벤트 AI가 내전 트리거를 발동한다
-  4. NPC AI가 1 tick당 1 그룹 처리(슬롯 기반 스케줄링)로 O(n) 성능 문제 없이 동작한다
-**Plans**: 3 plans
-
-Plans:
-- [x] 05-01-PLAN.md — UtilityScorer (성격 기반 gin7 커맨드 점수) + AiCommandBridge + OfflinePlayerAI TickEngine 연결
-- [x] 05-02-PLAN.md — FactionAIScheduler (슬롯 기반 라운드 로빈) + TickEngine 10틱 연결
-- [x] 05-03-PLAN.md — ScenarioEventAIService (쿠데타 감지 + 내전 트리거) + AI-01~04 통합 테스트
+  1. 오프라인 플레이어 캐릭터가 성격 가중치에 따라 커맨드를 자동 실행한다
+  2. 진영 AI가 예산/인사를 자율 처리한다
+  3. 쿠데타 조건 감지 시 내전 트리거가 발동한다
+  4. NPC AI가 슬롯 기반 스케줄링으로 성능 문제 없이 동작한다
+**Plans**: 3 plans (complete)
 
 ### Phase 6: 프론트엔드 통합
-**Goal**: 은하영웅전설 세계관의 전략 게임 화면, 전술전 UI, 은하맵이 삼국지 잔재 없이 한국어로 완성되며 WebSocket 구독이 모든 백엔드 시스템에 연결된다
-**Depends on**: Phase 1, Phase 2, Phase 3 (UI가 의존하는 백엔드 시스템)
-**Requirements**: FE-01, FE-02, FE-03, FE-04, FE-05, FE-06, FE-07, FE-08
+**Goal**: 전략 게임 화면, 전술전 UI, 은하맵이 삼국지 잔재 없이 한국어로 완성된다
+**Depends on**: Phase 1, Phase 2, Phase 3
+**Requirements**: FE-01 through FE-08
 **Success Criteria** (what must be TRUE):
-  1. 은하맵에서 도트스타일 성계 아이콘과 진영 색상 5단계 음영이 표시되며 함대 위치와 이동 범위가 하이라이트된다
-  2. 전술전 화면이 상단 3D 접근전 뷰(React Three Fiber)와 하단 2D 전술맵(React Konva)으로 분할되며 에너지 슬라이더가 실시간 동작한다
-  3. 전략 게임 화면에서 직무권한카드 탭 → 커맨드 목록 → CP 표시 → 실행 흐름이 완전히 동작한다
-  4. city/nation/troop 등 삼국지 용어와 컴포넌트가 코드베이스에 0건 존재한다
-  5. 진영별 정치 UI(제국 쿠데타/귀족, 동맹 의회/선거, 페잔 차관/정보)가 동작한다
-**Plans**: 8 plans
+  1. 은하맵 도트스타일 성계 아이콘과 진영 색상 표시
+  2. 전술전 화면이 3D+2D 분할 에너지 슬라이더 실시간 동작
+  3. 직무권한카드 탭 -> 커맨드 -> CP -> 실행 흐름 동작
+  4. 삼국지 용어/컴포넌트 0건
+  5. 진영별 정치 UI 동작
+**Plans**: 8 plans (complete)
 **UI hint**: yes
 
-Plans:
-- [x] 06-01-PLAN.md — gin7 도메인 타입 파일 생성 (Officer/Fleet/Planet/Faction/Command) + types/index.ts 재구성
-- [x] 06-02-PLAN.md — 은하맵 도트 아이콘 + 5단계 진영색 + 함대위치 마커 + 이동범위 하이라이트
-- [x] 06-03-PLAN.md — 전술맵 UI: △□◇ 유닛아이콘 + 커맨드레인지서클 + 미니맵 + 정보패널
-- [x] 06-04-PLAN.md — 전투 접근전 뷰: 상단 3열(아군패널+연출뷰+적군패널) + 하단 R3F 전술맵
-- [x] 06-05-PLAN.md — 전략게임 화면: 8스탯 패널 + 직무권한카드탭 + 커맨드실행 + 동스폿장교
-- [x] 06-06-PLAN.md — 함대/행성 관리: 함대편성 카드 + 행성자원 패널 + 창고이송 UI
-- [x] 06-07-PLAN.md — 정치 UI: 제국(쿠데타/귀족) + 동맹(의회/선거) + 페잔(차관/정보)
-- [x] 06-08-PLAN.md — 삼국지 레거시 UI 완전 제거 + 네비게이션 gin7 용어 정리
-
 ### Phase 7: 시나리오 데이터 + 밸런싱
-**Goal**: 10개 시나리오의 초기 데이터가 완비되고, 플레이테스트 기반 밸런스 조정이 적용되어 실제 플레이 가능한 게임이 완성된다
-**Depends on**: Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, Phase 6
-**Requirements**: SCEN-01, SCEN-02, SCEN-03, TEST-01, TEST-02, TEST-03, TEST-04
+**Goal**: 10개 시나리오 초기 데이터 완비, 밸런스 조정 적용, 실제 플레이 가능
+**Depends on**: Phase 1-6
+**Requirements**: SCEN-01 through SCEN-03, TEST-01 through TEST-04
 **Success Criteria** (what must be TRUE):
-  1. 10개 시나리오 모두 인물 배치, 함대 편성, 행성 상태 초기값이 DB에 적재되어 게임 시작이 가능하다
-  2. LOGH 원작 캐릭터(라인하르트, 양웬리 등)의 8스탯/성격/계급/직무카드가 gin7 매뉴얼 기준으로 입력된다
-  3. 커스텀 캐릭터 생성 시 8스탯 배분과 진영 선택이 가능하다
-  4. 88 서브타입 전투 시뮬레이션, CP 비용/대기시간, 경제 순환이 밸런스 검증 통과 상태이다
-**Plans**: 4 plans
+  1. 10개 시나리오 인물/함대/행성 초기값 적재, 게임 시작 가능
+  2. LOGH 원작 캐릭터 8스탯/성격/계급/직무카드 입력 완료
+  3. 커스텀 캐릭터 생성 시 8스탯 배분과 진영 선택 가능
+  4. 전투/CP/경제 밸런스 검증 통과
+**Plans**: 4 plans (complete)
 
-Plans:
-- [x] 07-01-PLAN.md — S10 장교 데이터 완성 + LOGH 시나리오 초기 함대 생성
-- [x] 07-02-PLAN.md — 커스텀 캐릭터 8-stat 유효성 강화 + 시나리오 참가 페이지
-- [x] 07-03-PLAN.md — 밸런스 검증 테스트 (전투/CP비용/경제 3종)
-- [x] 07-04-PLAN.md — 전체 플로우 통합 테스트 (시나리오 초기화→커맨드→경제→커스텀 캐릭터)
+</details>
+
+### Phase 8: 엔진 통합 + 커맨드 버퍼
+**Goal**: 듀얼 전술 엔진이 단일 엔진으로 통합되고, 커맨드 버퍼로 tick-WebSocket 동시성이 보장되며, 지휘 계층 데이터 모델이 전투 상태에 포함된다
+**Depends on**: Phase 7 (v2.0 완료)
+**Requirements**: ENGINE-01, ENGINE-02, ENGINE-03
+**Success Criteria** (what must be TRUE):
+  1. TacticalCombatEngine(engine/war/)이 제거 또는 비활성화되고 TacticalBattleEngine 하나만 전술전을 처리한다
+  2. WebSocket으로 수신된 전술 명령이 ConcurrentLinkedQueue에 버퍼링되어 tick 시작 시점에 일괄 처리된다 (직접 상태 변경 없음)
+  3. TacticalBattleState에 CommandHierarchy(사령관-유닛 매핑, 승계 대기열)가 포함되어 전투 초기화 시 자동 생성된다
+**Plans**: TBD
+
+### Phase 9: 지휘권 분배 + 커맨드레인지서클
+**Goal**: 사령관이 함대를 분함대로 나누어 지휘하고, 커맨드레인지서클 내 유닛에만 명령이 전달되며, 통신 방해가 지휘 체계에 영향을 미친다
+**Depends on**: Phase 8
+**Requirements**: CMD-01, CMD-02, CMD-03, CMD-04, CMD-05, CMD-06
+**Success Criteria** (what must be TRUE):
+  1. 사령관이 60유닛을 부사령관/참모에게 분함대로 배정할 수 있고, 온라인->계급->평가->공적 우선순위가 자동 적용된다
+  2. 지휘관의 CRC 반경 내 유닛에만 명령이 전달되고, CRC 밖 유닛은 마지막 명령 유지 또는 AI 자율 행동한다
+  3. 사령관이 서클 밖이면서 정지 중인 유닛을 실시간으로 재배정할 수 있다
+  4. 통신 방해 상태에서 총사령관의 전군 명령이 차단된다
+
+### Phase 10: 지휘 승계
+**Goal**: 사령관 부상/사망 시 지휘권이 규칙에 따라 승계되며, 체계 붕괴 시 유닛이 독립 AI로 전환된다
+**Depends on**: Phase 9
+**Requirements**: SUCC-01, SUCC-02, SUCC-03, SUCC-04, SUCC-05, SUCC-06
+**Success Criteria** (what must be TRUE):
+  1. 사령관이 사전에 후계자를 지명할 수 있고, 부상 시 지휘력 저하와 함께 지휘권 위임이 가능하다
+  2. 사령관 사망(기함 격침) 시 30틱 공백 후 사전 지명자가 승계하며, 지명자 부재/사망 시 차순위 계급자가 자동 승계한다
+  3. 분함대장 지휘 불가 시 해당 유닛이 사령관 직할로 복귀한다
+  4. 모든 사령관 지휘 불가 시 지휘 체계가 붕괴하여 각 유닛이 독립 AI로 행동한다
+**Plans**: TBD
+
+### Phase 11: 전술 AI
+**Goal**: 오프라인/NPC 유닛이 작전 목적과 성격에 따라 자동 전투를 수행하며, 위협 평가 기반 퇴각과 에너지/진형 자동 조정이 동작한다
+**Depends on**: Phase 9, Phase 10
+**Requirements**: TAI-01, TAI-02, TAI-03, TAI-04, TAI-05
+**Success Criteria** (what must be TRUE):
+  1. AI 유닛이 작전 목적(점령/방어/소탕)에 따라 서로 다른 기본 행동(행성이동/현위치수비/적추격)을 수행한다
+  2. 성격 특성(AGGRESSIVE/DEFENSIVE 등)에 따라 교전 거리, 퇴각 임계값, 공격 대상 선택이 달라진다
+  3. HP<20% 또는 사기<30% 조건에서 AI가 퇴각 판단을 실행한다
+  4. AI가 상황에 따라 에너지 배분, 진형, 태세를 자동 변경하고 집중/분산 공격을 전환한다
+**Plans**: TBD
+
+### Phase 12: 작전 연동
+**Goal**: 전략 게임의 작전계획이 전술전 AI 행동을 결정하고, 작전 참가 부대가 공적 보상을 받으며, 발령-도달로 작전이 시작된다
+**Depends on**: Phase 11
+**Requirements**: OPS-01, OPS-02, OPS-03
+**Success Criteria** (what must be TRUE):
+  1. 전략 게임에서 발령한 작전계획(점령/방어/소탕)의 목적이 전술전 진입 시 AI 기본 행동(TAI-01)에 자동 전달된다
+  2. 작전에 참가한 부대가 전투 종료 후 비참가 부대 대비 공적 보너스를 받는다
+  3. 발령된 부대가 목표 성계에 도달하면 작전이 자동 시작된다
+**Plans**: TBD
+
+### Phase 13: 전략 AI
+**Goal**: AI 진영이 전쟁 상태에서 자동으로 작전계획을 수립하고 전력 평가에 따라 적절한 작전 유형을 선택한다
+**Depends on**: Phase 12
+**Requirements**: SAI-01, SAI-02
+**Success Criteria** (what must be TRUE):
+  1. AI 진영이 교전 중일 때 FactionAI가 자동으로 작전계획(점령/방어/소탕)을 생성한다
+  2. 자기 진영 대비 적 전력이 약한 성계에는 점령, 위협받는 자기 성계에는 방어, 침입 함대에는 소탕 작전이 선택된다
+**Plans**: TBD
+
+### Phase 14: 프론트엔드 통합
+**Goal**: 전술전 지휘체계의 모든 백엔드 기능이 프론트엔드에서 시각적으로 표현되고 조작 가능하다
+**Depends on**: Phase 8, Phase 9, Phase 10, Phase 11, Phase 12, Phase 13
+**Requirements**: FE-01, FE-02, FE-03, FE-04, FE-05
+**Success Criteria** (what must be TRUE):
+  1. 전술맵에 각 지휘관의 CRC가 기함 위치 중심으로 색상 구분되어 표시되고, 명령 발령 시 서클 축소가 시각적으로 반영된다
+  2. 분함대 배정 패널에서 유닛을 드래그하여 지휘관별로 배정/해제할 수 있다
+  3. 현재 로그인한 장교의 지휘권에 해당하지 않는 유닛의 명령 버튼이 비활성화된다
+  4. 지휘 승계 발생 시 "지휘 승계 중" 카운트다운과 기함 격침 플래시가 표시된다
+  5. 색적 범위 밖의 적 유닛이 안개 효과로 숨겨진다
+**Plans**: TBD
+**UI hint**: yes
 
 ## Progress
 
-**Execution Order:** 1 → 2 → 3 → 4 (Phase 3과 병렬 가능) → 5 → 6 → 7
+**Execution Order:** 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. 레거시 제거 + 함종 유닛 기반 | 8/8 | Complete   | 2026-04-06 |
-| 2. gin7 81종 커맨드 시스템 | 6/7 | In Progress|  |
-| 3. 실시간 전술전 엔진 | 2/5 | In Progress|  |
-| 4. 경제 시스템 | 5/5 | Complete   | 2026-04-06 |
-| 5. AI 시스템 | 1/3 | In Progress|  |
-| 6. 프론트엔드 통합 | 6/8 | In Progress|  |
-| 7. 시나리오 데이터 + 밸런싱 | 1/3 | In Progress|  |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. 레거시 제거 + 함종 유닛 기반 | v2.0 | 5/5 | Complete | 2026-04-06 |
+| 2. gin7 81종 커맨드 시스템 | v2.0 | 7/7 | Complete | 2026-04-06 |
+| 3. 실시간 전술전 엔진 | v2.0 | 5/5 | Complete | 2026-04-06 |
+| 4. 경제 시스템 | v2.0 | 5/5 | Complete | 2026-04-06 |
+| 5. AI 시스템 | v2.0 | 3/3 | Complete | 2026-04-06 |
+| 6. 프론트엔드 통합 | v2.0 | 8/8 | Complete | 2026-04-06 |
+| 7. 시나리오 데이터 + 밸런싱 | v2.0 | 4/4 | Complete | 2026-04-06 |
+| 8. 엔진 통합 + 커맨드 버퍼 | v2.1 | 0/0 | Not started | - |
+| 9. 지휘권 분배 + CRC | v2.1 | 0/0 | Not started | - |
+| 10. 지휘 승계 | v2.1 | 0/0 | Not started | - |
+| 11. 전술 AI | v2.1 | 0/0 | Not started | - |
+| 12. 작전 연동 | v2.1 | 0/0 | Not started | - |
+| 13. 전략 AI | v2.1 | 0/0 | Not started | - |
+| 14. 프론트엔드 통합 | v2.1 | 0/0 | Not started | - |

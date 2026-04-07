@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
-status: defining-requirements
+status: ready-to-plan
 stopped_at: null
 last_updated: "2026-04-07"
 last_activity: 2026-04-07
 progress:
-  total_phases: 0
+  total_phases: 7
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** gin7 조직 시뮬레이션 — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Milestone v2.1 — 전술전 지휘체계 + AI
+**Current focus:** Phase 8 — 엔진 통합 + 커맨드 버퍼
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-07 — Milestone v2.1 started
+Phase: 8 of 14 (엔진 통합 + 커맨드 버퍼)
+Plan: 0 of 0 in current phase (not yet planned)
+Status: Ready to plan
+Last activity: 2026-04-07 — Roadmap created for v2.1
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -55,23 +57,16 @@ Last activity: 2026-04-07 — Milestone v2.1 started
 
 ### Decisions
 
-- [v2.0-Roadmap]: Phase 4 (Economy) can run in parallel with Phase 3 (Battle) — both depend only on Phase 2
-- [v2.0-Phase 01]: ShipUnit shipClass/shipSubtype stored as String enum names for schema evolution flexibility
-- [v2.0-Phase 01]: ShipStatRegistry parses nested JSON (shipClasses[].subtypes[]) into flat subtype key map via buildSubtypeKey()
-- [v2.0-Phase 02]: Gin7StubCommand uses single cpType: StatCategory constructor param
-- [v2.0-Phase 02]: positionCards is MutableList<String> (JSONB) not comma-separated String
-- [v2.0-Phase 02]: CommandProposalService: uses currentYear for both year and startYear in CommandEnv
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
 - [v2.0-Phase 03]: BattleWebSocketController uses officerId in payload (not OfficerPrincipal)
-- [v2.0-Phase 03]: UnitStance.defenseModifier: NAVIGATION=1.0, ANCHORING=1.1, STATIONED=1.3, COMBAT=0.9
-- [v2.0-Phase 03]: DetectionService wraps DetectionEngine — precision>=0.5 OR 2+ detectors for confirmation
 - [v2.0-Phase 03]: isFlagship cleared on destruction before replacement promotion
-- [v2.0-Phase 04]: Tax collection on months 1,4,7,10 only (90-day gin7 cycle)
-- [v2.0-Phase 05]: UtilityScorer is pure object (no Spring DI) — stat drivers are static, personality weights applied at call time
-- [v2.0-Phase 05]: AiCommandBridge uses runBlocking for CommandExecutor.executeOfficerCommand (suspend fun)
-- [v2.0-Phase 06]: BattleMap converted from SVG to React Konva for gin7 dot-style rendering
-- [v2.0-Phase 06]: Tactical icon rule: isFlagship → △, all others → □, ◇ removed
-- [v2.0-Phase 06]: Used REST as authoritative command execution; WebSocket publish is fire-and-forget supplement
-- [v2.0-Phase 07]: H2 ddl-auto=create-drop + NON_KEYWORDS로 통합 테스트 DB 설정
+- [v2.0-Phase 05]: UtilityScorer is pure object (no Spring DI)
+- [v2.0-Phase 06]: Tactical icon rule: isFlagship -> triangle, all others -> square
+- [v2.1-Roadmap]: Dual engine (TacticalBattleEngine + TacticalCombatEngine) must be resolved in Phase 8 before any hierarchy code
+- [v2.1-Roadmap]: Command buffer pattern (ConcurrentLinkedQueue) replaces direct WebSocket-to-state mutation
+- [v2.1-Roadmap]: TacticalAI must be pure function operating only on TacticalBattleState — no DB access
 
 ### Pending Todos
 
@@ -79,10 +74,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- [Phase 8]: Exact field differences between TacticalCombatEngine.TacticalUnit and TacticalBattleEngine.TacticalUnit need a diff at kickoff
+- [Phase 8]: OperationPlan entity design decision needed: new table vs enriched JSONB
+- [Phase 14]: CRC rendering layer (Konva vs R3F) must be confirmed before UI work
 
 ## Session Continuity
 
 Last session: 2026-04-07
-Stopped at: Milestone v2.1 initialization
+Stopped at: Roadmap created for v2.1 (7 phases, 30 requirements)
 Resume file: None
