@@ -1,0 +1,7 @@
+{
+  "columns": ["generalName", "picture", "affinity"],
+  "data": [
+    ["테스트장수", "9999", 50],
+    ["테스트장수2", "9998", 40]
+  ]
+}

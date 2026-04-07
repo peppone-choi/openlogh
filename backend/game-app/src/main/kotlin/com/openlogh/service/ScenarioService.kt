@@ -28,6 +28,7 @@ class ScenarioService(
     private val officerRepository: OfficerRepository,
     private val diplomacyRepository: DiplomacyRepository,
     private val eventRepository: EventRepository,
+    private val fleetRepository: FleetRepository,
     private val mapService: MapService,
     private val historyService: HistoryService,
     private val selectPoolRepository: com.openlogh.repository.SelectPoolRepository,
@@ -266,7 +267,7 @@ class ScenarioService(
         collectGenerals(scenario.general, 2)
         if (extendedGeneralEnabled) collectGenerals(scenario.generalEx, 2)
         collectGenerals(scenario.generalNeutral, 6)
-        officerRepository.saveAll(generalsToSave)
+        val savedOfficers = officerRepository.saveAll(generalsToSave)
 
         if (delayedNpcCount > 0) {
             log.info(
@@ -274,6 +275,27 @@ class ScenarioService(
                 worldId,
                 delayedNpcCount,
             )
+        }
+
+        // 3. Create initial fleets for LOGH scenarios (one per faction)
+        if (mapName == "logh") {
+            val savedOfficersByFaction = savedOfficers.groupBy { it.factionId }
+            val fleetsToCreate = savedNations.mapNotNull { faction ->
+                val factionOfficers = savedOfficersByFaction[faction.id] ?: return@mapNotNull null
+                val leader = factionOfficers.maxByOrNull { it.officerLevel } ?: return@mapNotNull null
+                Fleet(
+                    sessionId = worldId,
+                    name = "${faction.name} 제1함대",
+                    leaderOfficerId = leader.id,
+                    factionId = faction.id,
+                    planetId = faction.capitalPlanetId ?: allCityIds.firstOrNull(),
+                    meta = mutableMapOf("initial" to true),
+                )
+            }
+            if (fleetsToCreate.isNotEmpty()) {
+                fleetRepository.saveAll(fleetsToCreate)
+                log.info("[World {}] Created {} initial fleets for LOGH scenario", worldId, fleetsToCreate.size)
+            }
         }
 
         val allGenerals = officerRepository.findBySessionId(worldId)

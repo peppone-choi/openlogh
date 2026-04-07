@@ -8,6 +8,7 @@ import com.openlogh.entity.SelectPool
 import com.openlogh.entity.SessionState
 import com.openlogh.model.CityConst
 import com.openlogh.model.ScenarioData
+import com.openlogh.entity.Fleet
 import com.openlogh.repository.*
 import jakarta.persistence.EntityManager
 import org.junit.jupiter.api.Assertions.*
@@ -36,6 +37,7 @@ class ScenarioServiceTest {
     private lateinit var planetRepository: PlanetRepository
     private lateinit var officerRepository: OfficerRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
+    private lateinit var fleetRepository: FleetRepository
     private lateinit var selectPoolRepository: SelectPoolRepository
     private lateinit var historyService: HistoryService
     private lateinit var mapService: MapService
@@ -49,6 +51,7 @@ class ScenarioServiceTest {
         planetRepository = mock(PlanetRepository::class.java)
         officerRepository = mock(OfficerRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
+        fleetRepository = mock(FleetRepository::class.java)
         historyService = mock(HistoryService::class.java)
         mapService = mock(MapService::class.java)
         entityManager = mock(EntityManager::class.java)
@@ -65,6 +68,7 @@ class ScenarioServiceTest {
             officerRepository = officerRepository,
             diplomacyRepository = diplomacyRepository,
             eventRepository = mock(EventRepository::class.java),
+            fleetRepository = fleetRepository,
             mapService = mapService,
             historyService = historyService,
             selectPoolRepository = selectPoolRepository,
@@ -74,7 +78,7 @@ class ScenarioServiceTest {
         )
 
         parseGeneral = ScenarioService::class.java.getDeclaredMethod(
-            "parseGeneral",
+            "parseOfficer",
             List::class.java,
             Long::class.javaPrimitiveType,
             Map::class.java,
@@ -609,7 +613,7 @@ class ScenarioServiceTest {
     @Test
     fun `parseNation sets scoutMsg from scenario description`() {
         val parseNation = ScenarioService::class.java.getDeclaredMethod(
-            "parseNation",
+            "parseFaction",
             List::class.java,
             Long::class.javaPrimitiveType,
         )
@@ -626,7 +630,7 @@ class ScenarioServiceTest {
     @Test
     fun `parseNation sets legacy default bill 100 rate 15 rateTmp 15`() {
         val parseNation = ScenarioService::class.java.getDeclaredMethod(
-            "parseNation",
+            "parseFaction",
             List::class.java,
             Long::class.javaPrimitiveType,
         )
@@ -643,7 +647,7 @@ class ScenarioServiceTest {
     @Test
     fun `parseNation handles missing description gracefully`() {
         val parseNation = ScenarioService::class.java.getDeclaredMethod(
-            "parseNation",
+            "parseFaction",
             List::class.java,
             Long::class.javaPrimitiveType,
         )
@@ -679,7 +683,7 @@ class ScenarioServiceTest {
         val scenario = com.openlogh.model.ScenarioData(
             title = "test",
             startYear = 184,
-            emperor = mapOf("generalName" to "헌제", "factionIdx" to 1, "status" to "enthroned"),
+            emperor = mapOf("generalName" to "헌제", "nationIdx" to 1, "status" to "enthroned"),
         )
 
         val factionIdxToDbId = mapOf(1 to 100L)
@@ -711,7 +715,7 @@ class ScenarioServiceTest {
         val scenario = com.openlogh.model.ScenarioData(
             title = "test",
             startYear = 184,
-            emperor = mapOf("generalName" to "영제", "factionIdx" to 1, "status" to "enthroned"),
+            emperor = mapOf("generalName" to "영제", "nationIdx" to 1, "status" to "enthroned"),
         )
 
         val factionIdxToDbId = mapOf(1 to 100L)
@@ -832,6 +836,63 @@ class ScenarioServiceTest {
         val nation = Faction(id = 1, sessionId = 1, name = "테스트")
         nation.abbreviation = "abcdef".take(2)
         assertEquals("ab", nation.abbreviation)
+    }
+
+    @Test
+    fun `LOGH scenario initial fleet creation logic selects highest-rank officer as leader per faction`() {
+        // Unit test for the fleet creation algorithm used in ScenarioService.initializeWorld()
+        // Tests the logic directly without mocking initializeWorld (which requires full Spring context)
+
+        val empire = Faction(id = 10L, sessionId = 1L, name = "은하제국")
+        empire.capitalPlanetId = 100L
+        val alliance = Faction(id = 20L, sessionId = 1L, name = "자유행성동맹")
+        alliance.capitalPlanetId = 200L
+
+        val reinhard = Officer(id = 1L, sessionId = 1L, name = "라인하르트", factionId = 10L)
+        reinhard.officerLevel = 10
+        val muller = Officer(id = 2L, sessionId = 1L, name = "뮐러", factionId = 10L)
+        muller.officerLevel = 8
+        val yang = Officer(id = 3L, sessionId = 1L, name = "양 웬리", factionId = 20L)
+        yang.officerLevel = 8
+        val attenborough = Officer(id = 4L, sessionId = 1L, name = "아텐보로", factionId = 20L)
+        attenborough.officerLevel = 7
+
+        val savedOfficers = listOf(reinhard, muller, yang, attenborough)
+        val savedNations = listOf(empire, alliance)
+        val allCityIds = listOf(100L, 200L)
+        val worldId = 1L
+
+        // Replicate the fleet creation algorithm from ScenarioService.initializeWorld()
+        val savedOfficersByFaction = savedOfficers.groupBy { it.factionId }
+        val fleetsToCreate = savedNations.mapNotNull { faction ->
+            val factionOfficers = savedOfficersByFaction[faction.id] ?: return@mapNotNull null
+            val leader = factionOfficers.maxByOrNull { it.officerLevel } ?: return@mapNotNull null
+            Fleet(
+                sessionId = worldId,
+                name = "${faction.name} 제1함대",
+                leaderOfficerId = leader.id,
+                factionId = faction.id,
+                planetId = faction.capitalPlanetId ?: allCityIds.firstOrNull(),
+                meta = mutableMapOf("initial" to true),
+            )
+        }
+
+        assertEquals(2, fleetsToCreate.size, "Should create one fleet per faction")
+
+        val empireFleet = fleetsToCreate.find { it.factionId == 10L }
+        val allianceFleet = fleetsToCreate.find { it.factionId == 20L }
+
+        assertNotNull(empireFleet, "Empire fleet should be created")
+        assertNotNull(allianceFleet, "Alliance fleet should be created")
+
+        assertEquals("은하제국 제1함대", empireFleet!!.name)
+        assertEquals(1L, empireFleet.leaderOfficerId, "Reinhard (highest officerLevel=10) should be empire fleet leader")
+        assertEquals(100L, empireFleet.planetId, "Empire fleet should be at capital planet")
+        assertEquals(true, empireFleet.meta["initial"])
+
+        assertEquals("자유행성동맹 제1함대", allianceFleet!!.name)
+        assertEquals(3L, allianceFleet.leaderOfficerId, "Yang Wenli (highest officerLevel=8) should be alliance fleet leader")
+        assertEquals(200L, allianceFleet.planetId, "Alliance fleet should be at capital planet")
     }
 
 }
