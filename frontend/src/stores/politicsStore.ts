@@ -9,6 +9,7 @@ import type {
   NobilityEntry,
 } from '@/types/politics';
 import { politicsApi } from '@/lib/politicsApi';
+import api from '@/lib/api';
 
 interface PoliticsState {
   overview: FactionPoliticsOverview | null;
@@ -18,11 +19,14 @@ interface PoliticsState {
   loans: Loan[];
   intelOffers: IntelligenceOffer[];
   nobilityList: NobilityEntry[];
+  /** Faction type resolved from officer's factionId ('empire' | 'alliance' | 'fezzan' | 'rebel') */
+  factionType: string | null;
   loading: boolean;
   error: string | null;
 }
 
 interface PoliticsActions {
+  fetchFactionType: (sessionId: number, factionId: number) => Promise<void>;
   fetchOverview: (sessionId: number, factionId: number) => Promise<void>;
   fetchCoupStatus: (sessionId: number, factionId: number) => Promise<void>;
   fetchCouncil: (sessionId: number, factionId: number) => Promise<void>;
@@ -50,8 +54,21 @@ export const usePoliticsStore = create<PoliticsState & PoliticsActions>((set, ge
   loans: [],
   intelOffers: [],
   nobilityList: [],
+  factionType: null,
   loading: false,
   error: null,
+
+  // Fetch faction type from /api/{sessionId}/factions/{factionId}
+  fetchFactionType: async (sessionId, factionId) => {
+    try {
+      const { data } = await api.get<{ factionType?: string; faction_type?: string }>(
+        `/${sessionId}/factions/${factionId}`
+      );
+      set({ factionType: data.factionType ?? data.faction_type ?? null });
+    } catch (e) {
+      set({ error: (e as Error).message });
+    }
+  },
 
   // Fetch actions
   fetchOverview: async (sessionId, factionId) => {
