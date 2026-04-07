@@ -24,6 +24,10 @@ data class CommandHierarchy(
     val crcRadius: MutableMap<Long, Double> = mutableMapOf(),
     /** Communication jammed flag -- blocks order propagation when true */
     var commJammed: Boolean = false,
+    /** Remaining ticks of communication jamming (0 = not jammed, Plan 04 integration) */
+    var jammingTicksRemaining: Int = 0,
+    /** Officer ID that caused the current jamming (null = no active jammer) */
+    var jammingSourceOfficerId: Long? = null,
 )
 
 /**
@@ -38,8 +42,8 @@ data class SubFleet(
     val commanderId: Long,
     /** Sub-fleet commander display name */
     val commanderName: String,
-    /** Fleet IDs assigned to this sub-fleet */
-    val unitFleetIds: List<Long>,
+    /** TacticalUnit IDs (fleetId) assigned to this sub-fleet (per D-01: individual ShipUnit assignment) */
+    val unitIds: List<Long>,
     /** Commander's rank level (0-10, used for succession ordering) */
     val commanderRank: Int,
 )

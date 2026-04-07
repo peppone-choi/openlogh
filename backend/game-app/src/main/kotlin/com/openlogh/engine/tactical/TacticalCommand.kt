@@ -70,4 +70,20 @@ sealed class TacticalCommand {
         override val officerId: Long,
         val request: ConquestRequest,
     ) : TacticalCommand()
+
+    /** Sub-fleet assignment command (Phase 9: fleet commander assigns units to sub-commander) */
+    data class AssignSubFleet(
+        override val battleId: Long,
+        override val officerId: Long,  // fleet commander issuing the assignment
+        val subCommanderId: Long,
+        val unitIds: List<Long>,       // TacticalUnit.fleetId values to assign
+    ) : TacticalCommand()
+
+    /** Unit reassignment command (Phase 9: move a unit between sub-fleets or back to fleet commander) */
+    data class ReassignUnit(
+        override val battleId: Long,
+        override val officerId: Long,
+        val unitId: Long,
+        val newSubCommanderId: Long?,  // null = return to fleet commander direct control
+    ) : TacticalCommand()
 }
