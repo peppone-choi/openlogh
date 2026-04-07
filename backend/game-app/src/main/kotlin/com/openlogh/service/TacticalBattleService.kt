@@ -508,6 +508,16 @@ class TacticalBattleService(
         return toDto(battle)
     }
 
+    /**
+     * Get battle history including persisted battle state snapshot.
+     * Returns null if battle not found or session mismatch.
+     */
+    fun getBattleHistory(sessionId: Long, battleId: Long): TacticalBattleHistoryDto? {
+        val battle = tacticalBattleRepository.findById(battleId).orElse(null) ?: return null
+        if (battle.sessionId != sessionId) return null
+        return toHistoryDto(battle)
+    }
+
     // ── DTO Conversion ──
 
     private fun toDto(battle: TacticalBattle): TacticalBattleDto {
@@ -556,6 +566,29 @@ class TacticalBattleService(
         retreatProgress = unit.retreatProgress,
         unitType = unit.unitType,
     )
+
+    private fun toHistoryDto(battle: TacticalBattle): TacticalBattleHistoryDto {
+        @Suppress("UNCHECKED_CAST")
+        val attackerIds = (battle.participants["attackers"] as? List<*>)?.mapNotNull { (it as? Number)?.toLong() } ?: emptyList()
+        @Suppress("UNCHECKED_CAST")
+        val defenderIds = (battle.participants["defenders"] as? List<*>)?.mapNotNull { (it as? Number)?.toLong() } ?: emptyList()
+
+        return TacticalBattleHistoryDto(
+            id = battle.id,
+            sessionId = battle.sessionId,
+            starSystemId = battle.starSystemId,
+            attackerFactionId = battle.attackerFactionId,
+            defenderFactionId = battle.defenderFactionId,
+            phase = battle.phase,
+            startedAt = battle.startedAt.toString(),
+            endedAt = battle.endedAt?.toString(),
+            result = battle.result,
+            tickCount = battle.tickCount,
+            attackerFleetIds = attackerIds,
+            defenderFleetIds = defenderIds,
+            battleState = battle.battleState,
+        )
+    }
 
     private fun broadcastBattleState(
         sessionId: Long,

@@ -75,3 +75,23 @@ data class BattleTickEventDto(
 data class ActiveBattlesResponse(
     val battles: List<TacticalBattleDto>,
 )
+
+/**
+ * Battle history DTO for completed battles.
+ * Includes result, tick count, and participating unit summaries.
+ */
+data class TacticalBattleHistoryDto(
+    val id: Long,
+    val sessionId: Long,
+    val starSystemId: Long,
+    val attackerFactionId: Long,
+    val defenderFactionId: Long,
+    val phase: String,
+    val startedAt: String,
+    val endedAt: String? = null,
+    val result: String? = null,
+    val tickCount: Int,
+    val attackerFleetIds: List<Long>,
+    val defenderFleetIds: List<Long>,
+    val battleState: Map<String, Any>,
+)
