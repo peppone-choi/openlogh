@@ -1,36 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: milestone
-status: verifying
-stopped_at: Completed 07-04-PLAN.md
-last_updated: "2026-04-07T04:13:43.753Z"
+milestone: v2.1
+milestone_name: 전술전 지휘체계 + AI
+status: defining-requirements
+stopped_at: null
+last_updated: "2026-04-07"
 last_activity: 2026-04-07
 progress:
-  total_phases: 13
-  completed_phases: 11
-  total_plans: 63
-  completed_plans: 60
-  percent: 77
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-06)
+See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** gin7 조직 시뮬레이션 — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 1 — 레거시 제거 + 함종 유닛 기반
+**Current focus:** Milestone v2.1 — 전술전 지휘체계 + AI
 
 ## Current Position
 
-Phase: 1 of 7 (레거시 제거 + 함종 유닛 기반)
-Plan: 5 of 5 in current phase
-Status: Phase complete — ready for verification
-Last activity: 2026-04-07
-
-Progress: [████████░░] 77%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-07 — Milestone v2.1 started
 
 ## Performance Metrics
 
@@ -52,108 +50,28 @@ Progress: [████████░░] 77%
 - Trend: -
 
 *Updated after each plan completion*
-| Phase 01-legacy-removal-ship-unit-foundation P02 | 25 | 2 tasks | 25 files |
-| Phase 01-legacy-removal-ship-unit-foundation P03 | 8 | 1 tasks | 2 files |
-| Phase 01-legacy-removal-ship-unit-foundation P04 | 8 | 2 tasks | 3 files |
-| Phase 01-legacy-removal-ship-unit-foundation P05 | 12 | 2 tasks | 9 files |
-| Phase 02-gin7-command-system P01 | 12 | 2 tasks | 2 files |
-| Phase 02-gin7-command-system P04 | 8 | 2 tasks | 3 files |
-| Phase 02-gin7-command-system P03 | 25 | 2 tasks | 18 files |
-| Phase 02-gin7-command-system P02 | 45 | 2 tasks | 17 files |
-| Phase 02-gin7-command-system P05 | 35 | 2 tasks | 10 files |
-| Phase 02-gin7-command-system P06 | 10 | 2 tasks | 5 files |
-| Phase 02-gin7-command-system P07 | 45 | 2 tasks | 6 files |
-| Phase 03-tactical-battle-engine P03 | 35 | 2 tasks | 6 files |
-| Phase 03-tactical-battle-engine P02 | 45 | 2 tasks | 7 files |
-| Phase 03-tactical-battle-engine P04 | 35 | 2 tasks | 8 files |
-| Phase 03-tactical-battle-engine P05 | 35 | 2 tasks | 5 files |
-| Phase 04-economy-system P03 | 35 | 2 tasks | 4 files |
-| Phase 04 P01 | 180 | 2 tasks | 6 files |
-| Phase 04-economy-system P02 | 25 | 2 tasks | 5 files |
-| Phase 04-economy-system P04 | 56 | 2 tasks | 7 files |
-| Phase 04-economy-system P05 | 15 | 2 tasks | 1 files |
-| Phase 05-ai-system P01 | 25 | 2 tasks | 7 files |
-| Phase 05-ai-system P03 | 35 | 2 tasks | 5 files |
-| Phase 06-frontend-integration P02 | 15 | 2 tasks | 6 files |
-| Phase 06 P04 | 20 | 2 tasks | 5 files |
-| Phase 06 P03 | 25 | 2 tasks | 6 files |
-| Phase 06 P07 | 25 | 2 tasks | 5 files |
-| Phase 06 P05 | 35 | 2 tasks | 6 files |
-| Phase 06 P08 | 25 | 2 tasks | 53 files |
-| Phase 07 P03 | 25 | 1 tasks | 4 files |
-| Phase 07-scenario-data-balancing P01 | 90 | 2 tasks | 5 files |
-| Phase 07 P04 | 45 | 1 tasks | 5 files |
 
 ## Accumulated Context
 
 ### Decisions
 
-- [Roadmap]: Phase 4 (Economy) can run in parallel with Phase 3 (Battle) — both depend only on Phase 2
-- [Roadmap]: Phase 2 and Phase 3 flagged for pre-planning research before `/gsd:plan-phase`
-- [Research]: `officerLevel >= 5` authority bypass confirmed at 7+ locations — must be fully removed in Phase 2
-- [Research]: `TickEngine.runMonthlyPipeline()` disconnected (TODO at line 126-136) — wire as first task of Phase 4
-- [Research]: Two battle engines coexist (BattleEngine.kt + TacticalBattleEngine.kt) — plan deletion list at Phase 1 start
-- [Research]: ShipUnit subtype stats hardcoded in TacticalBattleEngine — fix in Phase 1 with ShipUnit entity
-- [01-01]: Gin7CommandRegistry extends CommandRegistry (not interface) — preserves CommandExecutor type injection without constructor changes
-- [01-01]: ALWAYS_ALLOWED_COMMANDS = setOf("대기") — replaces 삼국지 휴식/NPC능동/CR건국/CR맹훈련
-- [01-01]: ArgSchemas.kt legacy entries left as dead data — Phase 2 will replace with gin7 schemas
-- [Phase 01]: 삼국지 BattleEngine/WarUnit* 19개 파일 삭제, gin7 TacticalBattleEngine 보존, BattleTrigger stub 유지(ItemModifiers 의존성), Phase 3에서 gin7 전투 엔진으로 대체 예정
-- [Phase 01-legacy-removal-ship-unit-foundation]: EconomyService: keep updateCitySupply/processDisasterOrBoom/randomizeCityTradeRate/processYearlyStatistics active — gin7-compatible, not legacy income logic
-- [Phase 01-legacy-removal-ship-unit-foundation]: NationTypeModifiers: che_* types replaced with gin7 empire/alliance/fezzan/rebel stubs — modifier bodies deferred to Phase 4
-- [Phase 01]: ShipUnit shipClass/shipSubtype stored as String enum names for schema evolution flexibility
-- [Phase 01-legacy-removal-ship-unit-foundation]: ShipStatRegistry parses nested JSON (shipClasses[].subtypes[]) into flat subtype key map via buildSubtypeKey()
-- [Phase 01-legacy-removal-ship-unit-foundation]: officerLevel >= 5 authority bypass fully removed (0 occurrences) — PositionCard-only authority from Plan 05 onwards
-- [Phase 02-gin7-command-system]: Gin7StubCommand uses single cpType: StatCategory constructor param rather than two separate subclasses — simpler, less duplication
-- [Phase 02-gin7-command-system]: 대기 registered as registerPcpStub — ensures ALWAYS_ALLOWED fallback works even if registry lookup is called
-- [Phase 02-gin7-command-system]: PoliticsCommands: all 12 use PCP pool (default, no override); IntelligenceCommands: all 14 override getCommandPoolType()=MCP
-- [Phase 02-gin7-command-system]: positionCards is MutableList<String> (JSONB) not comma-separated String — list add/remove for all manipulation
-- [Phase 02-gin7-command-system]: Planet.supplies 없음 — RequisitionCommand/TransferGoodsCommand은 planet.production을 자원 proxy로 사용
-- [Phase 02-gin7-command-system]: FullRepairCommand: ShipUnitRepository CommandServices 미노출 — fleet.meta[pendingFullRepair]=true 플래그로 turn engine에 위임
-- [Phase 02-gin7-command-system]: FleetRepository added as nullable field to CommandServices; injected via CommandExecutor @Autowired constructor
-- [Phase 02-gin7-command-system]: CommandProposalService: uses currentYear for both year and startYear in CommandEnv (SessionState has no startYear field)
-- [Phase 02-gin7-command-system]: CommandProposalController.approveProposal: uses runBlocking{} wrapper since project is Spring MVC not WebFlux
-- [Phase 02-gin7-command-system]: Mockito cannot stub Kotlin suspend functions without mockito-kotlin; used SuccessCommandExecutor fake subclass for approveProposal test
-- [Phase 02-gin7-command-system]: Pre-existing broken test files (samguk che_* commands, BattleService, TurnService) excluded from compilation via sourceSets.test.kotlin.exclude in build.gradle.kts
-- [Phase 03-tactical-battle-engine]: BattleWebSocketController uses officerId in payload (not OfficerPrincipal) — consistent with JwtAuthenticationFilter String principal
-- [Phase 03-tactical-battle-engine]: UnitStance.defenseModifier: NAVIGATION=1.0, ANCHORING=1.1, STATIONED=1.3, COMBAT=0.9
-- [Phase 03-tactical-battle-engine]: FortressGunType.fromPower() maps power threshold: >=10000=THOR_HAMMER, >=7000=GAIESBURGHER, >=3000=ARTEMIS, else=LIGHT_XRAY
-- [Phase 03-tactical-battle-engine]: BattleWebSocketController /retreat and /attack-target use officerId in payload (not Principal) — consistent with existing /energy and /stance
-- [Phase 03-tactical-battle-engine]: MissileWeaponSystem is stateless pure class — injected via TacticalBattleEngine constructor
-- [Phase 03-tactical-battle-engine]: DetectionService wraps DetectionEngine — precision>=0.5 OR 2+ detectors for confirmation
-- [Phase 03-tactical-battle-engine]: GroundBattleEngine is stateless pure class — injected inline in TacticalBattleEngine processTick, no Spring DI needed
-- [Phase 03-tactical-battle-engine]: GROUND_ASSAULT ConquestCommand returns success=false (ground battle starts) — conquest completion detected via GroundBattleState.isConquestComplete each tick
-- [Phase 03-tactical-battle-engine]: isFlagship cleared on destruction before replacement promotion — avoids stale flagship state
-- [Phase 03-tactical-battle-engine]: getMissileSystem() exposed on TacticalBattleEngine for SORTIE command in service layer
-- [Phase 04-economy-system]: TransferRequest/TransferResult defined in WarehouseService.kt alongside AllocationResult for locality
-- [Phase 04-economy-system]: Overflow on transfer uses coerceAtMost (no exception) consistent with existing allocate() pattern
-- [Phase 04]: Tax collection on months 1,4,7,10 only (90-day gin7 cycle)
-- [Phase 04]: supplyState=0 planets excluded from tax and resource growth
-- [Phase 04-economy-system]: ShipyardProductionService: factionId=0 neutral guard + planet.meta[shipyardClass] config + SHIPYARD_INTERVAL_TICKS=3600 in GameTimeConstants
-- [Phase 04-economy-system]: FezzanEndingService broadcasts via broadcastWorldUpdate() not typed GameEvent — avoids world year/month dependency at trigger time
-- [Phase 04-economy-system]: FleetSortieCostService uses fleet.leaderOfficerId (not meta[commanderId]) as commander reference — matches actual Fleet entity field
-- [Phase 04-economy-system]: Population growth assertion uses >= 10049 (not 10050) due to double truncation in JVM: (10000 * 1.005).toInt() = 10049
-- [Phase 05-ai-system]: UtilityScorer is pure object (no Spring DI) — stat drivers are static, personality weights applied at call time
-- [Phase 05-ai-system]: AiCommandBridge uses runBlocking for CommandExecutor.executeOfficerCommand (suspend fun) — consistent with Spring MVC approach used in Phase 02
-- [Phase 05-ai-system]: ScenarioEventAIService uses hand-rolled WorldPorts spy to avoid Kotlin non-null + Mockito any() NPE
-- [Phase 05-ai-system]: Civil war threshold: supportRatio >= 0.4 OR ticksActive > 300 — dual condition matches gin7 design
-- [Phase 06-frontend-integration]: FACTION_SHADES added to galaxy.ts — single source of truth for 5-shade palette used by both Konva and HTML layers
-- [Phase 06-frontend-integration]: fetchFleetPositions is non-blocking (catches errors silently) — map works without fleet data
-- [Phase 06]: BattleCloseView uses inline styles (not Tailwind) for panel components adjacent to R3F Canvas context
-- [Phase 06]: Used unitType field from TacticalUnit instead of shipClass for gin7 icon mapping
-- [Phase 06]: BattleMap converted from SVG to React Konva for gin7 dot-style rendering
-- [Phase 06]: Used nationId fallback for General type since OfficerStore returns General not Officer DTO
-- [Phase 06]: Tab navigation allows cross-faction politics viewing; own faction tab marked with dot indicator
-- [Phase 06-05]: Used REST as authoritative command execution; WebSocket publish is fire-and-forget supplement
-- [Phase 06-05]: Officer cast via unknown to bypass legacy General alias in officerStore
-- [Phase 06]: Samguk 3D map (map-3d/) deleted entirely; gin7 uses 2D galaxy map
-- [Phase 06]: Tactical icon rule: isFlagship → △, all others → □, ◇ removed per user feedback
-- [Phase 07]: validateEightStats() was pre-implemented; only tests added
-- [Phase 07]: Scenario join page uses use client for router+hooks integration
-- [Phase 07]: 비전투 함종(civilian/transport/hospital)은 DPS=0이 설계상 정상 — CombatBalanceTest에서 제외
-- [Phase 07]: EconomyBalanceTest는 SpringBootTest 없이 Mockito mock 순수 단위 테스트로 구현
-- [Phase 07-scenario-data-balancing]: S10 officerLevel LOGH 0-10 계급 체계로 정정, 로이엔탈 제외, 페잔 3번째 진영 추가
-- [Phase 07]: H2 ddl-auto=create-drop + NON_KEYWORDS로 통합 테스트 DB 설정 — Flyway PostgreSQL SQL은 H2 실행 불가
-- [Phase 07]: 대기 커맨드 테스트: Gin7StubCommand는 fail 반환이 정상 → ALWAYS_ALLOWED 게이팅 우회 검증으로 재정의
+- [v2.0-Roadmap]: Phase 4 (Economy) can run in parallel with Phase 3 (Battle) — both depend only on Phase 2
+- [v2.0-Phase 01]: ShipUnit shipClass/shipSubtype stored as String enum names for schema evolution flexibility
+- [v2.0-Phase 01]: ShipStatRegistry parses nested JSON (shipClasses[].subtypes[]) into flat subtype key map via buildSubtypeKey()
+- [v2.0-Phase 02]: Gin7StubCommand uses single cpType: StatCategory constructor param
+- [v2.0-Phase 02]: positionCards is MutableList<String> (JSONB) not comma-separated String
+- [v2.0-Phase 02]: CommandProposalService: uses currentYear for both year and startYear in CommandEnv
+- [v2.0-Phase 03]: BattleWebSocketController uses officerId in payload (not OfficerPrincipal)
+- [v2.0-Phase 03]: UnitStance.defenseModifier: NAVIGATION=1.0, ANCHORING=1.1, STATIONED=1.3, COMBAT=0.9
+- [v2.0-Phase 03]: DetectionService wraps DetectionEngine — precision>=0.5 OR 2+ detectors for confirmation
+- [v2.0-Phase 03]: isFlagship cleared on destruction before replacement promotion
+- [v2.0-Phase 04]: Tax collection on months 1,4,7,10 only (90-day gin7 cycle)
+- [v2.0-Phase 05]: UtilityScorer is pure object (no Spring DI) — stat drivers are static, personality weights applied at call time
+- [v2.0-Phase 05]: AiCommandBridge uses runBlocking for CommandExecutor.executeOfficerCommand (suspend fun)
+- [v2.0-Phase 06]: BattleMap converted from SVG to React Konva for gin7 dot-style rendering
+- [v2.0-Phase 06]: Tactical icon rule: isFlagship → △, all others → □, ◇ removed
+- [v2.0-Phase 06]: Used REST as authoritative command execution; WebSocket publish is fire-and-forget supplement
+- [v2.0-Phase 07]: H2 ddl-auto=create-drop + NON_KEYWORDS로 통합 테스트 DB 설정
 
 ### Pending Todos
 
@@ -161,12 +79,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Phase 2 planning]: 81-command per-group implementation design complex — run `/gsd:research-phase` before planning
-- [Phase 3 planning]: Ground combat terrain rules (행성타입별) partially specified — validate against gin7 manual before planning
-- [Phase 3 planning]: 5-phase tactical turn structure has implementation ambiguities — resolve during research
+None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T04:13:43.744Z
-Stopped at: Completed 07-04-PLAN.md
+Last session: 2026-04-07
+Stopped at: Milestone v2.1 initialization
 Resume file: None
