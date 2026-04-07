@@ -26,9 +26,9 @@ Requirements for milestone v2.1: 전술전 지휘체계 + AI. Each maps to roadm
 
 - [x] **SUCC-01**: 사령관이 사전에 후계자를 지명할 수 있다
 - [x] **SUCC-02**: 사령관 부상 시 지휘력이 저하되며, 이 시점에 후계자를 지명하여 지휘권을 위임할 수 있다
-- [ ] **SUCC-03**: 사령관 사망(기함 격침/전사) 시 30틱 공백 후 사전 지명된 후계자가 승계한다
-- [ ] **SUCC-04**: 사전 지명자가 없거나 지명자도 사망한 경우 차순위 계급자가 자동 승계한다
-- [ ] **SUCC-05**: 분함대장 지휘 불가 시 해당 유닛이 사령관 직할로 복귀한다
+- [x] **SUCC-03**: 사령관 사망(기함 격침/전사) 시 30틱 공백 후 사전 지명된 후계자가 승계한다
+- [x] **SUCC-04**: 사전 지명자가 없거나 지명자도 사망한 경우 차순위 계급자가 자동 승계한다
+- [x] **SUCC-05**: 분함대장 지휘 불가 시 해당 유닛이 사령관 직할로 복귀한다
 - [ ] **SUCC-06**: 모든 사령관 지휘 불가 시 지휘 체계가 붕괴하여 각 유닛이 독립 AI로 행동한다
 
 ### 전술 AI (TAI)
@@ -96,9 +96,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMD-06 | Phase 9 | Complete |
 | SUCC-01 | Phase 10 | Complete |
 | SUCC-02 | Phase 10 | Complete |
-| SUCC-03 | Phase 10 | Pending |
-| SUCC-04 | Phase 10 | Pending |
-| SUCC-05 | Phase 10 | Pending |
+| SUCC-03 | Phase 10 | Complete |
+| SUCC-04 | Phase 10 | Complete |
+| SUCC-05 | Phase 10 | Complete |
 | SUCC-06 | Phase 10 | Pending |
 | TAI-01 | Phase 11 | Pending |
 | TAI-02 | Phase 11 | Pending |
