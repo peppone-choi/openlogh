@@ -57,7 +57,7 @@ class NpcSpawnService(
     private fun raiseNPCNation(world: SessionState) {
         val worldId = world.id.toLong()
         val cities = planetRepository.findBySessionId(worldId)
-        val mapCode = (world.config["mapCode"] as? String) ?: "che"
+        val mapCode = (world.config["mapCode"] as? String) ?: "logh"
 
         // Find empty cities at level 5-6
         val emptyCities = cities.filter { it.factionId == 0L && it.level.toInt() in 5..6 }.toMutableList()

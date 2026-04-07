@@ -78,11 +78,11 @@ class MapRecentService(
                 data = mapOf("result" to false, "reason" to "서버 초기화되지 않음"),
             )
 
-        val mapCode = (world.config["mapCode"] as? String) ?: "che"
+        val mapCode = (world.config["mapCode"] as? String) ?: "logh"
         val mapCities = try {
             mapService.getCities(mapCode)
         } catch (_: Exception) {
-            mapService.getCities("che")
+            mapService.getCities("logh")
         }
         val mapCityByName = mapCities.associateBy { it.name }
 

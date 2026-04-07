@@ -20,7 +20,7 @@ class PlanetService(
     private val factionRepository: FactionRepository,
 ) {
     private val canonicalRegionByCityName: Map<String, Short> by lazy {
-        mapService.getCities("che").associate { it.name to it.region.toShort() }
+        mapService.getCities("logh").associate { it.name to it.region.toShort() }
     }
 
     companion object {
@@ -154,7 +154,7 @@ class PlanetService(
      * Get the map code for a given world, reading from world config.
      */
     fun getMapCode(worldConfig: Map<String, Any>): String {
-        return (worldConfig["mapCode"] as? String) ?: "che"
+        return (worldConfig["mapCode"] as? String) ?: "logh"
     }
 
     // ── Supply Calculation ──
@@ -386,7 +386,7 @@ class PlanetService(
     }
 
     fun getRegionName(regionCode: Int): String {
-        return getRegionName("che", regionCode)
+        return getRegionName("logh", regionCode)
     }
 
     /**

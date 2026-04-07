@@ -269,7 +269,7 @@ class CommandService(
 
     private fun createCommandEnv(world: com.openlogh.entity.SessionState): CommandEnv {
         val gameStor = mutableMapOf<String, Any>()
-        val mapName = (world.config["mapCode"] as? String)?.trim().orEmpty().ifBlank { "che" }
+        val mapName = (world.config["mapCode"] as? String)?.trim().orEmpty().ifBlank { "logh" }
         gameStor["mapName"] = mapName
         gameStor["maxGeneral"] = (world.config["maxGeneral"] as? Number)?.toInt() ?: 500
         gameStor["openingPartYears"] = (world.config["openingPartYears"] as? Number)?.toInt()

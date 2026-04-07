@@ -107,13 +107,13 @@ class OfficerAI(
         // War target nations
         val warTargetNations = calcWarTargetNations(nation, diplomacies)
 
-        val mapName = (world.config["mapName"] as? String) ?: "che"
+        val mapName = (world.config["mapName"] as? String) ?: "logh"
         val mapAdjacency = try {
             mapService.getCities(mapName).associate { cityConst ->
                 cityConst.id.toLong() to cityConst.connections.map { it.toLong() }
             }
         } catch (e: Exception) {
-            logger.warn("Failed to load city connections for map {}: {}", world.config["mapName"] ?: "che", e.message)
+            logger.warn("Failed to load city connections for map {}: {}", world.config["mapName"] ?: "logh", e.message)
             emptyMap()
         }
 
@@ -818,7 +818,7 @@ class OfficerAI(
         if (nation.capitalPlanetId == null) return null
         if (frontCities.isEmpty()) return null
 
-        val mapName = (ctx.world.config["mapName"] as? String) ?: "che"
+        val mapName = (ctx.world.config["mapName"] as? String) ?: "logh"
         val capitalMapCityId = ctx.allCities.find { it.id == nation.capitalPlanetId }?.mapPlanetId ?: return null
 
         val targetNationIds = warTargetNations.keys.filter { it != 0L }

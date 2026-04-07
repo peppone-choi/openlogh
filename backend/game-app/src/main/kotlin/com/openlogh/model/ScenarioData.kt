@@ -27,8 +27,8 @@ data class ScenarioData(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ScenarioMap(
-    val mapName: String = "che",
-    val unitSet: String = "che",
+    val mapName: String = "logh",
+    val unitSet: String = "logh",
     val scenarioEffect: String? = null,
 )
 
@@ -49,7 +49,7 @@ data class ScenarioInfo(
     val startYear: Int,
     val id: String = code,
     val name: String = title,
-    val mapName: String = "che",
+    val mapName: String = "logh",
     val factionCount: Int = 0,
     val description: String = "",
     val formableFleets: Map<String, List<Int>>? = null,

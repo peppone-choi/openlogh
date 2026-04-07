@@ -447,7 +447,7 @@ class CommandExecutor @Autowired constructor(
 
     private fun buildConstraintEnv(general: Officer, env: CommandEnv): Map<String, Any> {
         val worldId = env.sessionId
-        val mapName = (env.gameStor["mapName"] as? String) ?: "che"
+        val mapName = (env.gameStor["mapName"] as? String) ?: "logh"
         val ports = worldPortFactory.create(worldId)
 
         val allCities = ports.allPlanets().map { it.toEntity() }

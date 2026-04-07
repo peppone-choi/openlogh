@@ -321,7 +321,7 @@ class FactionService(
         if (nationId == 0L) return
 
         val world = sessionStateRepository.findById(worldId.toShort()).orElse(null) ?: return
-        val mapCode = (world.config["mapCode"] as? String) ?: "che"
+        val mapCode = (world.config["mapCode"] as? String) ?: "logh"
 
         val allCities = planetRepository.findBySessionId(worldId)
         val nationCities = allCities.filter { it.factionId == nationId }

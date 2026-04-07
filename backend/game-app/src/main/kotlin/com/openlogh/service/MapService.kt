@@ -33,7 +33,7 @@ class MapService {
 
     @PostConstruct
     fun init() {
-        loadMap("che")
+        loadMap("logh")
     }
 
     private fun loadMap(mapName: String) {
@@ -156,7 +156,7 @@ class MapService {
         return -1
     }
 
-    fun calcAllPairsDistance(cityIds: List<Int>, mapName: String = "che"): Map<Int, Map<Int, Int>> {
+    fun calcAllPairsDistance(cityIds: List<Int>, mapName: String = "logh"): Map<Int, Map<Int, Int>> {
         if (cityIds.isEmpty()) return emptyMap()
 
         val uniqueCityIds = cityIds.distinct()
@@ -198,7 +198,7 @@ class MapService {
     fun calcAllPairsDistanceByNation(
         nationIds: List<Long>,
         allCities: List<Planet>,
-        mapName: String = "che",
+        mapName: String = "logh",
     ): Map<Int, Map<Int, Int>> {
         val nationIdSet = nationIds.toSet()
         val cityIds = allCities.asSequence()
@@ -211,7 +211,7 @@ class MapService {
     fun calcAllPairsDistanceByNations(
         nationIds: List<Long>,
         allCities: List<Planet>,
-        mapName: String = "che",
+        mapName: String = "logh",
     ): Map<Int, Map<Int, Int>> = calcAllPairsDistanceByNation(nationIds, allCities, mapName)
 
     private fun readListOfStringAnyMap(raw: Any?): List<Map<String, Any>> {

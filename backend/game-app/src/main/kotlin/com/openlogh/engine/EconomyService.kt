@@ -150,7 +150,7 @@ class EconomyService @Autowired constructor(
     // ── Supply state calculation (map-connectivity based — gin7 compatible) ──
 
     private fun updateCitySupply(world: SessionState, nations: List<Faction>, cities: List<Planet>, generals: List<Officer>) {
-        val mapCode = (world.config["mapCode"] as? String) ?: "che"
+        val mapCode = (world.config["mapCode"] as? String) ?: "logh"
         val citiesByNation = cities.groupBy { it.factionId }
         val cityById = cities.associateBy { it.id }
         val generalsByCity = generals.groupBy { it.planetId }

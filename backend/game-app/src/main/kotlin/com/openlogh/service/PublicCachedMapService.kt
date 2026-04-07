@@ -68,7 +68,7 @@ class PublicCachedMapService(
 
     private fun buildPayload(world: SessionState, worldSummaries: List<PublicWorldSummary>): PublicCachedMapResponse {
         val worldId = world.id.toLong()
-        val mapCode = (world.config["mapCode"] as? String) ?: "che"
+        val mapCode = (world.config["mapCode"] as? String) ?: "logh"
         val mapCityByName = mapService.getCities(mapCode).associateBy { it.name }
 
         val nations = factionRepository.findBySessionId(worldId)

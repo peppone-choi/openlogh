@@ -174,14 +174,14 @@ class WorldService(
      * Get the map code for the world.
      */
     fun getMapCode(world: SessionState): String {
-        return (world.config["mapCode"] as? String) ?: "che"
+        return (world.config["mapCode"] as? String) ?: "logh"
     }
 
     /**
      * Get the unit set for the world.
      */
     fun getUnitSet(world: SessionState): String {
-        return (world.config["unitSet"] as? String) ?: "che"
+        return (world.config["unitSet"] as? String) ?: "logh"
     }
 
     // ── World-Level Computed Properties ──
