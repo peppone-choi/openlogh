@@ -4,7 +4,7 @@ milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: verifying
 stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-04-07T09:11:55.993Z"
+last_updated: "2026-04-07T09:38:49.561Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 18
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 08 (scenario-character-system) — EXECUTING
-Plan: 3 of 3
+Phase: 09
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-07
 
