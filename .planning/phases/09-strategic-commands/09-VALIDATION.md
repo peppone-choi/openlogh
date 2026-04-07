@@ -42,7 +42,7 @@ created: 2026-04-07
 | 09-01-02 | 01 | 1 | CMD-02 | unit | `./gradlew :game-app:test --tests "*.CommandPriorityTest.*" -x bootJar` | ❌ W0 | ⬜ pending |
 | 09-02-01 | 02 | 2 | CMD-03 | unit | `./gradlew :game-app:test --tests "*.CrcValidatorTest.*" -x bootJar` | ❌ W0 | ⬜ pending |
 | 09-02-02 | 02 | 2 | CMD-04 | unit | `./gradlew :game-app:test --tests "*.OutOfCrcBehaviorTest.*" -x bootJar` | ❌ W0 | ⬜ pending |
-| 09-03-01 | 03 | 3 | CMD-05 | unit | `./gradlew :game-app:test --tests "*.CommandHierarchyServiceTest.reassign*" -x bootJar` | ❌ W0 | ⬜ pending |
+| 09-03-01 | 03 | 3 | CMD-05 | unit | `./gradlew :game-app:test --tests "*.CrcIntegrationTest.reassignUnit*" -x bootJar` | ❌ W0 | ⬜ pending |
 | 09-03-02 | 03 | 3 | CMD-06 | unit | `./gradlew :game-app:test --tests "*.CommunicationJammingTest.*" -x bootJar` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
