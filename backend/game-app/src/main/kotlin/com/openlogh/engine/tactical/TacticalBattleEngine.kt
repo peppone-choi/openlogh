@@ -395,6 +395,31 @@ class TacticalBattleEngine(
     }
 
     private fun applyCommand(cmd: TacticalCommand, state: TacticalBattleState) {
+        // Succession commands bypass CRC and unit lookup (SUCC-01, SUCC-02)
+        if (cmd is TacticalCommand.DesignateSuccessor) {
+            val hierarchy = getHierarchyForSide(cmd, state)
+            if (hierarchy != null) {
+                val error = SuccessionService.designateSuccessor(hierarchy, cmd.officerId, cmd.successorOfficerId)
+                if (error == null) {
+                    state.tickEvents.add(BattleTickEvent("successor_designated",
+                        sourceUnitId = cmd.officerId, targetUnitId = cmd.successorOfficerId,
+                        detail = "후계자 지명 완료"))
+                }
+            }
+            return
+        }
+        if (cmd is TacticalCommand.DelegateCommand) {
+            val hierarchy = getHierarchyForSide(cmd, state)
+            if (hierarchy != null) {
+                val error = SuccessionService.delegateCommand(hierarchy, cmd.officerId)
+                if (error == null) {
+                    state.tickEvents.add(BattleTickEvent("command_delegated",
+                        sourceUnitId = cmd.officerId,
+                        detail = "지휘권 위임 완료"))
+                }
+            }
+            return
+        }
         // Sub-fleet assignment commands bypass CRC (administrative, not tactical)
         if (cmd is TacticalCommand.AssignSubFleet) {
             applyAssignSubFleet(cmd, state)
@@ -472,6 +497,12 @@ class TacticalBattleEngine(
             is TacticalCommand.TriggerJamming -> {
                 // Handled above; exhaustive when requires this branch
             }
+            is TacticalCommand.DesignateSuccessor -> {
+                // Handled in applyCommand before unit lookup
+            }
+            is TacticalCommand.DelegateCommand -> {
+                // Handled in applyCommand before unit lookup
+            }
         }
     }
 
@@ -485,6 +516,15 @@ class TacticalBattleEngine(
             BattleSide.ATTACKER -> state.attackerHierarchy
             BattleSide.DEFENDER -> state.defenderHierarchy
         }
+    }
+
+    /**
+     * Resolve the CommandHierarchy for a command by finding the issuing officer's side.
+     * Used for succession/delegation commands that don't require a live unit lookup.
+     */
+    private fun getHierarchyForSide(cmd: TacticalCommand, state: TacticalBattleState): CommandHierarchy? {
+        val unit = state.units.find { it.officerId == cmd.officerId }
+        return if (unit != null) getHierarchyForUnit(unit, state) else null
     }
 
     /**

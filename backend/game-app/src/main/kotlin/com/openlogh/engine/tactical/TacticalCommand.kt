@@ -94,4 +94,17 @@ sealed class TacticalCommand {
         val targetSide: BattleSide,    // which side gets jammed
         val durationTicks: Int = CommunicationJamming.JAMMING_DEFAULT_DURATION_TICKS,
     ) : TacticalCommand()
+
+    /** Successor designation command (SUCC-01: fleet commander pre-designates successor) */
+    data class DesignateSuccessor(
+        override val battleId: Long,
+        override val officerId: Long,  // fleet commander issuing designation
+        val successorOfficerId: Long,  // officer being designated as successor
+    ) : TacticalCommand()
+
+    /** Command delegation (SUCC-02: injured commander delegates to designated successor) */
+    data class DelegateCommand(
+        override val battleId: Long,
+        override val officerId: Long,  // commander delegating (must be current active commander)
+    ) : TacticalCommand()
 }

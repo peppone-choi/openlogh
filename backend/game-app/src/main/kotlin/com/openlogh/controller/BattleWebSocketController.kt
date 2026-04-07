@@ -237,6 +237,47 @@ class BattleWebSocketController(
             log.error("Error reassigning unit for battle {} officer {}: {}", battleId, payload.officerId, e.message)
         }
     }
+
+    /**
+     * 후계자 지명 (SUCC-01).
+     * Channel: /app/battle/{sessionId}/{battleId}/designate-successor
+     */
+    @MessageMapping("/battle/{sessionId}/{battleId}/designate-successor")
+    fun designateSuccessor(
+        @DestinationVariable sessionId: Long,
+        @DestinationVariable battleId: Long,
+        @Payload payload: DesignateSuccessorRequest,
+    ) {
+        try {
+            tacticalBattleService.enqueueCommand(battleId, TacticalCommand.DesignateSuccessor(
+                battleId = battleId,
+                officerId = payload.officerId,
+                successorOfficerId = payload.successorOfficerId,
+            ))
+        } catch (e: Exception) {
+            log.error("Error designating successor for battle {} officer {}: {}", battleId, payload.officerId, e.message)
+        }
+    }
+
+    /**
+     * 지휘권 위임 (SUCC-02).
+     * Channel: /app/battle/{sessionId}/{battleId}/delegate-command
+     */
+    @MessageMapping("/battle/{sessionId}/{battleId}/delegate-command")
+    fun delegateCommand(
+        @DestinationVariable sessionId: Long,
+        @DestinationVariable battleId: Long,
+        @Payload payload: DelegateCommandRequest,
+    ) {
+        try {
+            tacticalBattleService.enqueueCommand(battleId, TacticalCommand.DelegateCommand(
+                battleId = battleId,
+                officerId = payload.officerId,
+            ))
+        } catch (e: Exception) {
+            log.error("Error delegating command for battle {} officer {}: {}", battleId, payload.officerId, e.message)
+        }
+    }
 }
 
 /** 에너지 배분 변경 요청 DTO */
@@ -298,4 +339,15 @@ data class ReassignUnitRequest(
     val officerId: Long,            // fleet commander
     val unitId: Long,               // unit to reassign
     val newSubCommanderId: Long?,   // null = return to fleet commander direct
+)
+
+/** 후계자 지명 요청 DTO (SUCC-01) */
+data class DesignateSuccessorRequest(
+    val officerId: Long,           // fleet commander
+    val successorOfficerId: Long,  // officer to designate
+)
+
+/** 지휘권 위임 요청 DTO (SUCC-02) */
+data class DelegateCommandRequest(
+    val officerId: Long,  // commander delegating
 )
