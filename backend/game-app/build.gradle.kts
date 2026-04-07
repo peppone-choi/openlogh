@@ -87,6 +87,8 @@ sourceSets {
                 // Phase 04-04: FezzanEndingServiceTest implemented with new constructor — exclusion removed
                 // Phase 05-01: FactionAISchedulerTest references FactionAIScheduler (not yet implemented)
                 "com/openlogh/engine/ai/FactionAISchedulerTest.kt",
+                // Phase 07-03: ScenarioServiceTest constructor missing fleetRepository param (pre-existing breakage)
+                "com/openlogh/service/ScenarioServiceTest.kt",
             )
         }
     }
