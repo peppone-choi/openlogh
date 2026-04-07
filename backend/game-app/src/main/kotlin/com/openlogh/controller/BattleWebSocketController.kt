@@ -188,6 +188,55 @@ class BattleWebSocketController(
                 payload.command, battleId, payload.officerId, e.message)
         }
     }
+    /**
+     * 분함대 배정.
+     * Channel: /app/battle/{sessionId}/{battleId}/assign-subfleet
+     *
+     * 총사령관이 분함대장에게 유닛을 배정한다 (CMD-05).
+     * officerId는 payload에 포함 (JWT principal은 String subject — OfficerPrincipal 미구현).
+     */
+    @MessageMapping("/battle/{sessionId}/{battleId}/assign-subfleet")
+    fun assignSubFleet(
+        @DestinationVariable sessionId: Long,
+        @DestinationVariable battleId: Long,
+        @Payload payload: AssignSubFleetRequest,
+    ) {
+        try {
+            tacticalBattleService.enqueueCommand(battleId, TacticalCommand.AssignSubFleet(
+                battleId = battleId,
+                officerId = payload.officerId,
+                subCommanderId = payload.subCommanderId,
+                unitIds = payload.unitIds,
+            ))
+        } catch (e: Exception) {
+            log.error("Error assigning sub-fleet for battle {} officer {}: {}", battleId, payload.officerId, e.message)
+        }
+    }
+
+    /**
+     * 유닛 재배정.
+     * Channel: /app/battle/{sessionId}/{battleId}/reassign-unit
+     *
+     * 총사령관이 유닛을 다른 분함대로 이동하거나 직할로 복귀시킨다 (CMD-05).
+     * newSubCommanderId가 null이면 총사령관 직할로 복귀.
+     */
+    @MessageMapping("/battle/{sessionId}/{battleId}/reassign-unit")
+    fun reassignUnit(
+        @DestinationVariable sessionId: Long,
+        @DestinationVariable battleId: Long,
+        @Payload payload: ReassignUnitRequest,
+    ) {
+        try {
+            tacticalBattleService.enqueueCommand(battleId, TacticalCommand.ReassignUnit(
+                battleId = battleId,
+                officerId = payload.officerId,
+                unitId = payload.unitId,
+                newSubCommanderId = payload.newSubCommanderId,
+            ))
+        } catch (e: Exception) {
+            log.error("Error reassigning unit for battle {} officer {}: {}", battleId, payload.officerId, e.message)
+        }
+    }
 }
 
 /** 에너지 배분 변경 요청 DTO */
@@ -235,4 +284,18 @@ data class PlanetConquestRequest(
     val attackerMissileCount: Int,
     val militaryWorkPoint: Int = 0,
     val intelWorkPoint: Int = 0,
+)
+
+/** 분함대 배정 요청 DTO (CMD-05) */
+data class AssignSubFleetRequest(
+    val officerId: Long,         // fleet commander issuing the assignment
+    val subCommanderId: Long,    // officer to lead the sub-fleet
+    val unitIds: List<Long>,     // TacticalUnit.fleetId values to assign
+)
+
+/** 유닛 재배정 요청 DTO (CMD-05) */
+data class ReassignUnitRequest(
+    val officerId: Long,            // fleet commander
+    val unitId: Long,               // unit to reassign
+    val newSubCommanderId: Long?,   // null = return to fleet commander direct
 )
