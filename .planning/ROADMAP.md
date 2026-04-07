@@ -155,7 +155,7 @@ Plans:
 Plans:
 - [x] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
 - [x] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
-- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
+- [x] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 
 ### Phase 11: 전술 AI
 **Goal**: 오프라인/NPC 유닛이 작전 목적과 성격에 따라 자동 전투를 수행하며, 위협 평가 기반 퇴각과 에너지/진형 자동 조정이 동작한다
@@ -168,9 +168,9 @@ Plans:
   4. AI가 상황에 따라 에너지 배분, 진형, 태세를 자동 변경하고 집중/분산 공격을 전환한다
 **Plans**: 3 plans
 Plans:
-- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
-- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
-- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
+- [x] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
+- [x] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
+- [x] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
 
 ### Phase 12: 작전 연동
 **Goal**: 전략 게임의 작전계획이 전술전 AI 행동을 결정하고, 작전 참가 부대가 공적 보상을 받으며, 발령-도달로 작전이 시작된다

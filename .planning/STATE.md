@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
-status: executing
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-04-07T08:56:34.401Z"
+status: verifying
+stopped_at: Completed 08-03-PLAN.md
+last_updated: "2026-04-07T09:11:55.993Z"
 last_activity: 2026-04-07
 progress:
   total_phases: 18
   completed_phases: 12
   total_plans: 85
-  completed_plans: 67
+  completed_plans: 68
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 Phase: 08 (scenario-character-system) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-07
 
 Progress: [░░░░░░░░░░] 0%
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 08 P01 | 9m | 2 tasks | 4 files |
 | Phase 08 P02 | 18min | 2 tasks | 43 files |
+| Phase 08 P03 | 7min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Recent decisions affecting current work:
 - [Phase 08]: TacticalCommand sealed class with 7 subtypes for exhaustive when() matching in command buffer drain
 - [Phase 08]: CommandRange object reused from model/ package for TacticalUnit field unification
 - [Phase 08]: Count-down cooldown pattern: stanceChangeTicksRemaining replaces ticksSinceStanceChange
+- [Phase 08]: Two CommandHierarchy fields (attackerHierarchy/defenderHierarchy) per battle state for dual-side support
+- [Phase 08]: buildCommandHierarchyStatic companion method pattern for test isolation without Spring context
+- [Phase 08]: Officer.officerLevel used as rank proxy for succession queue ordering
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T08:56:34.394Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-04-07T09:11:44.893Z
+Stopped at: Completed 08-03-PLAN.md
 Resume file: None
