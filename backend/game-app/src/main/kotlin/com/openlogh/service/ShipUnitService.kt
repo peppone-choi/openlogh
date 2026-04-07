@@ -31,7 +31,7 @@ class ShipUnitService(
     fun createShipUnit(
         sessionId: Long,
         fleetId: Long,
-        slotIndex: Int,
+        slotIndex: Short,
         shipSubtypeName: String,
         factionType: String,
         shipCount: Int = 0,

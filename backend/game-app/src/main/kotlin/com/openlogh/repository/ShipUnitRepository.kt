@@ -9,7 +9,7 @@ interface ShipUnitRepository : JpaRepository<ShipUnit, Long> {
 
     fun findByFleetId(fleetId: Long): List<ShipUnit>
 
-    fun findByFleetIdAndSlotIndex(fleetId: Long, slotIndex: Int): ShipUnit?
+    fun findByFleetIdAndSlotIndex(fleetId: Long, slotIndex: Short): ShipUnit?
 
     fun findBySessionId(sessionId: Long): List<ShipUnit>
 
