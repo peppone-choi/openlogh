@@ -106,8 +106,8 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md — UtilityScorer (성격 기반 gin7 커맨드 점수) + AiCommandBridge + OfflinePlayerAI TickEngine 연결
-- [ ] 05-02-PLAN.md — FactionAIScheduler (슬롯 기반 라운드 로빈) + TickEngine 10틱 연결
-- [ ] 05-03-PLAN.md — ScenarioEventAIService (쿠데타 감지 + 내전 트리거) + AI-01~04 통합 테스트
+- [x] 05-02-PLAN.md — FactionAIScheduler (슬롯 기반 라운드 로빈) + TickEngine 10틱 연결
+- [x] 05-03-PLAN.md — ScenarioEventAIService (쿠데타 감지 + 내전 트리거) + AI-01~04 통합 테스트
 
 ### Phase 6: 프론트엔드 통합
 **Goal**: 은하영웅전설 세계관의 전략 게임 화면, 전술전 UI, 은하맵이 삼국지 잔재 없이 한국어로 완성되며 WebSocket 구독이 모든 백엔드 시스템에 연결된다

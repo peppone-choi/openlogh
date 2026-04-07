@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 05-ai-system/05-01-PLAN.md
-last_updated: "2026-04-06T18:08:46.406Z"
-last_activity: 2026-04-06
+stopped_at: Completed 05-ai-system/05-03-PLAN.md
+last_updated: "2026-04-07T02:08:37.921Z"
+last_activity: 2026-04-07
 progress:
   total_phases: 11
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 51
-  completed_plans: 46
+  completed_plans: 48
   percent: 77
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-06)
 Phase: 1 of 7 (레거시 제거 + 함종 유닛 기반)
 Plan: 5 of 5 in current phase
 Status: Phase complete — ready for verification
-Last activity: 2026-04-06
+Last activity: 2026-04-07
 
 Progress: [████████░░] 77%
 
@@ -73,6 +73,7 @@ Progress: [████████░░] 77%
 | Phase 04-economy-system P04 | 56 | 2 tasks | 7 files |
 | Phase 04-economy-system P05 | 15 | 2 tasks | 1 files |
 | Phase 05-ai-system P01 | 25 | 2 tasks | 7 files |
+| Phase 05-ai-system P03 | 35 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -124,6 +125,8 @@ Progress: [████████░░] 77%
 - [Phase 04-economy-system]: Population growth assertion uses >= 10049 (not 10050) due to double truncation in JVM: (10000 * 1.005).toInt() = 10049
 - [Phase 05-ai-system]: UtilityScorer is pure object (no Spring DI) — stat drivers are static, personality weights applied at call time
 - [Phase 05-ai-system]: AiCommandBridge uses runBlocking for CommandExecutor.executeOfficerCommand (suspend fun) — consistent with Spring MVC approach used in Phase 02
+- [Phase 05-ai-system]: ScenarioEventAIService uses hand-rolled WorldPorts spy to avoid Kotlin non-null + Mockito any() NPE
+- [Phase 05-ai-system]: Civil war threshold: supportRatio >= 0.4 OR ticksActive > 300 — dual condition matches gin7 design
 
 ### Pending Todos
 
@@ -137,6 +140,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T18:08:46.398Z
-Stopped at: Completed 05-ai-system/05-01-PLAN.md
+Last session: 2026-04-07T02:08:37.909Z
+Stopped at: Completed 05-ai-system/05-03-PLAN.md
 Resume file: None
