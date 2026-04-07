@@ -237,7 +237,7 @@ Plans:
 | 7. 시나리오 데이터 + 밸런싱 | v2.0 | 4/4 | Complete | 2026-04-06 |
 | 8. 엔진 통합 + 커맨드 버퍼 | v2.1 | 3/3 | Complete | - |
 | 9. 지휘권 분배 + CRC | v2.1 | 0/4 | Planned | - |
-| 10. 지휘 승계 | v2.1 | 0/0 | Not started | - |
+| 10. 지휘 승계 | v2.1 | 2/4 | In Progress|  |
 | 11. 전술 AI | v2.1 | 0/0 | Not started | - |
 | 12. 작전 연동 | v2.1 | 0/0 | Not started | - |
 | 13. 전략 AI | v2.1 | 0/0 | Not started | - |
