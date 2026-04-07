@@ -1,6 +1,14 @@
 'use client';
 
-import type { CommandGroup } from '@/types';
+// CommandGroup matches the gin7 7-group classification
+type CommandGroup =
+    | 'OPERATION'
+    | 'PERSONAL'
+    | 'COMMAND'
+    | 'LOGISTICS'
+    | 'PERSONNEL'
+    | 'POLITICS'
+    | 'INTELLIGENCE';
 
 const GROUP_LABELS: Record<CommandGroup, string> = {
     OPERATION:    '작전',

@@ -1,6 +1,6 @@
 'use client';
 
-import type { Officer } from '@/types';
+import type { Officer } from '@/types/officer';
 
 const STAT_CONFIG = [
     { key: 'leadership',     label: '통솔', color: '#eab308' },  // yellow

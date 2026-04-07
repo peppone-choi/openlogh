@@ -70,6 +70,20 @@ export function subscribeWebSocket(topic: string, callback: (data: unknown) => v
     }
 }
 
+/**
+ * Publish a message to a STOMP destination on the existing connection.
+ * Returns true if published, false if client is not connected.
+ */
+export function publishWebSocket(destination: string, body: unknown): boolean {
+    if (!stompClient?.active) return false;
+    try {
+        stompClient.publish({ destination, body: JSON.stringify(body) });
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 export function disconnectWebSocket() {
     stompClient?.deactivate();
     stompClient = null;
