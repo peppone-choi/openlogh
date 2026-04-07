@@ -1,6 +1,6 @@
 {
   "version": "3.0",
-  "lastUpdated": "2026-04-06T11:30:53.001Z",
+  "lastUpdated": "2026-04-07T13:30:02.149Z",
   "activeFeatures": [
     "engine",
     "war",
@@ -64,7 +64,8 @@
     "politics",
     "processing",
     "generals",
-    "terms"
+    "terms",
+    "troop"
   ],
   "primaryFeature": "engine",
   "features": {
@@ -103,9 +104,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T07:03:46.614Z",
-        "lastUpdated": "2026-04-06T09:34:57.240Z"
+        "lastUpdated": "2026-04-07T12:44:49.721Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/service/SelectNpcTokenService.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/service/TacticalBattleService.kt"
     },
     "general": {
       "phase": "do",
@@ -129,9 +130,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T07:38:05.660Z",
-        "lastUpdated": "2026-04-06T05:41:03.729Z"
+        "lastUpdated": "2026-04-07T05:18:12.024Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/engine/ai/OfficerAI.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/engine/ai/FactionAI.kt"
     },
     "command": {
       "phase": "do",
@@ -246,9 +247,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T11:46:41.223Z",
-        "lastUpdated": "2026-04-06T11:26:59.854Z"
+        "lastUpdated": "2026-04-07T04:21:23.515Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/game/command-panel.tsx"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/components/game/planet-resource-panel.tsx"
     },
     "trigger": {
       "phase": "do",
@@ -272,9 +273,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T12:17:49.514Z",
-        "lastUpdated": "2026-04-05T09:52:00.957Z"
+        "lastUpdated": "2026-04-07T08:46:51.470Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/engine/modifier/SpecialModifiers.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/engine/modifier/ItemModifiers.kt"
     },
     "test": {
       "phase": "do",
@@ -298,9 +299,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T00:32:24.227Z",
-        "lastUpdated": "2026-04-06T11:30:05.063Z"
+        "lastUpdated": "2026-04-07T12:48:50.897Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/types/galaxy.ts"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/lib/tacticalApi.ts"
     },
     "city": {
       "phase": "do",
@@ -469,9 +470,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T03:11:24.354Z",
-        "lastUpdated": "2026-04-06T05:49:30.454Z"
+        "lastUpdated": "2026-04-07T12:44:26.447Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/dto/FactionPoliticsDtos.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/dto/TacticalBattleDtos.kt"
     },
     "join": {
       "phase": "do",
@@ -683,9 +684,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-05T09:28:39.148Z",
-        "lastUpdated": "2026-04-06T09:40:56.415Z"
+        "lastUpdated": "2026-04-07T13:19:19.922Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/controller/CommandController.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/controller/BattleWebSocketController.kt"
     },
     "persist": {
       "phase": "do",
@@ -709,9 +710,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-05T11:02:12.579Z",
-        "lastUpdated": "2026-04-06T09:39:42.977Z"
+        "lastUpdated": "2026-04-07T04:48:44.183Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/entity/FactionTurn.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/entity/ShipUnit.kt"
     },
     "repository": {
       "phase": "do",
@@ -722,9 +723,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-05T11:16:32.305Z",
-        "lastUpdated": "2026-04-06T09:40:13.909Z"
+        "lastUpdated": "2026-04-07T04:55:35.365Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/repository/FactionTurnRepository.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/repository/ShipUnitRepository.kt"
     },
     "cqrs": {
       "phase": "do",
@@ -748,9 +749,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-06T02:43:34.268Z",
-        "lastUpdated": "2026-04-06T08:54:38.571Z"
+        "lastUpdated": "2026-04-07T08:47:06.218Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/shared/src/main/kotlin/com/openlogh/shared/model/GroundUnitStats.kt"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/model/TacticalUnitState.kt"
     },
     "unit-panel": {
       "phase": "do",
@@ -839,9 +840,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-06T05:20:49.593Z",
-        "lastUpdated": "2026-04-06T05:27:09.073Z"
+        "lastUpdated": "2026-04-07T13:30:02.147Z"
       },
-      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(game)/tactical/page.tsx"
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/backend/game-app/src/main/kotlin/com/openlogh/engine/tactical/TacticalBattleEngine.kt"
     },
     "victory": {
       "phase": "do",
@@ -907,6 +908,19 @@
         "lastUpdated": "2026-04-06T10:45:52.666Z"
       },
       "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(auth)/terms/page.tsx"
+    },
+    "troop": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-07T04:13:56.880Z",
+        "lastUpdated": "2026-04-07T04:21:40.626Z"
+      },
+      "lastFile": "/Users/apple/Desktop/개인프로젝트/openlogh/frontend/src/app/(game)/troop/page.tsx"
     }
   },
   "pipeline": {
@@ -917,7 +931,7 @@
   "session": {
     "startedAt": "2026-03-23T06:31:12.665Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-06T11:30:53.001Z"
+    "lastActivity": "2026-04-07T13:30:02.149Z"
   },
   "history": [
     {
@@ -9053,6 +9067,834 @@
     {
       "timestamp": "2026-04-06T11:30:53.000Z",
       "feature": "galaxy",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:07:11.280Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:13:56.882Z",
+      "feature": "troop",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:16:52.020Z",
+      "feature": "troop",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:20:19.743Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:20:58.039Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:21:23.516Z",
+      "feature": "game",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:21:40.627Z",
+      "feature": "troop",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:22:40.847Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:47:37.995Z",
+      "feature": "entity",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:48:44.185Z",
+      "feature": "entity",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:54:21.801Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T04:55:35.367Z",
+      "feature": "repository",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T05:07:08.657Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T05:07:15.139Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T05:18:04.686Z",
+      "feature": "ai",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T05:18:12.026Z",
+      "feature": "ai",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:38:22.102Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:38:31.637Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:38:47.122Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:38:52.920Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:38:58.358Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:39:11.925Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:39:18.099Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:39:26.019Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:39:34.160Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:39:41.321Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:39:46.606Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:39:57.811Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:40:03.623Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:40:09.220Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:40:16.916Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:40:22.260Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:40:54.392Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:45:16.706Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:45:27.690Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:46:18.587Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:46:24.427Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:46:29.193Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:46:36.719Z",
+      "feature": "modifier",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:46:51.471Z",
+      "feature": "modifier",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:47:06.219Z",
+      "feature": "model",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:49:22.719Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:49:27.580Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:49:34.596Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:49:56.469Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:50:05.323Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:50:16.086Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:51:10.449Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T08:51:21.827Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:04:27.234Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:04:37.474Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:04:44.352Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:04:51.018Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:05:14.966Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:05:23.174Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:05:28.212Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:05:34.652Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:05:41.262Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:05:47.778Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:05:57.472Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:06:04.497Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:06:11.931Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:07:10.230Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:07:17.928Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:07:23.766Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:07:29.110Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:07:34.830Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:07:40.212Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:07:46.454Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:08:03.137Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:08:25.917Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:08:40.207Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:08:51.529Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T09:09:48.471Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:38:30.638Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:38:46.594Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:39:04.546Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:39:10.123Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:39:10.208Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:39:21.193Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:39:24.813Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:39:40.983Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:39:55.522Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:40:08.110Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:40:23.911Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:40:27.382Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:41:09.048Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:42:00.606Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:42:10.550Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:42:11.003Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:43:06.236Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:44:46.202Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:50:05.407Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:50:12.430Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:51:38.716Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:51:50.675Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:52:10.839Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:52:21.033Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:53:49.570Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:54:30.902Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:58:09.409Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:58:30.452Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:58:40.474Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:58:50.275Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:58:58.428Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:59:07.397Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:59:19.409Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T11:59:25.650Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T12:00:57.443Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T12:01:14.160Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T12:44:18.868Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T12:44:26.449Z",
+      "feature": "dto",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T12:44:33.302Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T12:44:49.722Z",
+      "feature": "service",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T12:48:41.020Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T12:48:50.899Z",
+      "feature": "frontend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T12:49:54.594Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T12:50:01.155Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:15:17.628Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:15:38.302Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:16:05.832Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:19:01.269Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:19:12.484Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:19:19.924Z",
+      "feature": "controller",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:19:30.821Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:19:36.655Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:19:44.778Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:22:55.863Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:23:06.278Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:23:14.317Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:23:24.207Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:23:26.336Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:23:56.782Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:24:08.239Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:26:30.531Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:26:57.841Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:29:55.065Z",
+      "feature": "tactical",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-07T13:30:02.149Z",
+      "feature": "tactical",
       "phase": "do",
       "action": "updated"
     }

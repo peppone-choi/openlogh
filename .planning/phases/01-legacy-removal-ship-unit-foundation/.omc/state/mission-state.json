@@ -1,0 +1,79 @@
+{
+  "updatedAt": "2026-04-06T13:34:19.774Z",
+  "missions": [
+    {
+      "id": "session:9be27043-fd8f-4304-8df2-e060073d6845:none",
+      "source": "session",
+      "name": "none",
+      "objective": "Session mission",
+      "createdAt": "2026-04-06T13:22:41.680Z",
+      "updatedAt": "2026-04-06T13:34:19.774Z",
+      "status": "done",
+      "workerCount": 2,
+      "taskCounts": {
+        "total": 2,
+        "pending": 0,
+        "blocked": 0,
+        "inProgress": 0,
+        "completed": 2,
+        "failed": 0
+      },
+      "agents": [
+        {
+          "name": "gsd-executor:a2ec106",
+          "role": "gsd-executor",
+          "ownership": "a2ec106da5551be91",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-06T13:34:09.107Z"
+        },
+        {
+          "name": "gsd-executor:aaaf122",
+          "role": "gsd-executor",
+          "ownership": "aaaf122622a911337",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-06T13:34:19.774Z"
+        }
+      ],
+      "timeline": [
+        {
+          "id": "session-start:a2ec106da5551be91:2026-04-06T13:22:41.680Z",
+          "at": "2026-04-06T13:22:41.680Z",
+          "kind": "update",
+          "agent": "gsd-executor:a2ec106",
+          "detail": "started gsd-executor:a2ec106",
+          "sourceKey": "session-start:a2ec106da5551be91"
+        },
+        {
+          "id": "session-start:aaaf122622a911337:2026-04-06T13:22:44.744Z",
+          "at": "2026-04-06T13:22:44.744Z",
+          "kind": "update",
+          "agent": "gsd-executor:aaaf122",
+          "detail": "started gsd-executor:aaaf122",
+          "sourceKey": "session-start:aaaf122622a911337"
+        },
+        {
+          "id": "session-stop:a2ec106da5551be91:2026-04-06T13:34:09.107Z",
+          "at": "2026-04-06T13:34:09.107Z",
+          "kind": "completion",
+          "agent": "gsd-executor:a2ec106",
+          "detail": "completed",
+          "sourceKey": "session-stop:a2ec106da5551be91"
+        },
+        {
+          "id": "session-stop:aaaf122622a911337:2026-04-06T13:34:19.774Z",
+          "at": "2026-04-06T13:34:19.774Z",
+          "kind": "completion",
+          "agent": "gsd-executor:aaaf122",
+          "detail": "completed",
+          "sourceKey": "session-stop:aaaf122622a911337"
+        }
+      ]
+    }
+  ]
+}

@@ -301,6 +301,17 @@ class TacticalBattleEngine(
                         sourceUnitId = unit.fleetId, value = severity,
                         detail = "${unit.officerName} 기함 격침 → 부상 (중증도 $severity)"))
 
+                    // SUCC-03: Start succession vacancy countdown
+                    val fsHierarchy = getHierarchyForUnit(unit, state)
+                    if (fsHierarchy != null) {
+                        SuccessionService.startVacancy(fsHierarchy, unit.officerId, state.tickCount)
+                    }
+
+                    // SUCC-02: Apply injury capability reduction
+                    if (fsHierarchy != null) {
+                        SuccessionService.applyInjuryCapabilityReduction(fsHierarchy, state.pendingInjuryEvents.last())
+                    }
+
                     // 다음 부대가 기함 대체: 같은 진영 잔존 유닛 중 ships 최대 유닛 승격
                     val replacementUnit = state.units
                         .filter { it.isAlive && it.ships > 0 && it.side == unit.side && it.fleetId != unit.fleetId }
@@ -312,10 +323,26 @@ class TacticalBattleEngine(
                             detail = "${replacementUnit.officerName} 기함 부대 대체"))
                     }
                 }
+
+                // SUCC-05: subfleet commander incapacitated -> return units to direct command
+                val unitHierarchy = getHierarchyForUnit(unit, state)
+                if (unitHierarchy != null && unitHierarchy.subCommanders.containsKey(unit.officerId)) {
+                    val returnedIds = CommandHierarchyService.returnUnitsToDirectCommand(
+                        unitHierarchy, unit.officerId, state.units
+                    )
+                    if (returnedIds.isNotEmpty()) {
+                        state.tickEvents.add(BattleTickEvent("subfleet_dissolved",
+                            sourceUnitId = unit.fleetId,
+                            detail = "${unit.officerName} 분함대 해체 — ${returnedIds.size}개 유닛 사령관 직할 복귀"))
+                    }
+                }
             }
         }
 
-        // 5.4: Check for command breakdown (SUCC-06)
+        // Step 5.3: Process command succession (SUCC-03/04/05)
+        processSuccession(state)
+
+        // Step 5.4: Check for command breakdown (SUCC-06)
         processCommandBreakdown(state)
 
         // 5.5 Ground battle tick (Plan 03-04)
@@ -528,6 +555,48 @@ class TacticalBattleEngine(
     private fun getHierarchyForSide(cmd: TacticalCommand, state: TacticalBattleState): CommandHierarchy? {
         val unit = state.units.find { it.officerId == cmd.officerId }
         return if (unit != null) getHierarchyForUnit(unit, state) else null
+    }
+
+    /**
+     * Process command succession for both sides (SUCC-03/04).
+     * Called after unit destruction (step 5) so vacancy/death state is current.
+     */
+    private fun processSuccession(state: TacticalBattleState) {
+        listOfNotNull(state.attackerHierarchy, state.defenderHierarchy).forEach { hierarchy ->
+            // Skip if no vacancy is active
+            if (hierarchy.vacancyStartTick < 0) return@forEach
+
+            // Check if 30-tick countdown has expired
+            if (!SuccessionService.isVacancyExpired(hierarchy, state.currentTick)) {
+                // Broadcast countdown event
+                val ticksRemaining = SuccessionService.VACANCY_DURATION_TICKS -
+                    (state.currentTick - hierarchy.vacancyStartTick)
+                if (ticksRemaining % 10 == 0 || ticksRemaining <= 5) {  // broadcast every 10 ticks + last 5
+                    state.tickEvents.add(BattleTickEvent("succession_countdown",
+                        value = ticksRemaining,
+                        detail = "지휘 승계 대기 중 (${ticksRemaining}틱 남음)"))
+                }
+                return@forEach
+            }
+
+            // Vacancy expired -> execute succession
+            val aliveOfficerIds = state.units
+                .filter { it.isAlive }
+                .map { it.officerId }
+                .toSet()
+
+            val newCommander = SuccessionService.executeSuccession(hierarchy, aliveOfficerIds)
+            if (newCommander != null) {
+                val newCmdUnit = state.units.find { it.officerId == newCommander }
+                state.tickEvents.add(BattleTickEvent("succession_complete",
+                    sourceUnitId = newCmdUnit?.fleetId ?: 0,
+                    detail = "${newCmdUnit?.officerName ?: "Unknown"} 지휘권 승계 완료"))
+            } else {
+                // No successor available -> command breakdown (handled in 10-07)
+                state.tickEvents.add(BattleTickEvent("command_breakdown",
+                    detail = "지휘 체계 붕괴 — 승계 가능한 지휘관 없음"))
+            }
+        }
     }
 
     /**

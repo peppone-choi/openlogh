@@ -105,6 +105,27 @@ object CommandHierarchyService {
     }
 
     /**
+     * Return all units of an incapacitated subfleet commander to fleet commander direct control (SUCC-05).
+     * Removes the subfleet entry and clears subFleetCommanderId on affected TacticalUnits.
+     *
+     * @return list of unit fleetIds that were returned to direct command
+     */
+    fun returnUnitsToDirectCommand(
+        hierarchy: CommandHierarchy,
+        incapacitatedCommanderId: Long,
+        allUnits: List<TacticalUnit>,
+    ): List<Long> {
+        val subFleet = hierarchy.subCommanders.remove(incapacitatedCommanderId) ?: return emptyList()
+        val affectedUnitIds = subFleet.unitIds
+        for (unit in allUnits) {
+            if (unit.fleetId in affectedUnitIds) {
+                unit.subFleetCommanderId = null
+            }
+        }
+        return affectedUnitIds.toList()
+    }
+
+    /**
      * Build a priority-sorted list from officer data and online status.
      *
      * @return list sorted by priority descending (highest priority first)

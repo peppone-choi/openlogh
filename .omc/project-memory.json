@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1774958321331,
-  "projectRoot": "C:\\Users\\by0ng\\OneDrive\\Desktop\\my_projets\\opensamguk",
+  "lastScanned": 1775537828436,
+  "projectRoot": "/Users/apple/Desktop/개인프로젝트/openlogh",
   "techStack": {
     "languages": [],
     "frameworks": [],
@@ -39,10 +39,10 @@
       "path": "backend",
       "purpose": null,
       "fileCount": 7,
-      "lastAccessed": 1774958321313,
+      "lastAccessed": 1775537828400,
       "keyFiles": [
-        "build.gradle.kts",
         "Dockerfile",
+        "build.gradle.kts",
         "gradle.properties",
         "gradlew",
         "gradlew.bat"
@@ -51,28 +51,32 @@
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 0,
-      "lastAccessed": 1774958321314,
-      "keyFiles": []
+      "fileCount": 3,
+      "lastAccessed": 1775537828403,
+      "keyFiles": [
+        "REWRITE_PROMPT.md",
+        "scenarios.json",
+        "star_systems.json"
+      ]
     },
     "frontend": {
       "path": "frontend",
       "purpose": null,
-      "fileCount": 15,
-      "lastAccessed": 1774958321314,
+      "fileCount": 17,
+      "lastAccessed": 1775537828405,
       "keyFiles": [
-        "components.json",
         "Dockerfile",
+        "README.md",
+        "components.json",
         "eslint.config.mjs",
-        "next.config.ts",
-        "package-lock.json"
+        "next-env.d.ts"
       ]
     },
     "legacy-docker": {
       "path": "legacy-docker",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1774958321315,
+      "lastAccessed": 1775537828406,
       "keyFiles": [
         "account.env"
       ]
@@ -81,7 +85,7 @@
       "path": "nginx",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1774958321316,
+      "lastAccessed": 1775537828407,
       "keyFiles": [
         "nginx.conf"
       ]
@@ -90,7 +94,7 @@
       "path": "parity-screenshots",
       "purpose": null,
       "fileCount": 5,
-      "lastAccessed": 1774958321316,
+      "lastAccessed": 1775537828408,
       "keyFiles": [
         "parity-report-commands.json",
         "parity-report-links.json",
@@ -103,14 +107,21 @@
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 0,
-      "lastAccessed": 1774958321316,
+      "lastAccessed": 1775537828409,
       "keyFiles": []
     },
-    "legacy-docker\\app": {
-      "path": "legacy-docker\\app",
+    "backend/build": {
+      "path": "backend/build",
+      "purpose": "Build output",
+      "fileCount": 0,
+      "lastAccessed": 1775537828410,
+      "keyFiles": []
+    },
+    "legacy-docker/app": {
+      "path": "legacy-docker/app",
       "purpose": "Application code",
       "fileCount": 2,
-      "lastAccessed": 1774958321318,
+      "lastAccessed": 1775537828411,
       "keyFiles": [
         "id_ecdsa",
         "known_hosts"
@@ -120,8 +131,8 @@
   "hotPaths": [
     {
       "path": "backend",
-      "accessCount": 131,
-      "lastAccessed": 1775471808141,
+      "accessCount": 155,
+      "lastAccessed": 1775566100094,
       "type": "directory"
     },
     {
@@ -138,8 +149,8 @@
     },
     {
       "path": "backend/game-app/src/main/kotlin",
-      "accessCount": 35,
-      "lastAccessed": 1775468401967,
+      "accessCount": 41,
+      "lastAccessed": 1775554926285,
       "type": "directory"
     },
     {
