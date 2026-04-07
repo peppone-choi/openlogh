@@ -7,6 +7,8 @@ import { useTacticalStore } from '@/stores/tacticalStore';
 import { subscribeWebSocket } from '@/lib/websocket';
 import { buildBattleCommandPayload } from '@/lib/tacticalApi';
 import { BattleMap } from '@/components/tactical/BattleMap';
+import { MiniMap } from '@/components/tactical/MiniMap';
+import { InfoPanel } from '@/components/tactical/InfoPanel';
 import { EnergyPanel } from '@/components/tactical/EnergyPanel';
 import { FormationSelector } from '@/components/tactical/FormationSelector';
 import { BattleStatus } from '@/components/tactical/BattleStatus';
@@ -14,7 +16,7 @@ import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
 import { Button } from '@/components/ui/8bit/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
+import { Card, CardContent } from '@/components/ui/8bit/card';
 import { Crosshair, AlertTriangle } from 'lucide-react';
 import type { EnergyAllocation, Formation, BattleTickBroadcast, TacticalBattle } from '@/types/tactical';
 
@@ -38,6 +40,7 @@ export default function TacticalPage() {
         clearBattle,
     } = useTacticalStore();
 
+    const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null);
     const [stompClient, setStompClient] = useState<{ publish: (params: { destination: string; body: string }) => void } | null>(null);
 
     useEffect(() => {
@@ -109,6 +112,9 @@ export default function TacticalPage() {
         sendCommand('retreat');
     }, [sendCommand]);
 
+    // Suppress unused warning — stompClient setter used via WebSocket init (future integration)
+    void setStompClient;
+
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
 
@@ -123,12 +129,12 @@ export default function TacticalPage() {
                 ) : (
                     <div className="space-y-2">
                         {activeBattles.map((battle) => (
-                            <Card
+                            <div
                                 key={battle.id}
-                                className="cursor-pointer hover:border-yellow-600 transition-colors"
+                                className="cursor-pointer hover:border-yellow-600 border border-gray-700 rounded p-3 transition-colors"
                                 onClick={() => handleSelectBattle(battle)}
                             >
-                                <CardContent className="flex items-center justify-between py-3">
+                                <div className="flex items-center justify-between">
                                     <div>
                                         <span className="text-sm font-bold">전투 #{battle.id}</span>
                                         <span className="text-xs text-muted-foreground ml-2">
@@ -145,8 +151,8 @@ export default function TacticalPage() {
                                         </span>
                                         <span className="text-muted-foreground">T{battle.tickCount}</span>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 )}
@@ -159,33 +165,54 @@ export default function TacticalPage() {
     const isEnded = currentBattle.phase === 'ENDED';
 
     return (
-        <div className="space-y-4 max-w-6xl mx-auto">
-            <div className="flex items-center justify-between">
-                <PageHeader icon={Crosshair} title={`전술전 #${currentBattle.id}`} description="실시간 함대 교전" />
+        <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-black">
+            {/* Toolbar */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-[#0a0a14] border-b border-[#222] shrink-0">
+                <div className="flex gap-1">
+                    {['작전조회', '함대정보', '성계정보', '자함대', '해결'].map((label) => (
+                        <button
+                            key={label}
+                            className="px-3 py-1 text-xs font-mono bg-[#111] border border-[#333] text-gray-300 hover:bg-[#1a1a2e] hover:border-[#4466ff] transition-colors"
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex-1" />
                 <Button variant="outline" size="sm" onClick={() => clearBattle()}>
                     목록으로
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Left: Battle Map (spans 2 cols on large screens) */}
-                <div className="lg:col-span-2 space-y-4">
+            {/* Main area */}
+            <div className="flex flex-1 overflow-hidden">
+                {/* Battle map area — relative container for minimap/infopanel overlays */}
+                <div className="relative flex-1 overflow-hidden">
                     <BattleMap
+                        units={units}
+                        myOfficerId={myOfficer?.id}
+                        selectedUnitId={selectedUnitId}
+                        onSelectUnit={setSelectedUnitId}
+                        width={800}
+                        height={480}
+                    />
+
+                    {/* MiniMap overlay — top-right */}
+                    <MiniMap
                         units={units}
                         myOfficerId={myOfficer?.id}
                     />
 
-                    <BattleStatus
-                        tickCount={currentBattle.tickCount}
-                        phase={currentBattle.phase}
-                        result={currentBattle.result}
+                    {/* InfoPanel overlay — bottom-right */}
+                    <InfoPanel
+                        battle={currentBattle}
                         units={units}
-                        events={recentEvents}
+                        myOfficerId={myOfficer?.id}
                     />
                 </div>
 
-                {/* Right: Controls */}
-                <div className="space-y-4">
+                {/* Right sidebar: controls */}
+                <div className="w-64 shrink-0 overflow-y-auto bg-[#0a0a14] border-l border-[#222] space-y-3 p-3">
                     <EnergyPanel
                         energy={myEnergy}
                         onChange={handleEnergyChange}
@@ -213,6 +240,14 @@ export default function TacticalPage() {
                             </CardContent>
                         </Card>
                     )}
+
+                    <BattleStatus
+                        tickCount={currentBattle.tickCount}
+                        phase={currentBattle.phase}
+                        result={currentBattle.result}
+                        units={units}
+                        events={recentEvents}
+                    />
                 </div>
             </div>
         </div>

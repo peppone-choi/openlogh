@@ -1,6 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
+import { Stage, Layer, Rect, Line, Circle } from 'react-konva';
+import { TacticalUnitIcon } from './TacticalUnitIcon';
+import { CommandRangeCircle } from './CommandRangeCircle';
 import type { TacticalUnit } from '@/types/tactical';
 
 interface BattleMapProps {
@@ -8,183 +11,146 @@ interface BattleMapProps {
     width?: number;
     height?: number;
     myOfficerId?: number;
-    fortressFactionId?: number;
+    selectedUnitId?: number | null;
+    onSelectUnit?: (unitId: number | null) => void;
 }
 
-/**
- * 2D tactical battle map rendered with SVG.
- * Shows unit positions with faction colors, HP bars, command range circles.
- */
+// Game coordinate range
+const GAME_W = 1000;
+const GAME_H = 600;
+
+// Number of random stars in background
+const STAR_COUNT = 200;
+
+function generateStars(count: number, w: number, h: number) {
+    const stars: { x: number; y: number; r: number }[] = [];
+    // Use a seeded pattern so stars don't shift on re-render
+    for (let i = 0; i < count; i++) {
+        const seed = i * 2654435761;
+        stars.push({
+            x: ((seed >>> 0) % w),
+            y: (((seed * 1234567) >>> 0) % h),
+            r: 0.5 + (((seed * 987654) >>> 0) % 10) / 10, // 0.5 - 1.4
+        });
+    }
+    return stars;
+}
+
 export function BattleMap({
     units,
     width = 800,
     height = 480,
     myOfficerId,
-    fortressFactionId,
+    selectedUnitId,
+    onSelectUnit,
 }: BattleMapProps) {
-    // Scale factor from game coords (0-1000, 0-600) to SVG viewport
-    const scaleX = width / 1000;
-    const scaleY = height / 600;
+    const scaleX = width / GAME_W;
+    const scaleY = height / GAME_H;
 
-    const aliveUnits = useMemo(() => units.filter((u) => u.isAlive), [units]);
-    const deadUnits = useMemo(() => units.filter((u) => !u.isAlive), [units]);
+    const stars = useMemo(() => generateStars(STAR_COUNT, width, height), [width, height]);
+
+    // Grid lines every 50px
+    const gridLines = useMemo(() => {
+        const lines: { points: number[]; key: string }[] = [];
+        for (let x = 50; x < width; x += 50) {
+            lines.push({ points: [x, 0, x, height], key: `v-${x}` });
+        }
+        for (let y = 50; y < height; y += 50) {
+            lines.push({ points: [0, y, width, y], key: `h-${y}` });
+        }
+        return lines;
+    }, [width, height]);
+
+    const selectedUnit = useMemo(
+        () => (selectedUnitId != null ? units.find((u) => u.fleetId === selectedUnitId) : undefined),
+        [units, selectedUnitId]
+    );
+
+    const handleStageClick = useCallback(
+        (e: { target: { getLayer: () => unknown } }) => {
+            // Click on stage background → deselect
+            if (e.target === e.target.getLayer()) {
+                onSelectUnit?.(null);
+            }
+        },
+        [onSelectUnit]
+    );
+
+    const handleBackgroundClick = useCallback(() => {
+        onSelectUnit?.(null);
+    }, [onSelectUnit]);
 
     return (
-        <div className="border border-gray-700 rounded bg-gray-950 overflow-hidden">
-            <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} className="w-full h-auto">
-                {/* Background grid */}
-                <defs>
-                    <pattern id="grid" width={width / 10} height={height / 10} patternUnits="userSpaceOnUse">
-                        <path
-                            d={`M ${width / 10} 0 L 0 0 0 ${height / 10}`}
-                            fill="none"
-                            stroke="#1a1a2e"
-                            strokeWidth="0.5"
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+            <Stage
+                width={width}
+                height={height}
+                onClick={handleStageClick}
+            >
+                {/* Background layer */}
+                <Layer>
+                    {/* Space background */}
+                    <Rect
+                        x={0}
+                        y={0}
+                        width={width}
+                        height={height}
+                        fill="#000008"
+                        onClick={handleBackgroundClick}
+                    />
+
+                    {/* Stars */}
+                    {stars.map((star, i) => (
+                        <Circle
+                            key={i}
+                            x={star.x}
+                            y={star.y}
+                            radius={star.r}
+                            fill="white"
+                            listening={false}
                         />
-                    </pattern>
-                </defs>
-                <rect width={width} height={height} fill="url(#grid)" />
+                    ))}
 
-                {/* Side labels */}
-                <text x={10} y={20} className="fill-red-400 text-[10px]" fontFamily="monospace">
-                    ATTACKER
-                </text>
-                <text x={width - 80} y={20} className="fill-blue-400 text-[10px]" fontFamily="monospace">
-                    DEFENDER
-                </text>
-
-                {/* Fortress indicator */}
-                {fortressFactionId && fortressFactionId > 0 && (
-                    <g>
-                        <rect
-                            x={width / 2 - 20}
-                            y={0}
-                            width={40}
-                            height={12}
-                            fill="#4a1a1a"
-                            stroke="#ff6600"
-                            strokeWidth={1}
+                    {/* Grid */}
+                    {gridLines.map((line) => (
+                        <Line
+                            key={line.key}
+                            points={line.points}
+                            stroke="#1a2040"
+                            strokeWidth={0.5}
+                            opacity={0.3}
+                            listening={false}
                         />
-                        <text
-                            x={width / 2}
-                            y={9}
-                            textAnchor="middle"
-                            className="fill-orange-400 text-[7px]"
-                            fontFamily="monospace"
-                        >
-                            FORTRESS
-                        </text>
-                    </g>
-                )}
+                    ))}
+                </Layer>
 
-                {/* Dead units (faded) */}
-                {deadUnits.map((unit) => (
-                    <g key={`dead-${unit.fleetId}`} opacity={0.2}>
-                        <circle
-                            cx={unit.posX * scaleX}
-                            cy={unit.posY * scaleY}
-                            r={6}
-                            fill={unit.side === 'ATTACKER' ? '#ef4444' : '#3b82f6'}
-                            stroke="#333"
+                {/* Command range layer */}
+                <Layer>
+                    {selectedUnit && selectedUnit.commandRange > 0 && (
+                        <CommandRangeCircle
+                            x={selectedUnit.posX * scaleX}
+                            y={selectedUnit.posY * scaleY}
+                            radius={0}
+                            maxRadius={selectedUnit.commandRange * Math.min(scaleX, scaleY)}
+                            side={selectedUnit.side}
                         />
-                        <line
-                            x1={unit.posX * scaleX - 5}
-                            y1={unit.posY * scaleY - 5}
-                            x2={unit.posX * scaleX + 5}
-                            y2={unit.posY * scaleY + 5}
-                            stroke="#fff"
-                            strokeWidth={1}
+                    )}
+                </Layer>
+
+                {/* Units layer */}
+                <Layer>
+                    {units.map((unit) => (
+                        <TacticalUnitIcon
+                            key={unit.fleetId}
+                            unit={unit}
+                            x={unit.posX * scaleX}
+                            y={unit.posY * scaleY}
+                            isSelected={unit.fleetId === selectedUnitId}
+                            onClick={(u) => onSelectUnit?.(u.fleetId)}
                         />
-                    </g>
-                ))}
-
-                {/* Alive units */}
-                {aliveUnits.map((unit) => {
-                    const cx = unit.posX * scaleX;
-                    const cy = unit.posY * scaleY;
-                    const isMe = unit.officerId === myOfficerId;
-                    const baseColor = unit.side === 'ATTACKER' ? '#ef4444' : '#3b82f6';
-                    const hpPercent = unit.maxHp > 0 ? unit.hp / unit.maxHp : 0;
-                    const unitRadius = 8 + (unit.ships / 3000) * 4; // Scale with fleet size
-
-                    return (
-                        <g key={unit.fleetId}>
-                            {/* Command range circle */}
-                            {unit.commandRange > 0 && (
-                                <circle
-                                    cx={cx}
-                                    cy={cy}
-                                    r={unit.commandRange * scaleX * 0.5}
-                                    fill="none"
-                                    stroke={baseColor}
-                                    strokeWidth={0.5}
-                                    strokeDasharray="3 3"
-                                    opacity={0.3}
-                                />
-                            )}
-
-                            {/* Retreat arrow */}
-                            {unit.isRetreating && (
-                                <line
-                                    x1={cx}
-                                    y1={cy}
-                                    x2={unit.side === 'ATTACKER' ? cx - 30 : cx + 30}
-                                    y2={cy}
-                                    stroke="#ffff00"
-                                    strokeWidth={1}
-                                    strokeDasharray="4 2"
-                                    markerEnd="url(#arrow)"
-                                />
-                            )}
-
-                            {/* Unit circle */}
-                            <circle
-                                cx={cx}
-                                cy={cy}
-                                r={unitRadius}
-                                fill={baseColor}
-                                stroke={isMe ? '#ffd700' : '#555'}
-                                strokeWidth={isMe ? 2 : 1}
-                                opacity={unit.isRetreating ? 0.5 : 0.9}
-                            />
-
-                            {/* HP bar below unit */}
-                            <rect x={cx - 10} y={cy + unitRadius + 2} width={20} height={2} fill="#333" />
-                            <rect
-                                x={cx - 10}
-                                y={cy + unitRadius + 2}
-                                width={20 * hpPercent}
-                                height={2}
-                                fill={hpPercent > 0.5 ? '#22c55e' : hpPercent > 0.25 ? '#eab308' : '#ef4444'}
-                            />
-
-                            {/* Officer name */}
-                            <text
-                                x={cx}
-                                y={cy + unitRadius + 12}
-                                textAnchor="middle"
-                                className="text-[7px]"
-                                fill="#ccc"
-                                fontFamily="monospace"
-                            >
-                                {unit.officerName}
-                            </text>
-
-                            {/* Ship count */}
-                            <text
-                                x={cx}
-                                y={cy + 3}
-                                textAnchor="middle"
-                                className="text-[6px]"
-                                fill="#fff"
-                                fontFamily="monospace"
-                            >
-                                {unit.ships}
-                            </text>
-                        </g>
-                    );
-                })}
-            </svg>
+                    ))}
+                </Layer>
+            </Stage>
         </div>
     );
 }
