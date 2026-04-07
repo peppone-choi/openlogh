@@ -157,11 +157,15 @@ Plans:
   2. 사령관 사망(기함 격침) 시 30틱 공백 후 사전 지명자가 승계하며, 지명자 부재/사망 시 차순위 계급자가 자동 승계한다
   3. 분함대장 지휘 불가 시 해당 유닛이 사령관 직할로 복귀한다
   4. 모든 사령관 지휘 불가 시 지휘 체계가 붕괴하여 각 유닛이 독립 AI로 행동한다
-**Plans**: 3 plans
+**Plans**: 7 plans
 Plans:
-- [x] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
-- [x] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
-- [x] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
+- [x] 10-01-PLAN.md — 에너지/진형/전투상태 데이터 모델 (tactical combat)
+- [x] 10-02-PLAN.md — 전술전 엔진 + 요새포 시스템 (tactical combat)
+- [x] 10-03-PLAN.md — WebSocket 전투 컨트롤러 + REST API (tactical combat)
+- [x] 10-04-PLAN.md — 프론트엔드 전술전 UI (tactical combat)
+- [ ] 10-05-PLAN.md — 후계자 지명 + 부상 지휘력 저하 + 위임 (SUCC-01, SUCC-02)
+- [ ] 10-06-PLAN.md — 30틱 공백 + 자동 승계 + 분함대 복귀 (SUCC-03, SUCC-04, SUCC-05)
+- [ ] 10-07-PLAN.md — 지휘 체계 붕괴 + 독립 AI 전환 (SUCC-06)
 
 ### Phase 11: 전술 AI
 **Goal**: 오프라인/NPC 유닛이 작전 목적과 성격에 따라 자동 전투를 수행하며, 위협 평가 기반 퇴각과 에너지/진형 자동 조정이 동작한다
@@ -237,7 +241,7 @@ Plans:
 | 7. 시나리오 데이터 + 밸런싱 | v2.0 | 4/4 | Complete | 2026-04-06 |
 | 8. 엔진 통합 + 커맨드 버퍼 | v2.1 | 3/3 | Complete | - |
 | 9. 지휘권 분배 + CRC | v2.1 | 0/4 | Planned | - |
-| 10. 지휘 승계 | v2.1 | 5/4 | Complete   | 2026-04-07 |
+| 10. 지휘 승계 | v2.1 | 4/7 | In Progress | - |
 | 11. 전술 AI | v2.1 | 0/0 | Not started | - |
 | 12. 작전 연동 | v2.1 | 0/0 | Not started | - |
 | 13. 전략 AI | v2.1 | 0/0 | Not started | - |
