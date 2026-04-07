@@ -1795,3 +1795,9 @@ export interface ChatCommandRequest {
     scope: string;
     targetOfficerId?: number;
 }
+
+// Re-export gin7 domain types
+export type { Fleet, FleetUnit, ShipClass, Formation } from './fleet';
+export type { Officer, OfficerStat } from './officer';
+export type { Gin7Planet } from './planet';
+export type { Gin7Command, CommandGroup } from './command';
