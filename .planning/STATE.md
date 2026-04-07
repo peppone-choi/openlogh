@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 05-ai-system/05-03-PLAN.md
-last_updated: "2026-04-07T02:08:37.921Z"
+stopped_at: Completed 06-frontend-integration/06-02-PLAN.md
+last_updated: "2026-04-07T02:30:36.775Z"
 last_activity: 2026-04-07
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 9
-  total_plans: 51
-  completed_plans: 48
+  total_plans: 59
+  completed_plans: 49
   percent: 77
 ---
 
@@ -74,6 +74,7 @@ Progress: [████████░░] 77%
 | Phase 04-economy-system P05 | 15 | 2 tasks | 1 files |
 | Phase 05-ai-system P01 | 25 | 2 tasks | 7 files |
 | Phase 05-ai-system P03 | 35 | 2 tasks | 5 files |
+| Phase 06-frontend-integration P02 | 15 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,8 @@ Progress: [████████░░] 77%
 - [Phase 05-ai-system]: AiCommandBridge uses runBlocking for CommandExecutor.executeOfficerCommand (suspend fun) — consistent with Spring MVC approach used in Phase 02
 - [Phase 05-ai-system]: ScenarioEventAIService uses hand-rolled WorldPorts spy to avoid Kotlin non-null + Mockito any() NPE
 - [Phase 05-ai-system]: Civil war threshold: supportRatio >= 0.4 OR ticksActive > 300 — dual condition matches gin7 design
+- [Phase 06-frontend-integration]: FACTION_SHADES added to galaxy.ts — single source of truth for 5-shade palette used by both Konva and HTML layers
+- [Phase 06-frontend-integration]: fetchFleetPositions is non-blocking (catches errors silently) — map works without fleet data
 
 ### Pending Todos
 
@@ -140,6 +143,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T02:08:37.909Z
-Stopped at: Completed 05-ai-system/05-03-PLAN.md
+Last session: 2026-04-07T02:30:29.754Z
+Stopped at: Completed 06-frontend-integration/06-02-PLAN.md
 Resume file: None

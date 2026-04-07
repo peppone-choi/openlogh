@@ -68,7 +68,7 @@
 
 ### 프론트엔드 (FE)
 
-- [ ] **FE-01**: 은하맵 재작성 (도트스타일 성계 아이콘, 진영 색상 기반 5단계 음영)
+- [x] **FE-01**: 은하맵 재작성 (도트스타일 성계 아이콘, 진영 색상 기반 5단계 음영)
 - [ ] **FE-02**: 전술전 전략맵 UI (도형 아이콘 △□◇, 커맨드레인지서클, 정보패널)
 - [ ] **FE-03**: 전투 접근전 뷰 (상하 2분할, 상단 연출뷰+하단 전술맵, React Three Fiber)
 - [ ] **FE-04**: 전략 게임 화면 (성계맵 확대, 정보뷰, 직무권한카드 탭, 동스폿 캐릭터)
@@ -157,7 +157,7 @@
 | AI-02 | Phase 5 | Complete |
 | AI-03 | Phase 5 | Complete |
 | AI-04 | Phase 5 | Complete |
-| FE-01 | Phase 6 | Pending |
+| FE-01 | Phase 6 | Complete |
 | FE-02 | Phase 6 | Pending |
 | FE-03 | Phase 6 | Pending |
 | FE-04 | Phase 6 | Pending |
