@@ -28,6 +28,16 @@ data class CommandHierarchy(
     var jammingTicksRemaining: Int = 0,
     /** Officer ID that caused the current jamming (null = no active jammer) */
     var jammingSourceOfficerId: Long? = null,
+    /** Designated successor officer ID (SUCC-01: pre-designated by fleet commander) */
+    var designatedSuccessor: Long? = null,
+    /** Injury-based capability modifier: 1.0 = full, 0.5 = reduced (SUCC-02) */
+    var injuryCapabilityModifier: Double = 1.0,
+    /** Tick when command vacancy started (-1 = no vacancy) (SUCC-03: 30-tick countdown) */
+    var vacancyStartTick: Int = -1,
+    /** Whether command has been delegated to successor (SUCC-02: voluntary delegation) */
+    var commandDelegated: Boolean = false,
+    /** Officer ID who received delegated command (tracks active commander after delegation) */
+    var activeCommander: Long? = null,
 )
 
 /**
