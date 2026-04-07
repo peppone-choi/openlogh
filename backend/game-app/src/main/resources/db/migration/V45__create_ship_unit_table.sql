@@ -7,7 +7,7 @@ CREATE TABLE ship_unit (
     id                  BIGSERIAL PRIMARY KEY,
     session_id          BIGINT NOT NULL,
     fleet_id            BIGINT NOT NULL REFERENCES fleet(id) ON DELETE CASCADE,
-    slot_index          SMALLINT NOT NULL DEFAULT 0,  -- 함대 내 부대 번호 (0~7)
+    slot_index          SMALLINT NOT NULL DEFAULT 0,  -- 함대 내 부대 번호 (함대=0~59, 순찰대=0~2, 수송함대=0~22)
 
     -- 함종 정보
     ship_class          VARCHAR(32) NOT NULL DEFAULT 'BATTLESHIP',

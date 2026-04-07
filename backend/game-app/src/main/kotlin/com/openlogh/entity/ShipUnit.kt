@@ -33,7 +33,7 @@ class ShipUnit(
     @Column(name = "fleet_id", nullable = false)
     var fleetId: Long = 0,
 
-    /** 함대 내 부대 번호 (0~7). 0번이 사령관 직할 부대. */
+    /** 함대 내 부대 번호. 함대=0~59(최대60유닛), 순찰대=0~2, 수송함대=0~22, 지상부대=0~5, 수비대=0~9 */
     @Column(name = "slot_index", nullable = false)
     var slotIndex: Short = 0,
 
