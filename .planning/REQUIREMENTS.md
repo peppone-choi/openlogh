@@ -88,7 +88,7 @@
 - [x] **TEST-01**: 함종 간 밸런스 검증 (88 서브타입 전투 시뮬레이션)
 - [x] **TEST-02**: 커맨드 CP 비용/대기시간 밸런싱
 - [x] **TEST-03**: 경제 밸런스 (세율/생산/소비 순환)
-- [ ] **TEST-04**: 통합 테스트 (전술전→경제→인사 연동)
+- [x] **TEST-04**: 통합 테스트 (전술전→경제→인사 연동)
 
 ## v3.0 Requirements (Deferred)
 
@@ -171,7 +171,7 @@
 | TEST-01 | Phase 7 | Complete |
 | TEST-02 | Phase 7 | Complete |
 | TEST-03 | Phase 7 | Complete |
-| TEST-04 | Phase 7 | Pending |
+| TEST-04 | Phase 7 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 51 total
