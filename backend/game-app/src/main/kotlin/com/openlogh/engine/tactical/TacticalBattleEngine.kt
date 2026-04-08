@@ -1,11 +1,18 @@
 package com.openlogh.engine.tactical
 
+import com.openlogh.engine.ai.PersonalityTrait
+import com.openlogh.engine.tactical.ai.MissionObjective
+import com.openlogh.engine.tactical.ai.TacticalAIRunner
+import com.openlogh.model.CommandRange
+import com.openlogh.model.DetectionCapability
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
 import com.openlogh.model.InjuryEvent
+import com.openlogh.model.ShipSubtype
 import com.openlogh.model.TacticalWeaponType
 import com.openlogh.model.UnitStance
 import com.openlogh.service.ShipStatRegistry
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -50,9 +57,7 @@ data class TacticalUnit(
     var formation: Formation = Formation.MIXED,
 
     // Command range: expands based on command stat, resets on new order
-    var commandRange: Double = 0.0,
-    var commandRangeMax: Double = 100.0,
-    var ticksSinceLastOrder: Int = 0,
+    var commandRange: CommandRange = CommandRange(),
 
     // Status
     var isAlive: Boolean = true,
@@ -69,20 +74,59 @@ data class TacticalUnit(
     /** 미사일 잔탄 수 */
     var missileCount: Int = 100,
     /** 함선 서브타입 (battleship/cruiser/destroyer 등 세부 구분) */
-    var shipSubtype: String = "",
+    var shipSubtype: ShipSubtype? = null,
     /** 기함 여부 */
     var isFlagship: Boolean = false,
     /** 탑재 지상부대 수 */
     var groundUnitsEmbark: Int = 0,
     /** 스파르타니안 속도 디버프 잔여 틱 */
     var fighterSpeedDebuffTicks: Int = 0,
-    /** 마지막 태세 변경 이후 경과 틱 (쿨다운 관리) */
-    var ticksSinceStanceChange: Int = 0,
+    /** 태세 변경 쿨다운 잔여 틱 (0 이하이면 변경 가능) */
+    var stanceChangeTicksRemaining: Int = 0,
     /** 플레이어 지정 공격 대상 함대 ID (null=자동 선택) */
     var targetFleetId: Long? = null,
     /** 선회 중 여부 (ORBIT 커맨드) */
     var isOrbiting: Boolean = false,
-)
+
+    // ── Phase 9: Command hierarchy fields ──
+    /** 이 유닛이 소속된 분함대장의 officerId (null = 사령관 직할) */
+    var subFleetCommanderId: Long? = null,
+    /** 마지막 명령을 수신한 tick 번호 (CRC 밖 자율행동 판단용) */
+    var lastCommandTick: Int = 0,
+    /** Officer rank level (populated at battle init from Officer.officerLevel, for priority ordering) */
+    val officerLevel: Int = 0,
+    /** Evaluation points (populated at battle init from Officer.evaluationPoints, for priority ordering) */
+    val evaluationPoints: Int = 0,
+    /** Merit points (populated at battle init from Officer.meritPoints, for priority ordering) */
+    val meritPoints: Int = 0,
+
+    // ── Phase 11: Tactical AI fields ──
+    /** Officer personality trait for AI decisions */
+    var personality: PersonalityTrait = PersonalityTrait.BALANCED,
+    /** Current mission objective (stub for Phase 12 connection) */
+    var missionObjective: MissionObjective = MissionObjective.DEFENSE,
+    /** Anchor position X for DEFENSE mission (initial position at battle start) */
+    var anchorX: Double = 0.0,
+    /** Anchor position Y for DEFENSE mission */
+    var anchorY: Double = 0.0,
+    /** Last AI evaluation tick (for 10-tick re-evaluation cycle per D-06) */
+    var lastAIEvalTick: Int = -10,
+
+    // ── Merged from TacticalCombatEngine ──
+    /** 보급 물자 */
+    var supplies: Int = 0,
+    /** Weapon cooldowns: weaponType -> ticks remaining */
+    var weaponCooldowns: MutableMap<TacticalWeaponType, Int> = mutableMapOf(),
+    /** Active debuffs: type -> ticks remaining */
+    var debuffs: MutableMap<String, Int> = mutableMapOf(),
+    /** Detection capability of this unit */
+    var detectionCapability: DetectionCapability = DetectionCapability(
+        baseRange = 5.0, basePrecision = 0.5, evasionRating = 0.2,
+    ),
+) {
+    /** Unit is stopped (zero velocity) */
+    val isStopped: Boolean get() = velX == 0.0 && velY == 0.0
+}
 
 enum class BattleSide { ATTACKER, DEFENDER }
 
@@ -132,6 +176,24 @@ data class TacticalBattleState(
      * null이면 지상전 미진행.
      */
     var groundBattleState: GroundBattleState? = null,
+
+    /** Command buffer: WebSocket handlers enqueue, tick loop drains (per D-03/D-04) */
+    val commandBuffer: ConcurrentLinkedQueue<TacticalCommand> = ConcurrentLinkedQueue(),
+
+    /** Command hierarchy for attacker side (per D-05, populated at battle init) */
+    var attackerHierarchy: CommandHierarchy? = null,
+
+    /** Command hierarchy for defender side (per D-05, populated at battle init) */
+    var defenderHierarchy: CommandHierarchy? = null,
+
+    /** Pending conquest commands to be processed after command buffer drain */
+    val pendingConquestCommands: MutableList<TacticalCommand.PlanetConquest> = mutableListOf(),
+
+    /** Connected player officer IDs for online status tracking (Phase 9: priority ordering) */
+    val connectedPlayerOfficerIds: MutableSet<Long> = mutableSetOf(),
+
+    /** Current tick counter (alias for tickCount, used by command hierarchy logic) */
+    var currentTick: Int = 0,
 )
 
 data class BattleTickEvent(
@@ -170,6 +232,7 @@ class TacticalBattleEngine(
         const val MORALE_DAMAGE_THRESHOLD = 20  // below this, combat effectiveness drops
         const val MISSILE_RANGE = 800.0    // TacticalWeaponType.MISSILE.baseRange * 100
         const val FIGHTER_RANGE = 600.0    // TacticalWeaponType.FIGHTER.baseRange * 100
+        const val STANCE_CHANGE_COOLDOWN = 10  // ticks between stance changes
     }
 
     /** Expose missile system for SORTIE command in TacticalBattleService. */
@@ -181,12 +244,24 @@ class TacticalBattleEngine(
     fun processTick(state: TacticalBattleState, rng: Random = Random): TacticalBattleState {
         state.tickEvents.clear()
         state.tickCount++
+        state.currentTick = state.tickCount  // Sync currentTick for CRC/hierarchy logic
+
+        // Step 0: Drain command buffer (per D-03)
+        drainCommandBuffer(state)
+
+        // Step 0.5: Process out-of-CRC units (Phase 9 Plan 03)
+        processOutOfCrcUnits(state)
+
+        // Step 0.7: Process tactical AI for NPC/offline units (Phase 11)
+        TacticalAIRunner.processAITick(state)
 
         val aliveUnits = state.units.filter { it.isAlive }
 
-        // 0. Update per-tick counters
+        // 0. Update per-tick counters (stance cooldown counts down)
         for (unit in aliveUnits) {
-            unit.ticksSinceStanceChange++
+            if (unit.stanceChangeTicksRemaining > 0) {
+                unit.stanceChangeTicksRemaining--
+            }
         }
 
         // 1. Update command range for all units
@@ -244,6 +319,20 @@ class TacticalBattleEngine(
                         sourceUnitId = unit.fleetId, value = severity,
                         detail = "${unit.officerName} 기함 격침 → 부상 (중증도 $severity)"))
 
+                    // SUCC-03: Start succession vacancy countdown
+                    val fsHierarchy = getHierarchyForUnit(unit, state)
+                    if (fsHierarchy != null) {
+                        SuccessionService.startVacancy(fsHierarchy, unit.officerId, state.tickCount)
+                    }
+
+                    // SUCC-02: Apply injury capability reduction
+                    if (fsHierarchy != null) {
+                        SuccessionService.applyInjuryCapabilityReduction(fsHierarchy, state.pendingInjuryEvents.last())
+                    }
+
+                    // D-07: Flagship destroyed -> immediate AI re-evaluation for that side
+                    TacticalAIRunner.triggerImmediateReeval(state, unit.side)
+
                     // 다음 부대가 기함 대체: 같은 진영 잔존 유닛 중 ships 최대 유닛 승격
                     val replacementUnit = state.units
                         .filter { it.isAlive && it.ships > 0 && it.side == unit.side && it.fleetId != unit.fleetId }
@@ -255,8 +344,27 @@ class TacticalBattleEngine(
                             detail = "${replacementUnit.officerName} 기함 부대 대체"))
                     }
                 }
+
+                // SUCC-05: subfleet commander incapacitated -> return units to direct command
+                val unitHierarchy = getHierarchyForUnit(unit, state)
+                if (unitHierarchy != null && unitHierarchy.subCommanders.containsKey(unit.officerId)) {
+                    val returnedIds = CommandHierarchyService.returnUnitsToDirectCommand(
+                        unitHierarchy, unit.officerId, state.units
+                    )
+                    if (returnedIds.isNotEmpty()) {
+                        state.tickEvents.add(BattleTickEvent("subfleet_dissolved",
+                            sourceUnitId = unit.fleetId,
+                            detail = "${unit.officerName} 분함대 해체 — ${returnedIds.size}개 유닛 사령관 직할 복귀"))
+                    }
+                }
             }
         }
+
+        // Step 5.3: Process command succession (SUCC-03/04/05)
+        processSuccession(state)
+
+        // Step 5.4: Check for command breakdown (SUCC-06)
+        processCommandBreakdown(state)
 
         // 5.5 Ground battle tick (Plan 03-04)
         state.groundBattleState?.let { groundState ->
@@ -270,6 +378,16 @@ class TacticalBattleEngine(
                 state.tickEvents.add(BattleTickEvent("conquest_complete",
                     detail = "지상전 승리 — 행성 점령 완료 (행성 ${groundState.planetId})"))
             }
+        }
+
+        // 5.7 Tick jamming countdown + source-gone check (D-14)
+        state.attackerHierarchy?.let { h ->
+            CommunicationJamming.tickJamming(h)
+            CommunicationJamming.clearJammingIfSourceGone(h, state.units)
+        }
+        state.defenderHierarchy?.let { h ->
+            CommunicationJamming.tickJamming(h)
+            CommunicationJamming.clearJammingIfSourceGone(h, state.units)
         }
 
         // 6. Morale effects
@@ -313,14 +431,382 @@ class TacticalBattleEngine(
         return null
     }
 
+    // ── Command Buffer ──
+
+    /**
+     * Step 0 of processTick: drain all buffered commands and apply them.
+     * Called BEFORE any other tick processing (movement, detection, combat).
+     */
+    fun drainCommandBuffer(state: TacticalBattleState) {
+        var cmd = state.commandBuffer.poll()
+        while (cmd != null) {
+            applyCommand(cmd, state)
+            cmd = state.commandBuffer.poll()
+        }
+    }
+
+    private fun applyCommand(cmd: TacticalCommand, state: TacticalBattleState) {
+        // Succession commands bypass CRC and unit lookup (SUCC-01, SUCC-02)
+        if (cmd is TacticalCommand.DesignateSuccessor) {
+            val hierarchy = getHierarchyForSide(cmd, state)
+            if (hierarchy != null) {
+                val error = SuccessionService.designateSuccessor(hierarchy, cmd.officerId, cmd.successorOfficerId)
+                if (error == null) {
+                    state.tickEvents.add(BattleTickEvent("successor_designated",
+                        sourceUnitId = cmd.officerId, targetUnitId = cmd.successorOfficerId,
+                        detail = "후계자 지명 완료"))
+                }
+            }
+            return
+        }
+        if (cmd is TacticalCommand.DelegateCommand) {
+            val hierarchy = getHierarchyForSide(cmd, state)
+            if (hierarchy != null) {
+                val error = SuccessionService.delegateCommand(hierarchy, cmd.officerId)
+                if (error == null) {
+                    state.tickEvents.add(BattleTickEvent("command_delegated",
+                        sourceUnitId = cmd.officerId,
+                        detail = "지휘권 위임 완료"))
+                }
+            }
+            return
+        }
+        // Sub-fleet assignment commands bypass CRC (administrative, not tactical)
+        if (cmd is TacticalCommand.AssignSubFleet) {
+            applyAssignSubFleet(cmd, state)
+            return
+        }
+        if (cmd is TacticalCommand.ReassignUnit) {
+            applyReassignUnit(cmd, state)
+            return
+        }
+        // TriggerJamming targets enemy hierarchy -- no unit lookup needed
+        if (cmd is TacticalCommand.TriggerJamming) {
+            val targetHierarchy = when (cmd.targetSide) {
+                BattleSide.ATTACKER -> state.attackerHierarchy
+                BattleSide.DEFENDER -> state.defenderHierarchy
+            }
+            if (targetHierarchy != null) {
+                CommunicationJamming.applyJamming(targetHierarchy, cmd.officerId, cmd.durationTicks)
+            }
+            return
+        }
+
+        val unit = state.units.find { it.officerId == cmd.officerId && it.isAlive } ?: return
+
+        // CRC gate: check if command can reach the target unit (Phase 9 Plan 03)
+        val hierarchy = getHierarchyForUnit(unit, state)
+        if (hierarchy != null && !CrcValidator.isCommandReachable(cmd, unit, hierarchy, state.units)) {
+            return  // Command blocked by CRC -- unit maintains last order
+        }
+
+        // Jamming gate: blocks fleet commander's fleet-wide orders when jammed (D-13)
+        if (hierarchy != null && CommunicationJamming.isFleetWideCommandBlocked(cmd, unit, hierarchy)) {
+            return  // Command blocked by communication jamming
+        }
+
+        // Update lastCommandTick on successful command delivery
+        unit.lastCommandTick = state.currentTick
+
+        when (cmd) {
+            is TacticalCommand.SetEnergy -> {
+                unit.energy = cmd.allocation
+                unit.commandRange = unit.commandRange.resetOnCommand()
+            }
+            is TacticalCommand.SetStance -> {
+                if (unit.stanceChangeTicksRemaining <= 0) {
+                    unit.stance = cmd.stance
+                    unit.stanceChangeTicksRemaining = STANCE_CHANGE_COOLDOWN
+                    unit.commandRange = unit.commandRange.resetOnCommand()
+                }
+            }
+            is TacticalCommand.SetFormation -> {
+                unit.formation = cmd.formation
+                unit.commandRange = unit.commandRange.resetOnCommand()
+            }
+            is TacticalCommand.Retreat -> {
+                unit.isRetreating = true
+                unit.commandRange = unit.commandRange.resetOnCommand()
+            }
+            is TacticalCommand.SetAttackTarget -> {
+                unit.targetFleetId = cmd.targetFleetId
+                unit.commandRange = unit.commandRange.resetOnCommand()
+            }
+            is TacticalCommand.UnitCommand -> {
+                applyUnitCommand(cmd, unit, state)
+            }
+            is TacticalCommand.PlanetConquest -> {
+                // PlanetConquest commands require service-level logic; store as pending
+                state.pendingConquestCommands.add(cmd)
+            }
+            is TacticalCommand.AssignSubFleet -> {
+                // Handled above; exhaustive when requires this branch
+            }
+            is TacticalCommand.ReassignUnit -> {
+                // Handled above; exhaustive when requires this branch
+            }
+            is TacticalCommand.TriggerJamming -> {
+                // Handled above; exhaustive when requires this branch
+            }
+            is TacticalCommand.DesignateSuccessor -> {
+                // Handled in applyCommand before unit lookup
+            }
+            is TacticalCommand.DelegateCommand -> {
+                // Handled in applyCommand before unit lookup
+            }
+        }
+    }
+
+    // ── Phase 9: Command Hierarchy helpers ──
+
+    /**
+     * Resolve the CommandHierarchy for a unit based on its side.
+     */
+    private fun getHierarchyForUnit(unit: TacticalUnit, state: TacticalBattleState): CommandHierarchy? {
+        return when (unit.side) {
+            BattleSide.ATTACKER -> state.attackerHierarchy
+            BattleSide.DEFENDER -> state.defenderHierarchy
+        }
+    }
+
+    /**
+     * Resolve the CommandHierarchy for a command by finding the issuing officer's side.
+     * Used for succession/delegation commands that don't require a live unit lookup.
+     */
+    private fun getHierarchyForSide(cmd: TacticalCommand, state: TacticalBattleState): CommandHierarchy? {
+        val unit = state.units.find { it.officerId == cmd.officerId }
+        return if (unit != null) getHierarchyForUnit(unit, state) else null
+    }
+
+    /**
+     * Process command succession for both sides (SUCC-03/04).
+     * Called after unit destruction (step 5) so vacancy/death state is current.
+     */
+    private fun processSuccession(state: TacticalBattleState) {
+        listOfNotNull(state.attackerHierarchy, state.defenderHierarchy).forEach { hierarchy ->
+            // Skip if no vacancy is active
+            if (hierarchy.vacancyStartTick < 0) return@forEach
+
+            // Check if 30-tick countdown has expired
+            if (!SuccessionService.isVacancyExpired(hierarchy, state.currentTick)) {
+                // Broadcast countdown event
+                val ticksRemaining = SuccessionService.VACANCY_DURATION_TICKS -
+                    (state.currentTick - hierarchy.vacancyStartTick)
+                if (ticksRemaining % 10 == 0 || ticksRemaining <= 5) {  // broadcast every 10 ticks + last 5
+                    state.tickEvents.add(BattleTickEvent("succession_countdown",
+                        value = ticksRemaining,
+                        detail = "지휘 승계 대기 중 (${ticksRemaining}틱 남음)"))
+                }
+                return@forEach
+            }
+
+            // Vacancy expired -> execute succession
+            val aliveOfficerIds = state.units
+                .filter { it.isAlive }
+                .map { it.officerId }
+                .toSet()
+
+            val newCommander = SuccessionService.executeSuccession(hierarchy, aliveOfficerIds)
+            if (newCommander != null) {
+                val newCmdUnit = state.units.find { it.officerId == newCommander }
+                state.tickEvents.add(BattleTickEvent("succession_complete",
+                    sourceUnitId = newCmdUnit?.fleetId ?: 0,
+                    detail = "${newCmdUnit?.officerName ?: "Unknown"} 지휘권 승계 완료"))
+            } else {
+                // No successor available -> command breakdown (handled in 10-07)
+                state.tickEvents.add(BattleTickEvent("command_breakdown",
+                    detail = "지휘 체계 붕괴 — 승계 가능한 지휘관 없음"))
+            }
+        }
+    }
+
+    /**
+     * Process AssignSubFleet command: fleet commander assigns units to a sub-commander.
+     * Validates via CommandHierarchyService before mutating hierarchy.
+     */
+    private fun applyAssignSubFleet(cmd: TacticalCommand.AssignSubFleet, state: TacticalBattleState) {
+        val commanderUnit = state.units.find { it.officerId == cmd.officerId && it.isAlive } ?: return
+        val hierarchy = getHierarchyForUnit(commanderUnit, state) ?: return
+
+        // Only fleet commander can assign (validated in CommandHierarchyService)
+        val crewOfficerIds = state.units
+            .filter { it.side == commanderUnit.side && it.isAlive }
+            .map { it.officerId }
+            .toSet()
+
+        val error = CommandHierarchyService.validateSubFleetAssignment(
+            hierarchy, cmd.officerId, cmd.subCommanderId, cmd.unitIds, crewOfficerIds,
+        )
+        if (error != null) return  // silently reject invalid assignment
+
+        val subUnit = state.units.find { it.officerId == cmd.subCommanderId && it.isAlive } ?: return
+        CommandHierarchyService.assignSubFleet(
+            hierarchy, cmd.subCommanderId, subUnit.officerName, subUnit.officerLevel,
+            cmd.unitIds, state.units,
+        )
+    }
+
+    /**
+     * Process ReassignUnit command: fleet commander reassigns a unit between sub-fleets.
+     * CMD-05 condition: unit must be outside CRC AND stopped.
+     */
+    private fun applyReassignUnit(cmd: TacticalCommand.ReassignUnit, state: TacticalBattleState) {
+        val commanderUnit = state.units.find { it.officerId == cmd.officerId && it.isAlive } ?: return
+        val hierarchy = getHierarchyForUnit(commanderUnit, state) ?: return
+        if (cmd.officerId != hierarchy.fleetCommander) return  // only fleet commander
+
+        val targetUnit = state.units.find { it.fleetId == cmd.unitId && it.isAlive } ?: return
+
+        // CMD-05 condition: unit must be outside CRC AND stopped
+        val isOutsideCrc = !CrcValidator.isWithinCrc(commanderUnit, targetUnit)
+        val isStopped = targetUnit.isStopped
+        if (!isOutsideCrc || !isStopped) return  // reject if conditions not met
+
+        // Reassign: remove from current sub-fleet, assign to new one (or direct)
+        if (cmd.newSubCommanderId != null) {
+            val newCommander = state.units.find { it.officerId == cmd.newSubCommanderId && it.isAlive } ?: return
+            CommandHierarchyService.assignSubFleet(
+                hierarchy, cmd.newSubCommanderId, newCommander.officerName, newCommander.officerLevel,
+                listOf(cmd.unitId), state.units,
+            )
+        } else {
+            // Return to fleet commander direct: remove from all sub-fleets
+            targetUnit.subFleetCommanderId = null
+            hierarchy.subCommanders.values.forEach { sf ->
+                if (cmd.unitId in sf.unitIds) {
+                    val updated = sf.copy(unitIds = sf.unitIds - cmd.unitId)
+                    hierarchy.subCommanders[sf.commanderId] = updated
+                }
+            }
+        }
+    }
+
+    private fun applyUnitCommand(cmd: TacticalCommand.UnitCommand, unit: TacticalUnit, state: TacticalBattleState) {
+        unit.commandRange = unit.commandRange.resetOnCommand()
+
+        when (cmd.command.uppercase()) {
+            "MOVE" -> {
+                val norm = sqrt(cmd.dirX * cmd.dirX + cmd.dirY * cmd.dirY).coerceAtLeast(0.001)
+                val spd = BASE_SPEED * cmd.speed.coerceIn(0.0, 2.0)
+                unit.velX = (cmd.dirX / norm) * spd
+                unit.velY = (cmd.dirY / norm) * spd
+            }
+            "TURN" -> {
+                val currentSpeed = sqrt(unit.velX * unit.velX + unit.velY * unit.velY)
+                val norm = sqrt(cmd.dirX * cmd.dirX + cmd.dirY * cmd.dirY).coerceAtLeast(0.001)
+                unit.velX = (cmd.dirX / norm) * currentSpeed
+                unit.velY = (cmd.dirY / norm) * currentSpeed
+            }
+            "STRAFE" -> {
+                unit.velY = cmd.dirY * BASE_SPEED
+            }
+            "REVERSE" -> {
+                unit.velX = -unit.velX
+                unit.velY = -unit.velY
+            }
+            "ATTACK", "FIRE" -> {
+                if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
+            }
+            "ORBIT" -> {
+                if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
+                unit.isOrbiting = true
+            }
+            "FORMATION_CHANGE" -> {
+                val formation = cmd.formation?.let { Formation.fromString(it) } ?: Formation.MIXED
+                unit.formation = formation
+            }
+            "REPAIR" -> {
+                if (unit.morale >= 5) {
+                    unit.morale -= 5
+                    val repairAmount = (unit.training / 100.0 * unit.maxHp * 0.05).toInt().coerceAtLeast(1)
+                    unit.hp = (unit.hp + repairAmount).coerceAtMost(unit.maxHp)
+                    state.tickEvents.add(BattleTickEvent("repair", sourceUnitId = unit.fleetId,
+                        value = repairAmount, detail = "${unit.officerName} 자함 수리 (+$repairAmount HP)"))
+                }
+            }
+            "RESUPPLY" -> {
+                val nearPlanet = unit.posX < 100.0 || unit.posX > 900.0
+                if (nearPlanet && unit.missileCount < 100) {
+                    val resupplyAmount = 20
+                    unit.missileCount = (unit.missileCount + resupplyAmount).coerceAtMost(100)
+                    state.tickEvents.add(BattleTickEvent("resupply", sourceUnitId = unit.fleetId,
+                        value = resupplyAmount, detail = "${unit.officerName} 미사일 보급 (+$resupplyAmount)"))
+                }
+            }
+            "SORTIE" -> {
+                val enemies = state.units.filter { it.side != unit.side && it.isAlive }
+                val target = enemies.minByOrNull {
+                    val dx = unit.posX - it.posX
+                    val dy = unit.posY - it.posY
+                    sqrt(dx * dx + dy * dy)
+                }
+                if (target != null) {
+                    missileSystem.processFighterAttack(unit, target, state)
+                }
+            }
+        }
+    }
+
+    /**
+     * Process out-of-CRC units: maintain last order or AI retreat (D-06).
+     * Called each tick AFTER command buffer drain and BEFORE movement processing.
+     */
+    private fun processOutOfCrcUnits(state: TacticalBattleState) {
+        for (unit in state.units) {
+            if (!unit.isAlive || unit.isRetreating) continue
+
+            val hierarchy = getHierarchyForUnit(unit, state) ?: continue
+            val commanderId = CommandHierarchyService.resolveCommanderForUnit(unit, hierarchy)
+            val commanderUnit = state.units.find { it.officerId == commanderId && it.isAlive }
+
+            // Skip if commander not found (edge case) or if unit IS the commander
+            if (commanderUnit == null || unit.officerId == commanderId) continue
+
+            // Check if unit is outside commander's CRC
+            if (!CrcValidator.isWithinCrc(commanderUnit, unit)) {
+                OutOfCrcBehavior.processOutOfCrcUnit(unit, commanderUnit, state.currentTick)
+            }
+        }
+    }
+
+    /**
+     * Detect command breakdown and transition all units to independent AI (SUCC-06).
+     * Called after processSuccession() — if succession failed (no successor found),
+     * all alive units on that side fall back to OutOfCrcBehavior.
+     */
+    private fun processCommandBreakdown(state: TacticalBattleState) {
+        val aliveOfficerIds = state.units
+            .filter { it.isAlive }
+            .map { it.officerId }
+            .toSet()
+
+        listOf(
+            BattleSide.ATTACKER to state.attackerHierarchy,
+            BattleSide.DEFENDER to state.defenderHierarchy,
+        ).forEach { (side, hierarchy) ->
+            if (hierarchy == null) return@forEach
+            if (!SuccessionService.isCommandBroken(hierarchy, aliveOfficerIds)) return@forEach
+
+            // Command is broken — force immediate AI re-evaluation for all units on this side
+            // AI will handle retreat decisions based on personality thresholds
+            TacticalAIRunner.triggerImmediateReeval(state, side)
+
+            val affectedUnits = state.units.filter { it.isAlive && it.side == side && !it.isRetreating }
+
+            // Broadcast once per tick only if there are affected units
+            if (affectedUnits.isNotEmpty()) {
+                state.tickEvents.add(BattleTickEvent("command_broken_ai",
+                    value = affectedUnits.size,
+                    detail = "${side.name} 지휘 체계 붕괴 — ${affectedUnits.size}개 유닛 독립 AI 행동"))
+            }
+        }
+    }
+
     // ── Private helpers ──
 
     private fun updateCommandRange(unit: TacticalUnit) {
-        unit.ticksSinceLastOrder++
-        // commandRangeMax scales linearly with command stat: command=50 → 100, command=100 → 200
-        unit.commandRangeMax = (unit.command / 50.0) * 100.0
-        val growthRate = COMMAND_RANGE_GROWTH_RATE * (unit.command / 50.0)
-        unit.commandRange = (unit.commandRange + growthRate).coerceAtMost(unit.commandRangeMax)
+        // CommandRange.tick() handles expansion toward maxRange
+        unit.commandRange = unit.commandRange.tick()
     }
 
     private fun processMovement(unit: TacticalUnit, state: TacticalBattleState, allUnits: List<TacticalUnit>) {
@@ -405,9 +891,10 @@ class TacticalBattleEngine(
         val stanceAttack = unit.stance.attackModifier
 
         // Resolve per-subtype base damage from ShipStatRegistry (fallback to hardcoded constants)
-        val subtypeStat = if (!unit.shipSubtype.isNullOrBlank()) {
-            shipStatRegistry?.getShipStat(unit.shipSubtype, "empire")
-                ?: shipStatRegistry?.getShipStat(unit.shipSubtype, "alliance")
+        val subtypeName = unit.shipSubtype?.name
+        val subtypeStat = if (subtypeName != null) {
+            shipStatRegistry?.getShipStat(subtypeName, "empire")
+                ?: shipStatRegistry?.getShipStat(subtypeName, "alliance")
         } else null
         val beamBaseDamage = subtypeStat?.beamPower?.takeIf { it > 0 }?.toDouble() ?: BEAM_BASE_DAMAGE
         val gunBaseDamage  = subtypeStat?.gunPower?.takeIf { it > 0 }?.toDouble()  ?: GUN_BASE_DAMAGE
