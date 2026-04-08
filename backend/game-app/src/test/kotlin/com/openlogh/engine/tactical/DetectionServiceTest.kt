@@ -1,5 +1,6 @@
 package com.openlogh.engine.tactical
 
+import com.openlogh.model.CommandRange
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
 import com.openlogh.model.UnitStance
@@ -10,8 +11,8 @@ import org.junit.jupiter.api.Test
  * Tests for DetectionService (Task 03-02):
  * - 두 유닛이 탐지 범위 이내 → detectionMatrix 갱신
  * - 정지(STATIONED/ANCHORING) 유닛은 탐지 범위 +20% 보너스
- * - commandRange가 매 틱 growthRate만큼 증가하다 commandRangeMax에서 멈춤
- * - 발령 후 commandRange = 0.0 확인 (TacticalBattleService에서 이미 처리됨)
+ * - CommandRange.currentRange가 매 틱 expansionRate만큼 증가하다 maxRange에서 멈춤
+ * - 발령 후 commandRange.resetOnCommand() 확인 (TacticalBattleService에서 이미 처리됨)
  */
 class DetectionServiceTest {
 
@@ -155,43 +156,44 @@ class DetectionServiceTest {
     // ── CommandRange Tests ──
 
     @Test
-    fun `commandRange increases by growthRate each tick up to commandRangeMax`() {
-        // command=50 → commandRangeMax = (50/50)*100 = 100, growthRate = 0.5*(50/50) = 0.5
+    fun `commandRange increases by expansionRate each tick up to maxRange`() {
+        // CommandRange with expansionRate=1.0, maxRange=100.0
         val unit = makeUnit(1L, BattleSide.ATTACKER, posX = 0.0, posY = 0.0, command = 50)
         val enemy = makeUnit(2L, BattleSide.DEFENDER, posX = 900.0, posY = 300.0)
         val state = makeState(unit, enemy)
 
-        unit.commandRange = 0.0
+        unit.commandRange = CommandRange(currentRange = 0.0, maxRange = 100.0, expansionRate = 1.0)
 
-        // After 1 tick, commandRange should increase
+        // After 1 tick, commandRange.currentRange should increase
         engine.processTick(state)
-        val afterOneTick = state.units.first { it.fleetId == 1L }.commandRange
-        assertTrue(afterOneTick > 0.0, "commandRange should increase after 1 tick, got $afterOneTick")
+        val afterOneTick = state.units.first { it.fleetId == 1L }.commandRange.currentRange
+        assertTrue(afterOneTick > 0.0, "commandRange.currentRange should increase after 1 tick, got $afterOneTick")
 
-        // After many ticks, commandRange should cap at commandRangeMax
+        // After many ticks, commandRange should cap at maxRange
         repeat(300) { engine.processTick(state) }
-        val cappedRange = state.units.first { it.fleetId == 1L }.commandRange
-        val maxRange = state.units.first { it.fleetId == 1L }.commandRangeMax
-        assertEquals(maxRange, cappedRange, 0.01, "commandRange should cap at commandRangeMax=$maxRange after many ticks, got $cappedRange")
+        val cappedRange = state.units.first { it.fleetId == 1L }.commandRange.currentRange
+        val maxRange = state.units.first { it.fleetId == 1L }.commandRange.maxRange
+        assertEquals(maxRange, cappedRange, 0.01, "commandRange should cap at maxRange=$maxRange after many ticks, got $cappedRange")
     }
 
     @Test
-    fun `commandRangeMax is proportional to command stat`() {
+    fun `commandRange maxRange can be configured per unit`() {
         val lowCommandUnit = makeUnit(1L, BattleSide.ATTACKER, command = 25)
+        lowCommandUnit.commandRange = CommandRange(currentRange = 0.0, maxRange = 50.0, expansionRate = 0.5)
         val highCommandUnit = makeUnit(2L, BattleSide.ATTACKER, command = 100)
+        highCommandUnit.commandRange = CommandRange(currentRange = 0.0, maxRange = 200.0, expansionRate = 2.0)
         val enemy = makeUnit(3L, BattleSide.DEFENDER, posX = 900.0)
         val state = makeState(lowCommandUnit, highCommandUnit, enemy)
 
         // Run a tick to trigger updateCommandRange
         engine.processTick(state)
 
-        val lowMax = state.units.first { it.fleetId == 1L }.commandRangeMax
-        val highMax = state.units.first { it.fleetId == 2L }.commandRangeMax
+        val lowMax = state.units.first { it.fleetId == 1L }.commandRange.maxRange
+        val highMax = state.units.first { it.fleetId == 2L }.commandRange.maxRange
 
         assertTrue(highMax > lowMax,
-            "Higher command stat should produce higher commandRangeMax. low=$lowMax, high=$highMax")
-        // command=100 → max=200, command=25 → max=50
-        assertEquals(50.0, lowMax, 0.1, "command=25 → commandRangeMax should be 50")
-        assertEquals(200.0, highMax, 0.1, "command=100 → commandRangeMax should be 200")
+            "Higher command stat should produce higher maxRange. low=$lowMax, high=$highMax")
+        assertEquals(50.0, lowMax, 0.1, "low command unit maxRange should be 50")
+        assertEquals(200.0, highMax, 0.1, "high command unit maxRange should be 200")
     }
 }

@@ -162,11 +162,11 @@ class TacticalBattleEngineTest {
         // All new fields must exist with default values
         assertEquals(UnitStance.NAVIGATION, unit.stance)
         assertEquals(100, unit.missileCount)
-        assertEquals("", unit.shipSubtype)
+        assertNull(unit.shipSubtype)
         assertFalse(unit.isFlagship)
         assertEquals(0, unit.groundUnitsEmbark)
         assertEquals(0, unit.fighterSpeedDebuffTicks)
-        assertEquals(0, unit.ticksSinceStanceChange)
+        assertEquals(0, unit.stanceChangeTicksRemaining)
     }
 
     /**
