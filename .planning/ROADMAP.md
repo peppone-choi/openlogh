@@ -179,7 +179,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 11-01-PLAN.md — 전술 AI 데이터 모델 + 위협 평가 + 성격별 전술 프로파일
-- [ ] 11-02-PLAN.md — TacticalAI 핵심 로직: 작전 목적별 행동 + 성격별 전투 + 에너지/진형/집중화력
+- [x] 11-02-PLAN.md — TacticalAI 핵심 로직: 작전 목적별 행동 + 성격별 전투 + 에너지/진형/집중화력
 - [ ] 11-03-PLAN.md — 엔진 통합: AI 틱 처리 + 즉시 재평가 트리거 + 체계 붕괴 AI 전환
 
 ### Phase 12: 작전 연동
@@ -242,7 +242,7 @@ Plans:
 | 8. 엔진 통합 + 커맨드 버퍼 | v2.1 | 3/3 | Complete | - |
 | 9. 지휘권 분배 + CRC | v2.1 | 4/4 | Complete | 2026-04-07 |
 | 10. 지휘 승계 | v2.1 | 7/7 | Complete   | 2026-04-07 |
-| 11. 전술 AI | v2.1 | 1/3 | In Progress|  |
+| 11. 전술 AI | v2.1 | 2/3 | In Progress|  |
 | 12. 작전 연동 | v2.1 | 0/0 | Not started | - |
 | 13. 전략 AI | v2.1 | 0/0 | Not started | - |
 | 14. 프론트엔드 통합 | v2.1 | 0/0 | Not started | - |
