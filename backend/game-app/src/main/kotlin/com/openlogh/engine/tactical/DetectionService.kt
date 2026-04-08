@@ -1,8 +1,5 @@
 package com.openlogh.engine.tactical
 
-import com.openlogh.engine.war.DetectionEngine
-import com.openlogh.engine.war.DetectionTarget
-import com.openlogh.engine.war.DetectorUnit
 import com.openlogh.model.DetectionCapability
 
 /**

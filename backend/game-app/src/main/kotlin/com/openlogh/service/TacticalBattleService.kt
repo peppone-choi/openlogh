@@ -120,8 +120,20 @@ class TacticalBattleService(
         val state = activeBattles[battleId] ?: return
         val battle = tacticalBattleRepository.findById(battleId).orElse(null) ?: return
 
-        // Process tick
+        // Process tick (drains command buffer as step 0)
         engine.processTick(state)
+
+        // Process any pending conquest commands (require service-level logic)
+        val pendingConquests = state.pendingConquestCommands.toList()
+        state.pendingConquestCommands.clear()
+        for (cmd in pendingConquests) {
+            try {
+                @Suppress("DEPRECATION")
+                executeConquest(battleId, cmd.officerId, cmd.request)
+            } catch (e: Exception) {
+                log.warn("Failed to process conquest command in battle {}: {}", battleId, e.message)
+            }
+        }
 
         // Check for battle end
         val outcome = engine.checkBattleEnd(state)
@@ -143,16 +155,25 @@ class TacticalBattleService(
     // ── Player Commands ──
 
     /**
+     * Enqueue a tactical command for processing at next tick start.
+     * Thread-safe: ConcurrentLinkedQueue.offer() is lock-free.
+     */
+    fun enqueueCommand(battleId: Long, command: TacticalCommand) {
+        activeBattles[battleId]?.commandBuffer?.offer(command)
+            ?: log.warn("Cannot enqueue command: battle {} not found", battleId)
+    }
+
+    /**
      * Set energy allocation for a unit in battle.
      */
+    @Deprecated("Use enqueueCommand instead", ReplaceWith("enqueueCommand(battleId, TacticalCommand.SetEnergy(battleId, officerId, allocation))"))
     fun setEnergyAllocation(battleId: Long, officerId: Long, allocation: EnergyAllocation) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
             ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
 
         unit.energy = allocation
-        unit.commandRange = 0.0  // Reset command range on new order
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()  // Reset command range on new order
 
         log.debug("Officer {} set energy allocation in battle {}: B={} G={} S={} E={} W={} SE={}",
             officerId, battleId, allocation.beam, allocation.gun, allocation.shield,
@@ -162,35 +183,35 @@ class TacticalBattleService(
     /**
      * Set formation for a unit in battle.
      */
+    @Deprecated("Use enqueueCommand instead")
     fun setFormation(battleId: Long, officerId: Long, formation: Formation) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
             ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
 
         unit.formation = formation
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
         log.debug("Officer {} set formation to {} in battle {}", officerId, formation.name, battleId)
     }
 
     /**
      * Set stance for a unit in battle.
-     * gin7 rule: 태세 변경은 10틱(ticksSinceStanceChange >= 10) 쿨다운 필요.
+     * gin7 rule: 태세 변경은 stanceChangeTicksRemaining <= 0 일 때만 가능 (10틱 쿨다운).
      */
+    @Deprecated("Use enqueueCommand instead")
     fun setStance(battleId: Long, officerId: Long, stance: UnitStance) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
             ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
 
-        require(unit.ticksSinceStanceChange >= 10) {
-            "태세 변경 쿨다운 중 (현재 ${unit.ticksSinceStanceChange}틱, 10틱 필요)"
+        require(unit.stanceChangeTicksRemaining <= 0) {
+            "태세 변경 쿨다운 중 (잔여 ${unit.stanceChangeTicksRemaining}틱)"
         }
 
         unit.stance = stance
-        unit.ticksSinceStanceChange = 0
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.stanceChangeTicksRemaining = 10
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
         log.debug("Officer {} changed stance to {} in battle {}", officerId, stance.name, battleId)
     }
@@ -199,14 +220,14 @@ class TacticalBattleService(
      * Set a specific attack target for a unit.
      * gin7 rule: 플레이어가 공격 대상 함대를 지정하면, 지정 대상이 살아있는 한 우선 공격.
      */
+    @Deprecated("Use enqueueCommand instead")
     fun setAttackTarget(battleId: Long, officerId: Long, targetFleetId: Long) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
             ?: throw IllegalArgumentException("Officer $officerId not found in battle $battleId")
 
         unit.targetFleetId = targetFleetId
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
         log.debug("Officer {} set attack target fleet {} in battle {}", officerId, targetFleetId, battleId)
     }
@@ -214,6 +235,7 @@ class TacticalBattleService(
     /**
      * Initiate retreat for a unit. Requires WARP energy >= 50%.
      */
+    @Deprecated("Use enqueueCommand instead")
     fun retreat(battleId: Long, officerId: Long) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == officerId && it.isAlive }
@@ -235,6 +257,7 @@ class TacticalBattleService(
      * - GROUND_ASSAULT: groundUnitsEmbark > 0 확인 후 GroundBattleState 초기화
      * - 정밀폭격/무차별폭격: missileCount 소모 반영
      */
+    @Deprecated("Use enqueueCommand instead")
     fun executeConquest(battleId: Long, officerId: Long, request: ConquestRequest): ConquestResult {
         val state = activeBattles[battleId]
             ?: throw IllegalStateException("Battle $battleId not active")
@@ -265,8 +288,7 @@ class TacticalBattleService(
         }
 
         val result = planetConquestService.executeConquest(request)
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
         // 미사일 소모 반영
         if (result.missilesConsumed > 0) {
@@ -336,14 +358,14 @@ class TacticalBattleService(
      * 전술 유닛 커맨드 11종 처리.
      * MOVE/TURN/STRAFE/REVERSE/ATTACK/FIRE/ORBIT/FORMATION_CHANGE/REPAIR/RESUPPLY/SORTIE
      */
+    @Deprecated("Use enqueueCommand instead")
     fun executeUnitCommand(battleId: Long, cmd: UnitCommandRequest) {
         val state = activeBattles[battleId] ?: throw IllegalStateException("Battle $battleId not active")
         val unit = state.units.find { it.officerId == cmd.officerId && it.isAlive }
             ?: throw IllegalArgumentException("Officer ${cmd.officerId} not found in battle $battleId")
 
         // 모든 커맨드는 commandRange 리셋
-        unit.commandRange = 0.0
-        unit.ticksSinceLastOrder = 0
+        unit.commandRange = unit.commandRange.resetOnCommand()
 
         when (cmd.command.uppercase()) {
             "MOVE" -> {
@@ -452,6 +474,27 @@ class TacticalBattleService(
         state.pendingInjuryEvents.clear()
     }
 
+    // ── Player Connection Tracking (Phase 9 Plan 03) ──
+
+    /**
+     * Track player connection for priority-based hierarchy updates.
+     * Called from BattleWebSocketController on connect/disconnect events.
+     * Phase 14 frontend integration will wire the actual WebSocket handlers.
+     */
+    fun onPlayerConnected(battleId: Long, officerId: Long) {
+        val state = activeBattles[battleId] ?: return
+        state.connectedPlayerOfficerIds.add(officerId)
+        log.debug("Player {} connected to battle {}", officerId, battleId)
+    }
+
+    fun onPlayerDisconnected(battleId: Long, officerId: Long) {
+        val state = activeBattles[battleId] ?: return
+        state.connectedPlayerOfficerIds.remove(officerId)
+        log.debug("Player {} disconnected from battle {}", officerId, battleId)
+        // D-10: priority recalculation triggered on disconnect
+        // Succession queue will be re-evaluated at next hierarchy rebuild (flagship destruction, etc.)
+    }
+
     // ── Query Methods ──
 
     fun getActiveBattles(sessionId: Long): List<TacticalBattleDto> {
@@ -463,6 +506,16 @@ class TacticalBattleService(
         val battle = tacticalBattleRepository.findById(battleId).orElse(null) ?: return null
         if (battle.sessionId != sessionId) return null
         return toDto(battle)
+    }
+
+    /**
+     * Get battle history including persisted battle state snapshot.
+     * Returns null if battle not found or session mismatch.
+     */
+    fun getBattleHistory(sessionId: Long, battleId: Long): TacticalBattleHistoryDto? {
+        val battle = tacticalBattleRepository.findById(battleId).orElse(null) ?: return null
+        if (battle.sessionId != sessionId) return null
+        return toHistoryDto(battle)
     }
 
     // ── DTO Conversion ──
@@ -507,12 +560,35 @@ class TacticalBattleService(
         morale = unit.morale,
         energy = EnergyAllocation.toMap(unit.energy),
         formation = unit.formation.name,
-        commandRange = unit.commandRange,
+        commandRange = unit.commandRange.currentRange,
         isAlive = unit.isAlive,
         isRetreating = unit.isRetreating,
         retreatProgress = unit.retreatProgress,
         unitType = unit.unitType,
     )
+
+    private fun toHistoryDto(battle: TacticalBattle): TacticalBattleHistoryDto {
+        @Suppress("UNCHECKED_CAST")
+        val attackerIds = (battle.participants["attackers"] as? List<*>)?.mapNotNull { (it as? Number)?.toLong() } ?: emptyList()
+        @Suppress("UNCHECKED_CAST")
+        val defenderIds = (battle.participants["defenders"] as? List<*>)?.mapNotNull { (it as? Number)?.toLong() } ?: emptyList()
+
+        return TacticalBattleHistoryDto(
+            id = battle.id,
+            sessionId = battle.sessionId,
+            starSystemId = battle.starSystemId,
+            attackerFactionId = battle.attackerFactionId,
+            defenderFactionId = battle.defenderFactionId,
+            phase = battle.phase,
+            startedAt = battle.startedAt.toString(),
+            endedAt = battle.endedAt?.toString(),
+            result = battle.result,
+            tickCount = battle.tickCount,
+            attackerFleetIds = attackerIds,
+            defenderFleetIds = defenderIds,
+            battleState = battle.battleState,
+        )
+    }
 
     private fun broadcastBattleState(
         sessionId: Long,
