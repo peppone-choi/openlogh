@@ -11,6 +11,8 @@ import com.openlogh.engine.tactical.TacticalUnit
  * Pure data class — no side effects, no Spring DI.
  */
 data class TacticalAIContext(
+    /** Battle ID for generating TacticalCommand instances */
+    val battleId: Long = 0L,
     /** The AI-controlled unit making a decision */
     val unit: TacticalUnit,
     /** Alive friendly units (same side, excluding self) */
