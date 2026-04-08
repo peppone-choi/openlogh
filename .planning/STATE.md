@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: verifying
-stopped_at: Completed 11-03-PLAN.md
-last_updated: "2026-04-08T04:08:47.101Z"
+stopped_at: Phase 12 context gathered
+last_updated: "2026-04-08T05:11:46.018Z"
 last_activity: 2026-04-08
 progress:
-  total_phases: 17
+  total_phases: 18
   completed_phases: 15
   total_plans: 80
   completed_plans: 80
@@ -123,6 +123,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T04:03:50.474Z
-Stopped at: Completed 11-03-PLAN.md
-Resume file: None
+Last session: 2026-04-08T05:11:46.005Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-operation-integration/12-CONTEXT.md
