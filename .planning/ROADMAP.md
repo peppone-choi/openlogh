@@ -190,11 +190,12 @@ Plans:
   1. 전략 게임에서 발령한 작전계획(점령/방어/소탕)의 목적이 전술전 진입 시 AI 기본 행동(TAI-01)에 자동 전달된다
   2. 작전에 참가한 부대가 전투 종료 후 비참가 부대 대비 공적 보너스를 받는다
   3. 발령된 부대가 목표 성계에 도달하면 작전이 자동 시작된다
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
-- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
-- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
-- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
+- [ ] 12-01-PLAN.md — OperationPlan 엔티티 + V47 마이그레이션 + MissionObjective.defaultForPersonality + 리포지토리
+- [ ] 12-02-PLAN.md — OperationPlanCommand/CancelCommand 재작성 + WarpNavigationCommand Fleet.planetId 버그 수정
+- [ ] 12-03-PLAN.md — TacticalBattleState missionObjectiveByFleetId + BattleTriggerService 주입 + sync 채널
+- [ ] 12-04-PLAN.md — OperationLifecycleService + TickEngine 5.5단계 + endBattle ×1.5 공적 보너스
 
 ### Phase 13: 전략 AI
 **Goal**: AI 진영이 전쟁 상태에서 자동으로 작전계획을 수립하고 전력 평가에 따라 적절한 작전 유형을 선택한다
@@ -243,6 +244,6 @@ Plans:
 | 9. 지휘권 분배 + CRC | v2.1 | 4/4 | Complete | 2026-04-07 |
 | 10. 지휘 승계 | v2.1 | 7/7 | Complete   | 2026-04-07 |
 | 11. 전술 AI | v2.1 | 3/3 | Complete    | 2026-04-08 |
-| 12. 작전 연동 | v2.1 | 0/0 | Not started | - |
+| 12. 작전 연동 | v2.1 | 0/4 | Not started | - |
 | 13. 전략 AI | v2.1 | 0/0 | Not started | - |
 | 14. 프론트엔드 통합 | v2.1 | 0/0 | Not started | - |
