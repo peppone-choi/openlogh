@@ -1,5 +1,8 @@
 package com.openlogh.engine.tactical
 
+import com.openlogh.engine.ai.PersonalityTrait
+import com.openlogh.engine.tactical.ai.MissionObjective
+import com.openlogh.engine.tactical.ai.TacticalAIRunner
 import com.openlogh.model.CommandRange
 import com.openlogh.model.DetectionCapability
 import com.openlogh.model.EnergyAllocation
@@ -96,6 +99,18 @@ data class TacticalUnit(
     val evaluationPoints: Int = 0,
     /** Merit points (populated at battle init from Officer.meritPoints, for priority ordering) */
     val meritPoints: Int = 0,
+
+    // ── Phase 11: Tactical AI fields ──
+    /** Officer personality trait for AI decisions */
+    var personality: PersonalityTrait = PersonalityTrait.BALANCED,
+    /** Current mission objective (stub for Phase 12 connection) */
+    var missionObjective: MissionObjective = MissionObjective.DEFENSE,
+    /** Anchor position X for DEFENSE mission (initial position at battle start) */
+    var anchorX: Double = 0.0,
+    /** Anchor position Y for DEFENSE mission */
+    var anchorY: Double = 0.0,
+    /** Last AI evaluation tick (for 10-tick re-evaluation cycle per D-06) */
+    var lastAIEvalTick: Int = -10,
 
     // ── Merged from TacticalCombatEngine ──
     /** 보급 물자 */
@@ -237,6 +252,9 @@ class TacticalBattleEngine(
         // Step 0.5: Process out-of-CRC units (Phase 9 Plan 03)
         processOutOfCrcUnits(state)
 
+        // Step 0.7: Process tactical AI for NPC/offline units (Phase 11)
+        TacticalAIRunner.processAITick(state)
+
         val aliveUnits = state.units.filter { it.isAlive }
 
         // 0. Update per-tick counters (stance cooldown counts down)
@@ -311,6 +329,9 @@ class TacticalBattleEngine(
                     if (fsHierarchy != null) {
                         SuccessionService.applyInjuryCapabilityReduction(fsHierarchy, state.pendingInjuryEvents.last())
                     }
+
+                    // D-07: Flagship destroyed -> immediate AI re-evaluation for that side
+                    TacticalAIRunner.triggerImmediateReeval(state, unit.side)
 
                     // 다음 부대가 기함 대체: 같은 진영 잔존 유닛 중 ships 최대 유닛 승격
                     val replacementUnit = state.units
@@ -766,13 +787,11 @@ class TacticalBattleEngine(
             if (hierarchy == null) return@forEach
             if (!SuccessionService.isCommandBroken(hierarchy, aliveOfficerIds)) return@forEach
 
-            // Command is broken — apply OutOfCrcBehavior to all alive units on this side
+            // Command is broken — force immediate AI re-evaluation for all units on this side
+            // AI will handle retreat decisions based on personality thresholds
+            TacticalAIRunner.triggerImmediateReeval(state, side)
+
             val affectedUnits = state.units.filter { it.isAlive && it.side == side && !it.isRetreating }
-            for (unit in affectedUnits) {
-                // Pass null as commanderUnit since there is no commander
-                // This means: HP<30% retreat, else maintain last velocity
-                OutOfCrcBehavior.processOutOfCrcUnit(unit, null, state.currentTick)
-            }
 
             // Broadcast once per tick only if there are affected units
             if (affectedUnits.isNotEmpty()) {
