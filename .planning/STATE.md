@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Phase 11 context gathered
-last_updated: "2026-04-08T02:32:05.180Z"
-last_activity: 2026-04-07
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-04-08T03:39:27.453Z"
+last_activity: 2026-04-08
 progress:
-  total_phases: 19
+  total_phases: 17
   completed_phases: 14
-  total_plans: 88
-  completed_plans: 79
+  total_plans: 80
+  completed_plans: 78
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** gin7 조직 시뮬레이션 — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 10 — tactical-combat
+**Current focus:** Phase 11 — tactical-ai
 
 ## Current Position
 
-Phase: 10 (tactical-combat) — EXECUTING
-Plan: 3 of 7
+Phase: 11 (tactical-ai) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-04-07
+Last activity: 2026-04-08
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -66,6 +66,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 10 P05 | 6min | 2 tasks | 6 files |
 | Phase 10 P06 | 5min | 2 tasks | 4 files |
 | Phase 10 P07 | 5min | 1 tasks | 3 files |
+| Phase 11 P01 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,8 @@ Recent decisions affecting current work:
 - [Phase 10]: processSuccession at step 5.3 (after destruction, before ground battle) ensures vacancy state is current
 - [Phase 10]: findNextSuccessor checks designatedSuccessor first, then successionQueue in rank order
 - [Phase 10]: Command breakdown passes null commanderUnit to OutOfCrcBehavior: HP<30% retreat, healthy maintain velocity
+- [Phase 11]: ThreatAssessor scoring formula: HP*40 + ships*20 + proximity*25 + attack*15 (0-100 scale)
+- [Phase 11]: Pure object pattern for all tactical AI classes (no Spring DI)
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-08T02:32:05.169Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-tactical-ai/11-CONTEXT.md
+Last session: 2026-04-08T03:39:27.445Z
+Stopped at: Completed 11-01-PLAN.md
+Resume file: None

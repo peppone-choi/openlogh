@@ -34,8 +34,8 @@ Requirements for milestone v2.1: 전술전 지휘체계 + AI. Each maps to roadm
 ### 전술 AI (TAI)
 
 - [ ] **TAI-01**: 오프라인/NPC 유닛이 작전 목적 기반 기본 행동을 수행한다 (점령→행성이동, 방어→현위치수비, 소탕→적추격)
-- [ ] **TAI-02**: 성격(PersonalityTrait) 기반으로 전술 차이가 발생한다 (AGGRESSIVE→공격적, DEFENSIVE→방어적)
-- [ ] **TAI-03**: 위협 평가 기반 퇴각 판단이 작동한다 (HP<20%, 사기<30%)
+- [x] **TAI-02**: 성격(PersonalityTrait) 기반으로 전술 차이가 발생한다 (AGGRESSIVE→공격적, DEFENSIVE→방어적)
+- [x] **TAI-03**: 위협 평가 기반 퇴각 판단이 작동한다 (HP<20%, 사기<30%)
 - [ ] **TAI-04**: 에너지 배분/진형/태세가 상황에 따라 자동 조정된다
 - [ ] **TAI-05**: 집중공격/분산공격 전략이 적용된다
 
@@ -101,8 +101,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SUCC-05 | Phase 10 | Complete |
 | SUCC-06 | Phase 10 | Complete |
 | TAI-01 | Phase 11 | Pending |
-| TAI-02 | Phase 11 | Pending |
-| TAI-03 | Phase 11 | Pending |
+| TAI-02 | Phase 11 | Complete |
+| TAI-03 | Phase 11 | Complete |
 | TAI-04 | Phase 11 | Pending |
 | TAI-05 | Phase 11 | Pending |
 | OPS-01 | Phase 12 | Pending |
