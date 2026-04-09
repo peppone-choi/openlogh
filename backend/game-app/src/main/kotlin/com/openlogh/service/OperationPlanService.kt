@@ -96,7 +96,7 @@ class OperationPlanService(
             targetStarSystemId = targetStarSystemId,
             status = OperationStatus.PENDING,
             participantFleetIds = participantFleetIds.toMutableList(),
-            scale = scale,
+            scale = scale.toShort(),
             issuedByOfficerId = issuedByOfficerId,
             // Phase 12 limitation: no tick accessor available at this layer.
             // issuedAtTick is always 0L. OPS-03 semantics do not depend on

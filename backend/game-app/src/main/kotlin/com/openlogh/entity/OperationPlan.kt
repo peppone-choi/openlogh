@@ -55,7 +55,7 @@ class OperationPlan(
     @Column(name = "participant_fleet_ids", columnDefinition = "jsonb", nullable = false)
     var participantFleetIds: MutableList<Long> = mutableListOf(),
 
-    @Column(name = "scale", nullable = false)
+    @Column(name = "scale", columnDefinition = "SMALLINT", nullable = false)
     var scale: Short = 1,
 
     @Column(name = "issued_by_officer_id", nullable = false)
