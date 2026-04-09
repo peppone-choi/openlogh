@@ -1,11 +1,13 @@
 package com.openlogh.service
 
+import com.openlogh.dto.OperationEventDto
 import com.openlogh.engine.tactical.ai.MissionObjective
 import com.openlogh.entity.OperationPlan
 import com.openlogh.model.OperationStatus
 import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OperationPlanRepository
 import org.slf4j.LoggerFactory
+import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
@@ -31,6 +33,7 @@ import java.time.OffsetDateTime
 class OperationPlanService(
     private val operationPlanRepository: OperationPlanRepository,
     private val fleetRepository: FleetRepository,
+    private val messagingTemplate: SimpMessagingTemplate,
 ) {
     private val logger = LoggerFactory.getLogger(OperationPlanService::class.java)
 
@@ -110,6 +113,11 @@ class OperationPlanService(
             "Operation {} assigned (session={}, faction={}, objective={})",
             saved.id, sessionId, factionId, objective,
         )
+
+        // Phase 14 D-31: broadcast PLANNED event so galaxy map updates without polling.
+        val event = OperationEventDto.fromPlan(saved, "OPERATION_PLANNED")
+        messagingTemplate.convertAndSend("/topic/world/${saved.sessionId}/operations", event)
+
         return saved
     }
 
@@ -139,6 +147,11 @@ class OperationPlanService(
         operation.updatedAt = OffsetDateTime.now()
         val saved = operationPlanRepository.save(operation)
         logger.info("Operation {} cancelled (faction={})", saved.id, factionId)
+
+        // Phase 14 D-31: broadcast CANCELLED event so galaxy map removes the overlay.
+        val event = OperationEventDto.fromPlan(saved, "OPERATION_CANCELLED")
+        messagingTemplate.convertAndSend("/topic/world/${saved.sessionId}/operations", event)
+
         return saved
     }
 }

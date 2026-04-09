@@ -1,5 +1,6 @@
 package com.openlogh.service
 
+import com.openlogh.dto.OperationEventDto
 import com.openlogh.engine.tactical.ai.MissionObjective
 import com.openlogh.entity.OperationPlan
 import com.openlogh.model.OperationStatus
@@ -7,6 +8,7 @@ import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OperationPlanRepository
 import com.openlogh.repository.StarSystemRepository
 import org.slf4j.LoggerFactory
+import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
@@ -41,6 +43,7 @@ class OperationLifecycleService(
     private val fleetRepository: FleetRepository,
     private val starSystemRepository: StarSystemRepository,
     private val tacticalBattleService: TacticalBattleService,
+    private val messagingTemplate: SimpMessagingTemplate,
 ) {
     private val logger = LoggerFactory.getLogger(OperationLifecycleService::class.java)
 
@@ -84,6 +87,10 @@ class OperationLifecycleService(
                     "Operation {} ACTIVE (session={}, tick={})",
                     operation.id, sessionId, tickCount,
                 )
+
+                // Phase 14 D-31: broadcast STARTED event so galaxy map promotes the overlay.
+                val event = OperationEventDto.fromPlan(operation, "OPERATION_STARTED")
+                messagingTemplate.convertAndSend("/topic/world/${operation.sessionId}/operations", event)
             }
         }
     }
@@ -115,6 +122,10 @@ class OperationLifecycleService(
                     "Operation {} COMPLETED (session={}, tick={}, objective={})",
                     operation.id, sessionId, tickCount, operation.objective,
                 )
+
+                // Phase 14 D-31: broadcast COMPLETED event so galaxy map clears the overlay.
+                val event = OperationEventDto.fromPlan(operation, "OPERATION_COMPLETED")
+                messagingTemplate.convertAndSend("/topic/world/${operation.sessionId}/operations", event)
             } else if (operation.objective == MissionObjective.DEFENSE) {
                 // DEFENSE stability counter mutation must persist across ticks.
                 operation.updatedAt = OffsetDateTime.now()

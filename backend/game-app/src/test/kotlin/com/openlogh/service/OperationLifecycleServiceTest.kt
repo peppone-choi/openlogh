@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
+import org.springframework.messaging.simp.SimpMessagingTemplate
 import java.util.Optional
 
 /**
@@ -29,8 +30,11 @@ class OperationLifecycleServiceTest {
     private val fleetRepo: FleetRepository = mock(FleetRepository::class.java)
     private val starSystemRepo: StarSystemRepository = mock(StarSystemRepository::class.java)
     private val tacticalBattleService: TacticalBattleService = mock(TacticalBattleService::class.java)
+    private val messagingTemplate: SimpMessagingTemplate = mock(SimpMessagingTemplate::class.java)
 
-    private fun svc() = OperationLifecycleService(opRepo, fleetRepo, starSystemRepo, tacticalBattleService)
+    private fun svc() = OperationLifecycleService(
+        opRepo, fleetRepo, starSystemRepo, tacticalBattleService, messagingTemplate,
+    )
 
     private fun pendingOp(id: Long, fleetIds: List<Long>, target: Long) = OperationPlan(
         id = id,
