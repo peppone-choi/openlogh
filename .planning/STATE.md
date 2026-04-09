@@ -4,7 +4,7 @@ milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
 stopped_at: Completed 14-13-PLAN.md (parallel Wave 4 — SubFleet assignment drawer)
-last_updated: "2026-04-09T11:49:06.267Z"
+last_updated: "2026-04-09T11:49:09.981Z"
 last_activity: 2026-04-09 -- Plan 14-10 completed in parallel Wave 3 (BattleMap layer restructure)
 progress:
   total_phases: 22
@@ -183,6 +183,7 @@ Recent decisions affecting current work:
 - [Phase 14]: PAUSED phase collapsed to ACTIVE at drawer edge for canReassignUnit gating (CMD-05 rules apply equally in paused battles)
 - [Phase 14]: Plan 14-12: canReassignUnit pure helper enforces FE-02 CMD-05 gating (outside CRC + stopped); structured { allowed, reason, message } return carries Korean tooltip copy from UI-SPEC Section B
 - [Phase 14]: Plan 14-12: isStopped read via duck-typing (unit as unknown as { isStopped?: unknown }) + typeof guard — not yet on TacticalUnitDto (RESEARCH Open Question 2), conservative unknown-state=MOVING default keeps drag gating safe until backend ships the field
+- [Phase 14]: Plan 14-12: SubFleetUnitChip TS2783 duplicate aria-disabled fix lands here (not 14-07 as deferred-items.md suggested); spread-then-override pattern {...attributes} aria-disabled={disabled} is the canonical way to override dnd-kit's auto-injected aria attributes
 
 ### Pending Todos
 
