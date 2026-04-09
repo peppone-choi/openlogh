@@ -17,7 +17,7 @@ interface BattleMapProps {
 
 // Game coordinate range
 const GAME_W = 1000;
-const GAME_H = 600;
+const GAME_H = 1000;
 
 // Number of random stars in background
 const STAR_COUNT = 200;
@@ -39,7 +39,7 @@ function generateStars(count: number, w: number, h: number) {
 export function BattleMap({
     units,
     width = 1000,
-    height = 600,
+    height = 1000,
     myOfficerId,
     selectedUnitId,
     onSelectUnit,

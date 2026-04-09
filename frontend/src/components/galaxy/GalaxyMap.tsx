@@ -13,6 +13,16 @@ import { FleetPositionMarker } from './FleetPositionMarker';
 
 interface GalaxyMapProps {
     sessionId: number;
+    /** Compact mode: smaller min-height, simpler layout for embedded use */
+    compact?: boolean;
+    /** When false, disables zoom/pan/drag. Click/hover still works. Default: true */
+    interactive?: boolean;
+    /** Callback invoked when a star system is clicked. When provided, overrides default select behavior. */
+    onSystemSelect?: (mapStarId: number) => void;
+    /** Hide the HTML detail panel overlay (useful for embedded/compact modes) */
+    hideDetailPanel?: boolean;
+    /** Custom minimum height override */
+    minHeight?: number | string;
 }
 
 const PADDING = 80;
@@ -21,7 +31,14 @@ const MAX_SCALE = 4.0;
 /** gin7-style dark navy space background */
 const BG_COLOR = '#0a0e17';
 
-export function GalaxyMap({ sessionId }: GalaxyMapProps) {
+export function GalaxyMap({
+    sessionId,
+    compact = false,
+    interactive = true,
+    onSystemSelect,
+    hideDetailPanel = false,
+    minHeight,
+}: GalaxyMapProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const stageRef = useRef<Konva.Stage>(null);
 
@@ -152,6 +169,7 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
     // Wheel zoom with pointer tracking
     const handleWheel = useCallback(
         (e: Konva.KonvaEventObject<WheelEvent>) => {
+            if (!interactive) return;
             e.evt.preventDefault();
             const stage = stageRef.current;
             if (!stage) return;
@@ -178,7 +196,18 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
                 y: pointer.y - mousePointTo.y * newScale,
             });
         },
-        [stageScale, stagePos]
+        [stageScale, stagePos, interactive]
+    );
+
+    const handleSystemClick = useCallback(
+        (mapStarId: number) => {
+            if (onSystemSelect) {
+                onSystemSelect(mapStarId);
+            } else {
+                selectSystem(mapStarId);
+            }
+        },
+        [onSystemSelect, selectSystem]
     );
 
     const handleDragEnd = useCallback((e: Konva.KonvaEventObject<DragEvent>) => {
@@ -187,9 +216,15 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
 
     const selectedSystem = selectedSystemId != null ? getSystem(selectedSystemId) : null;
 
+    const resolvedMinHeight = minHeight ?? (compact ? 240 : 500);
+    const statusMinHeight = compact ? 160 : 400;
+
     if (isLoading) {
         return (
-            <div className="flex h-full min-h-[400px] items-center justify-center text-gray-400">
+            <div
+                className="flex h-full w-full items-center justify-center text-gray-400"
+                style={{ minHeight: statusMinHeight }}
+            >
                 은하 지도를 불러오는 중...
             </div>
         );
@@ -197,7 +232,10 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
 
     if (error) {
         return (
-            <div className="flex h-full min-h-[400px] items-center justify-center text-red-400">
+            <div
+                className="flex h-full w-full items-center justify-center text-red-400"
+                style={{ minHeight: statusMinHeight }}
+            >
                 오류: {error}
             </div>
         );
@@ -205,14 +243,17 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
 
     if (systems.length === 0) {
         return (
-            <div className="flex h-full min-h-[400px] items-center justify-center text-gray-500">
+            <div
+                className="flex h-full w-full items-center justify-center text-gray-500"
+                style={{ minHeight: statusMinHeight }}
+            >
                 표시할 항성계가 없습니다.
             </div>
         );
     }
 
     return (
-        <div ref={containerRef} className="relative h-full w-full min-h-[500px]">
+        <div ref={containerRef} className="relative h-full w-full" style={{ minHeight: resolvedMinHeight }}>
             <Stage
                 ref={stageRef}
                 width={containerSize.width}
@@ -221,7 +262,7 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
                 scaleY={stageScale}
                 x={stagePos.x}
                 y={stagePos.y}
-                draggable
+                draggable={interactive}
                 onWheel={handleWheel}
                 onDragEnd={handleDragEnd}
             >
@@ -314,7 +355,7 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
                             }}
                             isSelected={selectedSystemId === system.mapStarId}
                             isHovered={hoveredSystemId === system.mapStarId}
-                            onSelect={() => selectSystem(system.mapStarId)}
+                            onSelect={() => handleSystemClick(system.mapStarId)}
                             onHover={(hovering) =>
                                 hoverSystem(hovering ? system.mapStarId : null)
                             }
@@ -349,10 +390,12 @@ export function GalaxyMap({ sessionId }: GalaxyMapProps) {
             </Stage>
 
             {/* Detail panel overlay (HTML, not Konva) */}
-            <StarSystemDetailPanel
-                system={selectedSystem ?? null}
-                onClose={() => selectSystem(null)}
-            />
+            {!hideDetailPanel && (
+                <StarSystemDetailPanel
+                    system={selectedSystem ?? null}
+                    onClose={() => selectSystem(null)}
+                />
+            )}
         </div>
     );
 }
