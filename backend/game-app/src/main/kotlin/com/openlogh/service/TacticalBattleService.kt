@@ -688,12 +688,10 @@ class TacticalBattleService(
         // D-37: mission objective string (CONQUEST/DEFENSE/SWEEP/…).
         val missionObjective = state.missionObjectiveByFleetId[unit.fleetId]?.name
 
-        // D-19 / FE-05: sensor range is derived from DetectionCapability base
-        // range × SENSOR energy multiplier. Phase 14 keeps this server-side so
-        // the frontend never has to re-derive.
-        val sensorEnergyMultiplier = (unit.energy.sensor.coerceAtLeast(0) / 50.0).coerceAtLeast(0.0)
-        val sensorRange = unit.detectionCapability.baseRange * sensorEnergyMultiplier.coerceAtLeast(1.0) *
-            (if (unit.isStopped) 1.3 else 1.0)
+        // D-19 / FE-05: sensorRange is cached on TacticalUnit by the engine
+        // tick loop (SensorRangeFormula, Phase 14 Plan 03). Reading the field
+        // here means the DTO builder never re-derives the formula — the
+        // engine is the single source of truth per D-19.
 
         return TacticalUnitDto(
             fleetId = unit.fleetId,
@@ -717,7 +715,7 @@ class TacticalBattleService(
             retreatProgress = unit.retreatProgress,
             unitType = unit.unitType,
             // Phase 14 D-22 / D-24 / D-37
-            sensorRange = sensorRange,
+            sensorRange = unit.sensorRange,
             subFleetCommanderId = subFleetCommanderId,
             successionState = successionState,
             successionTicksRemaining = successionTicksRemaining,

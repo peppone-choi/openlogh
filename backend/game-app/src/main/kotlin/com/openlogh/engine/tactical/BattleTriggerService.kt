@@ -185,6 +185,14 @@ class BattleTriggerService(
             ))
         }
 
+        // Phase 14 FE-05 / D-19: seed initial sensorRange for every unit so
+        // the first-tick broadcast carries a real visibility radius (not the
+        // data-class default of 150.0). Subsequent ticks are updated in the
+        // TacticalBattleEngine tick loop.
+        for (unit in units) {
+            unit.sensorRange = SensorRangeFormula.compute(unit)
+        }
+
         // Check for fortress at this star system
         val starSystem = starSystemRepository.findById(battle.starSystemId).orElse(null)
         val fortressGunPower = starSystem?.fortressGunPower ?: 0

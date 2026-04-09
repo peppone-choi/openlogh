@@ -60,6 +60,12 @@ data class TacticalUnit(
     // Command range: expands based on command stat, resets on new order
     var commandRange: CommandRange = CommandRange(),
 
+    // Phase 14 FE-05 / D-19 fog-of-war visibility radius.
+    // Derived from energy.sensor each tick via SensorRangeFormula; cached on
+    // the unit so the DTO builder and downstream services can read it without
+    // re-deriving the formula. Default 150.0 matches BASE_SENSOR_RANGE.
+    var sensorRange: Double = 150.0,
+
     // Status
     var isAlive: Boolean = true,
     var isRetreating: Boolean = false,
@@ -230,6 +236,48 @@ data class BattleTickEvent(
 )
 
 /**
+ * Phase 14 Plan 03 (FE-05 / D-19): sensorRange formula.
+ *
+ * Server-authoritative fog-of-war visibility radius derived from
+ * `TacticalUnit.energy.sensor`. The frontend never re-derives this — it
+ * simply reads `TacticalUnitDto.sensorRange` every tick and draws a
+ * visibility circle per friendly unit.
+ *
+ * Formula anchors (pinned by SensorRangeComputationTest):
+ * - DEFAULT_SENSOR_SLIDER (17 ≈ balanced 100/6) ⇒ BASE_SENSOR_RANGE (150.0)
+ * - Linear scaling: range = BASE * (slider / DEFAULT)
+ * - Clamped to [MIN_SENSOR_RANGE, MAX_SENSOR_RANGE] so units are never blind
+ *   and never see the whole map
+ * - HP < INJURY_HP_THRESHOLD (30%) ⇒ multiplied by INJURY_MODIFIER (0.7)
+ * - Dead unit ⇒ 0.0
+ */
+internal object SensorRangeFormula {
+    const val BASE_SENSOR_RANGE: Double = 150.0
+    const val MIN_SENSOR_RANGE: Double = 30.0
+    const val MAX_SENSOR_RANGE: Double = 500.0
+    const val DEFAULT_SENSOR_SLIDER: Int = 17  // 100 / 6 ≈ 17
+    const val INJURY_MODIFIER: Double = 0.7
+    const val INJURY_HP_THRESHOLD: Double = 0.30
+
+    fun compute(unit: TacticalUnit): Double {
+        if (!unit.isAlive) return 0.0
+        val sensorSlider = unit.energy.sensor.coerceIn(0, 100)
+        // Linear: base * (slider / default). Default slider 17 ⇒ multiplier 1.0.
+        val baseMultiplier = sensorSlider.toDouble() / DEFAULT_SENSOR_SLIDER.toDouble()
+        var range = BASE_SENSOR_RANGE * baseMultiplier
+        val hpRatio = unit.hp.toDouble() / unit.maxHp.coerceAtLeast(1).toDouble()
+        if (hpRatio < INJURY_HP_THRESHOLD) range *= INJURY_MODIFIER
+        return range.coerceIn(MIN_SENSOR_RANGE, MAX_SENSOR_RANGE)
+    }
+}
+
+/**
+ * Top-level wrapper around [SensorRangeFormula.compute] so same-package test
+ * code can pin the formula without touching the private tick loop.
+ */
+internal fun computeSensorRange(unit: TacticalUnit): Double = SensorRangeFormula.compute(unit)
+
+/**
  * Core tactical battle engine. Processes one tick at a time.
  *
  * Based on gin7 manual Chapter 4:
@@ -302,6 +350,10 @@ class TacticalBattleEngine(
         // 1. Update command range for all units
         for (unit in aliveUnits) {
             updateCommandRange(unit)
+            // Phase 14 FE-05 / D-19: recompute sensorRange from energy.sensor.
+            // Cached on the unit so TacticalBattleService.toUnitDto can surface
+            // it without re-deriving the formula on every DTO build.
+            unit.sensorRange = SensorRangeFormula.compute(unit)
         }
 
         // 2. Process movement (STATIONED/ANCHORING cannot move — handled in processMovement)
