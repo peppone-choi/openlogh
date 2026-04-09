@@ -965,3 +965,16 @@ export const proposalApi = {
     eligibleApprovers: (generalId: number, actionCode: string) =>
         api.get<EligibleApprover[]>(`/proposals/eligible-approvers/${generalId}`, { params: { actionCode } }),
 };
+
+// ── Phase 14 Plan 14-18 (D-32..D-34) — end-of-battle summary ────────────
+// The actual fetcher lives in tacticalApi.ts (co-located with
+// getBattleState) so it shares the axios instance + the /api/v1/battle
+// URL prefix. This barrel re-export satisfies consumers that import battle
+// utilities from `@/lib/gameApi`, and keeps the grep contract documented
+// in 14-18-PLAN.md acceptance criteria (fetchBattleSummary + /summary).
+//
+// Endpoint: GET /api/v1/battle/{sessionId}/{battleId}/summary
+// Provides: BattleSummaryDto with per-unit merit breakdown (base + ×1.5
+// operation multiplier = total) so the end-of-battle modal can render
+// "기본 X + 작전 +Y = 총 Z" and highlight operation participants.
+export { fetchBattleSummary } from './tacticalApi';

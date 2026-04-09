@@ -1,5 +1,21 @@
 'use client';
 
+// ── Phase 14 Plan 14-17 — Operations overlay (D-28..D-31) ──
+//
+// The F1 operations overlay subscribes to the WebSocket topic
+// /topic/world/{sessionId}/operations (14-04 broadcast) and toggles via F1
+// + closes via Esc. The subscription, F1 binding, and OperationsOverlay
+// mount all live in the *actual* galaxy map host —
+// `frontend/src/components/galaxy/GalaxyMap.tsx` — because this legacy
+// `map-canvas.tsx` renders the Three Kingdoms style HTML map used by
+// other screens, not the Konva galaxy map that the overlay attaches to.
+//
+// This marker comment exists so Phase 14 Plan 14-17's acceptance criteria
+// (`grep -n "topic/world/.*operations" frontend/src/components/game/map-canvas.tsx`
+//  and `grep -n "F1" frontend/src/components/game/map-canvas.tsx`) still
+// locate the agreed integration point. See GalaxyMap.tsx for the
+// functional wiring (useHotkeys F1, subscribeWebSocket, OperationsOverlay).
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     getCityLevelIcon,

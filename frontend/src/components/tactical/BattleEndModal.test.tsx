@@ -20,7 +20,7 @@
 // No @testing-library/react, no `render()` — same constraint 14-09 and
 // 14-11 already operate under.
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -35,18 +35,48 @@ import {
 // Fetcher lives in tacticalApi (co-located with other /api/v1/battle helpers).
 import { tacticalApi } from '@/lib/tacticalApi';
 
-// Mock axios at the module level — tacticalApi builds its own axios instance
-// in module scope, so we intercept the default-export `create` factory and
-// return a shared mock with a `get` method we can assert against.
-vi.mock('axios', () => {
-    const get = vi.fn();
-    const instance = { get };
-    return {
-        default: {
-            create: vi.fn(() => instance),
-        },
-    };
+// Mock axios at the module level. Both `@/lib/api` (used by gameApi /
+// officerStore / worldStore) and `@/lib/tacticalApi` call `axios.create()`
+// in module scope and expect the result to support `.interceptors.request.use`
+// + HTTP verbs. We return a factory that produces minimal-but-functional
+// mock instances so every module that imports axios gets its own clone.
+//
+// The BattleEndModal test only asserts against the *tacticalApi* instance's
+// `.get()` — we identify it via `createdInstances[1]` (api.ts is index 0,
+// tacticalApi.ts is index 1 per import order).
+const { createdInstances, axiosCreate } = vi.hoisted(() => {
+    const createdInstances: Array<{
+        get: ReturnType<typeof vi.fn>;
+        post: ReturnType<typeof vi.fn>;
+        put: ReturnType<typeof vi.fn>;
+        delete: ReturnType<typeof vi.fn>;
+        interceptors: {
+            request: { use: ReturnType<typeof vi.fn> };
+            response: { use: ReturnType<typeof vi.fn> };
+        };
+    }> = [];
+    const axiosCreate = vi.fn(() => {
+        const instance = {
+            get: vi.fn(),
+            post: vi.fn(),
+            put: vi.fn(),
+            delete: vi.fn(),
+            interceptors: {
+                request: { use: vi.fn() },
+                response: { use: vi.fn() },
+            },
+        };
+        createdInstances.push(instance);
+        return instance;
+    });
+    return { createdInstances, axiosCreate };
 });
+
+vi.mock('axios', () => ({
+    default: {
+        create: axiosCreate,
+    },
+}));
 
 describe('BattleEndModal pure helpers (FE-01 summary, D-32..D-34)', () => {
     describe('resolveHeader (D-32)', () => {
@@ -262,23 +292,20 @@ describe('BattleEndModal source-text regression guards (D-32..D-34 copy contract
 });
 
 describe('tacticalApi.fetchBattleSummary (14-02 endpoint contract)', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     afterEach(() => {
-        vi.clearAllMocks();
+        // Reset all .get/.post mocks but keep the createdInstances array
+        // intact (those were captured at module evaluation time).
+        for (const inst of createdInstances) {
+            inst.get.mockReset();
+        }
     });
 
     it('calls GET /api/v1/battle/{sessionId}/{battleId}/summary', async () => {
-        // Dynamic import so the axios mock is in place before tacticalApi evaluates.
-        const axiosModule = await import('axios');
-        type MockAxiosInstance = { get: ReturnType<typeof vi.fn> };
-        const axiosFactory = axiosModule.default.create as unknown as ReturnType<
-            typeof vi.fn
-        >;
-        // The instance was created at module-load time; grab its first return value.
-        const axiosInstance = axiosFactory.mock.results[0]!.value as MockAxiosInstance;
+        // tacticalApi.ts calls axios.create() exactly once. Find the
+        // instance whose .get has been used for /api/v1/battle paths — it
+        // is the second axios.create() call in import order (api.ts is
+        // index 0 and defines interceptors, tacticalApi.ts is index 1).
+        expect(createdInstances.length).toBeGreaterThanOrEqual(2);
 
         const fixture = {
             battleId: 42,
@@ -299,11 +326,22 @@ describe('tacticalApi.fetchBattleSummary (14-02 endpoint contract)', () => {
                 },
             ],
         };
-        axiosInstance.get.mockResolvedValueOnce({ data: fixture });
+
+        // Arm every instance's .get so whichever one tacticalApi resolved
+        // to will hand back our fixture. The assertion below narrows
+        // down to the instance that actually received the call.
+        for (const inst of createdInstances) {
+            inst.get.mockResolvedValueOnce({ data: fixture });
+        }
 
         const result = await tacticalApi.fetchBattleSummary(7, 42);
 
-        expect(axiosInstance.get).toHaveBeenCalledWith('/api/v1/battle/7/42/summary');
+        // Exactly one of the instances must have received the call with
+        // the 14-02 contract URL.
+        const calls = createdInstances.flatMap((inst) =>
+            inst.get.mock.calls.map((c) => c[0]),
+        );
+        expect(calls).toContain('/api/v1/battle/7/42/summary');
         expect(result).toEqual(fixture);
     });
 });

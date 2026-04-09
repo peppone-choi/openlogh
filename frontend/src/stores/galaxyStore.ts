@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { StarSystem, StarRoute, FleetPosition } from '@/types/galaxy';
+import type { OperationEventDto } from '@/types/tactical';
 import { fetchGalaxyMap, fetchPublicCachedGalaxy } from '@/lib/api/galaxy';
 import { STAR_SYSTEM_PLANETS } from '@/data/star-system-planets';
 
@@ -20,6 +21,16 @@ interface GalaxyState {
     currentSystemId: number | null;
     /** mapStarIds with an active battle — renders red hexagon overlay */
     battleSystemIds: Set<number>;
+    /**
+     * Phase 14 D-30/D-31 — active OperationPlan events consumed from the
+     * `/topic/world/{sessionId}/operations` WebSocket channel (14-04).
+     *
+     * Populated by `handleOperationEvent` routed from a WS subscription in
+     * the galaxy map host (see GalaxyMap.tsx). Used by the F1 operations
+     * overlay + right-edge side panel to render per-operation badges and
+     * focus targets without polling.
+     */
+    activeOperations: OperationEventDto[];
     /** Monotonic fetch token used to drop stale responses across overlapping requests */
     requestToken: number;
 }
@@ -39,6 +50,17 @@ interface GalaxyActions {
     getFortresses: () => StarSystem[];
     /** Get all mapStarIds reachable within `hops` hops from a given star */
     getReachableStars: (mapStarId: number, hops: number) => Set<number>;
+    // ── Phase 14 D-30/D-31 — OperationPlan WebSocket reducer ──
+    /** Upsert (replace-by-operationId or append) an operation entry. */
+    upsertOperation: (evt: OperationEventDto) => void;
+    /** Remove an operation by operationId (COMPLETED / CANCELLED). */
+    removeOperation: (operationId: number) => void;
+    /**
+     * Router for `/topic/world/{sessionId}/operations` events:
+     *   - OPERATION_PLANNED / OPERATION_STARTED → upsert
+     *   - OPERATION_COMPLETED / OPERATION_CANCELLED → remove
+     */
+    handleOperationEvent: (evt: OperationEventDto) => void;
 }
 
 export const useGalaxyStore = create<GalaxyState & GalaxyActions>()(
@@ -55,6 +77,7 @@ export const useGalaxyStore = create<GalaxyState & GalaxyActions>()(
         selectedFleetId: null,
         currentSystemId: null,
         battleSystemIds: new Set<number>(),
+        activeOperations: [],
         requestToken: 0,
 
         fetchGalaxyMap: async (sessionId: number) => {
@@ -182,6 +205,40 @@ export const useGalaxyStore = create<GalaxyState & GalaxyActions>()(
 
         getFortresses: () => {
             return get().systems.filter((s) => s.fortressType !== 'NONE');
+        },
+
+        upsertOperation: (evt: OperationEventDto) => {
+            set((state) => {
+                const idx = state.activeOperations.findIndex(
+                    (op) => op.operationId === evt.operationId,
+                );
+                if (idx >= 0) {
+                    const next = [...state.activeOperations];
+                    next[idx] = evt;
+                    return { activeOperations: next };
+                }
+                return { activeOperations: [...state.activeOperations, evt] };
+            });
+        },
+
+        removeOperation: (operationId: number) => {
+            set((state) => ({
+                activeOperations: state.activeOperations.filter(
+                    (op) => op.operationId !== operationId,
+                ),
+            }));
+        },
+
+        handleOperationEvent: (evt: OperationEventDto) => {
+            // D-31 — PLANNED / STARTED upsert; COMPLETED / CANCELLED remove.
+            if (
+                evt.type === 'OPERATION_COMPLETED' ||
+                evt.type === 'OPERATION_CANCELLED'
+            ) {
+                get().removeOperation(evt.operationId);
+                return;
+            }
+            get().upsertOperation(evt);
         },
 
         getReachableStars: (mapStarId: number, hops: number) => {

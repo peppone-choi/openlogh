@@ -10,6 +10,11 @@ import { StarRouteEdge } from './StarRouteEdge';
 import { StarSystemDetailPanel } from './StarSystemDetailPanel';
 import { StarField } from './StarField';
 import { FleetPositionMarker } from './FleetPositionMarker';
+// Phase 14 Plan 14-17 — operations overlay (D-28..D-31)
+import { OperationsOverlay } from '@/components/game/OperationsOverlay';
+import { subscribeWebSocket } from '@/lib/websocket';
+import { useHotkeys } from '@/hooks/useHotkeys';
+import type { OperationEventDto } from '@/types/tactical';
 
 interface GalaxyMapProps {
     /** Required in normal mode. Ignored when publicMode=true. */
@@ -72,6 +77,9 @@ export function GalaxyMap({
     const [stageScale, setStageScale] = useState(1);
     const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
+    // Phase 14 Plan 14-17 — F1 operations overlay toggle (D-28).
+    const [overlayOpen, setOverlayOpen] = useState(false);
+
     const systems = useGalaxyStore((s) => s.systems);
     const routes = useGalaxyStore((s) => s.routes);
     const systemsById = useGalaxyStore((s) => s.systemsById);
@@ -99,6 +107,42 @@ export function GalaxyMap({
             fetchMap(sessionId);
         }
     }, [sessionId, publicMode, fetchMap, fetchPublicMap]);
+
+    // Phase 14 Plan 14-17 — Subscribe to operations WebSocket channel (D-31).
+    // Mirrors the `/topic/world/{sessionId}/operations` broadcast emitted by
+    // 14-04 (OperationPlanService + OperationLifecycleService). Each event
+    // flows into galaxyStore via handleOperationEvent, which then drives the
+    // F1 overlay + side panel without polling.
+    useEffect(() => {
+        if (publicMode || sessionId == null) return;
+        const topic = `/topic/world/${sessionId}/operations`;
+        const unsubscribe = subscribeWebSocket(topic, (data) => {
+            // subscribeWebSocket already JSON.parses the body for us.
+            useGalaxyStore
+                .getState()
+                .handleOperationEvent(data as OperationEventDto);
+        });
+        return unsubscribe;
+    }, [sessionId, publicMode]);
+
+    // Phase 14 Plan 14-17 — F1 toggles the operations overlay; Esc closes it.
+    // `useHotkeys` ignores input/textarea focus and calls preventDefault so
+    // the browser's native F1 help dialog never pops.
+    useHotkeys(
+        [
+            {
+                key: 'F1',
+                handler: () => setOverlayOpen((v) => !v),
+                description: '작전 오버레이 토글',
+            },
+            {
+                key: 'Escape',
+                handler: () => setOverlayOpen(false),
+                description: '작전 오버레이 닫기',
+            },
+        ],
+        !publicMode,
+    );
 
     // Measure synchronously before first paint so the Stage starts at the
     // correct size. ResizeObserver then handles subsequent layout changes.
@@ -259,6 +303,38 @@ export function GalaxyMap({
     }, []);
 
     const selectedSystem = selectedSystemId != null ? getSystem(selectedSystemId) : null;
+
+    // Phase 14 Plan 14-17 — convert a mapStarId to Stage-space pixels so the
+    // HTML OperationsOverlay can anchor its badges to the target system.
+    // Returns null when the system is unknown (e.g. stale event before fetch).
+    const projectSystem = useCallback(
+        (mapStarId: number) => {
+            const sys = systemsById[mapStarId];
+            if (!sys) return null;
+            return {
+                x: toCanvasX(sys.x) * stageScale + stagePos.x,
+                y: toCanvasY(sys.y) * stageScale + stagePos.y,
+            };
+        },
+        [systemsById, toCanvasX, toCanvasY, stageScale, stagePos],
+    );
+
+    // Phase 14 Plan 14-17 — Camera-focus handler: recenters the stage on the
+    // target system and highlights it via the existing selectSystem flow so
+    // the detail panel + movement-range highlight both light up.
+    const focusOnSystem = useCallback(
+        (mapStarId: number) => {
+            const sys = systemsById[mapStarId];
+            if (!sys) return;
+            // Snap the camera to the center by computing the stage offset
+            // that would place the system at the container midpoint.
+            const targetX = containerSize.width / 2 - toCanvasX(sys.x) * stageScale;
+            const targetY = containerSize.height / 2 - toCanvasY(sys.y) * stageScale;
+            setStagePos({ x: targetX, y: targetY });
+            selectSystem(mapStarId);
+        },
+        [systemsById, containerSize, toCanvasX, toCanvasY, stageScale, selectSystem],
+    );
 
     const resolvedMinHeight = minHeight ?? (compact ? 240 : 500);
     const statusMinHeight = compact ? 160 : 400;
@@ -448,6 +524,17 @@ export function GalaxyMap({
                 <StarSystemDetailPanel
                     system={selectedSystem ?? null}
                     onClose={() => selectSystem(null)}
+                />
+            )}
+
+            {/* Phase 14 Plan 14-17 — Operations overlay (F1 toggle, D-28..D-31).
+                Disabled in publicMode (no real session, no WebSocket). */}
+            {!publicMode && (
+                <OperationsOverlay
+                    open={overlayOpen}
+                    onClose={() => setOverlayOpen(false)}
+                    projectSystem={projectSystem}
+                    onFocusSystem={focusOnSystem}
                 />
             )}
         </div>
