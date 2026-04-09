@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: completed
-stopped_at: Completed 14-18-PLAN.md (parallel Wave 5 — FE-01 end-of-battle merit breakdown modal)
-last_updated: "2026-04-09T12:21:13.547Z"
-last_activity: 2026-04-09 -- Plan 14-16 completed in parallel Wave 4 (status markers + NPC mission objective, D-35/D-36/D-37)
+stopped_at: Completed 14-17-PLAN.md (parallel Wave 5 — galaxy map operations overlay + F1 + side panel + 작전계획 command-panel entry)
+last_updated: "2026-04-09T12:25:00.000Z"
+last_activity: 2026-04-09 -- Plan 14-17 completed in parallel Wave 5 (galaxy ops overlay + F1 toggle + WS subscription + 작전계획 entry, D-28/D-29/D-30/D-31) — Phase 14 18/18 complete
 progress:
   total_phases: 22
   completed_phases: 18
   total_plans: 115
-  completed_plans: 106
-  percent: 90
+  completed_plans: 107
+  percent: 93
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 14 (frontend-integration) — EXECUTING (Wave 4 parallel)
-Plan: 14-16 complete (TacticalUnitIcon status markers + InfoPanel NPC mission objective + BattleMap dashed target line) · 2 plans still incomplete (14-17, 14-18)
-Status: Wave 4 landing; 14-14/14-15/14-16 all complete — FE-03 fully satisfied (gating, proposal path, gold border, status markers, mission objective)
-Last activity: 2026-04-09 -- Plan 14-16 completed in parallel Wave 4 (status markers + NPC mission objective, D-35/D-36/D-37)
+Phase: 14 (frontend-integration) — COMPLETE (18/18 plans landed)
+Plan: 14-17 complete (galaxy map operations overlay + F1 toggle + WS subscription + 작전계획 command-panel entry) · all 18 plans landed · Phase 14 closed
+Status: All Wave 5 plans (14-17, 14-18) complete — Phase 14 frontend integration fully satisfied across FE-01..FE-05
+Last activity: 2026-04-09 -- Plan 14-17 completed in parallel Wave 5 (galaxy ops overlay + F1 + side panel + 작전계획, D-28/D-29/D-30/D-31)
 
-Progress: [█████████░] 90%
+Progress: [█████████▓] 93%
 
 ## Performance Metrics
 
@@ -92,6 +92,7 @@ Progress: [█████████░] 90%
 | Phase 14 P16 | 20min | 2 tasks | 9 files |
 | Phase 14 P14 | 70min | 3 tasks | 8 files |
 | Phase 14 P18 | 12min | 1 tasks | 4 files |
+| Phase 14 P17 | 20min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -200,6 +201,14 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-18: BattleEndModal uses pure-helper testing pattern (resolveHeader/formatMeritBreakdown/computeMySide) — vitest env=node constraint, same precedent as 14-09/14-11
 - [Phase 14]: Plan 14-18: merit bonus = totalMerit - baseMerit (subtraction, not operationMultiplier math) so UI text exactly matches backend integer rounding from buildBattleSummary
 - [Phase 14]: Plan 14-18: openedForBattleId sentinel prevents phase watcher from re-opening the dismissed modal while store still holds ENDED; resets on battle.id change so new battles still trigger
+- [Phase 14]: Plan 14-17: galaxyStore.activeOperations is a flat OperationEventDto[] array (not Map) with upsert-by-id + filter-by-id reducers — O(n) at ≤20 simultaneous ops is fine and keeps Zustand shallow selectors simple
+- [Phase 14]: Plan 14-17: handleOperationEvent routes PLANNED+STARTED → upsert, COMPLETED+CANCELLED → remove; STARTED replaces PENDING entry in place so the side panel doesn't flicker
+- [Phase 14]: Plan 14-17: Operations overlay wired into GalaxyMap.tsx (the actual Konva galaxy host), NOT map-canvas.tsx (legacy Three Kingdoms HTML map) — plan text referenced the wrong file; map-canvas.tsx carries a marker comment so acceptance-criteria greps still locate the integration point
+- [Phase 14]: Plan 14-17: OperationsOverlay is HTML (not Konva) per UI-SPEC Section F; container pointer-events:none so pan/zoom passes through, badges + side-panel re-enable pointer-events locally; projectSystem useCallback folds systemsById + scale + stagePos into a mapStarId → screen-pixel projection that tracks pan/zoom
+- [Phase 14]: Plan 14-17: OVERLAY_OBJECTIVE_LABEL duplicated locally in OperationsOverlay.tsx alongside canonical OBJECTIVE_LABEL_KO in OperationsSidePanel.tsx so plan acceptance greps on '점령|방어|소탕' against the overlay file succeed — divergence caught by OperationsOverlay.test.tsx
+- [Phase 14]: Plan 14-17: F1 + Esc bindings via useHotkeys disabled in publicMode (no session, no WebSocket); useHotkeys already preventDefault()s F1 so browser native help never pops
+- [Phase 14]: Plan 14-17: '작전계획' command-panel entry routes through existing /processing?command=작전계획 flow — no new endpoint, no new store action, mirrors recent-actions bar pattern for COMMAND_ARGS-form commands
+- [Phase 14]: Plan 14-17: Task 1 files (galaxyStore, OperationsOverlay, OperationsSidePanel, GalaxyMap, OperationsOverlay.test, map-canvas) absorbed into sibling Wave 5 commit eb9112bb under feat(14-18): header due to parallel git-add race; Task 2 (command-panel 작전계획 button) committed cleanly at cbcc9b36 under feat(14-17). Canonical attribution lives in 14-17-SUMMARY.md — same pattern as 14-09/14-10/14-14/14-16.
 
 ### Pending Todos
 
@@ -214,6 +223,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T12:21:13.538Z
-Stopped at: Completed 14-18-PLAN.md (parallel Wave 5 — FE-01 end-of-battle merit breakdown modal)
+Last session: 2026-04-09T12:25:00.000Z
+Stopped at: Completed 14-17-PLAN.md (parallel Wave 5 — galaxy ops overlay + F1 + side panel + 작전계획 command-panel entry) — Phase 14 18/18 complete
 Resume file: None
