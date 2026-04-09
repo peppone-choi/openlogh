@@ -4,13 +4,13 @@ milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: verifying
 stopped_at: Completed 12-04-PLAN.md (Phase 12 complete)
-last_updated: "2026-04-09T03:57:43.373Z"
+last_updated: "2026-04-09T04:06:31.701Z"
 last_activity: 2026-04-09
 progress:
-  total_phases: 18
+  total_phases: 20
   completed_phases: 16
-  total_plans: 84
-  completed_plans: 84
+  total_plans: 95
+  completed_plans: 86
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** gin7 조직 시뮬레이션 — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 12 — operation-integration
+**Current focus:** Phase 13 — 전략-ai
 
 ## Current Position
 
-Phase: 12 (operation-integration) — EXECUTING
-Plan: 4 of 4
+Phase: 13
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-09
 
