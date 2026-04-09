@@ -116,15 +116,36 @@ function getFactionColor(unit: TacticalUnit): string {
     return unit.side === 'ATTACKER' ? FACTION_COLORS.alliance : FACTION_COLORS.empire;
 }
 
+// Phase 14 — Plan 14-14 (D-11) — UI-SPEC Section C "내 지휘권 하 유닛" gold
+// indicator colour. Single source of truth for the hex; stays in sync with
+// the matching badge background in InfoPanel.
+export const MY_COMMAND_GOLD = '#f59e0b';
+
 interface TacticalUnitIconProps {
     unit: TacticalUnit;
     x: number;
     y: number;
     isSelected: boolean;
     onClick: (unit: TacticalUnit) => void;
+    /**
+     * Phase 14 — Plan 14-14 (FE-03, D-11) — When true, draw a 2px gold
+     * (`#f59e0b`) outline BEHIND the main icon shape so the unit reads as
+     * "under my command" at a glance (UI-SPEC Section C). Gold is used
+     * instead of primary-green because green is reserved for the D-35
+     * online status marker; mixing them on the same icon defeats
+     * glanceability per UI-SPEC Section B.
+     */
+    isUnderMyCommand?: boolean;
 }
 
-export function TacticalUnitIcon({ unit, x, y, isSelected, onClick }: TacticalUnitIconProps) {
+export function TacticalUnitIcon({
+    unit,
+    x,
+    y,
+    isSelected,
+    onClick,
+    isUnderMyCommand = false,
+}: TacticalUnitIconProps) {
     const shipClass = (unit.unitType ?? 'battleship').toLowerCase();
     const letter = SHIP_LETTER[shipClass] ?? '?';
     const fillColor = getFactionColor(unit);
@@ -160,6 +181,38 @@ export function TacticalUnitIcon({ unit, x, y, isSelected, onClick }: TacticalUn
                     opacity={0.6}
                     dash={[2, 2]}
                     fill="transparent"
+                />
+            )}
+
+            {/*
+             * Phase 14 — Plan 14-14 (D-11) — "내 지휘권 하 유닛" gold border.
+             * Rendered BEHIND the main shape so it reads as a 2px outline
+             * around the icon body. `listening={false}` so the indicator
+             * never steals click events from the underlying unit icon.
+             * Shape mirrors the main icon: △ for flagship fleets, □ otherwise.
+             * Placed AFTER the selection ring and BEFORE the main fill shapes
+             * so selection stays the outermost affordance.
+             */}
+            {isUnderMyCommand && isFlagship && (
+                <RegularPolygon
+                    sides={3}
+                    radius={13}
+                    stroke={MY_COMMAND_GOLD}
+                    strokeWidth={2}
+                    fillEnabled={false}
+                    listening={false}
+                />
+            )}
+            {isUnderMyCommand && !isFlagship && (
+                <Rect
+                    width={20}
+                    height={20}
+                    offsetX={10}
+                    offsetY={10}
+                    stroke={MY_COMMAND_GOLD}
+                    strokeWidth={2}
+                    fillEnabled={false}
+                    listening={false}
                 />
             )}
 

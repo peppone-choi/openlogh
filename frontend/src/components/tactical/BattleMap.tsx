@@ -396,16 +396,29 @@ export function BattleMap({
                             listening={false}
                         />
                     )}
-                    {units.map((unit) => (
-                        <TacticalUnitIcon
-                            key={unit.fleetId}
-                            unit={unit}
-                            x={unit.posX * scaleX}
-                            y={unit.posY * scaleY}
-                            isSelected={unit.fleetId === selectedUnitId}
-                            onClick={(u) => onSelectUnit?.(u.fleetId)}
-                        />
-                    ))}
+                    {units.map((unit) => {
+                        // Phase 14 — Plan 14-14 (FE-03, D-11) — gold border
+                        // on units the logged-in officer can actually command.
+                        // Short-circuit to false for enemies + dead units so
+                        // the gating function only runs on live allies.
+                        const isSameSide =
+                            mySide != null && unit.side === mySide && unit.isAlive;
+                        const isUnderMyCommand =
+                            isSameSide && myOfficerId != null
+                                ? canCommandUnit(myOfficerId, myHierarchy, unit).allowed
+                                : false;
+                        return (
+                            <TacticalUnitIcon
+                                key={unit.fleetId}
+                                unit={unit}
+                                x={unit.posX * scaleX}
+                                y={unit.posY * scaleY}
+                                isSelected={unit.fleetId === selectedUnitId}
+                                onClick={(u) => onSelectUnit?.(u.fleetId)}
+                                isUnderMyCommand={isUnderMyCommand}
+                            />
+                        );
+                    })}
                 </Layer>
 
                 {/* ─── Layer 5: Succession FX (14-15) ────────────────────── */}
