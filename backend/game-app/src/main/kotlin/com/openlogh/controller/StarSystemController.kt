@@ -143,7 +143,7 @@ class StarSystemController(
             y = system.y,
             spectralType = system.spectralType,
             starRgb = system.starRgb,
-            level = system.level.toInt(),
+            tier = system.tier,
             region = system.region.toInt(),
             fortressType = system.fortressType,
             fortressGunPower = system.fortressGunPower,

@@ -10,7 +10,8 @@ data class StarSystemDto(
     val y: Int,
     val spectralType: String,
     val starRgb: List<Int>,
-    val level: Int,
+    /** `"CAPITAL"` (수도성계) or `"REGULAR"` (일반성계). */
+    val tier: String,
     val region: Int,
     val fortressType: String,
     val fortressGunPower: Int,

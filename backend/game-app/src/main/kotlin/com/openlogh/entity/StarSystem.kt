@@ -39,8 +39,12 @@ class StarSystem(
     @Column(name = "star_rgb", columnDefinition = "jsonb", nullable = false)
     var starRgb: MutableList<Int> = mutableListOf(255, 255, 255),
 
-    @Column(nullable = false)
-    var level: Short = 5,
+    /**
+     * 성계 등급. `CAPITAL` = 수도성계(진영 수도), `REGULAR` = 일반성계.
+     * Stored as VARCHAR for readability; see [com.openlogh.model.StarSystemTier].
+     */
+    @Column(nullable = false, length = 16)
+    var tier: String = "REGULAR",
 
     @Column(nullable = false)
     var region: Short = 1,

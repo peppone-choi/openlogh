@@ -7,6 +7,15 @@ export interface FleetPosition {
     factionId: number;
 }
 
+/** Two-tier classification for star systems. */
+export type StarSystemTier = 'CAPITAL' | 'REGULAR';
+
+/** Human-readable Korean label for a tier. */
+export const STAR_SYSTEM_TIER_LABEL: Record<StarSystemTier, string> = {
+    CAPITAL: '수도성계',
+    REGULAR: '일반성계',
+};
+
 export interface StarSystem {
     id: number;
     mapStarId: number;
@@ -17,7 +26,12 @@ export interface StarSystem {
     y: number;
     spectralType: string;
     starRgb: number[];
-    level: number;
+    /**
+     * Binary tier replacing the legacy 1..8 `level`. `CAPITAL` covers
+     * Empire/Alliance 수도성계 (Valhalla / Bharat); everything else is
+     * `REGULAR`.
+     */
+    tier: StarSystemTier;
     /** Faction display name (e.g. '은하제국', '자유행성동맹'). Empty for vacant. */
     factionName: string;
     /** Faction color hex from DB — directly used for map rendering */
@@ -190,15 +204,13 @@ export const FORTRESS_NAMES: Record<FortressType, string> = {
 };
 
 /**
- * Capital star systems (mapStarId) that render larger on the galaxy map.
- * Only the two political centers of the main war render oversized — Fezzan
- * stays the same size as every other neutral system so it doesn't read as a
- * peer of the Empire/Alliance capitals.
- * - 42: Valhalla (발할라) — Galactic Empire capital
- * - 36: Barat (바라트) — Free Planets Alliance capital (Heinessen)
+ * Whether a star system is a capital (수도성계). Reads the `tier` field
+ * exposed by the backend — no more hardcoded mapStarId lists.
+ *
+ * Empire/Alliance capitals (Valhalla, Bharat) are the only two systems
+ * seeded as `CAPITAL`; every other system, including Fezzan and the
+ * fortresses, is `REGULAR`.
  */
-export const CAPITAL_STAR_IDS: ReadonlySet<number> = new Set([42, 36]);
-
-export function isCapitalStar(mapStarId: number): boolean {
-    return CAPITAL_STAR_IDS.has(mapStarId);
+export function isCapitalStar(system: Pick<StarSystem, 'tier'>): boolean {
+    return system.tier === 'CAPITAL';
 }

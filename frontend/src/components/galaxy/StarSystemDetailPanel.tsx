@@ -5,6 +5,7 @@ import {
     isFortress,
     FORTRESS_NAMES,
     FACTION_SHADES,
+    STAR_SYSTEM_TIER_LABEL,
 } from '@/types/galaxy';
 import { useGalaxyStore } from '@/stores/galaxyStore';
 
@@ -100,8 +101,10 @@ export function StarSystemDetailPanel({
                     </p>
                 </div>
                 <div className="rounded bg-gray-800/70 px-2 py-1.5">
-                    <span className="text-gray-500">레벨</span>
-                    <p className="font-medium text-gray-200">{system.level}</p>
+                    <span className="text-gray-500">분류</span>
+                    <p className="font-medium text-gray-200">
+                        {STAR_SYSTEM_TIER_LABEL[system.tier]}
+                    </p>
                 </div>
                 <div className="rounded bg-gray-800/70 px-2 py-1.5">
                     <span className="text-gray-500">행성 수</span>
@@ -218,7 +221,7 @@ export function StarSystemDetailPanel({
                 <div className="rounded bg-gray-800/70 px-2 py-1.5">
                     <span className="text-gray-500">생산력</span>
                     <p className="font-medium text-gray-200">
-                        {system.level * 100}
+                        {system.tier === 'CAPITAL' ? 700 : 400}
                     </p>
                 </div>
                 <div className="rounded bg-gray-800/70 px-2 py-1.5">

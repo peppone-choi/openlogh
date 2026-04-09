@@ -34,19 +34,12 @@ function getDotPaletteFromHex(hex: string) {
     };
 }
 
-function getStarRadius(level: number, isCapital: boolean): number {
-    // Capital stars (Valhalla / Barat) render slightly larger than a
-    // standard level-7 system so the two political centers are legible at
-    // a glance without dominating the map.
-    if (isCapital) return 10;
-    switch (level) {
-        case 4: return 5;
-        case 5: return 6;
-        case 6: return 7;
-        case 7: return 8;
-        case 8: return 9;
-        default: return 6;
-    }
+/**
+ * Two-tier sizing: capitals (Valhalla / Bharat) render slightly larger so the
+ * two political centers are legible at a glance; everything else is uniform.
+ */
+function getStarRadius(isCapital: boolean): number {
+    return isCapital ? 10 : 6;
 }
 
 /**
@@ -63,8 +56,8 @@ export function StarSystemNode({
     onSelect,
     onHover,
 }: StarSystemNodeProps) {
-    const isCapital = isCapitalStar(system.mapStarId);
-    const r = getStarRadius(system.level, isCapital);
+    const isCapital = isCapitalStar(system);
+    const r = getStarRadius(isCapital);
     // Use 5-shade faction color based on controlStrength; fall back to factionColor or neutral
     const color = getFactionShadeColor(
         system.factionId,

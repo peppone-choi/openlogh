@@ -85,7 +85,7 @@ class PublicCachedGalaxyService(
                 y = sys.y,
                 spectralType = sys.spectralType,
                 starRgb = sys.starRgb,
-                level = sys.level.toInt(),
+                tier = sys.tier,
                 region = sys.region.toInt(),
                 fortressType = sys.fortressType,
                 fortressGunPower = sys.fortressGunPower,

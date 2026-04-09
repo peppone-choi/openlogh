@@ -3,6 +3,7 @@ package com.openlogh.service
 import com.openlogh.entity.StarRoute
 import com.openlogh.entity.StarSystem
 import com.openlogh.model.FortressType
+import com.openlogh.model.StarSystemTier
 import com.openlogh.repository.StarRouteRepository
 import com.openlogh.repository.StarSystemRepository
 import org.springframework.stereotype.Service
@@ -44,6 +45,11 @@ class StarSystemService(
                 FortressType.entries.find { it.name == typeName }
             } ?: FortressType.NONE
 
+            // Legacy city.level == 7 corresponds to levelNames["7"] = "수도" in
+            // logh.json, which matches Valhalla and Bharat. Everything else
+            // collapses into REGULAR in the new two-tier scheme.
+            val tier = if (city.level == 7) StarSystemTier.CAPITAL else StarSystemTier.REGULAR
+
             StarSystem(
                 sessionId = sessionId,
                 mapStarId = city.id,
@@ -54,7 +60,7 @@ class StarSystemService(
                 y = city.y,
                 spectralType = extra?.spectralType ?: "A",
                 starRgb = extra?.starRgb?.toMutableList() ?: mutableListOf(255, 255, 255),
-                level = city.level.toShort(),
+                tier = tier.name,
                 region = city.region.toShort(),
                 fortressType = fortressType.name,
                 fortressGunPower = fortressType.gunPower,
