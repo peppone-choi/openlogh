@@ -236,8 +236,8 @@ Plans:
 - [x] 14-14-PLAN.md — Frontend — Command gating UI + proposal path (FE-03)
 - [x] 14-15-PLAN.md — Frontend — Succession feedback FX (FE-04)
 - [x] 14-16-PLAN.md — Frontend — Unit status markers + NPC mission objective (D-35..D-37)
-- [ ] 14-17-PLAN.md — Frontend — Galaxy map operations overlay (F1 toggle + side panel)
-- [ ] 14-18-PLAN.md — Frontend — Battle end modal with merit breakdown (D-32..D-34)
+- [x] 14-17-PLAN.md — Frontend — Galaxy map operations overlay (F1 toggle + side panel)
+- [x] 14-18-PLAN.md — Frontend — Battle end modal with merit breakdown (D-32..D-34)
 **UI hint**: yes
 
 ## Progress
@@ -259,4 +259,4 @@ Plans:
 | 11. 전술 AI | v2.1 | 3/3 | Complete    | 2026-04-08 |
 | 12. 작전 연동 | v2.1 | 4/4 | Complete    | 2026-04-09 |
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
-| 14. 프론트엔드 통합 | v2.1 | 16/18 | In Progress|  |
+| 14. 프론트엔드 통합 | v2.1 | 18/18 | Complete   | 2026-04-09 |
