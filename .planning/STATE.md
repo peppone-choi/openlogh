@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 14-06-PLAN.md
-last_updated: "2026-04-09T11:03:59.776Z"
+stopped_at: Completed 14-08-PLAN.md
+last_updated: "2026-04-09T11:04:38.798Z"
 last_activity: 2026-04-09 -- Plan 14-07 completed in parallel Wave 1 (dnd-kit deps)
 progress:
   total_phases: 22
@@ -81,6 +81,7 @@ Progress: [████████░░] 77%
 | Phase 14 P01 | 120 | 2 tasks | 6 files |
 | Phase 14 P02 | 25 min | 1 tasks | 3 files |
 | Phase 14-frontend-integration P06 | 6min | 1 tasks | 4 files |
+| Phase 14 P08 | 6min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -155,6 +156,9 @@ Recent decisions affecting current work:
 - [Phase 14]: [Phase 14]: Plan 14-02: Reuse existing TacticalBattle.battleState JSONB column for endBattle unit snapshots — no new Flyway migration needed. Stores unitSnapshots + operationParticipantFleetIds keys; buildBattleSummary re-derives merit breakdown at read-time mirroring computeBaseMerit exactly.
 - [Phase 14]: [Phase 14]: Plan 14-02: /api/v1/battle/{sessionId}/{battleId}/summary endpoint maps NoSuchElementException→404, IllegalArgumentException (session mismatch)→404 (mirrors getBattleState not-found semantics to prevent cross-session leak), IllegalStateException→409. Lightweight Mockito controller test pattern (no SpringBootTest) mirrors GeneralControllerTest.
 - [Phase 14-frontend-integration]: Plan 14-06: new TacticalUnit Phase 14 fields are optional (?:) to allow phased backend rollout; string-fallback BattleTickEvent.type union preserves literal inference on 8 known values while accepting unknown codes; NOT re-exported through types/index.ts barrel (OpenSamguk legacy, no precedent); fixture shim (CommandHierarchyDto=unknown + as unknown as TacticalBattle cast) removed — 14-06 was the planned target for its removal
+- [Phase 14]: Plan 14-08: Battle page (감찰부) BattleCloseView takeover removed outright — tactical rendering centralized on /tactical via BattleMap.tsx per D-26; 감찰부 stays a pure war-status admin page (D-08-01)
+- [Phase 14]: Plan 14-08: no-r3f-imports test uses Node built-in fs.readdirSync walker (not globSync from glob pkg); package.json path math = join(__dirname, '..', '..', 'package.json') — 2 levels up, not 3 (D-08-02, D-08-03)
+- [Phase 14]: Plan 14-08: @react-three/fiber + @react-three/drei + three + @types/three fully removed from frontend/package.json (48 transitive pkgs dropped from lockfile); regression guard flipped from Wave 0 tolerance to strict expect(offenders).toEqual([])
 
 ### Pending Todos
 
@@ -169,6 +173,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:03:48.187Z
-Stopped at: Completed 14-06-PLAN.md
+Last session: 2026-04-09T11:04:38.788Z
+Stopped at: Completed 14-08-PLAN.md
 Resume file: None
