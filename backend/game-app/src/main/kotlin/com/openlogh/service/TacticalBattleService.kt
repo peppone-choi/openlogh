@@ -364,6 +364,13 @@ class TacticalBattleService(
             processFlagshipDestructions(battle.sessionId, state)
         }
 
+        // Phase 12 Blocker 4 guard (D-11/D-14): snapshot the participant set
+        // BEFORE the unit loop. A concurrent syncOperationToActiveBattles(CANCELLED)
+        // arriving between iterations must not produce non-deterministic bonus
+        // assignment. The snapshot captures the authoritative membership at the
+        // moment endBattle started.
+        val participantSnapshot: Set<Long> = state.operationParticipantFleetIds.toSet()
+
         // Update fleet ships based on battle results
         for (unit in state.units) {
             val fleet = fleetRepository.findById(unit.fleetId).orElse(null) ?: continue
@@ -374,6 +381,22 @@ class TacticalBattleService(
             if (unit.morale < officer.morale.toInt()) {
                 officer.morale = unit.morale.toShort()
             }
+
+            // Phase 12 D-11/D-12/D-14: Merit bonus for operation participants.
+            // FIRST merit-from-battle accumulation path in the codebase
+            // (RankLadderService.kt:124/143 are RESETS, not accumulations).
+            //
+            // Base merit: proportional to ship survival on the winning side
+            // (0 for losers). Multiplier: ×1.5 iff this unit's fleetId was in
+            // the snapshot taken above.
+            val baseMerit = computeBaseMerit(unit, outcome)
+            if (baseMerit > 0) {
+                val isOperationParticipant = participantSnapshot.contains(unit.fleetId)
+                val multiplier = if (isOperationParticipant) 1.5 else 1.0
+                val awarded = (baseMerit * multiplier).toInt()
+                officer.meritPoints += awarded
+            }
+
             officerRepository.save(officer)
         }
 
@@ -647,6 +670,25 @@ class TacticalBattleService(
             result = battle.result,
         )
         messagingTemplate.convertAndSend("/topic/world/$sessionId/tactical-battle/${battle.id}", broadcast)
+    }
+
+    /**
+     * Phase 12 D-11: base merit computation for endBattle.
+     *
+     * Heuristic for the first Phase 12 iteration:
+     *   - 0 merit for losing / drawing sides
+     *   - baseMerit = (100 * survivalRatio).toInt().coerceAtLeast(10) on winning side
+     *
+     * Full-ship survival on the winning side yields exactly 100 base merit
+     * (OperationMeritBonusTest fixtures depend on this exact value to verify
+     * the ×1.5 multiplier applies to baseMerit, not `> 0`).
+     */
+    private fun computeBaseMerit(unit: TacticalUnit, outcome: BattleOutcome): Int {
+        val winningSide = outcome.winner ?: return 0
+        if (unit.side != winningSide) return 0
+        val maxShips = unit.maxShips.coerceAtLeast(1)
+        val survivalRatio = unit.ships.toDouble() / maxShips.toDouble()
+        return (100.0 * survivalRatio).toInt().coerceAtLeast(10)
     }
 }
 
