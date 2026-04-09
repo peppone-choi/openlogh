@@ -32,6 +32,26 @@ class PublicProxyController(
         return proxyGet(targetUrl)
     }
 
+    @GetMapping("/cached-galaxy")
+    fun getCachedGalaxy(@RequestParam worldId: Short? = null): ResponseEntity<ByteArray> {
+        val baseUrl = pickAnyGameApp()
+            ?: return emptyGalaxyResponse()
+
+        val targetUrl = if (worldId != null) {
+            "$baseUrl/api/public/cached-galaxy?worldId=$worldId"
+        } else {
+            "$baseUrl/api/public/cached-galaxy"
+        }
+        return proxyGet(targetUrl)
+    }
+
+    private fun emptyGalaxyResponse(): ResponseEntity<ByteArray> {
+        val json = """{"systems":[],"routes":[],"factionTerritories":{}}"""
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(json.toByteArray())
+    }
+
     private fun pickAnyGameApp(): String? {
         return worldRouteRegistry.snapshot().values.firstOrNull()
     }

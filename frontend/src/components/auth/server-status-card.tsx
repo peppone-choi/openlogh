@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { Skeleton } from '@/components/ui/8bit/skeleton';
 import type { PublicCachedMapResponse } from '@/types';
-import { MapViewer } from '@/components/game/map-viewer';
+import { GalaxyMap } from '@/components/galaxy/GalaxyMap';
 import { formatGameLogDate } from '@/lib/gameLogDate';
 import { formatLog } from '@/lib/formatLog';
 import { publicApi } from '@/lib/gameApi';
@@ -106,7 +106,16 @@ export function ServerStatusCard() {
                         지도 로딩중...
                     </div>
                 ) : (
-                    <MapViewer publicData={data} interactive={false} />
+                    <div className="h-64 w-full overflow-hidden rounded border border-gray-700 bg-black/40">
+                        <GalaxyMap
+                            key={selectedWorldId ?? 'default'}
+                            sessionId={selectedWorldId ?? undefined}
+                            publicMode
+                            compact
+                            interactive={false}
+                            hideDetailPanel
+                        />
+                    </div>
                 )}
 
                 <div>

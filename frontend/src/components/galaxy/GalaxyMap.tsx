@@ -12,7 +12,14 @@ import { StarField } from './StarField';
 import { FleetPositionMarker } from './FleetPositionMarker';
 
 interface GalaxyMapProps {
-    sessionId: number;
+    /** Required in normal mode. Ignored when publicMode=true. */
+    sessionId?: number;
+    /**
+     * Public mode: fetch via the unauthenticated /api/public/cached-galaxy
+     * endpoint. Used by lobby/login screens before a world is joined. When
+     * enabled, sessionId is optional and used as a worldId filter.
+     */
+    publicMode?: boolean;
     /** Compact mode: smaller min-height, simpler layout for embedded use */
     compact?: boolean;
     /** When false, disables zoom/pan/drag. Click/hover still works. Default: true */
@@ -33,6 +40,7 @@ const BG_COLOR = '#0a0e17';
 
 export function GalaxyMap({
     sessionId,
+    publicMode = false,
     compact = false,
     interactive = true,
     onSystemSelect,
@@ -54,6 +62,7 @@ export function GalaxyMap({
     const isLoading = useGalaxyStore((s) => s.isLoading);
     const error = useGalaxyStore((s) => s.error);
     const fetchMap = useGalaxyStore((s) => s.fetchGalaxyMap);
+    const fetchPublicMap = useGalaxyStore((s) => s.fetchPublicGalaxyMap);
     const selectSystem = useGalaxyStore((s) => s.selectSystem);
     const hoverSystem = useGalaxyStore((s) => s.hoverSystem);
     const getSystem = useGalaxyStore((s) => s.getSystem);
@@ -62,10 +71,14 @@ export function GalaxyMap({
     const selectFleet = useGalaxyStore((s) => s.selectFleet);
     const getReachableStars = useGalaxyStore((s) => s.getReachableStars);
 
-    // Fetch data on mount
+    // Fetch data on mount (public or authenticated)
     useEffect(() => {
-        fetchMap(sessionId);
-    }, [sessionId, fetchMap]);
+        if (publicMode) {
+            fetchPublicMap(sessionId);
+        } else if (sessionId != null) {
+            fetchMap(sessionId);
+        }
+    }, [sessionId, publicMode, fetchMap, fetchPublicMap]);
 
     // ResizeObserver for container
     useEffect(() => {

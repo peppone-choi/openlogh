@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { StarSystem, StarRoute, FleetPosition } from '@/types/galaxy';
-import { fetchGalaxyMap } from '@/lib/api/galaxy';
+import { fetchGalaxyMap, fetchPublicCachedGalaxy } from '@/lib/api/galaxy';
 import { STAR_SYSTEM_PLANETS } from '@/data/star-system-planets';
 
 interface GalaxyState {
@@ -20,6 +20,8 @@ interface GalaxyState {
 
 interface GalaxyActions {
     fetchGalaxyMap: (sessionId: number) => Promise<void>;
+    /** Unauthenticated public fetch — used by lobby/login previews. */
+    fetchPublicGalaxyMap: (worldId?: number) => Promise<void>;
     fetchFleetPositions: (sessionId: number) => Promise<void>;
     selectSystem: (mapStarId: number | null) => void;
     hoverSystem: (mapStarId: number | null) => void;
@@ -73,6 +75,37 @@ export const useGalaxyStore = create<GalaxyState & GalaxyActions>()(
             } catch (err) {
                 const message =
                     err instanceof Error ? err.message : 'Failed to load galaxy map';
+                set({ error: message, isLoading: false });
+            }
+        },
+
+        fetchPublicGalaxyMap: async (worldId?: number) => {
+            set({ isLoading: true, error: null });
+            try {
+                const data = await fetchPublicCachedGalaxy(worldId);
+                for (const sys of data.systems) {
+                    if (!sys.planets || sys.planets.length === 0) {
+                        sys.planets = STAR_SYSTEM_PLANETS[sys.mapStarId] ?? [];
+                    }
+                    if (sys.planetCount === 0 && sys.planets.length > 0) {
+                        sys.planetCount = sys.planets.length;
+                    }
+                }
+                const systemsById: Record<number, StarSystem> = {};
+                for (const sys of data.systems) {
+                    systemsById[sys.mapStarId] = sys;
+                }
+                set({
+                    systems: data.systems,
+                    routes: data.routes,
+                    factionTerritories: data.factionTerritories,
+                    systemsById,
+                    fleetPositions: {}, // No fleet data in public preview
+                    isLoading: false,
+                });
+            } catch (err) {
+                const message =
+                    err instanceof Error ? err.message : 'Failed to load public galaxy map';
                 set({ error: message, isLoading: false });
             }
         },
