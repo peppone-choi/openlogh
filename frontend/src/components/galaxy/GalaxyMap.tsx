@@ -32,7 +32,9 @@ interface GalaxyMapProps {
     minHeight?: number | string;
 }
 
-const PADDING = 24;
+const PADDING_X = 24;
+/** Extra vertical breathing room so labels at the top/bottom edges have space. */
+const PADDING_Y = 34;
 /**
  * Zoom-in past the strict "contain" fit so the map actually fills the
  * viewport instead of huddling in the center. Overflow-hidden on the
@@ -128,15 +130,15 @@ export function GalaxyMap({
         const dataWidth = maxX - minX || 1;
         const dataHeight = maxY - minY || 1;
 
-        const availWidth = containerSize.width - PADDING * 2;
-        const availHeight = containerSize.height - PADDING * 2;
+        const availWidth = containerSize.width - PADDING_X * 2;
+        const availHeight = containerSize.height - PADDING_Y * 2;
 
         const sx = availWidth / dataWidth;
         const sy = availHeight / dataHeight;
         const us = Math.min(sx, sy) * FIT_BOOST;
 
-        const ox = PADDING + (availWidth - dataWidth * us) / 2 - minX * us;
-        const oy = PADDING + (availHeight - dataHeight * us) / 2 - minY * us;
+        const ox = PADDING_X + (availWidth - dataWidth * us) / 2 - minX * us;
+        const oy = PADDING_Y + (availHeight - dataHeight * us) / 2 - minY * us;
 
         return { offsetX: ox, offsetY: oy, uniformScale: us };
     }, [systems, containerSize]);
