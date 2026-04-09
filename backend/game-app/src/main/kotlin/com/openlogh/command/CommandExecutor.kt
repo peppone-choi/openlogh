@@ -20,6 +20,7 @@ import com.openlogh.engine.modifier.ModifierService
 import com.openlogh.model.PositionCardRegistry
 import com.openlogh.service.MapService
 import com.openlogh.service.OperationPlanService
+import com.openlogh.service.TacticalBattleService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -41,6 +42,7 @@ class CommandExecutor @Autowired constructor(
     private val messageService: com.openlogh.service.MessageService,
     private val fleetRepository: FleetRepository? = null,
     private val operationPlanService: OperationPlanService? = null,
+    private val tacticalBattleService: TacticalBattleService? = null,
 ) {
     private val mapper = jacksonObjectMapper()
 
@@ -118,6 +120,7 @@ class CommandExecutor @Autowired constructor(
             modifierService = modifierService,
             fleetRepository = fleetRepository,
             operationPlanService = operationPlanService,
+            tacticalBattleService = tacticalBattleService,
         )
         hydrateCommandForConstraintCheck(command, general, env, effectiveArg)
 
@@ -228,6 +231,7 @@ class CommandExecutor @Autowired constructor(
             modifierService = modifierService,
             fleetRepository = fleetRepository,
             operationPlanService = operationPlanService,
+            tacticalBattleService = tacticalBattleService,
         )
         hydrateCommandForConstraintCheck(command, general, env, effectiveArg)
 

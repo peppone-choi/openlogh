@@ -10,6 +10,7 @@ import com.openlogh.service.OfficerPoolService
 import com.openlogh.service.MessageService
 import com.openlogh.service.FactionService
 import com.openlogh.service.OperationPlanService
+import com.openlogh.service.TacticalBattleService
 
 /**
  * 커맨드에서 접근 가능한 서비스/리포지토리 홀더.
@@ -26,6 +27,7 @@ data class CommandServices(
     val modifierService: ModifierService? = null,
     val fleetRepository: FleetRepository? = null,
     val operationPlanService: OperationPlanService? = null,
+    val tacticalBattleService: TacticalBattleService? = null,
 ) {
     /**
      * Resolve city name by ID. Returns null if not found.

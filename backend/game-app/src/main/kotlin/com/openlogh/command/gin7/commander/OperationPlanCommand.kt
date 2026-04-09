@@ -77,9 +77,10 @@ class OperationPlanCommand(
             return CommandResult.fail(e.message ?: "작전 수립 실패")
         }
 
-        // Sync channel wiring: Plan 12-04 Task 2b adds the direct call to
-        // TacticalBattleService.syncOperationToActiveBattles(plan) once the
-        // method exists (created by Plan 12-03). Not wired here yet.
+        // Phase 12 D-08: Sync channel — propagate new operation into all active
+        // TacticalBattleStates. Nullable-safe: unit tests that don't load the
+        // full Spring context skip silently.
+        services.tacticalBattleService?.syncOperationToActiveBattles(plan)
 
         pushLog("${general.name}이(가) '${plan.name}' 작전계획을 수립했다 (${plan.objective.korean}).")
         pushNationalHistoryLog("작전계획 수립: ${plan.name} (${plan.objective.korean} @ 성계 ${plan.targetStarSystemId})")

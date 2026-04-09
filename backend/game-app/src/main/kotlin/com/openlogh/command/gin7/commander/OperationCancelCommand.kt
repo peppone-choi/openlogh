@@ -47,8 +47,10 @@ class OperationCancelCommand(
             return CommandResult.fail(e.message ?: "작전 철회 실패")
         }
 
-        // Sync channel wiring: Plan 12-04 Task 2b adds the direct call to
-        // TacticalBattleService.syncOperationToActiveBattles(cancelled).
+        // Phase 12 D-13: Sync channel — propagate CANCELLED so active battles
+        // drop bonus eligibility. Nullable-safe: unit tests that don't load the
+        // full Spring context skip silently.
+        services.tacticalBattleService?.syncOperationToActiveBattles(cancelled)
 
         pushLog("${general.name}이(가) '${cancelled.name}' 작전을 철회했다.")
         pushNationalHistoryLog("작전 철회: ${cancelled.name}")
