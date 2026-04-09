@@ -10,7 +10,8 @@ import { frontApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { FrontInfoResponse } from '@/types';
 import { GalaxyMap } from '@/components/galaxy/GalaxyMap';
-import { CommandPanel } from '@/components/game/command-panel';
+import { RealtimeCommandConsole } from '@/components/game/realtime-command-console';
+import type { Officer } from '@/types/officer';
 import { LoadingState } from '@/components/game/loading-state';
 import { Button } from '@/components/ui/8bit/button';
 import { toast } from 'sonner';
@@ -258,7 +259,11 @@ export function GameDashboard() {
                     </div>
                     <div className="flex-1 overflow-y-auto lg:max-h-[500px]">
                         {myOfficer && (
-                            <CommandPanel generalId={myOfficer.id} realtimeMode={currentWorld.realtimeMode} />
+                            <RealtimeCommandConsole
+                                officer={myOfficer as unknown as Officer}
+                                sessionId={currentWorld.id}
+                                regenRate={currentWorld.commandPointRegenRate ?? 1}
+                            />
                         )}
                     </div>
                 </div>

@@ -792,7 +792,7 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                 </div>
             ))}
             <Button size="sm" onClick={handleSubmit} className="w-full">
-                예약
+                실행
             </Button>
         </div>
     );
