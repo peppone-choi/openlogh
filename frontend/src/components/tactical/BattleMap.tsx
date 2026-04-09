@@ -125,14 +125,27 @@ export function BattleMap({
                 </Layer>
 
                 {/* Command range layer */}
+                {/*
+                 * TODO(14-10): multi-render one CRC per visible commander from
+                 * `tacticalStore.commandHierarchy`. For now we keep the Wave 3
+                 * single-selected-unit rendering so `pnpm typecheck` passes.
+                 * Plan 14-09 rewrote CommandRangeCircle to server-driven props
+                 * (cx/cy/currentRadius/maxRadius) and removed the local 3s
+                 * Konva.Animation loop — the radius ramp now comes from server
+                 * ticks, interpolated by BattleMap in 14-10.
+                 */}
                 <Layer>
                     {selectedUnit && selectedUnit.commandRange > 0 && (
                         <CommandRangeCircle
-                            x={selectedUnit.posX * scaleX}
-                            y={selectedUnit.posY * scaleY}
-                            radius={0}
-                            maxRadius={selectedUnit.commandRange * Math.min(scaleX, scaleY)}
+                            cx={selectedUnit.posX * scaleX}
+                            cy={selectedUnit.posY * scaleY}
+                            currentRadius={selectedUnit.commandRange * Math.min(scaleX, scaleY)}
+                            maxRadius={
+                                (selectedUnit.maxCommandRange ?? selectedUnit.commandRange) *
+                                Math.min(scaleX, scaleY)
+                            }
                             side={selectedUnit.side}
+                            isSelected={true}
                         />
                     )}
                 </Layer>
