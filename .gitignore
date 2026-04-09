@@ -76,3 +76,4 @@ ref_core2026/
 legacy-core/
 legacy-docker-src/
 .claude/worktrees/
+.worktrees/
