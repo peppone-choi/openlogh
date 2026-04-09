@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Rect, Circle } from 'react-konva';
 import type Konva from 'konva';
 import { useGalaxyStore } from '@/stores/galaxyStore';
@@ -50,7 +50,10 @@ export function GalaxyMap({
     const containerRef = useRef<HTMLDivElement>(null);
     const stageRef = useRef<Konva.Stage>(null);
 
-    const [containerSize, setContainerSize] = useState({ width: 900, height: 600 });
+    // Start at 0 so the Stage does not render larger than its parent before
+    // the first measurement. Parents such as the dashboard card clip their
+    // content, so a 900x600 seed would cause systems to spill off-screen.
+    const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
     const [stageScale, setStageScale] = useState(1);
     const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
 
@@ -80,10 +83,16 @@ export function GalaxyMap({
         }
     }, [sessionId, publicMode, fetchMap, fetchPublicMap]);
 
-    // ResizeObserver for container
-    useEffect(() => {
+    // Measure synchronously before first paint so the Stage starts at the
+    // correct size. ResizeObserver then handles subsequent layout changes.
+    useLayoutEffect(() => {
         const el = containerRef.current;
         if (!el) return;
+
+        const rect = el.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            setContainerSize({ width: rect.width, height: rect.height });
+        }
 
         const observer = new ResizeObserver((entries) => {
             for (const entry of entries) {
@@ -265,8 +274,15 @@ export function GalaxyMap({
         );
     }
 
+    const sizeReady = containerSize.width > 0 && containerSize.height > 0;
+
     return (
-        <div ref={containerRef} className="relative h-full w-full" style={{ minHeight: resolvedMinHeight }}>
+        <div
+            ref={containerRef}
+            className="relative h-full w-full overflow-hidden"
+            style={{ minHeight: resolvedMinHeight }}
+        >
+            {sizeReady && (
             <Stage
                 ref={stageRef}
                 width={containerSize.width}
@@ -401,6 +417,7 @@ export function GalaxyMap({
                     })}
                 </Layer>
             </Stage>
+            )}
 
             {/* Detail panel overlay (HTML, not Konva) */}
             {!hideDetailPanel && (

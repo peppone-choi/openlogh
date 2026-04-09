@@ -1,15 +1,23 @@
 package com.openlogh.engine.ai
 
-import com.openlogh.entity.Planet
-import com.openlogh.entity.Diplomacy
-import com.openlogh.entity.Officer
-import com.openlogh.entity.Faction
-import com.openlogh.entity.SessionState
+import com.openlogh.command.CommandEnv
+import com.openlogh.command.CommandExecutor
+import com.openlogh.command.CommandResult
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
-import com.openlogh.repository.PlanetRepository
+import com.openlogh.entity.Diplomacy
+import com.openlogh.entity.Faction
+import com.openlogh.entity.Fleet
+import com.openlogh.entity.Officer
+import com.openlogh.entity.OperationPlan
+import com.openlogh.entity.Planet
+import com.openlogh.entity.SessionState
+import com.openlogh.model.OperationStatus
 import com.openlogh.repository.DiplomacyRepository
-import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.FleetRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OperationPlanRepository
+import com.openlogh.repository.PlanetRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -19,7 +27,51 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
+import java.util.Optional
 import kotlin.random.Random
+
+/**
+ * Phase 13 Plan 02: test-double CommandExecutor that records every invocation
+ * and returns a configurable success/fail result. Mockito cannot stub Kotlin
+ * `suspend` functions without mockito-kotlin (not on the :game-app classpath,
+ * per Phase 12 decision), so we subclass the real CommandExecutor and override
+ * the suspend method directly.
+ */
+private class StubCommandExecutor(
+    var result: CommandResult = CommandResult(success = true, logs = listOf("ok")),
+) : CommandExecutor(
+    commandRegistry = mock(com.openlogh.command.CommandRegistry::class.java),
+    officerRepository = mock(OfficerRepository::class.java),
+    planetRepository = mock(PlanetRepository::class.java),
+    factionRepository = mock(FactionRepository::class.java),
+    diplomacyRepository = mock(DiplomacyRepository::class.java),
+    diplomacyService = mock(com.openlogh.engine.DiplomacyService::class.java),
+    mapService = mock(com.openlogh.service.MapService::class.java),
+    statChangeService = mock(com.openlogh.engine.StatChangeService::class.java),
+    modifierService = mock(com.openlogh.engine.modifier.ModifierService::class.java),
+    messageService = mock(com.openlogh.service.MessageService::class.java),
+) {
+    data class Invocation(
+        val actionCode: String,
+        val generalId: Long,
+        val arg: Map<String, Any>?,
+    )
+
+    val invocations = mutableListOf<Invocation>()
+
+    override suspend fun executeOfficerCommand(
+        actionCode: String,
+        general: Officer,
+        env: CommandEnv,
+        arg: Map<String, Any>?,
+        city: Planet?,
+        nation: Faction?,
+        rng: Random,
+    ): CommandResult {
+        invocations += Invocation(actionCode, general.id, arg)
+        return result
+    }
+}
 
 class NationAITest {
 
@@ -28,6 +80,9 @@ class NationAITest {
     private lateinit var officerRepository: OfficerRepository
     private lateinit var factionRepository: FactionRepository
     private lateinit var diplomacyRepository: DiplomacyRepository
+    private lateinit var fleetRepository: FleetRepository
+    private lateinit var operationPlanRepository: OperationPlanRepository
+    private lateinit var commandExecutor: StubCommandExecutor
 
     @BeforeEach
     fun setUp() {
@@ -35,12 +90,20 @@ class NationAITest {
         officerRepository = mock(OfficerRepository::class.java)
         factionRepository = mock(FactionRepository::class.java)
         diplomacyRepository = mock(DiplomacyRepository::class.java)
-        ai = FactionAI(JpaWorldPortFactory(
-            officerRepository = officerRepository,
-            planetRepository = planetRepository,
-            factionRepository = factionRepository,
-            diplomacyRepository = diplomacyRepository,
-        ))
+        fleetRepository = mock(FleetRepository::class.java)
+        operationPlanRepository = mock(OperationPlanRepository::class.java)
+        commandExecutor = StubCommandExecutor()
+        ai = FactionAI(
+            worldPortFactory = JpaWorldPortFactory(
+                officerRepository = officerRepository,
+                planetRepository = planetRepository,
+                factionRepository = factionRepository,
+                diplomacyRepository = diplomacyRepository,
+            ),
+            commandExecutor = commandExecutor,
+            fleetRepository = fleetRepository,
+            operationPlanRepository = operationPlanRepository,
+        )
     }
 
     private fun createWorld(year: Short = 200, month: Short = 3): SessionState {
@@ -53,7 +116,7 @@ class NationAITest {
         supplies: Int = 10000,
         militaryPower: Int = 100,
         warState: Short = 0,
-        strategicCmdLimit: Short = 0,
+        chiefOfficerId: Long = 0,
     ): Faction {
         return Faction(
             id = id,
@@ -64,8 +127,8 @@ class NationAITest {
             supplies = supplies,
             militaryPower = militaryPower,
             warState = warState,
-            strategicCmdLimit = strategicCmdLimit,
             capitalPlanetId = 1,
+            chiefOfficerId = chiefOfficerId,
         )
     }
 
@@ -101,6 +164,7 @@ class NationAITest {
         id: Long = 1,
         factionId: Long = 1,
         level: Short = 5,
+        frontState: Short = 0,
     ): Planet {
         return Planet(
             id = id,
@@ -108,6 +172,7 @@ class NationAITest {
             name = "도시$id",
             factionId = factionId,
             level = level,
+            frontState = frontState,
             population = 10000,
             populationMax = 50000,
             production = 500,
@@ -166,21 +231,125 @@ class NationAITest {
     }
 
     @Test
-    fun `decideNationAction returns war strategic action when at war and strategic commands available`() {
-        val nation = createNation(funds = 20000, supplies = 20000, warState = 1, strategicCmdLimit = 2)
-        setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
+    fun `decideNationAction creates operation plan when at war with available fleets`() {
+        val sovereign = createGeneral(id = 1, officerLevel = 10, dedication = 100)
+        sovereign.personality = "AGGRESSIVE"
+        sovereign.intelligence = 80  // spy — ensures fog-free evaluation
+
+        val nation = createNation(
+            funds = 20000, supplies = 20000, warState = 1, chiefOfficerId = 1L,
+        )
+
+        // Own front-line planet with our sovereign stationed on it
+        val ownCity = createCity(id = 1, factionId = 1, frontState = 1)
+
+        // Enemy planet — front-line + strategically valuable so CONQUEST wins
+        val enemyCity = createCity(id = 10, factionId = 2, frontState = 1).apply {
+            production = 1000
+            commerce = 1000
+            tradeRoute = 200
+            population = 50000
+        }
+
+        // Enemy officer with a tiny ship count so the selector picks this target
+        val enemyOfficer = createGeneral(id = 50, factionId = 2, planetId = 10)
+        enemyOfficer.ships = 100
+
+        val enemyNation = createNation(id = 2, militaryPower = 50)
+
+        // setupRepos only wires faction-scoped queries; the strategic AI also
+        // calls the session-wide queries via the port layer, so set those too.
+        setupRepos(
+            nation,
+            listOf(ownCity),
+            listOf(sovereign),
+            allNations = listOf(nation, enemyNation),
+        )
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(sovereign, enemyOfficer))
+        `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(ownCity, enemyCity))
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(sovereign))
+
+        // One own fleet strong enough to exceed the 1.3x margin vs the tiny enemy
+        val fleet = Fleet(
+            id = 100L,
+            sessionId = 1L,
+            factionId = 1L,
+            leaderOfficerId = 1L,
+            planetId = 1L,
+            currentUnits = 30,
+        )
+        `when`(fleetRepository.findBySessionIdAndFactionId(1L, 1L)).thenReturn(listOf(fleet))
+
+        // No existing operations — all fleets free to commit
+        `when`(
+            operationPlanRepository.findBySessionIdAndFactionIdAndStatusIn(
+                1L, 1L, listOf(OperationStatus.PENDING, OperationStatus.ACTIVE),
+            ),
+        ).thenReturn(emptyList())
 
         val action = ai.decideNationAction(nation, createWorld(), Random(42))
-        assertTrue(action in listOf("급습", "의병모집", "필사즉생"))
+
+        assertEquals("작전계획", action)
+        assertTrue(commandExecutor.invocations.isNotEmpty(), "expected at least one 작전계획 invocation")
+        val first = commandExecutor.invocations.first()
+        assertEquals("작전계획", first.actionCode)
+        assertEquals(1L, first.generalId)
+        val arg = first.arg
+        assertTrue(arg != null)
+        assertTrue(arg!!["objective"] in listOf("CONQUEST", "SWEEP", "DEFENSE"))
+        @Suppress("UNCHECKED_CAST")
+        val fleetIds = arg["participantFleetIds"] as List<Long>
+        assertTrue(100L in fleetIds)
     }
 
     @Test
-    fun `decideNationAction returns Nation휴식 when at war but no strategic command available`() {
-        val nation = createNation(funds = 20000, supplies = 20000, warState = 1, strategicCmdLimit = 0)
+    fun `decideNationAction returns Nation휴식 when at war but no sovereign`() {
+        val nation = createNation(funds = 20000, supplies = 20000, warState = 1, chiefOfficerId = 0L)
         setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
 
         val action = ai.decideNationAction(nation, createWorld(), Random(42))
         assertEquals("Nation휴식", action)
+        assertTrue(commandExecutor.invocations.isEmpty())
+    }
+
+    @Test
+    fun `decideNationAction returns Nation휴식 when at war but all fleets committed`() {
+        val sovereign = createGeneral(id = 1, officerLevel = 10)
+        sovereign.personality = "BALANCED"
+
+        val nation = createNation(
+            funds = 20000, supplies = 20000, warState = 1, chiefOfficerId = 1L,
+        )
+        val ownCity = createCity(id = 1, factionId = 1, frontState = 1)
+
+        setupRepos(nation, listOf(ownCity), listOf(sovereign))
+        `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(sovereign))
+        `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(ownCity))
+        `when`(officerRepository.findById(1L)).thenReturn(Optional.of(sovereign))
+
+        // All fleets already committed to an existing operation
+        val committedFleet = Fleet(
+            id = 100L, sessionId = 1L, factionId = 1L,
+            leaderOfficerId = 1L, planetId = 1L, currentUnits = 30,
+        )
+        `when`(fleetRepository.findBySessionIdAndFactionId(1L, 1L)).thenReturn(listOf(committedFleet))
+
+        val existingOp = OperationPlan(
+            id = 1L,
+            sessionId = 1L,
+            factionId = 1L,
+            participantFleetIds = mutableListOf(100L),
+            status = OperationStatus.ACTIVE,
+        )
+        `when`(
+            operationPlanRepository.findBySessionIdAndFactionIdAndStatusIn(
+                1L, 1L, listOf(OperationStatus.PENDING, OperationStatus.ACTIVE),
+            ),
+        ).thenReturn(listOf(existingOp))
+
+        val action = ai.decideNationAction(nation, createWorld(), Random(42))
+        assertEquals("Nation휴식", action)
+        assertTrue(commandExecutor.invocations.isEmpty())
     }
 
     @Test
