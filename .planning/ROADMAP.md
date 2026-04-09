@@ -223,10 +223,10 @@ Plans:
 - [ ] 14-01-PLAN.md — Backend DTO extension — CommandHierarchy + TacticalUnit fields
 - [ ] 14-02-PLAN.md — Backend — BattleSummaryDto + /summary REST endpoint
 - [ ] 14-03-PLAN.md — Backend — sensorRange field + computation + DTO wiring
-- [ ] 14-04-PLAN.md — Backend — Operations WebSocket channel broadcast
+- [x] 14-04-PLAN.md — Backend — Operations WebSocket channel broadcast
 - [x] 14-05-PLAN.md — Wave 0 — Test scaffold stubs for all Phase 14 requirements
 - [ ] 14-06-PLAN.md — Frontend — TypeScript type sync with Phase 14 DTO extensions
-- [ ] 14-07-PLAN.md — Frontend dependencies — add @dnd-kit, remove @react-three
+- [x] 14-07-PLAN.md — Frontend dependencies — add @dnd-kit, remove @react-three
 - [ ] 14-08-PLAN.md — Frontend — Remove R3F files + @react-three deps
 - [ ] 14-09-PLAN.md — Frontend — CommandRangeCircle rewrite (server-driven, no local animation)
 - [ ] 14-10-PLAN.md — Frontend — BattleMap layer restructure + tacticalStore hierarchy reducer
@@ -259,4 +259,4 @@ Plans:
 | 11. 전술 AI | v2.1 | 3/3 | Complete    | 2026-04-08 |
 | 12. 작전 연동 | v2.1 | 4/4 | Complete    | 2026-04-09 |
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
-| 14. 프론트엔드 통합 | v2.1 | 1/18 | In Progress|  |
+| 14. 프론트엔드 통합 | v2.1 | 3/18 | In Progress|  |

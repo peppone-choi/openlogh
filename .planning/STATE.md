@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
-status: Wave 0 scaffolds shipped; Wave 2-5 plans can begin
-stopped_at: Completed 14-05-PLAN.md (Wave 0 scaffolds)
-last_updated: "2026-04-09T10:22:42.914Z"
-last_activity: 2026-04-09 -- Plan 14-05 completed in parallel Wave 1
+status: executing
+stopped_at: Completed 14-04-PLAN.md
+last_updated: "2026-04-09T10:42:44.740Z"
+last_activity: 2026-04-09 -- Plan 14-07 completed in parallel Wave 1 (dnd-kit deps)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 90
+  completed_plans: 91
   percent: 77
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 14 (frontend-integration) — EXECUTING (Wave 1 parallel)
-Plan: 14-05 complete (Wave 0 scaffolds) · 17 plans still incomplete
-Status: Wave 0 scaffolds shipped; Wave 2-5 plans can begin
-Last activity: 2026-04-09 -- Plan 14-05 completed in parallel Wave 1
+Plan: 14-05 + 14-07 complete (Wave 0 scaffolds + dnd-kit deps) · 16 plans still incomplete
+Status: Wave 1 in progress; dnd-kit deps available at HEAD — 14-08/14-12/14-13 unblocked
+Last activity: 2026-04-09 -- Plan 14-07 completed in parallel Wave 1 (dnd-kit deps)
 
 Progress: [████████░░] 77%
 
@@ -77,6 +77,7 @@ Progress: [████████░░] 77%
 | Phase 13-ai P02 | 9min | 2 tasks | 2 files |
 | Phase 14-frontend-integration P05 | 8min | 2 tasks | 21 files |
 | Phase 14 P07 | 12min | 1 tasks | 2 files |
+| Phase 14 P04 | 13min | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -143,6 +144,8 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-05: no-r3f-imports regression guard runs in Wave 0 tolerance mode (scanner asserts Array.isArray only); plan 14-08 will flip to `expect(offenders).toHaveLength(0)` after R3F removal
 - [Phase 14]: Plan 14-05: Fixture factory uses `as unknown as TacticalBattle` for hierarchy fields until plan 14-06 extends the TacticalBattle type; cast becomes redundant and removable then
 - [Phase 14]: Plan 14-05: Replaced suggested `glob` npm import with Node built-in `fs.readdirSync + statSync` recursive walk — glob is not in frontend/package.json and adding it was out of scope
+- [Phase 14]: Plan 14-07: @dnd-kit/core + @dnd-kit/utilities added (no @dnd-kit/sortable, no react-dnd) under React 19.2.3 — dep-add landed opportunistically via sibling commit 6315120a (14-05 Wave 0 scaffolds race); R3F removal deferred to 14-08 atomic step
+- [Phase 14]: Plan 14-04: OperationEventDto.fromPlan guards null plan.id with IllegalStateException; broadcasts placed inside existing @Transactional methods (SimpMessagingTemplate flushes post-commit, matching TacticalBattleService pattern)
 
 ### Pending Todos
 
@@ -157,6 +160,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T10:20:42.638Z
-Stopped at: Completed 14-05-PLAN.md (Wave 0 scaffolds)
+Last session: 2026-04-09T10:42:38.336Z
+Stopped at: Completed 14-04-PLAN.md
 Resume file: None
