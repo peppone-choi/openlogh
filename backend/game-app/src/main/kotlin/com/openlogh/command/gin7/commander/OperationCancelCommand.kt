@@ -9,8 +9,11 @@ import com.openlogh.model.StatCategory
 import kotlin.random.Random
 
 /**
- * 작전철회 커맨드 — MCP 5~320 소모 (scale에 비례).
- * nation.meta["operationPlan"]을 제거한다.
+ * Phase 12: 작전철회 커맨드 — delegates to
+ * [com.openlogh.service.OperationPlanService.cancelOperation].
+ *
+ * Args:
+ *   - operationId: Long — the OperationPlan to cancel
  */
 class OperationCancelCommand(
     general: Officer,
@@ -29,15 +32,26 @@ class OperationCancelCommand(
     override fun getPostReqTurn(): Int = 0
 
     override suspend fun run(rng: Random): CommandResult {
-        val nation = nation ?: return CommandResult.fail("소속 진영 정보를 찾을 수 없습니다.")
+        val services = this.services ?: return CommandResult.fail("CommandServices unavailable")
+        val opService = services.operationPlanService
+            ?: return CommandResult.fail("OperationPlanService unavailable")
 
-        val planName = (nation.meta["operationPlan"] as? Map<*, *>)?.get("name")
-            ?: "진행 중인 작전"
+        val operationId = (arg?.get("operationId") as? Number)?.toLong()
+            ?: return CommandResult.fail("operationId 미지정")
 
-        nation.meta.remove("operationPlan")
+        val cancelled = try {
+            opService.cancelOperation(factionId = general.factionId, operationId = operationId)
+        } catch (e: NoSuchElementException) {
+            return CommandResult.fail(e.message ?: "작전을 찾을 수 없습니다")
+        } catch (e: IllegalStateException) {
+            return CommandResult.fail(e.message ?: "작전 철회 실패")
+        }
 
-        pushLog("${general.name}이(가) '${planName}' 작전을 철회했다.")
+        // Sync channel wiring: Plan 12-04 Task 2b adds the direct call to
+        // TacticalBattleService.syncOperationToActiveBattles(cancelled).
 
+        pushLog("${general.name}이(가) '${cancelled.name}' 작전을 철회했다.")
+        pushNationalHistoryLog("작전 철회: ${cancelled.name}")
         return CommandResult.success(logs)
     }
 }

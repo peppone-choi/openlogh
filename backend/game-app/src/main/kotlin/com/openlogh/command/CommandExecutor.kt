@@ -19,6 +19,7 @@ import com.openlogh.repository.FactionRepository
 import com.openlogh.engine.modifier.ModifierService
 import com.openlogh.model.PositionCardRegistry
 import com.openlogh.service.MapService
+import com.openlogh.service.OperationPlanService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
@@ -39,6 +40,7 @@ class CommandExecutor @Autowired constructor(
     private val modifierService: ModifierService,
     private val messageService: com.openlogh.service.MessageService,
     private val fleetRepository: FleetRepository? = null,
+    private val operationPlanService: OperationPlanService? = null,
 ) {
     private val mapper = jacksonObjectMapper()
 
@@ -107,7 +109,16 @@ class CommandExecutor @Autowired constructor(
         val command = commandRegistry.createOfficerCommand(actionCode, general, env, effectiveArg)
         command.city = city
         command.nation = effectiveNation
-        command.services = CommandServices(officerRepository, planetRepository, factionRepository, diplomacyService, messageService = messageService, modifierService = modifierService, fleetRepository = fleetRepository)
+        command.services = CommandServices(
+            officerRepository,
+            planetRepository,
+            factionRepository,
+            diplomacyService,
+            messageService = messageService,
+            modifierService = modifierService,
+            fleetRepository = fleetRepository,
+            operationPlanService = operationPlanService,
+        )
         hydrateCommandForConstraintCheck(command, general, env, effectiveArg)
 
         val cooldown = checkGeneralCooldown(actionCode, general, env)
@@ -208,7 +219,16 @@ class CommandExecutor @Autowired constructor(
             ?: return CommandResult(success = false, logs = listOf("<R>$actionCode</> - 알 수 없는 국가 명령"))
         command.city = city
         command.nation = nation
-        command.services = CommandServices(officerRepository, planetRepository, factionRepository, diplomacyService, messageService = messageService, modifierService = modifierService, fleetRepository = fleetRepository)
+        command.services = CommandServices(
+            officerRepository,
+            planetRepository,
+            factionRepository,
+            diplomacyService,
+            messageService = messageService,
+            modifierService = modifierService,
+            fleetRepository = fleetRepository,
+            operationPlanService = operationPlanService,
+        )
         hydrateCommandForConstraintCheck(command, general, env, effectiveArg)
 
         val cooldown = checkNationCooldown(actionCode, general, nation, env)
