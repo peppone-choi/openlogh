@@ -9,6 +9,7 @@ import com.openlogh.service.FezzanService
 import com.openlogh.service.GameEventService
 import com.openlogh.engine.ai.ScenarioEventAIService
 import com.openlogh.service.OfflinePlayerAIService
+import com.openlogh.service.OperationLifecycleService
 import com.openlogh.service.ShipyardProductionService
 import com.openlogh.service.TacticalBattleService
 import org.slf4j.LoggerFactory
@@ -42,6 +43,7 @@ class TickEngine(
     private val fleetSortieCostService: FleetSortieCostService,
     private val offlinePlayerAIService: OfflinePlayerAIService,
     private val scenarioEventAIService: ScenarioEventAIService,
+    private val operationLifecycleService: OperationLifecycleService,
 ) {
     private val logger = LoggerFactory.getLogger(TickEngine::class.java)
 
@@ -71,6 +73,16 @@ class TickEngine(
 
         // 5. Political processing
         processPolitics(world)
+
+        // 5.5 Phase 12 (D-15): Process operation lifecycle (PENDING→ACTIVE + ACTIVE→COMPLETED).
+        //     MUST run BEFORE battle trigger so activation state is visible to
+        //     BattleTriggerService.buildInitialState's OperationPlan lookup on the
+        //     same tick (eliminates the activation-vs-battle-trigger tick race).
+        try {
+            operationLifecycleService.processTick(world.id.toLong(), world.tickCount)
+        } catch (e: Exception) {
+            logger.warn("Operation lifecycle error for world {}: {}", world.id, e.message)
+        }
 
         // 6. Process active tactical battles
         tacticalBattleService.processSessionBattles(world.id.toLong())

@@ -9,6 +9,7 @@ import com.openlogh.service.FezzanService
 import com.openlogh.service.GameEventService
 import com.openlogh.engine.ai.ScenarioEventAIService
 import com.openlogh.service.OfflinePlayerAIService
+import com.openlogh.service.OperationLifecycleService
 import com.openlogh.service.ShipyardProductionService
 import com.openlogh.service.TacticalBattleService
 import org.junit.jupiter.api.Assertions.*
@@ -43,6 +44,7 @@ class TickEngineTest {
             mock(FleetSortieCostService::class.java),
             mock(OfflinePlayerAIService::class.java),
             mock(ScenarioEventAIService::class.java),
+            mock(OperationLifecycleService::class.java),
         )
 
         // stub save to return the argument
