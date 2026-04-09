@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
-status: verifying
-stopped_at: Phase 13 context gathered
-last_updated: "2026-04-09T04:26:13.738Z"
+status: executing
+stopped_at: Completed 13-ai-01-PLAN.md
+last_updated: "2026-04-09T05:08:46.599Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 21
   completed_phases: 16
-  total_plans: 95
-  completed_plans: 86
+  total_plans: 97
+  completed_plans: 87
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** gin7 조직 시뮬레이션 — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 13 — 전략-ai
+**Current focus:** Phase 13 — ai
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 13 (ai) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-09
 
 Progress: [░░░░░░░░░░] 0%
@@ -73,6 +73,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 12 P02 | 8min | 2 tasks | 8 files |
 | Phase 12 P03 | 13min | 2 tasks | 7 files |
 | Phase 12 P04 | 10min | 3 tasks | 12 files |
+| Phase 13-ai P01 | 6min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -128,6 +129,9 @@ Recent decisions affecting current work:
 - [Phase 12]: Plan 12-04: TacticalBattleService.endBattle inline merit bonus uses participantSnapshot=state.operationParticipantFleetIds.toSet() captured BEFORE the unit loop (Blocker 4 race guard); first officer.meritPoints += accumulation path in codebase
 - [Phase 12]: Plan 12-04: computeBaseMerit heuristic=(100*ships/maxShips).coerceAtLeast(10) on winning side, 0 otherwise; full survival on winning side = 100 exactly (test fixtures depend on this anchor)
 - [Phase 12]: Plan 12-04: OperationMeritBonusTest must AopTestUtils.getTargetObject() the TacticalBattleService CGLIB proxy before reflecting on private activeBattles; Spring proxy subclasses inherit but hold null for instance fields
+- [Phase 13-ai]: Plan 13-01: Strategic AI scorers (StrategicPowerScorer/FogOfWarEstimator/OperationTargetSelector/FleetAllocator) implemented as pure Kotlin objects under engine.ai.strategic, mirroring UtilityScorer pattern
+- [Phase 13-ai]: Plan 13-01: compositeScore = ships*0.5 + commander*30 + defense*20 with SHIPS_PER_UNIT=300; commander score is averaged across stationed officers (not summed)
+- [Phase 13-ai]: Plan 13-01: FleetAllocator uses greedy 1.3x SUPERIORITY_MARGIN; OperationTargetSelector applies AGGRESSIVE/DEFENSIVE *1.5 and CAUTIOUS *0.8 personality biases; DEFENSE_THREAT_RATIO=0.7
 
 ### Pending Todos
 
@@ -141,6 +145,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T04:26:13.728Z
-Stopped at: Phase 13 context gathered
-Resume file: .planning/phases/13-ai/13-CONTEXT.md
+Last session: 2026-04-09T05:08:46.591Z
+Stopped at: Completed 13-ai-01-PLAN.md
+Resume file: None
