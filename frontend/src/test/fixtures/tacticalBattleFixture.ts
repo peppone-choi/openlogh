@@ -1,8 +1,9 @@
-import type { TacticalBattle, TacticalUnit, BattleSide } from '@/types/tactical';
-
-// Optional — CommandHierarchyDto is added by plan 14-06. For Wave 0, use `any`
-// placeholder locally so this fixture compiles before the type extension lands.
-type CommandHierarchyDto = unknown;
+import type {
+    TacticalBattle,
+    TacticalUnit,
+    BattleSide,
+    CommandHierarchyDto,
+} from '@/types/tactical';
 
 export interface FixtureOverrides {
     battleId?: number;
@@ -80,7 +81,10 @@ export function createFixtureBattle(overrides: FixtureOverrides = {}): TacticalB
             ...o,
         }),
     );
-    const battle = {
+    // Plan 14-06 extended `TacticalBattle` with `attackerHierarchy` /
+    // `defenderHierarchy` — the earlier `as unknown as TacticalBattle` cast
+    // was removed once the type landed.
+    const battle: TacticalBattle = {
         id: battleId,
         sessionId: overrides.sessionId ?? 1,
         starSystemId: 1,
@@ -92,10 +96,8 @@ export function createFixtureBattle(overrides: FixtureOverrides = {}): TacticalB
         attackerFleetIds: attackerUnits.map((u) => u.fleetId),
         defenderFleetIds: defenderUnits.map((u) => u.fleetId),
         units: [...attackerUnits, ...defenderUnits],
-        // hierarchy fields are attached as loose extensions — plan 14-06 extends
-        // the TacticalBattle type and these casts will disappear then.
         attackerHierarchy: overrides.attackerHierarchy ?? null,
         defenderHierarchy: overrides.defenderHierarchy ?? null,
-    } as unknown as TacticalBattle;
+    };
     return battle;
 }

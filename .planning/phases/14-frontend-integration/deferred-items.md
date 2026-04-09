@@ -42,3 +42,32 @@ Plan 14-01 scope is strictly "backend DTO extensions + toDto builder wiring". Th
 
 Plan 14-02 owns the GREEN phase. No handoff needed — the next 14-02 executor will unblock compileTestKotlin automatically. The 14-01 DTO test classes (`TacticalBattleDtoExtensionTest`, `CommandHierarchyDtoMappingTest`) had already been verified passing at 100% in the 14-01 execution window before 14-02's RED commit arrived.
 
+
+## Pre-existing `pnpm verify:parity` failure (found during 14-06 execution)
+
+Discovered while running the plan 14-06 `<verification>` block. `frontend/package.json`'s `verify:parity` script runs `node ../scripts/verify/frontend-parity.mjs`, which asserts the existence of 17 OpenSamguk legacy Next.js routes and 5 Playwright parity specs:
+
+| Missing | Category | Count |
+| ------- | -------- | ----- |
+| `frontend/src/app/(game)/page.tsx` + 16 other `route:*` entries | OpenSamguk legacy routes | 17 |
+| `frontend/e2e/parity/0{1..5}-*.spec.ts` | OpenSamguk legacy E2E parity specs | 5 |
+
+None of these assets exist in the current LOGH codebase — they were removed during the gin7 rewrite (v2.0). The script itself (`scripts/verify/frontend-parity.mjs`) is stale legacy tooling from the OpenSamguk fork that nobody has updated to the new LOGH route layout.
+
+### Why not fixed here
+
+Plan 14-06 scope is strictly "TypeScript type sync with Phase 14 DTO extensions" — extending `frontend/src/types/tactical.ts` to mirror the backend Kotlin DTOs. The `frontend-parity.mjs` script checks OpenSamguk route/spec file existence, not Kotlin↔TS DTO field parity (those are two completely different things).
+
+The actual type-parity verification the plan cares about is `verify-type-parity` skill (listed in 14-VALIDATION.md line 141) + `pnpm typecheck` (line 32). Both are green after 14-06 changes.
+
+Per the GSD scope boundary:
+> Only auto-fix issues DIRECTLY caused by the current task's changes. Pre-existing warnings, linting errors, or failures in unrelated files are out of scope.
+
+### Suggested owner
+
+Either:
+1. A maintenance plan that rewrites `scripts/verify/frontend-parity.mjs` to check the actual LOGH route layout (`frontend/src/app/**/page.tsx` directory walk), or
+2. Deletion of the script entirely if it no longer serves a purpose after the OpenSamguk → LOGH rewrite.
+
+This is pre-existing breakage from before Phase 14 started — not a regression introduced by Wave 2 type-sync work.
+
