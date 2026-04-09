@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 14-09-PLAN.md (parallel Wave 3)
-last_updated: "2026-04-09T11:18:36.660Z"
-last_activity: 2026-04-09 -- Plan 14-07 completed in parallel Wave 1 (dnd-kit deps)
+stopped_at: Completed 14-10-PLAN.md (parallel Wave 3)
+last_updated: "2026-04-09T11:27:27.633Z"
+last_activity: 2026-04-09 -- Plan 14-10 completed in parallel Wave 3 (BattleMap layer restructure)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 97
-  percent: 77
+  completed_plans: 98
+  percent: 86
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 14 (frontend-integration) — EXECUTING (Wave 1 parallel)
-Plan: 14-05 + 14-07 complete (Wave 0 scaffolds + dnd-kit deps) · 16 plans still incomplete
-Status: Wave 1 in progress; dnd-kit deps available at HEAD — 14-08/14-12/14-13 unblocked
-Last activity: 2026-04-09 -- Plan 14-07 completed in parallel Wave 1 (dnd-kit deps)
+Phase: 14 (frontend-integration) — EXECUTING (Wave 3 parallel)
+Plan: 14-10 complete (BattleMap 5-layer restructure + tacticalStore hierarchy reducer + commandChain.ts SoT) · 8 plans still incomplete
+Status: Wave 3 in progress; 14-10 landed multi-CRC pipeline + fog/succession bookkeeping slots — 14-12/14-13/14-14 unblocked
+Last activity: 2026-04-09 -- Plan 14-10 completed in parallel Wave 3 (BattleMap layer restructure)
 
-Progress: [████████░░] 77%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -84,6 +84,7 @@ Progress: [████████░░] 77%
 | Phase 14 P08 | 6min | 2 tasks | 9 files |
 | Phase 14 P03 | 40min | 1 tasks | 4 files |
 | Phase 14-frontend-integration P09 | 5min | 1 tasks | 4 files |
+| Phase 14 P10 | 15min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -167,6 +168,11 @@ Recent decisions affecting current work:
 - [Phase 14-frontend-integration]: Plan 14-09: D-03 regression guard uses readFileSync + regex on CommandRangeCircle.tsx source text to catch any literal mention of Konva.Animation / new Animation( / import Konva — stronger than behavioral test because it catches comment mentions and conditional-branch re-introductions. Had to rephrase my own REMOVED doc comment from 'new Konva.Animation(...)' to 'Konva imperative animation loop' after first GREEN run to avoid tripping the guard.
 - [Phase 14-frontend-integration]: Plan 14-09: frontend/src/lib/tacticalColors.ts is the single source of truth for D-02 faction hex literals (empire #4466ff / alliance #ff4444 / fezzan #888888). Exports sideToDefaultColor + lightenHex(hex, lPercent) with an achromatic short-circuit so pure white/gray/black inputs stay idempotent. All future tactical components must import from this file — no inline hex literals.
 - [Phase 14-frontend-integration]: Plan 14-09: BattleMap.tsx single call site migrated to new CommandRangeCircle props in the same commit (not left dangling) with a TODO(14-10) marker — this was the splice point sibling Wave 3 plan 14-10 needed to multi-render CRCs. 14-10 has since replaced the marker with the full 5-layer restructure; the API contract I established (cx/cy/currentRadius/maxRadius/side + isMine/isCommandable/isHovered/isSelected) is stable under sibling consumption.
+- [Phase 14]: Plan 14-10: commandChain.ts (findVisibleCrcCommanders + findAlliesInMyChain) is the single source of truth for 'which commanders does the logged-in officer see/command' — BattleMap CRC layer + 14-11 fog-of-war + 14-13 canCommandUnit all call into it
+- [Phase 14]: Plan 14-10: activeCommander (post-delegation) aliases fleetCommander in the 'am I top of chain' branch — Kircheis-after-delegation sees all sub-CRCs even though hierarchy.fleetCommander still reads 1000
+- [Phase 14]: Plan 14-10: tacticalStore owns init+preservation of fog/succession bookkeeping slots (lastSeenEnemyPositions, activeSuccessionFleetIds, activeFlagshipDestroyedFleetIds); 14-11/14-14 own update logic — single slice avoids parallel-wave write races
+- [Phase 14]: Plan 14-10: activeFlagshipDestroyedFleetIds pruned by wall-clock Date.now() expiresAt, not tick count — FX animations run at 60fps framerate, not tick rate, so 500ms easing outlives a tick boundary
+- [Phase 14]: Plan 14-10: Task 1 + Task 2 source files landed under sibling commits b5c87d84 (14-09) + 03e8ef2d (14-09 docs) due to parallel Wave 3 git add race; 14-10-SUMMARY.md is the canonical attribution anchor. 03e8ef2d commit body explicitly acknowledges 14-10 ownership
 
 ### Pending Todos
 
@@ -181,6 +187,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:18:36.652Z
-Stopped at: Completed 14-09-PLAN.md (parallel Wave 3)
+Last session: 2026-04-09T11:27:27.625Z
+Stopped at: Completed 14-10-PLAN.md (parallel Wave 3)
 Resume file: None
