@@ -36,3 +36,30 @@ Ran the exact failing test against the pre-Plan 12-03 engine code by restoring `
 **Root cause (unrelated to Plan 12-03):** The test seeds `commandRange = CommandRange(currentRange = 0.0, maxRange = 100.0, expansionRate = 1.0)` then expects `currentRange` to reach `100.0` after 300 ticks. The runtime value plateaus at `7.0`, suggesting either (a) CRC expansion is capped by some other constant, or (b) the updateCommandRange branch is short-circuiting for idle units. Neither code path is touched by Plan 12-03.
 
 **Scope decision:** Out of scope for Plan 12-03. Belongs to whatever phase last modified `CrcValidator` / `updateCommandRange` (Phase 9 CRC work, ref commit `f7612aa9` area). A Phase 9 regression or a Phase 11 TacticalAI retreat interaction are the most likely root causes, but investigating either is beyond my plan's charter.
+
+## Plan 12-04 (2026-04-09)
+
+### Full suite: 207 failures (identical to Plan 12-01 baseline)
+
+Full `./gradlew :game-app:test` run at the end of Plan 12-04 produced
+`1854 tests completed, 207 failed, 1 skipped`. The failure count is
+identical to Plan 12-01's baseline — no new regressions from any Plan 12
+work.
+
+**Verification that Plan 12-04 is clean:**
+- All 54 Phase 12 targeted tests pass (6 OperationPlanService + 6
+  OperationLifecycleService + 4 OperationMeritBonus + 2 TacticalBattleServiceSync
+  + 1 TickEngineOrdering + 13 TickEngine + 2 BattleTriggerOperationInjection
+  + 5 MissionObjectiveDefault + 11 TacticalBattleEngine + 2 OperationPlanRepository
+  + 2 WarpNavigationCommand). See test reports at
+  `build/test-results/test/TEST-com.openlogh.*.xml`.
+- Failing classes are all the same Three Kingdoms legacy tests documented
+  in the Plan 12-01 section above, plus `DetectionServiceTest.commandRange`
+  from Plan 12-03.
+- `CommandExecutorTest` shows 5 NPEs at `CommandRegistry.createOfficerCommand(CommandRegistry.kt:34)`
+  but `CommandRegistry.kt` was last modified in `f06570f0` (feat(phase-01))
+  and `CommandExecutorTest.kt` in `7f6614c3`, both well before Phase 12
+  started. These are pre-existing.
+
+**Scope decision:** All 207 failures remain out-of-scope. Addressing them
+belongs to the ongoing OpenSamguk → OpenLOGH cleanup effort.

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
-status: executing
-stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-04-09T03:26:32.890Z"
+status: verifying
+stopped_at: Completed 12-04-PLAN.md (Phase 12 complete)
+last_updated: "2026-04-09T03:57:43.373Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 18
-  completed_phases: 15
+  completed_phases: 16
   total_plans: 84
-  completed_plans: 83
+  completed_plans: 84
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 Phase: 12 (operation-integration) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-09
 
 Progress: [░░░░░░░░░░] 0%
@@ -72,6 +72,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 12 P01 | 8min | 2 tasks | 7 files |
 | Phase 12 P02 | 8min | 2 tasks | 8 files |
 | Phase 12 P03 | 13min | 2 tasks | 7 files |
+| Phase 12 P04 | 10min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,11 @@ Recent decisions affecting current work:
 - [Phase 12]: Plan 12-03: missionObjectiveByFleetId contains ALL fleets (participants + personality-defaulted); separate operationParticipantFleetIds set flags real OperationPlan membership for merit bonus filtering
 - [Phase 12]: Plan 12-03: mockito-kotlin is NOT on :game-app classpath (build.gradle.kts:85) — all new Kotlin unit tests use plain org.mockito.Mockito.mock(Class::class.java) + when(...).thenReturn(...)
 - [Phase 12]: Plan 12-03: BattleTriggerService loads BOTH ACTIVE and PENDING operations at init to eliminate the activation-vs-battle-trigger tick race (PENDING→ACTIVE can happen on same tick as buildInitialState)
+- [Phase 12]: Plan 12-04: OperationLifecycleService at TickEngine Step 5.5 wraps activatePending + evaluateCompletion in @Transactional; runs BEFORE tacticalBattleService.processSessionBattles to ensure same-tick activation visibility (Mockito InOrder verifies)
+- [Phase 12]: Plan 12-04: DEFENSE_STABILITY_TICKS=60; counter mutation MUST be persisted on every tick (else-branch save) so it crosses tick boundaries; otherwise the counter resets every tick and DEFENSE never completes
+- [Phase 12]: Plan 12-04: TacticalBattleService.endBattle inline merit bonus uses participantSnapshot=state.operationParticipantFleetIds.toSet() captured BEFORE the unit loop (Blocker 4 race guard); first officer.meritPoints += accumulation path in codebase
+- [Phase 12]: Plan 12-04: computeBaseMerit heuristic=(100*ships/maxShips).coerceAtLeast(10) on winning side, 0 otherwise; full survival on winning side = 100 exactly (test fixtures depend on this anchor)
+- [Phase 12]: Plan 12-04: OperationMeritBonusTest must AopTestUtils.getTargetObject() the TacticalBattleService CGLIB proxy before reflecting on private activeBattles; Spring proxy subclasses inherit but hold null for instance fields
 
 ### Pending Todos
 
@@ -135,6 +141,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T03:26:18.284Z
-Stopped at: Completed 12-03-PLAN.md
+Last session: 2026-04-09T03:57:22.431Z
+Stopped at: Completed 12-04-PLAN.md (Phase 12 complete)
 Resume file: None
