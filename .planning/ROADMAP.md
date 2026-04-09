@@ -220,7 +220,7 @@ Plans:
   5. 색적 범위 밖의 적 유닛이 안개 효과로 숨겨진다
 **Plans**: 18 plans
 Plans:
-- [ ] 14-01-PLAN.md — Backend DTO extension — CommandHierarchy + TacticalUnit fields
+- [x] 14-01-PLAN.md — Backend DTO extension — CommandHierarchy + TacticalUnit fields
 - [ ] 14-02-PLAN.md — Backend — BattleSummaryDto + /summary REST endpoint
 - [ ] 14-03-PLAN.md — Backend — sensorRange field + computation + DTO wiring
 - [x] 14-04-PLAN.md — Backend — Operations WebSocket channel broadcast
@@ -259,4 +259,4 @@ Plans:
 | 11. 전술 AI | v2.1 | 3/3 | Complete    | 2026-04-08 |
 | 12. 작전 연동 | v2.1 | 4/4 | Complete    | 2026-04-09 |
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
-| 14. 프론트엔드 통합 | v2.1 | 3/18 | In Progress|  |
+| 14. 프론트엔드 통합 | v2.1 | 4/18 | In Progress|  |

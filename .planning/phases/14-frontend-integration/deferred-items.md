@@ -24,3 +24,21 @@ The `record-zone.test.ts` and `game-dashboard.test.tsx` failures look like date-
 
 The `command-select-form.test.ts` failure probably needs the same gin7 command-enabled flag contract as the upcoming plan 14-13 canCommandUnit work.
 
+
+## Pre-existing compileTestKotlin Break (found during 14-01 execution)
+
+Discovered while re-running `./gradlew :game-app:test --tests "com.openlogh.dto.*"` after committing 14-01 Task 1 + Task 2. The initial :game-app:compileKotlin + :game-app:compileTestKotlin pair had previously succeeded in 14-01's own execution window (both DTO tests passed 100%), but a concurrent wave has since landed an intentional TDD-RED test that now blocks the full test task.
+
+| File | Commit | Issue |
+| ---- | ------ | ----- |
+| `backend/game-app/src/test/kotlin/com/openlogh/controller/BattleSummaryEndpointTest.kt` | 7bb96d38 `test(14-02): add failing test for BattleSummary REST endpoint` | 13 `Unresolved reference` errors referencing `operationMultiplier`, `baseMerit`, `totalMerit`, `rows`, `buildBattleSummary`, `getBattleSummary` — these are the plan 14-02 RED phase, waiting on its own GREEN commit. |
+
+### Why not fixed here
+
+Plan 14-01 scope is strictly "backend DTO extensions + toDto builder wiring". The 14-02 controller/service shape is a separate plan on the same wave. Per the GSD scope boundary:
+> Only auto-fix issues DIRECTLY caused by the current task's changes. Pre-existing warnings, linting errors, or failures in unrelated files are out of scope.
+
+### Suggested owner
+
+Plan 14-02 owns the GREEN phase. No handoff needed — the next 14-02 executor will unblock compileTestKotlin automatically. The 14-01 DTO test classes (`TacticalBattleDtoExtensionTest`, `CommandHierarchyDtoMappingTest`) had already been verified passing at 100% in the 14-01 execution window before 14-02's RED commit arrived.
+

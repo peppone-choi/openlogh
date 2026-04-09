@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 14-04-PLAN.md
-last_updated: "2026-04-09T10:42:44.740Z"
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-04-09T10:49:05.908Z"
 last_activity: 2026-04-09 -- Plan 14-07 completed in parallel Wave 1 (dnd-kit deps)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 91
+  completed_plans: 92
   percent: 77
 ---
 
@@ -78,6 +78,7 @@ Progress: [████████░░] 77%
 | Phase 14-frontend-integration P05 | 8min | 2 tasks | 21 files |
 | Phase 14 P07 | 12min | 1 tasks | 2 files |
 | Phase 14 P04 | 13min | 1 tasks | 5 files |
+| Phase 14 P01 | 120 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -146,6 +147,9 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-05: Replaced suggested `glob` npm import with Node built-in `fs.readdirSync + statSync` recursive walk — glob is not in frontend/package.json and adding it was out of scope
 - [Phase 14]: Plan 14-07: @dnd-kit/core + @dnd-kit/utilities added (no @dnd-kit/sortable, no react-dnd) under React 19.2.3 — dep-add landed opportunistically via sibling commit 6315120a (14-05 Wave 0 scaffolds race); R3F removal deferred to 14-08 atomic step
 - [Phase 14]: Plan 14-04: OperationEventDto.fromPlan guards null plan.id with IllegalStateException; broadcasts placed inside existing @Transactional methods (SimpMessagingTemplate flushes post-commit, matching TacticalBattleService pattern)
+- [Phase 14]: Plan 14-01: CommandHierarchyDto renames engine fields (subCommanders→subFleets, commanderId→commanderOfficerId, unitIds→memberFleetIds) via fromEngine companion — stable frontend contract against engine refactors
+- [Phase 14]: Plan 14-01: toUnitDto signature changed to (unit, state) — hierarchy-derived fields (subFleetCommanderId, successionState, isOnline, isNpc, missionObjective, sensorRange) computed inline per-tick, not stored on TacticalUnit
+- [Phase 14]: Plan 14-01: npcOfficerIds tracked as state-level Set<Long> populated from Officer.npcState at buildInitialState — matches connectedPlayerOfficerIds pattern for O(1) NPC marker lookup (D-35)
 
 ### Pending Todos
 
@@ -160,6 +164,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T10:42:38.336Z
-Stopped at: Completed 14-04-PLAN.md
+Last session: 2026-04-09T10:49:05.900Z
+Stopped at: Completed 14-01-PLAN.md
 Resume file: None
