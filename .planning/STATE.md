@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
-status: executing
-stopped_at: Completed 14-16-PLAN.md (parallel Wave 4 — status markers + NPC mission objective)
-last_updated: "2026-04-09T12:01:12.114Z"
-last_activity: 2026-04-09 -- Plan 14-16 completed in parallel Wave 4 (status markers + NPC mission objective)
+status: completed
+stopped_at: Completed 14-14-PLAN.md (parallel Wave 4 — FE-03 gating + proposal path)
+last_updated: "2026-04-09T12:03:05.795Z"
+last_activity: 2026-04-09 -- Plan 14-16 completed in parallel Wave 4 (status markers + NPC mission objective, D-35/D-36/D-37)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 103
+  completed_plans: 104
   percent: 90
 ---
 
@@ -90,6 +90,7 @@ Progress: [█████████░] 90%
 | Phase 14 P13 | 8min | 1 tasks | 3 files |
 | Phase 14 P15 | 12min | 2 tasks | 7 files |
 | Phase 14 P16 | 20min | 2 tasks | 9 files |
+| Phase 14 P14 | 70min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -193,6 +194,7 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-16: Status marker priority is NPC > offline > online (D-35) — NPC takes priority so mixed online-NPC players still read as AI-controlled
 - [Phase 14]: Plan 14-16: targetStarSystemId added as optional forward-compat field on TacticalUnit — backend DTO does not yet surface it, so target-system name row and dashed mission line are inactive by default (deferred for future backend plan)
 - [Phase 14]: Plan 14-16: Main icon opacity remains gated on isAlive only — D-35 explicitly reserves opacity for destruction signalling, NOT online state (online/offline discrimination via shape)
+- [Phase 14]: Plan 14-14: canCommandUnit returns {allowed, reason, message} with 5-rule priority (null hierarchy → OUT_OF_CHAIN, jammed commander → JAMMED, am-fleet/active → allowed, sub-fleet + memberFleetIds → allowed, else OUT_OF_CHAIN); gated buttons use aria-disabled so Shift+click still fires; createProposal signature is (requesterOfficerId, commandCode, payload) to match existing submitProposal pattern; InfoPanel badge + Rule 3 targetSystem.name → nameKo fix landed under 14-16 commit absorption (50dcfc82) via parallel Wave 4 git race — code correct on main, split attribution documented in SUMMARY
 
 ### Pending Todos
 
@@ -207,6 +209,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T12:01:12.105Z
-Stopped at: Completed 14-16-PLAN.md (parallel Wave 4 — status markers + NPC mission objective)
+Last session: 2026-04-09T12:02:52.181Z
+Stopped at: Completed 14-14-PLAN.md (parallel Wave 4 — FE-03 gating + proposal path)
 Resume file: None
