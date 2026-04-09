@@ -592,6 +592,8 @@ class TacticalBattleService(
         @Suppress("UNCHECKED_CAST")
         val defenderIds = (battle.participants["defenders"] as? List<*>)?.mapNotNull { (it as? Number)?.toLong() } ?: emptyList()
 
+        val nameLookup: (Long) -> String = { id -> officerNameFallback(id) }
+
         return TacticalBattleDto(
             id = battle.id,
             sessionId = battle.sessionId,
@@ -605,32 +607,113 @@ class TacticalBattleService(
             tickCount = state?.tickCount ?: battle.tickCount,
             attackerFleetIds = attackerIds,
             defenderFleetIds = defenderIds,
-            units = state?.units?.map { toUnitDto(it) } ?: emptyList(),
+            units = state?.units?.map { toUnitDto(it, state) } ?: emptyList(),
+            // Phase 14 D-21: expose hierarchy to the frontend.
+            attackerHierarchy = state?.attackerHierarchy?.let { CommandHierarchyDto.fromEngine(it, nameLookup) },
+            defenderHierarchy = state?.defenderHierarchy?.let { CommandHierarchyDto.fromEngine(it, nameLookup) },
         )
     }
 
-    private fun toUnitDto(unit: TacticalUnit): TacticalUnitDto = TacticalUnitDto(
-        fleetId = unit.fleetId,
-        officerId = unit.officerId,
-        officerName = unit.officerName,
-        factionId = unit.factionId,
-        side = unit.side.name,
-        posX = unit.posX,
-        posY = unit.posY,
-        hp = unit.hp,
-        maxHp = unit.maxHp,
-        ships = unit.ships,
-        maxShips = unit.maxShips,
-        training = unit.training,
-        morale = unit.morale,
-        energy = EnergyAllocation.toMap(unit.energy),
-        formation = unit.formation.name,
-        commandRange = unit.commandRange.currentRange,
-        isAlive = unit.isAlive,
-        isRetreating = unit.isRetreating,
-        retreatProgress = unit.retreatProgress,
-        unitType = unit.unitType,
-    )
+    /**
+     * Phase 14 D-21 helper: resolve officer display name for SubFleetDto fallback.
+     * Normally the engine SubFleet already carries `commanderName` — this lookup
+     * only fires when the field is blank (defensive fallback).
+     */
+    private fun officerNameFallback(officerId: Long): String =
+        officerRepository.findById(officerId).orElse(null)?.name ?: ""
+
+    /**
+     * Phase 14 D-22 / D-37: derive per-unit hierarchy-dependent fields from
+     * the live [TacticalBattleState]. Called by [toDto] and [broadcastBattleState]
+     * once per unit per tick.
+     */
+    private fun toUnitDto(
+        unit: TacticalUnit,
+        state: com.openlogh.engine.tactical.TacticalBattleState,
+    ): TacticalUnitDto {
+        // Pick the hierarchy for this unit's side.
+        val hierarchy = when (unit.side) {
+            com.openlogh.engine.tactical.BattleSide.ATTACKER -> state.attackerHierarchy
+            com.openlogh.engine.tactical.BattleSide.DEFENDER -> state.defenderHierarchy
+        }
+
+        // D-22: Which sub-fleet (if any) does this unit belong to?
+        // Prefer the engine field (populated by CommandHierarchyService) with a
+        // fallback scan of subCommanders for robustness during reassignment races.
+        val subFleetCommanderId: Long? = unit.subFleetCommanderId
+            ?: hierarchy?.subCommanders?.values
+                ?.firstOrNull { sf -> sf.unitIds.contains(unit.fleetId) }
+                ?.commanderId
+
+        // D-22 / SUCC-03: 30-tick succession countdown surfaced per-unit.
+        // The vacancy flag lives on the hierarchy (keyed to fleetCommander's
+        // officerId), so every unit whose officerId == fleetCommander during a
+        // vacancy gets the pending state.
+        val isVacantCommander = hierarchy != null
+            && hierarchy.vacancyStartTick >= 0
+            && unit.officerId == hierarchy.fleetCommander
+        val successionState: String? = if (isVacantCommander) "PENDING_SUCCESSION" else null
+        val successionTicksRemaining: Int? = if (isVacantCommander) {
+            val elapsed = state.currentTick - hierarchy!!.vacancyStartTick
+            (SUCCESSION_VACANCY_TICKS - elapsed).coerceAtLeast(0)
+        } else null
+
+        // D-22: online = has an active WebSocket session.
+        // Default to true for officers that were never tracked (backwards compat
+        // before the ws handler lands in 14-08).
+        val isOnline = unit.officerId in state.connectedPlayerOfficerIds
+            || state.connectedPlayerOfficerIds.isEmpty()
+
+        // D-22 / D-35: isNpc from the state-level NPC set (populated at battle init).
+        val isNpc = unit.officerId in state.npcOfficerIds
+
+        // D-37: mission objective string (CONQUEST/DEFENSE/SWEEP/…).
+        val missionObjective = state.missionObjectiveByFleetId[unit.fleetId]?.name
+
+        // D-19 / FE-05: sensor range is derived from DetectionCapability base
+        // range × SENSOR energy multiplier. Phase 14 keeps this server-side so
+        // the frontend never has to re-derive.
+        val sensorEnergyMultiplier = (unit.energy.sensor.coerceAtLeast(0) / 50.0).coerceAtLeast(0.0)
+        val sensorRange = unit.detectionCapability.baseRange * sensorEnergyMultiplier.coerceAtLeast(1.0) *
+            (if (unit.isStopped) 1.3 else 1.0)
+
+        return TacticalUnitDto(
+            fleetId = unit.fleetId,
+            officerId = unit.officerId,
+            officerName = unit.officerName,
+            factionId = unit.factionId,
+            side = unit.side.name,
+            posX = unit.posX,
+            posY = unit.posY,
+            hp = unit.hp,
+            maxHp = unit.maxHp,
+            ships = unit.ships,
+            maxShips = unit.maxShips,
+            training = unit.training,
+            morale = unit.morale,
+            energy = EnergyAllocation.toMap(unit.energy),
+            formation = unit.formation.name,
+            commandRange = unit.commandRange.currentRange,
+            isAlive = unit.isAlive,
+            isRetreating = unit.isRetreating,
+            retreatProgress = unit.retreatProgress,
+            unitType = unit.unitType,
+            // Phase 14 D-22 / D-24 / D-37
+            sensorRange = sensorRange,
+            subFleetCommanderId = subFleetCommanderId,
+            successionState = successionState,
+            successionTicksRemaining = successionTicksRemaining,
+            isOnline = isOnline,
+            isNpc = isNpc,
+            missionObjective = missionObjective,
+            maxCommandRange = unit.commandRange.maxRange,
+        )
+    }
+
+    private companion object {
+        /** SUCC-03 (Phase 10): 30-tick command vacancy countdown. */
+        const val SUCCESSION_VACANCY_TICKS = 30
+    }
 
     private fun toHistoryDto(battle: TacticalBattle): TacticalBattleHistoryDto {
         @Suppress("UNCHECKED_CAST")
@@ -660,14 +743,18 @@ class TacticalBattleService(
         state: TacticalBattleState,
         battle: TacticalBattle,
     ) {
+        val nameLookup: (Long) -> String = { id -> officerNameFallback(id) }
         val broadcast = BattleTickBroadcast(
             battleId = battle.id,
             tickCount = state.tickCount,
             phase = battle.phase,
             currentPhase = state.currentPhase,
-            units = state.units.map { toUnitDto(it) },
+            units = state.units.map { toUnitDto(it, state) },
             events = state.tickEvents.map { BattleTickEventDto(it.type, it.sourceUnitId, it.targetUnitId, it.value, it.detail) },
             result = battle.result,
+            // Phase 14 D-21: per-tick hierarchy propagation.
+            attackerHierarchy = state.attackerHierarchy?.let { CommandHierarchyDto.fromEngine(it, nameLookup) },
+            defenderHierarchy = state.defenderHierarchy?.let { CommandHierarchyDto.fromEngine(it, nameLookup) },
         )
         messagingTemplate.convertAndSend("/topic/world/$sessionId/tactical-battle/${battle.id}", broadcast)
     }

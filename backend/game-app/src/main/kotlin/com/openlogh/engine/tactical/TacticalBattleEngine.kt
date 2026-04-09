@@ -194,6 +194,14 @@ data class TacticalBattleState(
     val connectedPlayerOfficerIds: MutableSet<Long> = mutableSetOf(),
 
     /**
+     * Phase 14 D-22: NPC officer IDs (Officer.npcState != 0 at battle init).
+     * Populated by BattleTriggerService.buildInitialState; read by
+     * TacticalBattleService.toUnitDto to derive TacticalUnitDto.isNpc so the
+     * frontend can render NPC markers (● / ○ / 🤖) per D-35.
+     */
+    val npcOfficerIds: MutableSet<Long> = mutableSetOf(),
+
+    /**
      * Phase 12 D-06/D-09: SoT for mission objective per fleet.
      * Populated by BattleTriggerService at battle init and by
      * TacticalBattleService.syncOperationToActiveBattles on OperationPlan CRUD.

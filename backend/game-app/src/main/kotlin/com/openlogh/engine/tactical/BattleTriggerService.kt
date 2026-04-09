@@ -108,6 +108,9 @@ class BattleTriggerService(
      */
     fun buildInitialState(battle: TacticalBattle): TacticalBattleState {
         val units = mutableListOf<TacticalUnit>()
+        // Phase 14 D-22 / D-35: Track NPC officers as we build units so the
+        // frontend can render NPC markers (●/○/🤖) from state-level truth.
+        val npcOfficerIds = mutableSetOf<Long>()
 
         @Suppress("UNCHECKED_CAST")
         val attackerFleetIds = (battle.participants["attackers"] as? List<*>)?.mapNotNull {
@@ -122,6 +125,8 @@ class BattleTriggerService(
         for ((index, fleetId) in attackerFleetIds.withIndex()) {
             val fleet = fleetRepository.findById(fleetId).orElse(null) ?: continue
             val officer = officerRepository.findById(fleet.leaderOfficerId).orElse(null) ?: continue
+
+            if (officer.npcState.toInt() != 0) npcOfficerIds.add(officer.id)
 
             units.add(TacticalUnit(
                 fleetId = fleet.id,
@@ -152,6 +157,8 @@ class BattleTriggerService(
         for ((index, fleetId) in defenderFleetIds.withIndex()) {
             val fleet = fleetRepository.findById(fleetId).orElse(null) ?: continue
             val officer = officerRepository.findById(fleet.leaderOfficerId).orElse(null) ?: continue
+
+            if (officer.npcState.toInt() != 0) npcOfficerIds.add(officer.id)
 
             units.add(TacticalUnit(
                 fleetId = fleet.id,
@@ -237,6 +244,7 @@ class BattleTriggerService(
             defenderHierarchy = defenderHierarchy,
             missionObjectiveByFleetId = missionMap,
             operationParticipantFleetIds = operationParticipants,
+            npcOfficerIds = npcOfficerIds,
         )
     }
 
