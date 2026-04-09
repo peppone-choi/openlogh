@@ -207,7 +207,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 13-01-PLAN.md — 전략 AI 순수 객체 스코어러 (전력평가+안개+작전대상+함대배정)
-- [ ] 13-02-PLAN.md — FactionAI atWar 분기 교체 + CommandExecutor 연동 + 테스트
+- [x] 13-02-PLAN.md — FactionAI atWar 분기 교체 + CommandExecutor 연동 + 테스트
 ### Phase 14: 프론트엔드 통합
 **Goal**: 전술전 지휘체계의 모든 백엔드 기능이 프론트엔드에서 시각적으로 표현되고 조작 가능하다
 **Depends on**: Phase 8, Phase 9, Phase 10, Phase 11, Phase 12, Phase 13

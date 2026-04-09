@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
-status: executing
-stopped_at: Completed 13-ai-01-PLAN.md
-last_updated: "2026-04-09T05:08:46.599Z"
+status: verifying
+stopped_at: Completed 13-ai-02-PLAN.md
+last_updated: "2026-04-09T05:27:05.137Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 21
-  completed_phases: 16
+  completed_phases: 17
   total_plans: 97
-  completed_plans: 87
+  completed_plans: 88
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 Phase: 13 (ai) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-09
 
 Progress: [░░░░░░░░░░] 0%
@@ -74,6 +74,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 12 P03 | 13min | 2 tasks | 7 files |
 | Phase 12 P04 | 10min | 3 tasks | 12 files |
 | Phase 13-ai P01 | 6min | 2 tasks | 8 files |
+| Phase 13-ai P02 | 9min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,10 @@ Recent decisions affecting current work:
 - [Phase 13-ai]: Plan 13-01: Strategic AI scorers (StrategicPowerScorer/FogOfWarEstimator/OperationTargetSelector/FleetAllocator) implemented as pure Kotlin objects under engine.ai.strategic, mirroring UtilityScorer pattern
 - [Phase 13-ai]: Plan 13-01: compositeScore = ships*0.5 + commander*30 + defense*20 with SHIPS_PER_UNIT=300; commander score is averaged across stationed officers (not summed)
 - [Phase 13-ai]: Plan 13-01: FleetAllocator uses greedy 1.3x SUPERIORITY_MARGIN; OperationTargetSelector applies AGGRESSIVE/DEFENSIVE *1.5 and CAUTIOUS *0.8 personality biases; DEFENSE_THREAT_RATIO=0.7
+- [Phase 13-ai]: Plan 13-02: FactionAI constructor expanded with CommandExecutor + FleetRepository + OperationPlanRepository; atWar branch delegates to executeStrategicOperations()
+- [Phase 13-ai]: Plan 13-02: Synthetic enemy Fleet(id=-officerId, currentUnits=officer.ships/300) constructed from enemy Officer.ships when enemy FleetRepository not queryable without N+1
+- [Phase 13-ai]: Plan 13-02: StubCommandExecutor subclass pattern (mirrors CommandProposalServiceTest SuccessCommandExecutor) used because Mockito cannot stub Kotlin suspend functions without mockito-kotlin (Phase 12 D-17)
+- [Phase 13-ai]: Plan 13-02: 삼국지 legacy strings (급습/의병모집/필사즉생/strategicCmdLimit) fully removed from FactionAI and NationAITest per D-08
 
 ### Pending Todos
 
@@ -145,6 +150,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T05:08:46.591Z
-Stopped at: Completed 13-ai-01-PLAN.md
+Last session: 2026-04-09T05:27:05.130Z
+Stopped at: Completed 13-ai-02-PLAN.md
 Resume file: None

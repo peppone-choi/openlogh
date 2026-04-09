@@ -47,7 +47,7 @@ Requirements for milestone v2.1: 전술전 지휘체계 + AI. Each maps to roadm
 
 ### 전략 AI (SAI)
 
-- [ ] **SAI-01**: 전술전 진입 시 AI가 작전계획을 자동 수립한다
+- [x] **SAI-01**: 전술전 진입 시 AI가 작전계획을 자동 수립한다
 - [x] **SAI-02**: 전력 평가 기반으로 작전 유형(점령/방어/소탕)을 선택한다
 
 ### 프론트엔드 (FE)
@@ -108,7 +108,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OPS-01 | Phase 12 | Complete |
 | OPS-02 | Phase 12 | Complete |
 | OPS-03 | Phase 12 | Complete |
-| SAI-01 | Phase 13 | Pending |
+| SAI-01 | Phase 13 | Complete |
 | SAI-02 | Phase 13 | Complete |
 | FE-01 | Phase 14 | Pending |
 | FE-02 | Phase 14 | Pending |
