@@ -1,10 +1,21 @@
 package com.openlogh.engine.ai
 
-import com.openlogh.entity.*
+import com.openlogh.command.CommandEnv
+import com.openlogh.command.CommandExecutor
+import com.openlogh.engine.ai.strategic.FleetAllocator
+import com.openlogh.engine.ai.strategic.OperationTargetSelector
+import com.openlogh.engine.ai.strategic.StrategicPowerScorer
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
+import com.openlogh.engine.turn.cqrs.persist.WorldPorts
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
 import com.openlogh.engine.turn.cqrs.port.WorldWritePort
+import com.openlogh.entity.*
+import com.openlogh.model.OperationStatus
+import com.openlogh.repository.FleetRepository
+import com.openlogh.repository.OperationPlanRepository
+import kotlinx.coroutines.runBlocking
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 import kotlin.math.sqrt
@@ -13,7 +24,13 @@ import kotlin.random.Random
 @Service
 class FactionAI(
     private val worldPortFactory: JpaWorldPortFactory,
+    private val commandExecutor: CommandExecutor,
+    private val fleetRepository: FleetRepository,
+    private val operationPlanRepository: OperationPlanRepository,
 ) : FactionAIPort {
+
+    private val logger = LoggerFactory.getLogger(FactionAI::class.java)
+
     override fun decideNationAction(nation: Faction, world: SessionState, rng: Random): String {
         val worldId = world.id.toLong()
         val ports = worldPortFactory.create(worldId)
@@ -33,13 +50,9 @@ class FactionAI(
                 (it.srcFactionId == nation.id || it.destFactionId == nation.id)
         } || nation.warState > 0
 
-        // At war: strategic commands
+        // At war: strategic operation planning (Phase 13 SAI-01/SAI-02)
         if (atWar) {
-            if (nation.strategicCmdLimit > 0) {
-                val warActions = listOf("급습", "의병모집", "필사즉생")
-                return warActions[rng.nextInt(warActions.size)]
-            }
-            return "Nation휴식"
+            return executeStrategicOperations(nation, world, ports, nationCities, nationGenerals, rng)
         }
 
         // Consider war declaration before resource gate (war declaration is free)
@@ -122,6 +135,148 @@ class FactionAI(
 
         return candidates.first()
     }
+
+    /**
+     * Phase 13 SAI-01/SAI-02 strategic AI: evaluates star system power, selects
+     * operation targets (CONQUEST/DEFENSE/SWEEP), allocates fleets, and executes
+     * "작전계획" through CommandExecutor (D-06).
+     *
+     * Returns the last successfully-executed command name (for logging) or
+     * "Nation휴식" when no operation could be created.
+     */
+    private fun executeStrategicOperations(
+        nation: Faction,
+        world: SessionState,
+        ports: WorldPorts,
+        nationCities: List<Planet>,
+        nationGenerals: List<Officer>,
+        rng: Random,
+    ): String {
+        val sessionId = world.id.toLong()
+
+        // D-07: sovereign (원수/의장) as command issuer
+        val sovereignId = nation.chiefOfficerId
+        if (sovereignId <= 0L) return "Nation휴식"
+        val sovereign = ports.officer(sovereignId)?.toEntity() ?: return "Nation휴식"
+
+        val sovereignPersonality = PersonalityTrait.fromString(sovereign.personality)
+
+        // Load cross-faction data for evaluation
+        val allPlanets = ports.allPlanets().map { it.toEntity() }
+        val allOfficers = ports.allOfficers().map { it.toEntity() }
+        val enemyPlanets = allPlanets.filter { it.factionId != nation.id && it.factionId != 0L }
+        val ownPlanets = nationCities
+
+        // Own fleets (real Fleet entities via FleetRepository)
+        val ownFleets = fleetRepository.findBySessionIdAndFactionId(sessionId, nation.id)
+        val ownFleetsByPlanet = ownFleets.groupBy { it.planetId ?: 0L }
+
+        // Own officers grouped by planet
+        val ownOfficersByPlanet = nationGenerals.groupBy { it.planetId }
+
+        // Enemy officers grouped by planet
+        val enemyOfficersByPlanet = allOfficers
+            .filter { it.factionId != nation.id && it.factionId != 0L }
+            .groupBy { it.planetId }
+
+        // Synthetic enemy fleets built from enemy officer ship counts.
+        // StrategicPowerScorer multiplies currentUnits by SHIPS_PER_UNIT (300),
+        // so convert officer.ships back into unit counts so totals stay consistent.
+        // Each enemy officer with ships > 0 becomes a synthetic Fleet; id is
+        // negative so it can never collide with real committed fleet ids.
+        val enemyFleetsByPlanet: Map<Long, List<Fleet>> = enemyOfficersByPlanet.mapValues { (_, officers) ->
+            officers.filter { it.ships > 0 }.map { officer ->
+                Fleet(
+                    id = -officer.id,
+                    sessionId = sessionId,
+                    leaderOfficerId = officer.id,
+                    factionId = officer.factionId,
+                    planetId = officer.planetId,
+                    currentUnits = (officer.ships / StrategicPowerScorer.SHIPS_PER_UNIT).coerceAtLeast(1),
+                )
+            }
+        }
+
+        // Select operation targets (D-04 composite + D-10 personality bias)
+        val candidates = OperationTargetSelector.selectTargets(
+            ownPlanets = ownPlanets,
+            enemyPlanets = enemyPlanets,
+            ownFleetsByPlanet = ownFleetsByPlanet,
+            enemyFleetsByPlanet = enemyFleetsByPlanet,
+            ownOfficersByPlanet = ownOfficersByPlanet,
+            enemyOfficersByPlanet = enemyOfficersByPlanet,
+            sovereignPersonality = sovereignPersonality,
+            friendlyOfficers = nationGenerals,
+            rng = rng,
+        )
+
+        if (candidates.isEmpty()) return "Nation휴식"
+
+        // D-09: exclude fleets already committed to PENDING/ACTIVE operations
+        val existingOps = operationPlanRepository.findBySessionIdAndFactionIdAndStatusIn(
+            sessionId, nation.id, listOf(OperationStatus.PENDING, OperationStatus.ACTIVE),
+        )
+        val committedFleetIds = existingOps.flatMap { it.participantFleetIds }.toSet()
+        val initiallyAvailable = ownFleets.filter { it.id !in committedFleetIds && it.currentUnits > 0 }
+
+        if (initiallyAvailable.isEmpty()) return "Nation휴식"
+
+        // D-05: unbounded operations per tick — iterate top candidates until fleets exhausted
+        val remainingFleets = initiallyAvailable.toMutableList()
+        var operationsCreated = 0
+        val env = buildCommandEnv(world)
+
+        for (candidate in candidates) {
+            if (remainingFleets.isEmpty()) break
+
+            val allocation = FleetAllocator.allocateFleets(
+                availableFleets = remainingFleets,
+                requiredEnemyPower = candidate.estimatedEnemyPower,
+            )
+
+            if (allocation.selectedFleetIds.isEmpty()) continue
+
+            val operationArg = mapOf<String, Any>(
+                "objective" to candidate.objective.name,
+                "targetStarSystemId" to candidate.targetPlanetId,
+                "participantFleetIds" to allocation.selectedFleetIds,
+                "scale" to 1,
+                "planName" to "AI작전-${world.currentYear}-${world.currentMonth}-${candidate.objective.korean}",
+            )
+
+            try {
+                val result = runBlocking {
+                    commandExecutor.executeOfficerCommand(
+                        actionCode = "작전계획",
+                        general = sovereign,
+                        env = env,
+                        arg = operationArg,
+                    )
+                }
+                if (result.success) {
+                    operationsCreated++
+                    val consumedIds = allocation.selectedFleetIds.toSet()
+                    remainingFleets.removeAll { it.id in consumedIds }
+                    logger.debug(
+                        "Faction AI [{}] created {} operation targeting planet {}",
+                        nation.id, candidate.objective, candidate.targetPlanetId,
+                    )
+                }
+            } catch (e: Exception) {
+                logger.debug("Faction AI [{}] operation failed: {}", nation.id, e.message)
+            }
+        }
+
+        return if (operationsCreated > 0) "작전계획" else "Nation휴식"
+    }
+
+    private fun buildCommandEnv(world: SessionState): CommandEnv = CommandEnv(
+        year = world.currentYear.toInt(),
+        month = world.currentMonth.toInt(),
+        startYear = world.currentYear.toInt(),
+        sessionId = world.id.toLong(),
+        realtimeMode = true,
+    )
 
     private fun promoteEligibleGenerals(writePort: WorldWritePort, nationGenerals: List<Officer>, rng: Random) {
         val candidates = nationGenerals.filter {
