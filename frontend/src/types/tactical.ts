@@ -144,6 +144,18 @@ export interface TacticalUnit {
     isNpc?: boolean;
     /** D-37: Current mission objective string from OperationPlan (CONQUEST / DEFENSE / SWEEP / null). */
     missionObjective?: string | null;
+    /**
+     * D-37: Star system ID the NPC unit is currently targeting (from
+     * OperationPlan.targetStarSystemId or internal AI target). Optional —
+     * the backend TacticalUnitDto does not currently surface this field;
+     * the frontend renders the "목표: {systemName}" InfoPanel row and the
+     * BattleMap dashed mission line only when this value is populated.
+     *
+     * Tracked as a 14-16 deferred-item — a future backend plan should
+     * add `targetStarSystemId: Long?` to TacticalUnitDto and wire it
+     * through `TacticalBattleService.toUnitDto`.
+     */
+    targetStarSystemId?: number | null;
     /** FE-01 / D-24: Maximum CRC radius (outer dashed stroke on the tactical map). */
     maxCommandRange?: number;
 }

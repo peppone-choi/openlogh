@@ -38,6 +38,7 @@ import { SuccessionCountdownOverlay } from './SuccessionCountdownOverlay';
 import { useTacticalStore } from '@/stores/tacticalStore';
 import { useGalaxyStore } from '@/stores/galaxyStore';
 import { findVisibleCrcCommanders, type VisibleCommander } from '@/lib/commandChain';
+import { canCommandUnit } from '@/lib/canCommandUnit';
 import type { TacticalUnit, BattleSide } from '@/types/tactical';
 
 interface BattleMapProps {
@@ -197,6 +198,46 @@ export function BattleMap({
         [units, selectedUnitId]
     );
 
+    // ── Phase 14 D-37: NPC mission target line ─────────────────────────
+    // Only rendered when the currently selected unit is NPC-controlled AND
+    // has targetStarSystemId populated. The backend TacticalUnitDto does
+    // NOT currently surface targetStarSystemId, so in the default DTO shape
+    // this line never draws — the scaffolding is in place so a future
+    // backend plan can enable it by wiring the field through toUnitDto.
+    //
+    // The line goes from the unit's canvas position toward the target star
+    // system's projected position. Galaxy-map coordinates live in an
+    // unrelated projection from tactical-map coordinates, so for the
+    // directional hint we project the galaxy posX/posY through the same
+    // scale transform and clamp to the viewport edge via
+    // clampMissionLineEnd — this produces a stable "target is that way"
+    // indicator without requiring a second coordinate-system conversion.
+    const getSystem = useGalaxyStore((s) => s.getSystem);
+    const missionLine = useMemo(() => {
+        if (!selectedUnit || !selectedUnit.isNpc) return null;
+        if (!selectedUnit.missionObjective) return null;
+        const targetStarSystemId = selectedUnit.targetStarSystemId;
+        if (targetStarSystemId == null) return null;
+        const targetSystem = getSystem?.(targetStarSystemId);
+        if (!targetSystem) return null;
+        const unitCanvasX = selectedUnit.posX * scaleX;
+        const unitCanvasY = selectedUnit.posY * scaleY;
+        const targetCanvasX = ((targetSystem as { posX?: number }).posX ?? unitCanvasX) * scaleX;
+        const targetCanvasY = ((targetSystem as { posY?: number }).posY ?? unitCanvasY) * scaleY;
+        return {
+            startX: unitCanvasX,
+            startY: unitCanvasY,
+            ...clampMissionLineEnd({
+                unitX: unitCanvasX,
+                unitY: unitCanvasY,
+                targetX: targetCanvasX,
+                targetY: targetCanvasY,
+                viewportWidth: width,
+                viewportHeight: height,
+            }),
+        };
+    }, [selectedUnit, getSystem, scaleX, scaleY, width, height]);
+
     // D-01 — multi-CRC: one ring per visible commander in the logged-in
     // officer's command chain. Pure compute; fog layer (14-11) also calls
     // `findAlliesInMyChain` from the same `commandChain.ts` source of truth.
@@ -210,6 +251,26 @@ export function BattleMap({
             ),
         [myOfficerId, units, currentBattle?.attackerHierarchy, currentBattle?.defenderHierarchy],
     );
+
+    // Phase 14 — Plan 14-14 (FE-03, D-11) — compute the logged-in officer's
+    // side + hierarchy ONCE per render so the units layer can cheaply ask
+    // canCommandUnit(myOfficerId, myHierarchy, unit) for every allied unit.
+    // Enemy units short-circuit to `isUnderMyCommand=false` below so we
+    // never even enter the gating function for them.
+    const myHierarchy = useMemo(() => {
+        if (myOfficerId == null) return null;
+        const myUnit = units.find((u) => u.officerId === myOfficerId);
+        if (!myUnit) return null;
+        return myUnit.side === 'ATTACKER'
+            ? currentBattle?.attackerHierarchy ?? null
+            : currentBattle?.defenderHierarchy ?? null;
+    }, [myOfficerId, units, currentBattle?.attackerHierarchy, currentBattle?.defenderHierarchy]);
+
+    const mySide = useMemo<BattleSide | null>(() => {
+        if (myOfficerId == null) return null;
+        const myUnit = units.find((u) => u.officerId === myOfficerId);
+        return myUnit?.side ?? null;
+    }, [myOfficerId, units]);
 
     const handleStageClick = useCallback(
         (e: { target: { getLayer: () => unknown } }) => {
@@ -312,6 +373,29 @@ export function BattleMap({
 
                 {/* ─── Layer 4: Units ────────────────────────────────────── */}
                 <Layer listening={true} id="units">
+                    {/*
+                     * Phase 14 D-37 — NPC mission target dashed line.
+                     * Rendered as the first child of the units layer so it
+                     * sits beneath the icons. listening={false} so the line
+                     * never steals click events from the unit icons above.
+                     * Color matches the NPC marker (#a78bfa) per D-35 so
+                     * the visual thread is consistent.
+                     */}
+                    {missionLine && (
+                        <Line
+                            points={[
+                                missionLine.startX,
+                                missionLine.startY,
+                                missionLine.endX,
+                                missionLine.endY,
+                            ]}
+                            stroke="#a78bfa"
+                            strokeWidth={1}
+                            dash={[5, 5]}
+                            opacity={0.7}
+                            listening={false}
+                        />
+                    )}
                     {units.map((unit) => (
                         <TacticalUnitIcon
                             key={unit.fleetId}

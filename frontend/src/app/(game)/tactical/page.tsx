@@ -204,10 +204,22 @@ export default function TacticalPage() {
                     />
 
                     {/* InfoPanel overlay — bottom-right */}
+                    {/*
+                     * Phase 14 Plan 14-16 (D-36 / D-37) — pass the currently
+                     * selected unit to InfoPanel so it can render the NPC
+                     * mission objective rows ("현재 목적" / "목표") when an
+                     * NPC unit is selected. Non-NPC selection simply omits
+                     * the extra rows.
+                     */}
                     <InfoPanel
                         battle={currentBattle}
                         units={units}
                         myOfficerId={myOfficer?.id}
+                        selectedUnit={
+                            selectedUnitId != null
+                                ? units.find((u) => u.fleetId === selectedUnitId) ?? null
+                                : null
+                        }
                     />
                 </div>
 
