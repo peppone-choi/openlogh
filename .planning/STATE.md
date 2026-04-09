@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 14-13-PLAN.md (parallel Wave 4 — SubFleet assignment drawer)
-last_updated: "2026-04-09T11:49:09.981Z"
+stopped_at: Completed 14-15-PLAN.md (parallel Wave 4 — succession feedback FX)
+last_updated: "2026-04-09T11:53:44.898Z"
 last_activity: 2026-04-09 -- Plan 14-10 completed in parallel Wave 3 (BattleMap layer restructure)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 101
+  completed_plans: 102
   percent: 86
 ---
 
@@ -88,6 +88,7 @@ Progress: [█████████░] 86%
 | Phase 14 P11 | 20min | 2 tasks | 7 files |
 | Phase 14 P12 | 7min | 1 tasks | 3 files |
 | Phase 14 P13 | 8min | 1 tasks | 3 files |
+| Phase 14 P15 | 12min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -184,6 +185,10 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-12: canReassignUnit pure helper enforces FE-02 CMD-05 gating (outside CRC + stopped); structured { allowed, reason, message } return carries Korean tooltip copy from UI-SPEC Section B
 - [Phase 14]: Plan 14-12: isStopped read via duck-typing (unit as unknown as { isStopped?: unknown }) + typeof guard — not yet on TacticalUnitDto (RESEARCH Open Question 2), conservative unknown-state=MOVING default keeps drag gating safe until backend ships the field
 - [Phase 14]: Plan 14-12: SubFleetUnitChip TS2783 duplicate aria-disabled fix lands here (not 14-07 as deferred-items.md suggested); spread-then-override pattern {...attributes} aria-disabled={disabled} is the canonical way to override dnd-kit's auto-injected aria attributes
+- [Phase 14]: Plan 14-15: Sonner toast id de-dup convention {kind}-{entityId} (e.g. succ-100) collapses engine re-broadcasts into single toast
+- [Phase 14]: Plan 14-15: HTML overlay (SuccessionCountdownOverlay) rendered as absolute-positioned sibling of Konva Stage for typography-critical feedback; pointerEvents:none so pill never blocks canvas picking
+- [Phase 14]: Plan 14-15: FlagshipFlash uses RAF (60fps) for animation + Date.now() wall-clock for store expiry — two clocks decoupled so 500ms flash lifecycle outlives tick boundaries
+- [Phase 14]: Plan 14-15: JAMMING_ACTIVE intentionally NOT toasted in 14-15 — 14-17's command proposal panel owns the comm-jam indicator per UI-SPEC; reducer falls through unhandled events via continue
 
 ### Pending Todos
 
@@ -198,6 +203,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:48:54.139Z
-Stopped at: Completed 14-13-PLAN.md (parallel Wave 4 — SubFleet assignment drawer)
+Last session: 2026-04-09T11:53:28.878Z
+Stopped at: Completed 14-15-PLAN.md (parallel Wave 4 — succession feedback FX)
 Resume file: None

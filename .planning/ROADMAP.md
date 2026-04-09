@@ -234,7 +234,7 @@ Plans:
 - [x] 14-12-PLAN.md — Frontend — Sub-fleet drag-gating helper (FE-02)
 - [x] 14-13-PLAN.md — Frontend — Sub-fleet assignment drawer component (FE-02)
 - [ ] 14-14-PLAN.md — Frontend — Command gating UI + proposal path (FE-03)
-- [ ] 14-15-PLAN.md — Frontend — Succession feedback FX (FE-04)
+- [x] 14-15-PLAN.md — Frontend — Succession feedback FX (FE-04)
 - [ ] 14-16-PLAN.md — Frontend — Unit status markers + NPC mission objective (D-35..D-37)
 - [ ] 14-17-PLAN.md — Frontend — Galaxy map operations overlay (F1 toggle + side panel)
 - [ ] 14-18-PLAN.md — Frontend — Battle end modal with merit breakdown (D-32..D-34)
@@ -259,4 +259,4 @@ Plans:
 | 11. 전술 AI | v2.1 | 3/3 | Complete    | 2026-04-08 |
 | 12. 작전 연동 | v2.1 | 4/4 | Complete    | 2026-04-09 |
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
-| 14. 프론트엔드 통합 | v2.1 | 13/18 | In Progress|  |
+| 14. 프론트엔드 통합 | v2.1 | 14/18 | In Progress|  |
