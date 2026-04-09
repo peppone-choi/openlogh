@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/8bit/input';
 import { Button } from '@/components/ui/8bit/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/8bit/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/8bit/select';
-import { MapViewer } from '@/components/game/map-viewer';
+import { GalaxyMap } from '@/components/galaxy/GalaxyMap';
 import { formatLog } from '@/lib/formatLog';
 
 type EventType = 'war' | 'diplomacy' | 'nation' | 'general' | 'city' | 'other';
@@ -269,15 +269,9 @@ export default function HistoryPage() {
 
     const mapHistory = worldSnapshots.length > 0 ? worldSnapshots : (cachedMap?.history ?? []);
     const currentSnapshot = mapHistory[mapSnapshotIdx] ?? null;
-    const snapshotCities = useMemo(() => {
-        if (!currentSnapshot) return cities;
-        const entries = (currentSnapshot.cityOwnership ?? []).map((co) => [co.cityId, co.nationId] as [number, number]);
-        const ownerMap = new Map(entries);
-        return cities.map((c) => ({
-            ...c,
-            nationId: ownerMap.get(c.id) ?? c.nationId,
-        }));
-    }, [cities, currentSnapshot]);
+    // Historical city ownership snapshots are preserved in the data but not
+    // rendered yet — the galaxy map shows current state until a galaxy-level
+    // snapshot is added to the backend.
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
@@ -353,9 +347,15 @@ export default function HistoryPage() {
                                     />
                                 )}
 
-                                {/* Map canvas */}
+                                {/* Map canvas — shows current galaxy state; historical snapshots
+                                    not yet preserved on the backend (tracked for Phase 4 follow-up) */}
                                 {currentWorld && (
-                                    <MapViewer worldId={currentWorld.id} compact overrideCities={snapshotCities} />
+                                    <GalaxyMap
+                                        sessionId={currentWorld.id}
+                                        compact
+                                        interactive={false}
+                                        hideDetailPanel
+                                    />
                                 )}
 
                                 {/* Snapshot info */}
