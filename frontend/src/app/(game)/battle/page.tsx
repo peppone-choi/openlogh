@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWorldStore } from '@/stores/worldStore';
 import { useGameStore } from '@/stores/gameStore';
-import { useTacticalStore } from '@/stores/tacticalStore';
-import { BattleCloseView } from '@/components/tactical/BattleCloseView';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { Nation, General, GeneralLogEntry } from '@/types';
 import { Swords, ArrowUpDown, Shield, Flame, User, ScrollText } from 'lucide-react';
@@ -53,7 +51,6 @@ function SortIndicator({ active }: { active: boolean }) {
 export default function BattlePage() {
     const currentWorld = useWorldStore((s) => s.currentWorld);
     const { cities, nations, generals, diplomacy, loading, loadAll } = useGameStore();
-    const { currentBattle } = useTacticalStore();
 
     const { myOfficer, fetchMyOfficer } = useOfficerStore();
     const [sortKey, setSortKey] = useState<SortKey>('totalCrew');
@@ -253,9 +250,6 @@ export default function BattlePage() {
 
     if (!currentWorld) return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
     if (loading) return <LoadingState />;
-
-    // When a battle is active, show the full-screen close-range tactical view
-    if (currentBattle) return <BattleCloseView />;
 
     return (
         <div className="space-y-4 max-w-4xl mx-auto">
