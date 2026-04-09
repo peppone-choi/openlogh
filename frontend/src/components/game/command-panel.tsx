@@ -762,6 +762,35 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                     <Button size="sm" variant="outline" disabled={realtimeMode} onClick={() => setShowSelector(true)}>
                         선택 채우기
                     </Button>
+                    {/*
+                      Phase 14 Plan 14-17 — "작전계획" command-panel entry (D-29).
+                      Shortcut button that routes directly through the existing
+                      processing flow for the 'operation_plan' MCP command
+                      (commands.json id 307 / nameKo 작전계획). Reuses the standard
+                      /processing?command=… path used by the selector + recent
+                      actions bar — no new endpoint, no new store. Primary CTA
+                      text matches UI-SPEC copywriting contract "작전 발령".
+                    */}
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-amber-500 text-amber-300 hover:bg-amber-500/10"
+                        disabled={realtimeMode}
+                        title="작전계획 커맨드 실행 (MCP 10-1280, 규모 가변)"
+                        onClick={() => {
+                            const targets =
+                                selectedTurnList.length > 0
+                                    ? selectedTurnList
+                                    : [0];
+                            router.push(
+                                `/processing?command=${encodeURIComponent(
+                                    '작전계획',
+                                )}&turnList=${targets.join(',')}`,
+                            );
+                        }}
+                    >
+                        작전계획
+                    </Button>
                     <Button size="sm" variant="outline" onClick={copySelected}>
                         복사
                     </Button>
