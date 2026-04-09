@@ -120,3 +120,37 @@ Plan 14-16 scope is strictly "status markers + NPC mission objective + BattleMap
 
 Plan 14-07 (sub-fleet drawer) own both fixes. The `SubFleetAssignmentDrawer` component file needs to be created (test stub exists ahead of GREEN), and the `SubFleetUnitChip` duplicate `aria-disabled` attribute needs to be removed. Both are mechanical 1-line fixes.
 
+### Update (14-13 execution, Wave 4)
+
+Plan 14-13 resolved both items:
+- `SubFleetAssignmentDrawer.tsx` shipped with the DndContext + bucket layout + `createDragEndHandler` pure helper.
+- `SubFleetUnitChip.tsx` aria-disabled de-dupe landed during the same wave (spread-then-override order).
+
+
+## Pre-existing typecheck/test breaks (found during 14-13 execution, Wave 4)
+
+Discovered while running `pnpm typecheck && pnpm test --run` after the 14-13 drawer landed. None of these files are touched by plan 14-13.
+
+| File | Error | Likely owner |
+| ---- | ----- | ------------ |
+| `frontend/src/components/tactical/InfoPanel.tsx:111` | `TS2339: Property 'name' does not exist on type 'StarSystem'.` — InfoPanel reads `starSystem.name` but the galaxyStore/StarSystem type no longer carries that field. | 14-16 / galaxy store |
+| `frontend/src/components/game/command-execution-panel.gating.test.tsx` | 3 × `TS2322: Property 'selectedUnit' does not exist on type 'CommandExecutionPanelProps'.` — tests pass a prop the component no longer accepts. | 14-14 (canCommandUnit rewire) |
+| `frontend/src/components/game/command-execution-panel.proposal.test.tsx` | 4 × same `TS2322` for `selectedUnit`. | 14-14 (canCommandUnit rewire) |
+| `frontend/src/components/game/command-execution-panel.gating.test.tsx` (runtime) | 1 × runtime FAIL "disables command button when target unit is outside hierarchy (D-09)" | 14-14 (FE-03 runtime re-wire) |
+| `frontend/src/components/game/command-execution-panel.proposal.test.tsx` (runtime) | 4 × runtime FAIL on Shift+click proposal path. | 14-14 (FE-03 runtime re-wire) |
+| `frontend/src/components/game/command-select-form.test.ts` | 1 × legacy `onClick does not gate on cmd.enabled`. | pre-existing (unchanged since 14-05) |
+| `frontend/src/components/game/game-dashboard.test.tsx` | 3 × source-scan assertions for 삼국지 legacy fields. | pre-existing (unchanged since 14-05) |
+| `frontend/src/components/game/record-zone.test.ts` | 3 × stripYear regex expects 삼국지 `"200년 1월"` format. | pre-existing (unchanged since 14-05) |
+
+### Why not fixed here
+
+Plan 14-13 scope is strictly "Drawer + createDragEndHandler + chip + drawer tests". All listed failures are in files owned by other Wave 4 plans (14-14 for command-execution-panel, 14-16 for InfoPanel) or pre-existing legacy tests (14-05 already logged them). Per GSD scope boundary:
+> Only auto-fix issues DIRECTLY caused by the current task's changes. Pre-existing warnings, linting errors, or failures in unrelated files are out of scope.
+
+### Suggested owner
+
+- **14-14** owns the `command-execution-panel.*.test.tsx` rewire (their plan removed `selectedUnit` prop but the parallel test files still import it). This is a mechanical test-side rename.
+- **14-16** owns the `InfoPanel.tsx` StarSystem.name fix (likely a rename to `displayName` or similar that didn't flow into InfoPanel).
+- Legacy 삼국지 → LOGH test-format failures (record-zone, game-dashboard, command-select-form) remain deferred to a future maintenance plan.
+
+None of these block 14-13's acceptance criteria, which are all green (24/24 drawer tests + 14/14 gating tests = 38 passing).
