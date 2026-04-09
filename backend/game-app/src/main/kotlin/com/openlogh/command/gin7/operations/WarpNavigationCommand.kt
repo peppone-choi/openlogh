@@ -40,6 +40,12 @@ class WarpNavigationCommand(
         val prevPlanetId = general.planetId
         general.planetId = destPlanetId
 
+        // Phase 12 fix: Update fleet's planetId alongside officer
+        // (mirrors IntraSystemNavigationCommand.kt:44). Without this,
+        // OPS-03 (arrival-triggered operation activation) is broken for
+        // all cross-system operations because Fleet.planetId stays stale.
+        troop?.planetId = destPlanetId
+
         pushLog("${general.name}이(가) 워프 항행을 명령했다.")
         pushLog("행성 #${prevPlanetId} → 행성 #${destPlanetId}")
 
