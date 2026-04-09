@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 14-15-PLAN.md (parallel Wave 4 — succession feedback FX)
-last_updated: "2026-04-09T11:53:44.898Z"
-last_activity: 2026-04-09 -- Plan 14-10 completed in parallel Wave 3 (BattleMap layer restructure)
+stopped_at: Completed 14-16-PLAN.md (parallel Wave 4 — status markers + NPC mission objective)
+last_updated: "2026-04-09T12:01:12.114Z"
+last_activity: 2026-04-09 -- Plan 14-16 completed in parallel Wave 4 (status markers + NPC mission objective)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 102
-  percent: 86
+  completed_plans: 103
+  percent: 90
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 14 (frontend-integration) — EXECUTING (Wave 3 parallel)
-Plan: 14-10 complete (BattleMap 5-layer restructure + tacticalStore hierarchy reducer + commandChain.ts SoT) · 8 plans still incomplete
-Status: Wave 3 in progress; 14-10 landed multi-CRC pipeline + fog/succession bookkeeping slots — 14-12/14-13/14-14 unblocked
-Last activity: 2026-04-09 -- Plan 14-10 completed in parallel Wave 3 (BattleMap layer restructure)
+Phase: 14 (frontend-integration) — EXECUTING (Wave 4 parallel)
+Plan: 14-16 complete (TacticalUnitIcon status markers + InfoPanel NPC mission objective + BattleMap dashed target line) · 2 plans still incomplete (14-17, 14-18)
+Status: Wave 4 landing; 14-14/14-15/14-16 all complete — FE-03 fully satisfied (gating, proposal path, gold border, status markers, mission objective)
+Last activity: 2026-04-09 -- Plan 14-16 completed in parallel Wave 4 (status markers + NPC mission objective, D-35/D-36/D-37)
 
-Progress: [█████████░] 86%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -89,6 +89,7 @@ Progress: [█████████░] 86%
 | Phase 14 P12 | 7min | 1 tasks | 3 files |
 | Phase 14 P13 | 8min | 1 tasks | 3 files |
 | Phase 14 P15 | 12min | 2 tasks | 7 files |
+| Phase 14 P16 | 20min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -189,6 +190,9 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-15: HTML overlay (SuccessionCountdownOverlay) rendered as absolute-positioned sibling of Konva Stage for typography-critical feedback; pointerEvents:none so pill never blocks canvas picking
 - [Phase 14]: Plan 14-15: FlagshipFlash uses RAF (60fps) for animation + Date.now() wall-clock for store expiry — two clocks decoupled so 500ms flash lifecycle outlives tick boundaries
 - [Phase 14]: Plan 14-15: JAMMING_ACTIVE intentionally NOT toasted in 14-15 — 14-17's command proposal panel owns the comm-jam indicator per UI-SPEC; reducer falls through unhandled events via continue
+- [Phase 14]: Plan 14-16: Status marker priority is NPC > offline > online (D-35) — NPC takes priority so mixed online-NPC players still read as AI-controlled
+- [Phase 14]: Plan 14-16: targetStarSystemId added as optional forward-compat field on TacticalUnit — backend DTO does not yet surface it, so target-system name row and dashed mission line are inactive by default (deferred for future backend plan)
+- [Phase 14]: Plan 14-16: Main icon opacity remains gated on isAlive only — D-35 explicitly reserves opacity for destruction signalling, NOT online state (online/offline discrimination via shape)
 
 ### Pending Todos
 
@@ -203,6 +207,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:53:28.878Z
-Stopped at: Completed 14-15-PLAN.md (parallel Wave 4 — succession feedback FX)
+Last session: 2026-04-09T12:01:12.105Z
+Stopped at: Completed 14-16-PLAN.md (parallel Wave 4 — status markers + NPC mission objective)
 Resume file: None
