@@ -371,6 +371,24 @@ class TacticalBattleService(
         // moment endBattle started.
         val participantSnapshot: Set<Long> = state.operationParticipantFleetIds.toSet()
 
+        // Phase 14 Plan 14-02 D-33: persist a per-unit snapshot into the existing
+        // battleState JSONB map so buildBattleSummary() can reconstruct the merit
+        // breakdown (기본 X + 작전 +Y = 총 Z) for the end-of-battle modal WITHOUT
+        // a new DB column / Flyway migration. Captured BEFORE the officer-update
+        // loop so the values mirror exactly what computeBaseMerit() sees.
+        val unitSnapshotList: List<Map<String, Any>> = state.units.map { u ->
+            mapOf(
+                "fleetId" to u.fleetId,
+                "officerId" to u.officerId,
+                "officerName" to u.officerName,
+                "side" to u.side.name,
+                "survivingShips" to u.ships.coerceAtLeast(0),
+                "maxShips" to u.maxShips.coerceAtLeast(1),
+            )
+        }
+        battle.battleState["unitSnapshots"] = unitSnapshotList
+        battle.battleState["operationParticipantFleetIds"] = participantSnapshot.toList()
+
         // Update fleet ships based on battle results
         for (unit in state.units) {
             val fleet = fleetRepository.findById(unit.fleetId).orElse(null) ?: continue
@@ -757,6 +775,88 @@ class TacticalBattleService(
             defenderHierarchy = state.defenderHierarchy?.let { CommandHierarchyDto.fromEngine(it, nameLookup) },
         )
         messagingTemplate.convertAndSend("/topic/world/$sessionId/tactical-battle/${battle.id}", broadcast)
+    }
+
+    // ── Phase 14 Plan 14-02: Battle Summary (D-32..D-34) ──
+
+    /**
+     * Phase 14 Plan 14-02: reconstruct the per-unit merit breakdown for the
+     * end-of-battle modal (D-32..D-34). Uses the persistent `battleState` JSONB
+     * snapshot captured by [endBattle] — no new DB column / Flyway migration.
+     *
+     * Algorithm mirrors [endBattle] exactly so the UI shows what was actually
+     * credited to Officer.meritPoints:
+     *   - `baseMerit` via the Phase 12 [computeBaseMerit] heuristic
+     *     (winning side = (100 * ships/maxShips).coerceAtLeast(10); else 0)
+     *   - `operationMultiplier` = 1.5 iff the fleetId was in the participant
+     *     snapshot AND baseMerit > 0, else 1.0
+     *   - `totalMerit` = (baseMerit * multiplier).toInt()
+     *
+     * @throws NoSuchElementException if the battle does not exist (→ 404)
+     * @throws IllegalStateException  if phase != ENDED (→ 409)
+     * @throws IllegalArgumentException if sessionId does not match (treated as
+     *   not-found by the controller, mirroring [getBattleState]/[getBattleHistory])
+     */
+    fun buildBattleSummary(sessionId: Long, battleId: Long): com.openlogh.dto.BattleSummaryDto {
+        val battle = tacticalBattleRepository.findById(battleId).orElseThrow {
+            NoSuchElementException("Battle $battleId not found")
+        }
+        require(battle.sessionId == sessionId) { "Battle $battleId not in session $sessionId" }
+        check(battle.phase == BattlePhase.ENDED.name) { "전투가 아직 종료되지 않았습니다" }
+
+        @Suppress("UNCHECKED_CAST")
+        val rawSnapshots = (battle.battleState["unitSnapshots"] as? List<Map<String, Any>>).orEmpty()
+        @Suppress("UNCHECKED_CAST")
+        val rawParticipants = (battle.battleState["operationParticipantFleetIds"] as? List<*>)
+            ?.mapNotNull { (it as? Number)?.toLong() }
+            ?.toSet()
+            ?: emptySet()
+
+        // Map TacticalBattle.result ("attacker_win" / "defender_win" / "draw")
+        // back to a BattleSide for computeBaseMerit-parity scoring.
+        val winningSide: BattleSide? = when (battle.result) {
+            "attacker_win" -> BattleSide.ATTACKER
+            "defender_win" -> BattleSide.DEFENDER
+            else -> null
+        }
+
+        val rows = rawSnapshots.map { snap ->
+            val fleetId = (snap["fleetId"] as? Number)?.toLong() ?: 0L
+            val officerId = (snap["officerId"] as? Number)?.toLong() ?: 0L
+            val officerName = snap["officerName"] as? String ?: "?"
+            val sideStr = snap["side"] as? String ?: "ATTACKER"
+            val survivingShips = (snap["survivingShips"] as? Number)?.toInt() ?: 0
+            val maxShips = ((snap["maxShips"] as? Number)?.toInt() ?: 1).coerceAtLeast(1)
+
+            val onWinningSide = (winningSide != null) && (sideStr == winningSide.name)
+            val baseMerit = if (onWinningSide) {
+                ((100.0 * survivingShips / maxShips).toInt()).coerceAtLeast(10)
+            } else 0
+
+            val isParticipant = rawParticipants.contains(fleetId)
+            val multiplier = if (isParticipant && baseMerit > 0) 1.5 else 1.0
+            val totalMerit = (baseMerit * multiplier).toInt()
+
+            com.openlogh.dto.BattleSummaryRow(
+                fleetId = fleetId,
+                officerId = officerId,
+                officerName = officerName,
+                side = sideStr,
+                survivingShips = survivingShips,
+                maxShips = maxShips,
+                baseMerit = baseMerit,
+                operationMultiplier = multiplier,
+                totalMerit = totalMerit,
+                isOperationParticipant = isParticipant,
+            )
+        }
+
+        return com.openlogh.dto.BattleSummaryDto(
+            battleId = battle.id,
+            winner = battle.result,
+            durationTicks = battle.tickCount,
+            rows = rows,
+        )
     }
 
     /**
