@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-04-09T03:19:33.845Z"
+stopped_at: Completed 12-03-PLAN.md
+last_updated: "2026-04-09T03:26:32.890Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 18
   completed_phases: 15
   total_plans: 84
-  completed_plans: 82
+  completed_plans: 83
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 12 (operation-integration) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-04-09
 
@@ -71,6 +71,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 11 P03 | 10min | 2 tasks | 3 files |
 | Phase 12 P01 | 8min | 2 tasks | 7 files |
 | Phase 12 P02 | 8min | 2 tasks | 8 files |
+| Phase 12 P03 | 13min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,10 @@ Recent decisions affecting current work:
 - [Phase 12]: Plan 12-01: SpringBootTest repository tests MUST use classes = [OpenloghApplication::class] to avoid duplicate @SpringBootConfiguration with OpenloghApplicationTests$TestConfig
 - [Phase 12]: Plan 12-01: Native JSONB @> query exists in OperationPlanRepository (PostgreSQL only); H2 tests MUST use findBySessionIdAndStatus + Kotlin-side filtering
 - [Phase 12]: Plan 12-02: operationPlanService wired via optional nullable field on CommandServices + CommandExecutor to avoid breaking 8+ pre-existing CommandServices test construction sites (mirrors fleetRepository pattern)
+- [Phase 12]: Plan 12-03: Step 0.6 mission objective read-through runs between Step 0.5 (processOutOfCrcUnits) and Step 0.7 (TacticalAIRunner.processAITick) — verified via both awk line check and unit test
+- [Phase 12]: Plan 12-03: missionObjectiveByFleetId contains ALL fleets (participants + personality-defaulted); separate operationParticipantFleetIds set flags real OperationPlan membership for merit bonus filtering
+- [Phase 12]: Plan 12-03: mockito-kotlin is NOT on :game-app classpath (build.gradle.kts:85) — all new Kotlin unit tests use plain org.mockito.Mockito.mock(Class::class.java) + when(...).thenReturn(...)
+- [Phase 12]: Plan 12-03: BattleTriggerService loads BOTH ACTIVE and PENDING operations at init to eliminate the activation-vs-battle-trigger tick race (PENDING→ACTIVE can happen on same tick as buildInitialState)
 
 ### Pending Todos
 
@@ -130,6 +135,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T03:19:18.753Z
-Stopped at: Completed 12-02-PLAN.md
+Last session: 2026-04-09T03:26:18.284Z
+Stopped at: Completed 12-03-PLAN.md
 Resume file: None
