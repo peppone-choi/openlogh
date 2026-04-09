@@ -4,13 +4,13 @@ milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
 stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-04-09T10:49:05.908Z"
+last_updated: "2026-04-09T10:52:43.985Z"
 last_activity: 2026-04-09 -- Plan 14-07 completed in parallel Wave 1 (dnd-kit deps)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 92
+  completed_plans: 93
   percent: 77
 ---
 
@@ -79,6 +79,7 @@ Progress: [████████░░] 77%
 | Phase 14 P07 | 12min | 1 tasks | 2 files |
 | Phase 14 P04 | 13min | 1 tasks | 5 files |
 | Phase 14 P01 | 120 | 2 tasks | 6 files |
+| Phase 14 P02 | 25 min | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -150,6 +151,8 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-01: CommandHierarchyDto renames engine fields (subCommanders→subFleets, commanderId→commanderOfficerId, unitIds→memberFleetIds) via fromEngine companion — stable frontend contract against engine refactors
 - [Phase 14]: Plan 14-01: toUnitDto signature changed to (unit, state) — hierarchy-derived fields (subFleetCommanderId, successionState, isOnline, isNpc, missionObjective, sensorRange) computed inline per-tick, not stored on TacticalUnit
 - [Phase 14]: Plan 14-01: npcOfficerIds tracked as state-level Set<Long> populated from Officer.npcState at buildInitialState — matches connectedPlayerOfficerIds pattern for O(1) NPC marker lookup (D-35)
+- [Phase 14]: [Phase 14]: Plan 14-02: Reuse existing TacticalBattle.battleState JSONB column for endBattle unit snapshots — no new Flyway migration needed. Stores unitSnapshots + operationParticipantFleetIds keys; buildBattleSummary re-derives merit breakdown at read-time mirroring computeBaseMerit exactly.
+- [Phase 14]: [Phase 14]: Plan 14-02: /api/v1/battle/{sessionId}/{battleId}/summary endpoint maps NoSuchElementException→404, IllegalArgumentException (session mismatch)→404 (mirrors getBattleState not-found semantics to prevent cross-session leak), IllegalStateException→409. Lightweight Mockito controller test pattern (no SpringBootTest) mirrors GeneralControllerTest.
 
 ### Pending Todos
 
