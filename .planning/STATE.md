@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-04-09T03:03:35.025Z"
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-04-09T03:19:33.845Z"
 last_activity: 2026-04-09
 progress:
   total_phases: 18
   completed_phases: 15
   total_plans: 84
-  completed_plans: 81
+  completed_plans: 82
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 12 (operation-integration) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-04-09
 
@@ -70,6 +70,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 11 P02 | 7min | 1 tasks | 3 files |
 | Phase 11 P03 | 10min | 2 tasks | 3 files |
 | Phase 12 P01 | 8min | 2 tasks | 7 files |
+| Phase 12 P02 | 8min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,7 @@ Recent decisions affecting current work:
 - [Phase 12]: Plan 12-01: JSONB List<Long> participantFleetIds via @JdbcTypeCode(SqlTypes.JSON); round-trip test proves 10_000_000_000L preserves Long type through Jackson
 - [Phase 12]: Plan 12-01: SpringBootTest repository tests MUST use classes = [OpenloghApplication::class] to avoid duplicate @SpringBootConfiguration with OpenloghApplicationTests$TestConfig
 - [Phase 12]: Plan 12-01: Native JSONB @> query exists in OperationPlanRepository (PostgreSQL only); H2 tests MUST use findBySessionIdAndStatus + Kotlin-side filtering
+- [Phase 12]: Plan 12-02: operationPlanService wired via optional nullable field on CommandServices + CommandExecutor to avoid breaking 8+ pre-existing CommandServices test construction sites (mirrors fleetRepository pattern)
 
 ### Pending Todos
 
@@ -128,6 +130,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T03:03:35.018Z
-Stopped at: Completed 12-01-PLAN.md
+Last session: 2026-04-09T03:19:18.753Z
+Stopped at: Completed 12-02-PLAN.md
 Resume file: None
