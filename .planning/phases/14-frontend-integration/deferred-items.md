@@ -102,3 +102,21 @@ A future `/gsd:debug` session or Phase 9 follow-up plan should update `Detection
 1. Construct the test state so units are never flagged as OutOfCrc (e.g., place a flagship/commander within range), or
 2. Move the commandRange expansion assertion to `CrcValidatorTest` / `CommandRangeTest` where Phase 9 CRC context is authoritative, and delete it from DetectionServiceTest (whose scope is just the detection matrix).
 
+
+## Pre-existing typecheck breaks in SubFleet wave (found during 14-16 execution)
+
+Discovered while running `pnpm typecheck` after Task 1 of plan 14-16. Both errors are in files NOT touched by plan 14-16 — they belong to a sibling Wave 3/4 plan that ships the `SubFleetAssignmentDrawer` component.
+
+| File | Error | Likely owner |
+| ---- | ----- | ------------ |
+| `frontend/src/components/tactical/SubFleetAssignmentDrawer.test.tsx:31` | `TS2307: Cannot find module './SubFleetAssignmentDrawer' or its corresponding type declarations.` | 14-07 (sub-fleet drawer) — stub test exists but the component file was not yet committed at the time of the 14-16 run |
+| `frontend/src/components/tactical/SubFleetUnitChip.tsx:74` | `TS2783: 'aria-disabled' is specified more than once, so this usage will be overwritten.` | 14-07 (sub-fleet drawer) — component has a duplicate aria-disabled attribute that needs de-duping |
+
+### Why not fixed here
+
+Plan 14-16 scope is strictly "status markers + NPC mission objective + BattleMap mission line". Per the GSD scope boundary, typecheck errors in files not touched by the current plan are out of scope.
+
+### Suggested owner
+
+Plan 14-07 (sub-fleet drawer) own both fixes. The `SubFleetAssignmentDrawer` component file needs to be created (test stub exists ahead of GREEN), and the `SubFleetUnitChip` duplicate `aria-disabled` attribute needs to be removed. Both are mechanical 1-line fixes.
+
