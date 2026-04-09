@@ -218,11 +218,26 @@ Plans:
   3. 현재 로그인한 장교의 지휘권에 해당하지 않는 유닛의 명령 버튼이 비활성화된다
   4. 지휘 승계 발생 시 "지휘 승계 중" 카운트다운과 기함 격침 플래시가 표시된다
   5. 색적 범위 밖의 적 유닛이 안개 효과로 숨겨진다
-**Plans**: 3 plans
+**Plans**: 18 plans
 Plans:
-- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
-- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
-- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
+- [ ] 14-01-PLAN.md — Backend DTO extension — CommandHierarchy + TacticalUnit fields
+- [ ] 14-02-PLAN.md — Backend — BattleSummaryDto + /summary REST endpoint
+- [ ] 14-03-PLAN.md — Backend — sensorRange field + computation + DTO wiring
+- [ ] 14-04-PLAN.md — Backend — Operations WebSocket channel broadcast
+- [ ] 14-05-PLAN.md — Wave 0 — Test scaffold stubs for all Phase 14 requirements
+- [ ] 14-06-PLAN.md — Frontend — TypeScript type sync with Phase 14 DTO extensions
+- [ ] 14-07-PLAN.md — Frontend dependencies — add @dnd-kit, remove @react-three
+- [ ] 14-08-PLAN.md — Frontend — Remove R3F files + @react-three deps
+- [ ] 14-09-PLAN.md — Frontend — CommandRangeCircle rewrite (server-driven, no local animation)
+- [ ] 14-10-PLAN.md — Frontend — BattleMap layer restructure + tacticalStore hierarchy reducer
+- [ ] 14-11-PLAN.md — Frontend — Fog-of-war reducer + FogLayer rendering
+- [ ] 14-12-PLAN.md — Frontend — Sub-fleet drag-gating helper (FE-02)
+- [ ] 14-13-PLAN.md — Frontend — Sub-fleet assignment drawer component (FE-02)
+- [ ] 14-14-PLAN.md — Frontend — Command gating UI + proposal path (FE-03)
+- [ ] 14-15-PLAN.md — Frontend — Succession feedback FX (FE-04)
+- [ ] 14-16-PLAN.md — Frontend — Unit status markers + NPC mission objective (D-35..D-37)
+- [ ] 14-17-PLAN.md — Frontend — Galaxy map operations overlay (F1 toggle + side panel)
+- [ ] 14-18-PLAN.md — Frontend — Battle end modal with merit breakdown (D-32..D-34)
 **UI hint**: yes
 
 ## Progress
@@ -244,4 +259,4 @@ Plans:
 | 11. 전술 AI | v2.1 | 3/3 | Complete    | 2026-04-08 |
 | 12. 작전 연동 | v2.1 | 4/4 | Complete    | 2026-04-09 |
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
-| 14. 프론트엔드 통합 | v2.1 | 0/0 | Not started | - |
+| 14. 프론트엔드 통합 | v2.1 | 0/18 | Planned | - |
