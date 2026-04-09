@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: completed
-stopped_at: Completed 14-17-PLAN.md (parallel Wave 5 — galaxy map operations overlay + F1 + side panel + 작전계획 command-panel entry)
-last_updated: "2026-04-09T12:25:00.000Z"
-last_activity: 2026-04-09 -- Plan 14-17 completed in parallel Wave 5 (galaxy ops overlay + F1 toggle + WS subscription + 작전계획 entry, D-28/D-29/D-30/D-31) — Phase 14 18/18 complete
+stopped_at: Completed 14-17-PLAN.md (parallel Wave 5 — galaxy ops overlay + F1 + side panel + 작전계획 command-panel entry) — Phase 14 18/18 complete
+last_updated: "2026-04-09T13:07:28.049Z"
+last_activity: 2026-04-09
 progress:
   total_phases: 22
   completed_phases: 18
   total_plans: 115
-  completed_plans: 107
+  completed_plans: 106
   percent: 93
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 14 (frontend-integration) — COMPLETE (18/18 plans landed)
-Plan: 14-17 complete (galaxy map operations overlay + F1 toggle + WS subscription + 작전계획 command-panel entry) · all 18 plans landed · Phase 14 closed
+Phase: 14
+Plan: Not started
 Status: All Wave 5 plans (14-17, 14-18) complete — Phase 14 frontend integration fully satisfied across FE-01..FE-05
-Last activity: 2026-04-09 -- Plan 14-17 completed in parallel Wave 5 (galaxy ops overlay + F1 + side panel + 작전계획, D-28/D-29/D-30/D-31)
+Last activity: 2026-04-09
 
 Progress: [█████████▓] 93%
 
