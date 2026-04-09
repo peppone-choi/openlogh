@@ -33,7 +33,10 @@ import { Stage, Layer, Rect, Line, Circle } from 'react-konva';
 import { TacticalUnitIcon } from './TacticalUnitIcon';
 import { CommandRangeCircle } from './CommandRangeCircle';
 import { FogLayer } from './FogLayer';
+import { FlagshipFlash } from './FlagshipFlash';
+import { SuccessionCountdownOverlay } from './SuccessionCountdownOverlay';
 import { useTacticalStore } from '@/stores/tacticalStore';
+import { useGalaxyStore } from '@/stores/galaxyStore';
 import { findVisibleCrcCommanders, type VisibleCommander } from '@/lib/commandChain';
 import type { TacticalUnit, BattleSide } from '@/types/tactical';
 
@@ -65,6 +68,73 @@ function generateStars(count: number, w: number, h: number) {
         });
     }
     return stars;
+}
+
+/**
+ * Phase 14 Plan 14-16 (D-37) — mission target line clamp helper.
+ *
+ * The NPC unit's mission target star system may be far outside the tactical
+ * viewport. In that case we still want a directional hint from the unit to
+ * the viewport edge so players can tell "their target is off that way"
+ * without rendering a line into empty space. This helper returns an
+ * end-point clamped to the viewport rectangle, or null if the target is
+ * on-screen (the caller draws a direct line instead) OR if any required
+ * coordinate is missing (data is optional — see TacticalUnit comment).
+ *
+ * Exported for unit tests (no react-konva mount in vitest env=node).
+ */
+export interface MissionLineClampArgs {
+    unitX: number;
+    unitY: number;
+    targetX: number;
+    targetY: number;
+    viewportWidth: number;
+    viewportHeight: number;
+}
+
+export interface MissionLineClampResult {
+    endX: number;
+    endY: number;
+    isClamped: boolean; // true if target was off-screen
+}
+
+export function clampMissionLineEnd({
+    unitX,
+    unitY,
+    targetX,
+    targetY,
+    viewportWidth,
+    viewportHeight,
+}: MissionLineClampArgs): MissionLineClampResult {
+    const inBounds =
+        targetX >= 0 && targetX <= viewportWidth && targetY >= 0 && targetY <= viewportHeight;
+    if (inBounds) {
+        return { endX: targetX, endY: targetY, isClamped: false };
+    }
+    // Off-screen — parametric line clip to viewport rectangle.
+    const dx = targetX - unitX;
+    const dy = targetY - unitY;
+    if (dx === 0 && dy === 0) {
+        return { endX: unitX, endY: unitY, isClamped: true };
+    }
+    // Find parameter t in (0, 1] where the ray hits the nearest edge.
+    const candidates: number[] = [];
+    if (dx !== 0) {
+        candidates.push((0 - unitX) / dx);
+        candidates.push((viewportWidth - unitX) / dx);
+    }
+    if (dy !== 0) {
+        candidates.push((0 - unitY) / dy);
+        candidates.push((viewportHeight - unitY) / dy);
+    }
+    // Smallest positive t up to 1 is the first edge intersection along the ray.
+    const positive = candidates.filter((t) => t > 0 && t <= 1);
+    const t = positive.length > 0 ? Math.min(...positive) : 1;
+    return {
+        endX: unitX + dx * t,
+        endY: unitY + dy * t,
+        isClamped: true,
+    };
 }
 
 /**
@@ -103,6 +173,12 @@ export function BattleMap({
     // to the same slice without BattleMap becoming a prop-relay. The store field
     // is populated by 14-10's onBattleTick reducer.
     const currentBattle = useTacticalStore((s) => s.currentBattle);
+
+    // Phase 14 Plan 14-15 (FE-04 / D-14) — active flagship-destroyed flashes.
+    // One 0.5s Konva ring per entry, pruned by tacticalStore.onBattleTick.
+    const activeFlagshipDestroyedFleetIds = useTacticalStore(
+        (s) => s.activeFlagshipDestroyedFleetIds,
+    );
 
     // Grid lines every 50px
     const gridLines = useMemo(() => {
@@ -248,18 +324,57 @@ export function BattleMap({
                     ))}
                 </Layer>
 
-                {/* ─── Layer 5: Succession FX (14-14 placeholder) ────────── */}
+                {/* ─── Layer 5: Succession FX (14-15) ────────────────────── */}
                 {/*
-                 * Plan 14-14 mounts <FlagshipFlash /> and succession pulse
-                 * rings here. `tacticalStore.activeFlagshipDestroyedFleetIds`
-                 * and `activeSuccessionFleetIds` (initialised by 14-10) drive
-                 * the render. Kept non-listening so ephemeral FX never steal
-                 * click events from the units below.
+                 * Plan 14-15 mounts <FlagshipFlash /> ring flashes here. Each
+                 * entry in `tacticalStore.activeFlagshipDestroyedFleetIds` is
+                 * rendered as a 0.5s Konva ring at the destroyed unit's
+                 * current screen position (or last-known if already removed).
+                 * Kept non-listening so ephemeral FX never steal click events
+                 * from the units below.
+                 *
+                 * The HTML succession countdown overlays render as siblings
+                 * of the Stage below this closing tag — they live outside
+                 * Konva so the monospaced pill inherits native font
+                 * rendering per UI-SPEC Section D Phase 2.
                  */}
                 <Layer listening={false} id="succession-fx">
-                    {/* intentional: filled in 14-14 */}
+                    {activeFlagshipDestroyedFleetIds.map((entry) => {
+                        const unit = units.find((u) => u.fleetId === entry.fleetId);
+                        if (!unit) return null;
+                        return (
+                            <FlagshipFlash
+                                key={`flash-${entry.fleetId}-${entry.expiresAt}`}
+                                cx={unit.posX * scaleX}
+                                cy={unit.posY * scaleY}
+                            />
+                        );
+                    })}
                 </Layer>
             </Stage>
+
+            {/*
+             * Phase 14 Plan 14-15 (FE-04 / D-13) — HTML succession countdown
+             * overlays. Rendered as absolute-positioned siblings of the Stage
+             * (inside the same relative-positioned wrapper <div>) so the pill
+             * floats above the canvas without competing with Konva picking.
+             * One overlay per unit whose successionState === 'PENDING_SUCCESSION'.
+             */}
+            {units
+                .filter(
+                    (u) =>
+                        u.isAlive &&
+                        u.successionState === 'PENDING_SUCCESSION' &&
+                        u.successionTicksRemaining != null,
+                )
+                .map((u) => (
+                    <SuccessionCountdownOverlay
+                        key={`succ-overlay-${u.fleetId}`}
+                        screenX={u.posX * scaleX}
+                        screenY={u.posY * scaleY}
+                        ticksRemaining={u.successionTicksRemaining ?? 0}
+                    />
+                ))}
         </div>
     );
 }
