@@ -32,7 +32,13 @@ interface GalaxyMapProps {
     minHeight?: number | string;
 }
 
-const PADDING = 80;
+const PADDING = 24;
+/**
+ * Zoom-in past the strict "contain" fit so the map actually fills the
+ * viewport instead of huddling in the center. Overflow-hidden on the
+ * wrapper handles any edge clipping this introduces.
+ */
+const FIT_BOOST = 1.2;
 const MIN_SCALE = 0.3;
 const MAX_SCALE = 4.0;
 /** gin7-style dark navy space background */
@@ -127,7 +133,7 @@ export function GalaxyMap({
 
         const sx = availWidth / dataWidth;
         const sy = availHeight / dataHeight;
-        const us = Math.min(sx, sy);
+        const us = Math.min(sx, sy) * FIT_BOOST;
 
         const ox = PADDING + (availWidth - dataWidth * us) / 2 - minX * us;
         const oy = PADDING + (availHeight - dataHeight * us) / 2 - minY * us;
