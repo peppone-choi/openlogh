@@ -16,97 +16,108 @@ object ItemModifiers {
     init {
         val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         val stream = ItemModifiers::class.java.classLoader.getResourceAsStream("data/items.json")
-            ?: error("items.json not found on classpath")
-        val data: Map<String, List<Map<String, Any>>> = mapper.readValue(
-            stream, object : TypeReference<Map<String, List<Map<String, Any>>>>() {}
-        )
 
-        val resultItems = mutableMapOf<String, ActionModifier>()
-        val resultMeta = mutableMapOf<String, ItemMeta>()
-        val resultTriggerTypes = mutableMapOf<String, String>()
-        val resultKillRice = mutableMapOf<String, Double>()
+        if (stream == null) {
+            // 삼국지 items.json removed in cleanup (commit aabd97d6, 2026-04-06).
+            // gin7 LOGH 함선/장비 시스템은 별도 작업 — 그때까지 legacy 호출은 null 반환으로 graceful degrade.
+            // 모든 호출부(ItemService, ModifierService, OfficerTrigger, FrontInfoService)는
+            // 이미 null-safe(`?.let`, `?: itemCode`)하게 되어 있음.
+            items = emptyMap()
+            itemMeta = emptyMap()
+            itemTriggerTypes = emptyMap()
+            itemKillRice = emptyMap()
+        } else {
+            val data: Map<String, List<Map<String, Any>>> = mapper.readValue(
+                stream, object : TypeReference<Map<String, List<Map<String, Any>>>>() {}
+            )
 
-        // Weapons: strength = grade
-        for (item in data["weapons"] ?: emptyList()) {
-            val code = item["code"] as String
-            val rawName = item["rawName"] as String
-            val grade = (item["grade"] as Number).toInt()
-            val name = "$rawName(+$grade)"
-            resultItems[code] = StatItem(code, name, strength = grade.toDouble())
-            resultMeta[code] = ItemMeta(code, rawName, "weapon", grade,
-                (item["cost"] as Number).toInt(), item["buyable"] as Boolean,
-                (item["rarity"] as Number).toInt())
-        }
+            val resultItems = mutableMapOf<String, ActionModifier>()
+            val resultMeta = mutableMapOf<String, ItemMeta>()
+            val resultTriggerTypes = mutableMapOf<String, String>()
+            val resultKillRice = mutableMapOf<String, Double>()
 
-        // Books: intel = grade
-        for (item in data["books"] ?: emptyList()) {
-            val code = item["code"] as String
-            val rawName = item["rawName"] as String
-            val grade = (item["grade"] as Number).toInt()
-            val name = "$rawName(+$grade)"
-            resultItems[code] = StatItem(code, name, intel = grade.toDouble())
-            resultMeta[code] = ItemMeta(code, rawName, "book", grade,
-                (item["cost"] as Number).toInt(), item["buyable"] as Boolean,
-                (item["rarity"] as Number).toInt())
-        }
-
-        // Horses: leadership = grade
-        for (item in data["horses"] ?: emptyList()) {
-            val code = item["code"] as String
-            val rawName = item["rawName"] as String
-            val grade = (item["grade"] as Number).toInt()
-            val name = "$rawName(+$grade)"
-            resultItems[code] = StatItem(code, name, leadership = grade.toDouble())
-            resultMeta[code] = ItemMeta(code, rawName, "horse", grade,
-                (item["cost"] as Number).toInt(), item["buyable"] as Boolean,
-                (item["rarity"] as Number).toInt())
-            (item["killRice"] as? Number)?.toDouble()?.let { resultKillRice[code] = it }
-        }
-
-        // Misc items
-        for (item in data["misc"] ?: emptyList()) {
-            val code = item["code"] as String
-            val rawName = item["rawName"] as String
-            val consumable = item["consumable"] as? Boolean ?: false
-            val cost = (item["cost"] as Number).toInt()
-            val buyable = item["buyable"] as? Boolean ?: false
-            val rarity = (item["rarity"] as? Number)?.toInt() ?: 0
-            val info = item["info"] as? String ?: ""
-            val triggerType = item["triggerType"] as? String
-
-            if (triggerType != null) {
-                resultTriggerTypes[code] = triggerType
+            // Weapons: strength = grade
+            for (item in data["weapons"] ?: emptyList()) {
+                val code = item["code"] as String
+                val rawName = item["rawName"] as String
+                val grade = (item["grade"] as Number).toInt()
+                val name = "$rawName(+$grade)"
+                resultItems[code] = StatItem(code, name, strength = grade.toDouble())
+                resultMeta[code] = ItemMeta(code, rawName, "weapon", grade,
+                    (item["cost"] as Number).toInt(), item["buyable"] as Boolean,
+                    (item["rarity"] as Number).toInt())
             }
-            (item["killRice"] as? Number)?.toDouble()?.let { resultKillRice[code] = it }
 
-            if (consumable) {
-                resultItems[code] = ConsumableItem(
-                    code = code,
-                    name = "$rawName(${info.take(10)})",
-                    maxUses = (item["maxUses"] as Number).toInt(),
-                    effect = item["effect"] as String,
-                    value = (item["value"] as Number).toInt(),
-                )
-            } else {
-                val statMap = readNumberMap(item["stat"])
-                val opposeStatMap = readNumberMap(item["opposeStat"])
-
-                resultItems[code] = MiscItem(
-                    code = code,
-                    name = rawName,
-                    statMods = statMap.mapValues { it.value.toDouble() },
-                    opposeStatMods = opposeStatMap.mapValues { it.value.toDouble() },
-                    triggerType = triggerType,
-                )
+            // Books: intel = grade
+            for (item in data["books"] ?: emptyList()) {
+                val code = item["code"] as String
+                val rawName = item["rawName"] as String
+                val grade = (item["grade"] as Number).toInt()
+                val name = "$rawName(+$grade)"
+                resultItems[code] = StatItem(code, name, intel = grade.toDouble())
+                resultMeta[code] = ItemMeta(code, rawName, "book", grade,
+                    (item["cost"] as Number).toInt(), item["buyable"] as Boolean,
+                    (item["rarity"] as Number).toInt())
             }
-            resultMeta[code] = ItemMeta(code, rawName, "misc", 0, cost, buyable, rarity,
-                consumable, info)
-        }
 
-        items = resultItems
-        itemMeta = resultMeta
-        itemTriggerTypes = resultTriggerTypes
-        itemKillRice = resultKillRice
+            // Horses: leadership = grade
+            for (item in data["horses"] ?: emptyList()) {
+                val code = item["code"] as String
+                val rawName = item["rawName"] as String
+                val grade = (item["grade"] as Number).toInt()
+                val name = "$rawName(+$grade)"
+                resultItems[code] = StatItem(code, name, leadership = grade.toDouble())
+                resultMeta[code] = ItemMeta(code, rawName, "horse", grade,
+                    (item["cost"] as Number).toInt(), item["buyable"] as Boolean,
+                    (item["rarity"] as Number).toInt())
+                (item["killRice"] as? Number)?.toDouble()?.let { resultKillRice[code] = it }
+            }
+
+            // Misc items
+            for (item in data["misc"] ?: emptyList()) {
+                val code = item["code"] as String
+                val rawName = item["rawName"] as String
+                val consumable = item["consumable"] as? Boolean ?: false
+                val cost = (item["cost"] as Number).toInt()
+                val buyable = item["buyable"] as? Boolean ?: false
+                val rarity = (item["rarity"] as? Number)?.toInt() ?: 0
+                val info = item["info"] as? String ?: ""
+                val triggerType = item["triggerType"] as? String
+
+                if (triggerType != null) {
+                    resultTriggerTypes[code] = triggerType
+                }
+                (item["killRice"] as? Number)?.toDouble()?.let { resultKillRice[code] = it }
+
+                if (consumable) {
+                    resultItems[code] = ConsumableItem(
+                        code = code,
+                        name = "$rawName(${info.take(10)})",
+                        maxUses = (item["maxUses"] as Number).toInt(),
+                        effect = item["effect"] as String,
+                        value = (item["value"] as Number).toInt(),
+                    )
+                } else {
+                    val statMap = readNumberMap(item["stat"])
+                    val opposeStatMap = readNumberMap(item["opposeStat"])
+
+                    resultItems[code] = MiscItem(
+                        code = code,
+                        name = rawName,
+                        statMods = statMap.mapValues { it.value.toDouble() },
+                        opposeStatMods = opposeStatMap.mapValues { it.value.toDouble() },
+                        triggerType = triggerType,
+                    )
+                }
+                resultMeta[code] = ItemMeta(code, rawName, "misc", 0, cost, buyable, rarity,
+                    consumable, info)
+            }
+
+            items = resultItems
+            itemMeta = resultMeta
+            itemTriggerTypes = resultTriggerTypes
+            itemKillRice = resultKillRice
+        }
     }
 
     private fun readNumberMap(raw: Any?): Map<String, Number> {
