@@ -35,10 +35,10 @@ function getDotPaletteFromHex(hex: string) {
 }
 
 function getStarRadius(level: number, isCapital: boolean): number {
-    // Capital stars (Valhalla / Barat / Phezzan) render ~1.6x bigger than a
-    // standard level-7 system so the three political centers are legible at
-    // a glance.
-    if (isCapital) return 13;
+    // Capital stars (Valhalla / Barat) render slightly larger than a
+    // standard level-7 system so the two political centers are legible at
+    // a glance without dominating the map.
+    if (isCapital) return 10;
     switch (level) {
         case 4: return 5;
         case 5: return 6;

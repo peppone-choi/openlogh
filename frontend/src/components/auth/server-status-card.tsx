@@ -97,22 +97,22 @@ export function ServerStatusCard() {
                     </div>
                 )}
 
-                {!data?.available ? (
-                    <div className="flex h-44 items-center justify-center border border-gray-700 bg-black/30 text-sm text-muted-foreground">
-                        현재 가동 중인 서버가 없습니다
-                    </div>
-                ) : switching ? (
-                    <div className="flex h-44 items-center justify-center border border-gray-700 bg-black/30 text-sm text-muted-foreground">
+                {switching ? (
+                    <div className="flex h-64 items-center justify-center rounded border border-gray-700 bg-black/30 text-sm text-muted-foreground">
                         지도 로딩중...
                     </div>
                 ) : (
-                    <div className="h-64 w-full overflow-hidden rounded border border-gray-700 bg-black/40">
+                    // Always mount the GalaxyMap in public mode — it has its
+                    // own loading / empty / error states, so we don't gate on
+                    // the legacy cached-map `available` flag (which only tracks
+                    // the cities list and can be false even when the galaxy
+                    // data is perfectly loadable).
+                    <div className="h-80 w-full overflow-hidden rounded border border-gray-700 bg-black/40">
                         <GalaxyMap
                             key={selectedWorldId ?? 'default'}
                             sessionId={selectedWorldId ?? undefined}
                             publicMode
                             compact
-                            interactive={false}
                             hideDetailPanel
                         />
                     </div>

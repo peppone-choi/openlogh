@@ -191,11 +191,13 @@ export const FORTRESS_NAMES: Record<FortressType, string> = {
 
 /**
  * Capital star systems (mapStarId) that render larger on the galaxy map.
+ * Only the two political centers of the main war render oversized — Fezzan
+ * stays the same size as every other neutral system so it doesn't read as a
+ * peer of the Empire/Alliance capitals.
  * - 42: Valhalla (발할라) — Galactic Empire capital
  * - 36: Barat (바라트) — Free Planets Alliance capital (Heinessen)
- * - 64: Phezzan (페잔) — Fezzan Dominion capital
  */
-export const CAPITAL_STAR_IDS: ReadonlySet<number> = new Set([42, 36, 64]);
+export const CAPITAL_STAR_IDS: ReadonlySet<number> = new Set([42, 36]);
 
 export function isCapitalStar(mapStarId: number): boolean {
     return CAPITAL_STAR_IDS.has(mapStarId);
