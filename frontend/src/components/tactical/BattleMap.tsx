@@ -1,10 +1,41 @@
+/**
+ * Phase 14 — Plan 14-10 — BattleMap 5-layer restructure (FE-01, D-01, D-04).
+ *
+ * Previous structure (pre-14-10): 3 Konva layers — background, command-range,
+ * units — with a single CRC gated on `selectedUnit`. The CRC was therefore
+ * invisible unless the player clicked their own fleet icon, which broke FE-01
+ * (multi-CRC under the logged-in officer's command) and left no layer seats
+ * for the fog-of-war ghosts (14-11) or the succession FX pulses (14-14).
+ *
+ * New structure (UI-SPEC Section A + Section E):
+ *
+ *   Layer 1 — background     (stars, grid) — listening disabled
+ *   Layer 2 — fog-ghosts     (placeholder; filled by 14-11's FogLayer)
+ *   Layer 3 — command-range  (multi-CRC driven by hierarchy)
+ *   Layer 4 — units          (existing TacticalUnitIcon render)
+ *   Layer 5 — succession-fx  (placeholder; filled by 14-14's FlagshipFlash)
+ *
+ * The CRC layer now multi-renders one CommandRangeCircle per entry returned
+ * by `findVisibleCrcCommanders(myOfficerId, hierarchy, units, side)` — not per
+ * selected-unit click. `selectedUnit` still drives the inner-ring glow via the
+ * `isSelected` prop so a clicked friendly commander still reads as the
+ * currently-focused CRC.
+ *
+ * The hierarchy comes from `useTacticalStore` instead of a prop so the fog
+ * layer (14-11) and succession layer (14-14) can subscribe to the same slice
+ * without redundantly passing it through BattleMap. `tactical/page.tsx` keeps
+ * its existing prop call site unchanged.
+ */
 'use client';
 
 import { useMemo, useCallback } from 'react';
 import { Stage, Layer, Rect, Line, Circle } from 'react-konva';
 import { TacticalUnitIcon } from './TacticalUnitIcon';
 import { CommandRangeCircle } from './CommandRangeCircle';
-import type { TacticalUnit } from '@/types/tactical';
+import { FogLayer } from './FogLayer';
+import { useTacticalStore } from '@/stores/tacticalStore';
+import { findVisibleCrcCommanders, type VisibleCommander } from '@/lib/commandChain';
+import type { TacticalUnit, BattleSide } from '@/types/tactical';
 
 interface BattleMapProps {
     units: TacticalUnit[];
@@ -36,6 +67,25 @@ function generateStars(count: number, w: number, h: number) {
     return stars;
 }
 
+/**
+ * Pure helper — computes the list of CRCs to draw for the logged-in officer.
+ * Exported for unit tests (BattleMap renders Konva, which is fragile under a
+ * `node` vitest environment; this helper is pure and easy to assert on).
+ */
+export function computeBattleMapVisibleCommanders(
+    myOfficerId: number,
+    units: TacticalUnit[],
+    attackerHierarchy: Parameters<typeof findVisibleCrcCommanders>[1],
+    defenderHierarchy: Parameters<typeof findVisibleCrcCommanders>[1],
+): VisibleCommander[] {
+    if (myOfficerId < 0) return [];
+    const myUnit = units.find((u) => u.officerId === myOfficerId);
+    if (!myUnit) return [];
+    const side: BattleSide = myUnit.side;
+    const hierarchy = side === 'ATTACKER' ? attackerHierarchy : defenderHierarchy;
+    return findVisibleCrcCommanders(myOfficerId, hierarchy, units, side);
+}
+
 export function BattleMap({
     units,
     width = 1000,
@@ -48,6 +98,11 @@ export function BattleMap({
     const scaleY = height / GAME_H;
 
     const stars = useMemo(() => generateStars(STAR_COUNT, width, height), [width, height]);
+
+    // Pull the hierarchy directly from the store so 14-11 and 14-14 can subscribe
+    // to the same slice without BattleMap becoming a prop-relay. The store field
+    // is populated by 14-10's onBattleTick reducer.
+    const currentBattle = useTacticalStore((s) => s.currentBattle);
 
     // Grid lines every 50px
     const gridLines = useMemo(() => {
@@ -64,6 +119,20 @@ export function BattleMap({
     const selectedUnit = useMemo(
         () => (selectedUnitId != null ? units.find((u) => u.fleetId === selectedUnitId) : undefined),
         [units, selectedUnitId]
+    );
+
+    // D-01 — multi-CRC: one ring per visible commander in the logged-in
+    // officer's command chain. Pure compute; fog layer (14-11) also calls
+    // `findAlliesInMyChain` from the same `commandChain.ts` source of truth.
+    const visibleCommanders: VisibleCommander[] = useMemo(
+        () =>
+            computeBattleMapVisibleCommanders(
+                myOfficerId ?? -1,
+                units,
+                currentBattle?.attackerHierarchy ?? null,
+                currentBattle?.defenderHierarchy ?? null,
+            ),
+        [myOfficerId, units, currentBattle?.attackerHierarchy, currentBattle?.defenderHierarchy],
     );
 
     const handleStageClick = useCallback(
@@ -87,8 +156,8 @@ export function BattleMap({
                 height={height}
                 onClick={handleStageClick}
             >
-                {/* Background layer */}
-                <Layer>
+                {/* ─── Layer 1: Background ──────────────────────────────── */}
+                <Layer listening={true} id="background">
                     {/* Space background */}
                     <Rect
                         x={0}
@@ -124,34 +193,49 @@ export function BattleMap({
                     ))}
                 </Layer>
 
-                {/* Command range layer */}
+                {/* ─── Layer 2: Fog ghosts (14-11) ───────────────────────── */}
                 {/*
-                 * TODO(14-10): multi-render one CRC per visible commander from
-                 * `tacticalStore.commandHierarchy`. For now we keep the Wave 3
-                 * single-selected-unit rendering so `pnpm typecheck` passes.
-                 * Plan 14-09 rewrote CommandRangeCircle to server-driven props
-                 * (cx/cy/currentRadius/maxRadius) and removed the local 3s
-                 * Konva.Animation loop — the radius ramp now comes from server
-                 * ticks, interpolated by BattleMap in 14-10.
+                 * FogLayer reads `tacticalStore.lastSeenEnemyPositions` +
+                 * `currentBattle.{attacker,defender}Hierarchy` and renders one
+                 * `EnemyGhostIcon` per stale enemy per D-17/D-18/D-20. Non-
+                 * listening so ghost icons never steal click events from the
+                 * live units / CRCs rendered above.
                  */}
-                <Layer>
-                    {selectedUnit && selectedUnit.commandRange > 0 && (
-                        <CommandRangeCircle
-                            cx={selectedUnit.posX * scaleX}
-                            cy={selectedUnit.posY * scaleY}
-                            currentRadius={selectedUnit.commandRange * Math.min(scaleX, scaleY)}
-                            maxRadius={
-                                (selectedUnit.maxCommandRange ?? selectedUnit.commandRange) *
-                                Math.min(scaleX, scaleY)
-                            }
-                            side={selectedUnit.side}
-                            isSelected={true}
-                        />
-                    )}
+                <Layer listening={false} id="fog-ghosts">
+                    <FogLayer
+                        myOfficerId={myOfficerId ?? -1}
+                        scaleX={scaleX}
+                        scaleY={scaleY}
+                    />
                 </Layer>
 
-                {/* Units layer */}
-                <Layer>
+                {/* ─── Layer 3: Command-range (multi-CRC) ────────────────── */}
+                <Layer listening={true} id="command-range">
+                    {visibleCommanders.map((cmd) => {
+                        const unit = units.find((u) => u.fleetId === cmd.flagshipFleetId);
+                        if (!unit || !unit.isAlive) return null;
+                        const minScale = Math.min(scaleX, scaleY);
+                        const currentRadius = unit.commandRange * minScale;
+                        const maxRadius =
+                            (unit.maxCommandRange ?? unit.commandRange) * minScale;
+                        return (
+                            <CommandRangeCircle
+                                key={`crc-${cmd.flagshipFleetId}`}
+                                cx={unit.posX * scaleX}
+                                cy={unit.posY * scaleY}
+                                currentRadius={currentRadius}
+                                maxRadius={maxRadius}
+                                side={cmd.side}
+                                isMine={cmd.isMine}
+                                isCommandable={cmd.isCommandable}
+                                isSelected={selectedUnit?.fleetId === cmd.flagshipFleetId}
+                            />
+                        );
+                    })}
+                </Layer>
+
+                {/* ─── Layer 4: Units ────────────────────────────────────── */}
+                <Layer listening={true} id="units">
                     {units.map((unit) => (
                         <TacticalUnitIcon
                             key={unit.fleetId}
@@ -162,6 +246,18 @@ export function BattleMap({
                             onClick={(u) => onSelectUnit?.(u.fleetId)}
                         />
                     ))}
+                </Layer>
+
+                {/* ─── Layer 5: Succession FX (14-14 placeholder) ────────── */}
+                {/*
+                 * Plan 14-14 mounts <FlagshipFlash /> and succession pulse
+                 * rings here. `tacticalStore.activeFlagshipDestroyedFleetIds`
+                 * and `activeSuccessionFleetIds` (initialised by 14-10) drive
+                 * the render. Kept non-listening so ephemeral FX never steal
+                 * click events from the units below.
+                 */}
+                <Layer listening={false} id="succession-fx">
+                    {/* intentional: filled in 14-14 */}
                 </Layer>
             </Stage>
         </div>

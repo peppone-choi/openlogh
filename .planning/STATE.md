@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 14-03-PLAN.md (parallel Wave 2)
-last_updated: "2026-04-09T11:06:07.810Z"
+stopped_at: Completed 14-09-PLAN.md (parallel Wave 3)
+last_updated: "2026-04-09T11:18:36.660Z"
 last_activity: 2026-04-09 -- Plan 14-07 completed in parallel Wave 1 (dnd-kit deps)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 96
+  completed_plans: 97
   percent: 77
 ---
 
@@ -83,6 +83,7 @@ Progress: [████████░░] 77%
 | Phase 14-frontend-integration P06 | 6min | 1 tasks | 4 files |
 | Phase 14 P08 | 6min | 2 tasks | 9 files |
 | Phase 14 P03 | 40min | 1 tasks | 4 files |
+| Phase 14-frontend-integration P09 | 5min | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -162,6 +163,10 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-08: @react-three/fiber + @react-three/drei + three + @types/three fully removed from frontend/package.json (48 transitive pkgs dropped from lockfile); regression guard flipped from Wave 0 tolerance to strict expect(offenders).toEqual([])
 - [Phase 14]: Plan 14-03: TacticalUnit.sensorRange cached field recomputed per tick from SensorRangeFormula (internal object, D-19 anchors: base=150, min=30, max=500, slider=17, injury=0.7); toUnitDto reads cached field replacing 14-01 inline DetectionCapability-based formula
 - [Phase 14]: Plan 14-03: Top-level computeSensorRange() wrapper exposes private SensorRangeFormula object to same-package tests without reflection; TDD RED+GREEN compressed into single commit (Wave 2 parallel-safe pattern from 14-01) to avoid wedging shared :game-app:compileTestKotlin on other executors
+- [Phase 14-frontend-integration]: Plan 14-09: CommandRangeCircle rewritten as pure-props hierarchy-aware component. Exports computeRingStyle(side, state) pure helper so vitest env=node can assert all visual decisions (color, stroke, opacity, shadow, goldHint) without mounting react-konva. 19 tests run in 14ms.
+- [Phase 14-frontend-integration]: Plan 14-09: D-03 regression guard uses readFileSync + regex on CommandRangeCircle.tsx source text to catch any literal mention of Konva.Animation / new Animation( / import Konva — stronger than behavioral test because it catches comment mentions and conditional-branch re-introductions. Had to rephrase my own REMOVED doc comment from 'new Konva.Animation(...)' to 'Konva imperative animation loop' after first GREEN run to avoid tripping the guard.
+- [Phase 14-frontend-integration]: Plan 14-09: frontend/src/lib/tacticalColors.ts is the single source of truth for D-02 faction hex literals (empire #4466ff / alliance #ff4444 / fezzan #888888). Exports sideToDefaultColor + lightenHex(hex, lPercent) with an achromatic short-circuit so pure white/gray/black inputs stay idempotent. All future tactical components must import from this file — no inline hex literals.
+- [Phase 14-frontend-integration]: Plan 14-09: BattleMap.tsx single call site migrated to new CommandRangeCircle props in the same commit (not left dangling) with a TODO(14-10) marker — this was the splice point sibling Wave 3 plan 14-10 needed to multi-render CRCs. 14-10 has since replaced the marker with the full 5-layer restructure; the API contract I established (cx/cy/currentRadius/maxRadius/side + isMine/isCommandable/isHovered/isSelected) is stable under sibling consumption.
 
 ### Pending Todos
 
@@ -176,6 +181,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:06:07.802Z
-Stopped at: Completed 14-03-PLAN.md (parallel Wave 2)
+Last session: 2026-04-09T11:18:36.652Z
+Stopped at: Completed 14-09-PLAN.md (parallel Wave 3)
 Resume file: None
