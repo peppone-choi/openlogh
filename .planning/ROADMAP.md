@@ -204,12 +204,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. AI 진영이 교전 중일 때 FactionAI가 자동으로 작전계획(점령/방어/소탕)을 생성한다
   2. 자기 진영 대비 적 전력이 약한 성계에는 점령, 위협받는 자기 성계에는 방어, 침입 함대에는 소탕 작전이 선택된다
-**Plans**: 3 plans
+**Plans**: 2 plans
 Plans:
-- [ ] 08-01-PLAN.md — TacticalCommand sealed class + CommandHierarchy 데이터 모델 + 테스트 스캐폴드
-- [ ] 08-02-PLAN.md — 엔진 통합: TacticalUnit 필드 병합, war/ 패키지 삭제, 중복 컨트롤러 삭제
-- [ ] 08-03-PLAN.md — 커맨드 버퍼 통합 + CommandHierarchy 초기화
-
+- [ ] 13-01-PLAN.md — 전략 AI 순수 객체 스코어러 (전력평가+안개+작전대상+함대배정)
+- [ ] 13-02-PLAN.md — FactionAI atWar 분기 교체 + CommandExecutor 연동 + 테스트
 ### Phase 14: 프론트엔드 통합
 **Goal**: 전술전 지휘체계의 모든 백엔드 기능이 프론트엔드에서 시각적으로 표현되고 조작 가능하다
 **Depends on**: Phase 8, Phase 9, Phase 10, Phase 11, Phase 12, Phase 13
@@ -245,5 +243,5 @@ Plans:
 | 10. 지휘 승계 | v2.1 | 7/7 | Complete   | 2026-04-07 |
 | 11. 전술 AI | v2.1 | 3/3 | Complete    | 2026-04-08 |
 | 12. 작전 연동 | v2.1 | 4/4 | Complete    | 2026-04-09 |
-| 13. 전략 AI | v2.1 | 0/0 | Not started | - |
+| 13. 전략 AI | v2.1 | 0/2 | Planned | - |
 | 14. 프론트엔드 통합 | v2.1 | 0/0 | Not started | - |
