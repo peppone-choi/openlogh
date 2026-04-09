@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 14-11-PLAN.md (parallel Wave 3 — fog-of-war)
-last_updated: "2026-04-09T11:34:34.142Z"
+stopped_at: Completed 14-13-PLAN.md (parallel Wave 4 — SubFleet assignment drawer)
+last_updated: "2026-04-09T11:49:06.267Z"
 last_activity: 2026-04-09 -- Plan 14-10 completed in parallel Wave 3 (BattleMap layer restructure)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 99
+  completed_plans: 101
   percent: 86
 ---
 
@@ -86,6 +86,8 @@ Progress: [█████████░] 86%
 | Phase 14-frontend-integration P09 | 5min | 1 tasks | 4 files |
 | Phase 14 P10 | 15min | 2 tasks | 5 files |
 | Phase 14 P11 | 20min | 2 tasks | 7 files |
+| Phase 14 P12 | 7min | 1 tasks | 3 files |
+| Phase 14 P13 | 8min | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -178,6 +180,9 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-11: FogLayer/EnemyGhostIcon tests follow 14-09 CommandRangeCircle pattern (source-text + pure-helper + compile-time props, no react-konva mount) because vitest config is environment:'node' without canvas polyfills
 - [Phase 14]: Plan 14-11: GhostEntry (fogOfWar.ts) and LastSeenEnemyRecord (tacticalStore.ts from 14-10) intentionally share the same shape via structural typing — no shared module, no store↔lib import cycle
 - [Phase 14]: Plan 14-11: EnemyGhostIcon uses fillEnabled={false} not fill={undefined} (Konva-native opt-out that doesn't trip the prop validator); shape rule mirrors TacticalUnitIcon via unitType string check (flagship/battleship→△, else □), stroke is neutral #888888 regardless of side per D-17/UI-SPEC Section E
+- [Phase 14]: PAUSED phase collapsed to ACTIVE at drawer edge for canReassignUnit gating (CMD-05 rules apply equally in paused battles)
+- [Phase 14]: Plan 14-12: canReassignUnit pure helper enforces FE-02 CMD-05 gating (outside CRC + stopped); structured { allowed, reason, message } return carries Korean tooltip copy from UI-SPEC Section B
+- [Phase 14]: Plan 14-12: isStopped read via duck-typing (unit as unknown as { isStopped?: unknown }) + typeof guard — not yet on TacticalUnitDto (RESEARCH Open Question 2), conservative unknown-state=MOVING default keeps drag gating safe until backend ships the field
 
 ### Pending Todos
 
@@ -192,6 +197,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:34:34.134Z
-Stopped at: Completed 14-11-PLAN.md (parallel Wave 3 — fog-of-war)
+Last session: 2026-04-09T11:48:54.139Z
+Stopped at: Completed 14-13-PLAN.md (parallel Wave 4 — SubFleet assignment drawer)
 Resume file: None
