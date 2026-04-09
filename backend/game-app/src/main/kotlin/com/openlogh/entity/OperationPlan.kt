@@ -56,7 +56,7 @@ class OperationPlan(
     var participantFleetIds: MutableList<Long> = mutableListOf(),
 
     @Column(name = "scale", nullable = false)
-    var scale: Int = 1,
+    var scale: Short = 1,
 
     @Column(name = "issued_by_officer_id", nullable = false)
     var issuedByOfficerId: Long = 0L,
