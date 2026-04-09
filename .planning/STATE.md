@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 14-10-PLAN.md (parallel Wave 3)
-last_updated: "2026-04-09T11:27:27.633Z"
+stopped_at: Completed 14-11-PLAN.md (parallel Wave 3 — fog-of-war)
+last_updated: "2026-04-09T11:34:34.142Z"
 last_activity: 2026-04-09 -- Plan 14-10 completed in parallel Wave 3 (BattleMap layer restructure)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 98
+  completed_plans: 99
   percent: 86
 ---
 
@@ -85,6 +85,7 @@ Progress: [█████████░] 86%
 | Phase 14 P03 | 40min | 1 tasks | 4 files |
 | Phase 14-frontend-integration P09 | 5min | 1 tasks | 4 files |
 | Phase 14 P10 | 15min | 2 tasks | 5 files |
+| Phase 14 P11 | 20min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -173,6 +174,10 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-10: tacticalStore owns init+preservation of fog/succession bookkeeping slots (lastSeenEnemyPositions, activeSuccessionFleetIds, activeFlagshipDestroyedFleetIds); 14-11/14-14 own update logic — single slice avoids parallel-wave write races
 - [Phase 14]: Plan 14-10: activeFlagshipDestroyedFleetIds pruned by wall-clock Date.now() expiresAt, not tick count — FX animations run at 60fps framerate, not tick rate, so 500ms easing outlives a tick boundary
 - [Phase 14]: Plan 14-10: Task 1 + Task 2 source files landed under sibling commits b5c87d84 (14-09) + 03e8ef2d (14-09 docs) due to parallel Wave 3 git add race; 14-10-SUMMARY.md is the canonical attribution anchor. 03e8ef2d commit body explicitly acknowledges 14-10 ownership
+- [Phase 14]: Plan 14-11: fogOfWar.ts delegates hierarchy resolution to commandChain.findAlliesInMyChain (14-10) instead of duplicating chain logic — single source of truth for D-18 vision rules
+- [Phase 14]: Plan 14-11: FogLayer/EnemyGhostIcon tests follow 14-09 CommandRangeCircle pattern (source-text + pure-helper + compile-time props, no react-konva mount) because vitest config is environment:'node' without canvas polyfills
+- [Phase 14]: Plan 14-11: GhostEntry (fogOfWar.ts) and LastSeenEnemyRecord (tacticalStore.ts from 14-10) intentionally share the same shape via structural typing — no shared module, no store↔lib import cycle
+- [Phase 14]: Plan 14-11: EnemyGhostIcon uses fillEnabled={false} not fill={undefined} (Konva-native opt-out that doesn't trip the prop validator); shape rule mirrors TacticalUnitIcon via unitType string check (flagship/battleship→△, else □), stroke is neutral #888888 regardless of side per D-17/UI-SPEC Section E
 
 ### Pending Todos
 
@@ -187,6 +192,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:27:27.625Z
-Stopped at: Completed 14-10-PLAN.md (parallel Wave 3)
+Last session: 2026-04-09T11:34:34.134Z
+Stopped at: Completed 14-11-PLAN.md (parallel Wave 3 — fog-of-war)
 Resume file: None

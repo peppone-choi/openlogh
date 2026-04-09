@@ -230,7 +230,7 @@ Plans:
 - [x] 14-08-PLAN.md — Frontend — Remove R3F files + @react-three deps
 - [x] 14-09-PLAN.md — Frontend — CommandRangeCircle rewrite (server-driven, no local animation)
 - [x] 14-10-PLAN.md — Frontend — BattleMap layer restructure + tacticalStore hierarchy reducer
-- [ ] 14-11-PLAN.md — Frontend — Fog-of-war reducer + FogLayer rendering
+- [x] 14-11-PLAN.md — Frontend — Fog-of-war reducer + FogLayer rendering
 - [ ] 14-12-PLAN.md — Frontend — Sub-fleet drag-gating helper (FE-02)
 - [ ] 14-13-PLAN.md — Frontend — Sub-fleet assignment drawer component (FE-02)
 - [ ] 14-14-PLAN.md — Frontend — Command gating UI + proposal path (FE-03)
@@ -259,4 +259,4 @@ Plans:
 | 11. 전술 AI | v2.1 | 3/3 | Complete    | 2026-04-08 |
 | 12. 작전 연동 | v2.1 | 4/4 | Complete    | 2026-04-09 |
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
-| 14. 프론트엔드 통합 | v2.1 | 10/18 | In Progress|  |
+| 14. 프론트엔드 통합 | v2.1 | 11/18 | In Progress|  |
