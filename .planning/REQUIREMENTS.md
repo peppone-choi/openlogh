@@ -41,7 +41,7 @@ Requirements for milestone v2.1: 전술전 지휘체계 + AI. Each maps to roadm
 
 ### 작전 연동 (OPS)
 
-- [ ] **OPS-01**: 전략 게임의 작전계획(점령/방어/소탕) 목적이 전술전 AI 기본 행동을 결정한다
+- [x] **OPS-01**: 전략 게임의 작전계획(점령/방어/소탕) 목적이 전술전 AI 기본 행동을 결정한다
 - [ ] **OPS-02**: 작전에 참가한 부대만 공적 보너스를 받는다
 - [ ] **OPS-03**: 발령된 부대가 목표 성계 도달 시 작전이 시작된다
 
@@ -105,7 +105,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TAI-03 | Phase 11 | Complete |
 | TAI-04 | Phase 11 | Complete |
 | TAI-05 | Phase 11 | Complete |
-| OPS-01 | Phase 12 | Pending |
+| OPS-01 | Phase 12 | Complete |
 | OPS-02 | Phase 12 | Pending |
 | OPS-03 | Phase 12 | Pending |
 | SAI-01 | Phase 13 | Pending |
