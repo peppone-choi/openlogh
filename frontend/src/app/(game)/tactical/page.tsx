@@ -12,6 +12,7 @@ import { InfoPanel } from '@/components/tactical/InfoPanel';
 import { EnergyPanel } from '@/components/tactical/EnergyPanel';
 import { FormationSelector } from '@/components/tactical/FormationSelector';
 import { BattleStatus } from '@/components/tactical/BattleStatus';
+import { BattleEndModal } from '@/components/tactical/BattleEndModal';
 import { PageHeader } from '@/components/game/page-header';
 import { LoadingState } from '@/components/game/loading-state';
 import { EmptyState } from '@/components/game/empty-state';
@@ -262,6 +263,13 @@ export default function TacticalPage() {
                     />
                 </div>
             </div>
+
+            {/*
+             * Phase 14 Plan 14-18 (D-32..D-34) — self-mounting end-of-battle
+             * modal. Subscribes to tacticalStore.currentBattle internally and
+             * opens automatically on the ACTIVE → ENDED phase transition.
+             */}
+            <BattleEndModal />
         </div>
     );
 }
