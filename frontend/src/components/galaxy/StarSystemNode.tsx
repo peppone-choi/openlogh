@@ -1,14 +1,17 @@
 'use client';
 
-import { Group, Circle, Rect, Text } from 'react-konva';
+import { Group, Circle, Rect, Text, RegularPolygon } from 'react-konva';
 import type { StarSystem } from '@/types/galaxy';
-import { getFactionShadeColor, isFortress } from '@/types/galaxy';
-import { FortressIndicator } from './FortressIndicator';
+import { getFactionShadeColor, isCapitalStar } from '@/types/galaxy';
 
 interface StarSystemNodeProps {
     system: StarSystem;
     isSelected: boolean;
     isHovered: boolean;
+    /** Mark this as the player's current star system — white hexagon ring overlay */
+    isCurrent?: boolean;
+    /** Mark this as an active battle site — red hexagon ring overlay */
+    hasBattle?: boolean;
     onSelect: () => void;
     onHover: (hovering: boolean) => void;
 }
@@ -31,7 +34,11 @@ function getDotPaletteFromHex(hex: string) {
     };
 }
 
-function getStarRadius(level: number): number {
+function getStarRadius(level: number, isCapital: boolean): number {
+    // Capital stars (Valhalla / Barat / Phezzan) render ~1.6x bigger than a
+    // standard level-7 system so the three political centers are legible at
+    // a glance.
+    if (isCapital) return 13;
     switch (level) {
         case 4: return 5;
         case 5: return 6;
@@ -51,10 +58,13 @@ export function StarSystemNode({
     system,
     isSelected,
     isHovered,
+    isCurrent = false,
+    hasBattle = false,
     onSelect,
     onHover,
 }: StarSystemNodeProps) {
-    const r = getStarRadius(system.level);
+    const isCapital = isCapitalStar(system.mapStarId);
+    const r = getStarRadius(system.level, isCapital);
     // Use 5-shade faction color based on controlStrength; fall back to factionColor or neutral
     const color = getFactionShadeColor(
         system.factionId,
@@ -62,7 +72,6 @@ export function StarSystemNode({
         system.controlStrength
     ) || system.factionColor || '#444444';
     const palette = getDotPaletteFromHex(color);
-    const hasFortress = isFortress(system);
 
     const labelText = system.nameEn;
     const labelWidth = Math.max(labelText.length * 6 + 8, 50);
@@ -87,9 +96,19 @@ export function StarSystemNode({
             onMouseEnter={() => onHover(true)}
             onMouseLeave={() => onHover(false)}
         >
-            {/* Fortress indicator behind node */}
-            {hasFortress && (
-                <FortressIndicator x={0} y={0} fortressType={system.fortressType} />
+            {/* Hexagon ring overlay: red for active battle, white for the
+                player's current system. Battle takes precedence. */}
+            {(hasBattle || isCurrent) && (
+                <RegularPolygon
+                    sides={6}
+                    radius={r + 6}
+                    rotation={30}
+                    stroke={hasBattle ? '#ff4455' : '#ffffff'}
+                    strokeWidth={hasBattle ? 2 : 1.5}
+                    fillEnabled={false}
+                    listening={false}
+                    perfectDrawEnabled={false}
+                />
             )}
 
             {/* Outer glow (subtle) */}

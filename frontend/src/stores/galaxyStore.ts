@@ -16,6 +16,12 @@ interface GalaxyState {
     fleetPositions: Record<number, FleetPosition[]>;
     /** Currently selected fleet id for movement range highlight */
     selectedFleetId: number | null;
+    /** Player's current star system (mapStarId) — renders white hexagon overlay */
+    currentSystemId: number | null;
+    /** mapStarIds with an active battle — renders red hexagon overlay */
+    battleSystemIds: Set<number>;
+    /** Monotonic fetch token used to drop stale responses across overlapping requests */
+    requestToken: number;
 }
 
 interface GalaxyActions {
@@ -26,6 +32,8 @@ interface GalaxyActions {
     selectSystem: (mapStarId: number | null) => void;
     hoverSystem: (mapStarId: number | null) => void;
     selectFleet: (fleetId: number | null) => void;
+    setCurrentSystem: (mapStarId: number | null) => void;
+    setBattleSystems: (mapStarIds: Iterable<number>) => void;
     getSystem: (mapStarId: number) => StarSystem | undefined;
     getConnectedSystems: (mapStarId: number) => StarSystem[];
     getFortresses: () => StarSystem[];
@@ -45,12 +53,18 @@ export const useGalaxyStore = create<GalaxyState & GalaxyActions>()(
         systemsById: {},
         fleetPositions: {},
         selectedFleetId: null,
+        currentSystemId: null,
+        battleSystemIds: new Set<number>(),
+        requestToken: 0,
 
         fetchGalaxyMap: async (sessionId: number) => {
-            set({ isLoading: true, error: null });
+            const token = get().requestToken + 1;
+            set({ isLoading: true, error: null, requestToken: token });
             try {
                 const data = await fetchGalaxyMap(sessionId);
-                // Merge static planet names if API doesn't provide them
+                // Drop stale responses: another fetch started after we began
+                if (get().requestToken !== token) return;
+
                 for (const sys of data.systems) {
                     if (!sys.planets || sys.planets.length === 0) {
                         sys.planets = STAR_SYSTEM_PLANETS[sys.mapStarId] ?? [];
@@ -73,6 +87,7 @@ export const useGalaxyStore = create<GalaxyState & GalaxyActions>()(
                 // Fetch fleet positions after map loads
                 await get().fetchFleetPositions(sessionId);
             } catch (err) {
+                if (get().requestToken !== token) return;
                 const message =
                     err instanceof Error ? err.message : 'Failed to load galaxy map';
                 set({ error: message, isLoading: false });
@@ -80,9 +95,12 @@ export const useGalaxyStore = create<GalaxyState & GalaxyActions>()(
         },
 
         fetchPublicGalaxyMap: async (worldId?: number) => {
-            set({ isLoading: true, error: null });
+            const token = get().requestToken + 1;
+            set({ isLoading: true, error: null, requestToken: token });
             try {
                 const data = await fetchPublicCachedGalaxy(worldId);
+                if (get().requestToken !== token) return;
+
                 for (const sys of data.systems) {
                     if (!sys.planets || sys.planets.length === 0) {
                         sys.planets = STAR_SYSTEM_PLANETS[sys.mapStarId] ?? [];
@@ -104,6 +122,7 @@ export const useGalaxyStore = create<GalaxyState & GalaxyActions>()(
                     isLoading: false,
                 });
             } catch (err) {
+                if (get().requestToken !== token) return;
                 const message =
                     err instanceof Error ? err.message : 'Failed to load public galaxy map';
                 set({ error: message, isLoading: false });
@@ -138,6 +157,14 @@ export const useGalaxyStore = create<GalaxyState & GalaxyActions>()(
 
         selectFleet: (fleetId: number | null) => {
             set({ selectedFleetId: fleetId });
+        },
+
+        setCurrentSystem: (mapStarId: number | null) => {
+            set({ currentSystemId: mapStarId });
+        },
+
+        setBattleSystems: (mapStarIds: Iterable<number>) => {
+            set({ battleSystemIds: new Set(mapStarIds) });
         },
 
         getSystem: (mapStarId: number) => {

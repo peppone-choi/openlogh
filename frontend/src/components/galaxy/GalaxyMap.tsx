@@ -41,6 +41,13 @@ const PADDING_Y = 34;
  * wrapper handles any edge clipping this introduces.
  */
 const FIT_BOOST = 1.2;
+/**
+ * Non-uniform stretch: pull coordinates apart horizontally and squash
+ * vertically so the map reads as a wide galactic disk instead of a tight
+ * square. Star nodes themselves stay circular — only positions warp.
+ */
+const SQUISH_X = 1.35;
+const SQUISH_Y = 0.82;
 const MIN_SCALE = 0.3;
 const MAX_SCALE = 4.0;
 /** gin7-style dark navy space background */
@@ -80,6 +87,8 @@ export function GalaxyMap({
     const fleetPositions = useGalaxyStore((s) => s.fleetPositions);
     const selectedFleetId = useGalaxyStore((s) => s.selectedFleetId);
     const selectFleet = useGalaxyStore((s) => s.selectFleet);
+    const currentSystemId = useGalaxyStore((s) => s.currentSystemId);
+    const battleSystemIds = useGalaxyStore((s) => s.battleSystemIds);
     const getReachableStars = useGalaxyStore((s) => s.getReachableStars);
 
     // Fetch data on mount (public or authenticated)
@@ -114,10 +123,12 @@ export function GalaxyMap({
         return () => observer.disconnect();
     }, []);
 
-    // Compute coordinate mapping: scale star_systems coords to fit container
-    const { offsetX, offsetY, uniformScale } = useMemo(() => {
+    // Compute coordinate mapping: scale star_systems coords to fit container.
+    // Uses independent x/y scales (SQUISH_X, SQUISH_Y) to stretch the galaxy
+    // into a wide disk rather than a tight square.
+    const { offsetX, offsetY, scaleX, scaleY } = useMemo(() => {
         if (systems.length === 0) {
-            return { offsetX: 0, offsetY: 0, uniformScale: 1 };
+            return { offsetX: 0, offsetY: 0, scaleX: 1, scaleY: 1 };
         }
 
         const xs = systems.map((s) => s.x);
@@ -133,24 +144,27 @@ export function GalaxyMap({
         const availWidth = containerSize.width - PADDING_X * 2;
         const availHeight = containerSize.height - PADDING_Y * 2;
 
-        const sx = availWidth / dataWidth;
-        const sy = availHeight / dataHeight;
-        const us = Math.min(sx, sy) * FIT_BOOST;
+        const sxRaw = availWidth / dataWidth;
+        const syRaw = availHeight / dataHeight;
+        const base = Math.min(sxRaw, syRaw) * FIT_BOOST;
+        // Cap the stretched scales so neither axis exceeds the available room.
+        const sxCapped = Math.min(base * SQUISH_X, availWidth / dataWidth);
+        const syCapped = Math.min(base * SQUISH_Y, availHeight / dataHeight);
 
-        const ox = PADDING_X + (availWidth - dataWidth * us) / 2 - minX * us;
-        const oy = PADDING_Y + (availHeight - dataHeight * us) / 2 - minY * us;
+        const ox = PADDING_X + (availWidth - dataWidth * sxCapped) / 2 - minX * sxCapped;
+        const oy = PADDING_Y + (availHeight - dataHeight * syCapped) / 2 - minY * syCapped;
 
-        return { offsetX: ox, offsetY: oy, uniformScale: us };
+        return { offsetX: ox, offsetY: oy, scaleX: sxCapped, scaleY: syCapped };
     }, [systems, containerSize]);
 
-    // Map star coordinates to canvas space
+    // Map star coordinates to canvas space (independent x/y scales)
     const toCanvasX = useCallback(
-        (x: number) => x * uniformScale + offsetX,
-        [uniformScale, offsetX]
+        (x: number) => x * scaleX + offsetX,
+        [scaleX, offsetX]
     );
     const toCanvasY = useCallback(
-        (y: number) => y * uniformScale + offsetY,
-        [uniformScale, offsetY]
+        (y: number) => y * scaleY + offsetY,
+        [scaleY, offsetY]
     );
 
     // Determine highlighted connections (when a system is selected)
@@ -392,6 +406,8 @@ export function GalaxyMap({
                             }}
                             isSelected={selectedSystemId === system.mapStarId}
                             isHovered={hoveredSystemId === system.mapStarId}
+                            isCurrent={currentSystemId === system.mapStarId}
+                            hasBattle={battleSystemIds.has(system.mapStarId)}
                             onSelect={() => handleSystemClick(system.mapStarId)}
                             onHover={(hovering) =>
                                 hoverSystem(hovering ? system.mapStarId : null)

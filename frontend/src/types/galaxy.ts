@@ -64,7 +64,8 @@ export const FACTION_SHADES = {
     empire:   ['#0a1233', '#1a2d66', '#2244aa', '#3355cc', '#4466ff'] as const,
     alliance: ['#330a0a', '#661a1a', '#aa2222', '#cc3333', '#ff4444'] as const,
     neutral:  ['#1a1a1a', '#333333', '#555555', '#777777', '#999999'] as const,
-    fezzan:   ['#1a1509', '#332a12', '#665421', '#997a30', '#ccaa44'] as const,
+    // Fezzan: neutral gray palette (cool-tinted) per design direction
+    fezzan:   ['#17181c', '#2c2e36', '#4a4d5a', '#6b6e7e', '#9598a8'] as const,
     rebel:    ['#1a0d00', '#331a00', '#663300', '#994d00', '#cc6600'] as const,
 } as const;
 
@@ -108,7 +109,7 @@ export const FACTION_REGION_COLORS = {
     VACANT: '#444444',      // 공백지 (unoccupied)
     EMPIRE: '#5a6ee0',      // 은하제국 (blue)
     ALLIANCE: '#d06878',    // 자유행성동맹 (pink/red)
-    FEZZAN: '#9898a0',      // 페잔 자치령 (gray)
+    FEZZAN: '#8d90a0',      // 페잔 자치령 (cool gray)
     REBEL: '#e0a830',       // 반군/독립세력 (amber)
 } as const;
 
@@ -117,7 +118,7 @@ export const FACTION_GRADIENT_COLORS = {
     VACANT: { inner: '#666666', outer: '#333333' },
     EMPIRE: { inner: '#8298ff', outer: '#4a5cc0' },
     ALLIANCE: { inner: '#ff96aa', outer: '#c86478' },
-    FEZZAN: { inner: '#c8c8d2', outer: '#9696a0' },
+    FEZZAN: { inner: '#b4b6c2', outer: '#7a7d8a' },
     REBEL: { inner: '#ffcc55', outer: '#c08820' },
 } as const;
 
@@ -187,3 +188,15 @@ export const FORTRESS_NAMES: Record<FortressType, string> = {
     RENTENBERG: '렌텐베르크 요새',
     GARMISCH: '가르미슈 요새',
 };
+
+/**
+ * Capital star systems (mapStarId) that render larger on the galaxy map.
+ * - 42: Valhalla (발할라) — Galactic Empire capital
+ * - 36: Barat (바라트) — Free Planets Alliance capital (Heinessen)
+ * - 64: Phezzan (페잔) — Fezzan Dominion capital
+ */
+export const CAPITAL_STAR_IDS: ReadonlySet<number> = new Set([42, 36, 64]);
+
+export function isCapitalStar(mapStarId: number): boolean {
+    return CAPITAL_STAR_IDS.has(mapStarId);
+}
