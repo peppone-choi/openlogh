@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
 status: executing
-stopped_at: Completed 14-08-PLAN.md
-last_updated: "2026-04-09T11:04:38.798Z"
+stopped_at: Completed 14-03-PLAN.md (parallel Wave 2)
+last_updated: "2026-04-09T11:06:07.810Z"
 last_activity: 2026-04-09 -- Plan 14-07 completed in parallel Wave 1 (dnd-kit deps)
 progress:
   total_phases: 22
   completed_phases: 17
   total_plans: 115
-  completed_plans: 95
+  completed_plans: 96
   percent: 77
 ---
 
@@ -82,6 +82,7 @@ Progress: [████████░░] 77%
 | Phase 14 P02 | 25 min | 1 tasks | 3 files |
 | Phase 14-frontend-integration P06 | 6min | 1 tasks | 4 files |
 | Phase 14 P08 | 6min | 2 tasks | 9 files |
+| Phase 14 P03 | 40min | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -159,6 +160,8 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-08: Battle page (감찰부) BattleCloseView takeover removed outright — tactical rendering centralized on /tactical via BattleMap.tsx per D-26; 감찰부 stays a pure war-status admin page (D-08-01)
 - [Phase 14]: Plan 14-08: no-r3f-imports test uses Node built-in fs.readdirSync walker (not globSync from glob pkg); package.json path math = join(__dirname, '..', '..', 'package.json') — 2 levels up, not 3 (D-08-02, D-08-03)
 - [Phase 14]: Plan 14-08: @react-three/fiber + @react-three/drei + three + @types/three fully removed from frontend/package.json (48 transitive pkgs dropped from lockfile); regression guard flipped from Wave 0 tolerance to strict expect(offenders).toEqual([])
+- [Phase 14]: Plan 14-03: TacticalUnit.sensorRange cached field recomputed per tick from SensorRangeFormula (internal object, D-19 anchors: base=150, min=30, max=500, slider=17, injury=0.7); toUnitDto reads cached field replacing 14-01 inline DetectionCapability-based formula
+- [Phase 14]: Plan 14-03: Top-level computeSensorRange() wrapper exposes private SensorRangeFormula object to same-package tests without reflection; TDD RED+GREEN compressed into single commit (Wave 2 parallel-safe pattern from 14-01) to avoid wedging shared :game-app:compileTestKotlin on other executors
 
 ### Pending Todos
 
@@ -173,6 +176,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T11:04:38.788Z
-Stopped at: Completed 14-08-PLAN.md
+Last session: 2026-04-09T11:06:07.802Z
+Stopped at: Completed 14-03-PLAN.md (parallel Wave 2)
 Resume file: None
