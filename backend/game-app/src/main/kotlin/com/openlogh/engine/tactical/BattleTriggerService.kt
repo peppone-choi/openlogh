@@ -1,16 +1,20 @@
 package com.openlogh.engine.tactical
 
+import com.openlogh.engine.tactical.ai.MissionObjective
 import com.openlogh.entity.Fleet
 import com.openlogh.entity.TacticalBattle
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
+import com.openlogh.model.OperationStatus
 import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.OperationPlanRepository
 import com.openlogh.repository.StarSystemRepository
 import com.openlogh.repository.TacticalBattleRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Detects when opposing fleets occupy the same star system and triggers
@@ -22,6 +26,7 @@ class BattleTriggerService(
     private val officerRepository: OfficerRepository,
     private val starSystemRepository: StarSystemRepository,
     private val tacticalBattleRepository: TacticalBattleRepository,
+    private val operationPlanRepository: OperationPlanRepository,
 ) {
     private val log = LoggerFactory.getLogger(BattleTriggerService::class.java)
 
@@ -196,6 +201,30 @@ class BattleTriggerService(
             buildCommandHierarchy(commander.officerId, defenderUnits, officerRanks)
         } else null
 
+        // Phase 12 D-07: Populate missionObjectiveByFleetId from OperationPlanRepository.
+        // Participants receive their operation's objective; non-participants receive
+        // MissionObjective.defaultForPersonality(unit.personality). A fleet's presence
+        // in operationParticipantFleetIds gates the Plan 12-04 merit bonus.
+        val activeOps = operationPlanRepository
+            .findBySessionIdAndStatus(battle.sessionId, OperationStatus.ACTIVE)
+        val pendingOps = operationPlanRepository
+            .findBySessionIdAndStatus(battle.sessionId, OperationStatus.PENDING)
+        val allOps = activeOps + pendingOps
+
+        val missionMap: MutableMap<Long, MissionObjective> = ConcurrentHashMap()
+        val operationParticipants: MutableSet<Long> = java.util.Collections.newSetFromMap(
+            ConcurrentHashMap<Long, Boolean>(),
+        )
+        for (unit in units) {
+            val op = allOps.firstOrNull { it.participantFleetIds.contains(unit.fleetId) }
+            if (op != null) {
+                missionMap[unit.fleetId] = op.objective
+                operationParticipants.add(unit.fleetId)
+            } else {
+                missionMap[unit.fleetId] = MissionObjective.defaultForPersonality(unit.personality)
+            }
+        }
+
         return TacticalBattleState(
             battleId = battle.id,
             starSystemId = battle.starSystemId,
@@ -206,6 +235,8 @@ class BattleTriggerService(
             fortressFactionId = fortressFactionId,
             attackerHierarchy = attackerHierarchy,
             defenderHierarchy = defenderHierarchy,
+            missionObjectiveByFleetId = missionMap,
+            operationParticipantFleetIds = operationParticipants,
         )
     }
 

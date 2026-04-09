@@ -23,3 +23,16 @@ Example failing tests:
 - Running only plan-12-01-targeted tests produces `BUILD SUCCESSFUL` with 7/7 passing.
 
 **Scope decision:** Out of scope for Plan 12-01 (per execute-plan deviation rules scope boundary). These failures belong to the broader legacy cleanup effort and should be addressed by a dedicated cleanup plan (likely in a future milestone) or by the phases that are actively rewriting those modules.
+
+## Plan 12-03 (2026-04-09)
+
+### Pre-existing test failure: `DetectionServiceTest.commandRange increases by expansionRate each tick up to maxRange`
+
+**Failure:** `AssertionFailedError at DetectionServiceTest.kt:176 — commandRange should cap at maxRange=100.0 after many ticks, got 7.0`
+
+**Verification that this is pre-existing (not caused by Plan 12-03):**
+Ran the exact failing test against the pre-Plan 12-03 engine code by restoring `TacticalBattleEngine.kt` + `TacticalBattleEngineTest.kt` from `git show 645459a4^` (the commit immediately before my Task 1). Same failure, same line, same `got 7.0` value. The test fails identically with and without my Step 0.6 read-through change.
+
+**Root cause (unrelated to Plan 12-03):** The test seeds `commandRange = CommandRange(currentRange = 0.0, maxRange = 100.0, expansionRate = 1.0)` then expects `currentRange` to reach `100.0` after 300 ticks. The runtime value plateaus at `7.0`, suggesting either (a) CRC expansion is capped by some other constant, or (b) the updateCommandRange branch is short-circuiting for idle units. Neither code path is touched by Plan 12-03.
+
+**Scope decision:** Out of scope for Plan 12-03. Belongs to whatever phase last modified `CrcValidator` / `updateCommandRange` (Phase 9 CRC work, ref commit `f7612aa9` area). A Phase 9 regression or a Phase 11 TacticalAI retreat interaction are the most likely root causes, but investigating either is beyond my plan's charter.

@@ -2,11 +2,14 @@ package com.openlogh.service
 
 import com.openlogh.dto.*
 import com.openlogh.engine.tactical.*
+import com.openlogh.engine.tactical.ai.MissionObjective
+import com.openlogh.entity.OperationPlan
 import com.openlogh.entity.TacticalBattle
 import com.openlogh.model.BattlePhase
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
 import com.openlogh.model.InjuryEvent
+import com.openlogh.model.OperationStatus
 import com.openlogh.model.UnitStance
 import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OfficerRepository
@@ -78,6 +81,45 @@ class TacticalBattleService(
         broadcastBattleState(battle.sessionId, state, battle)
 
         return battle
+    }
+
+    /**
+     * Phase 12 D-08: Direct-call sync channel. Invoked by OperationPlanCommand /
+     * OperationCancelCommand / OperationLifecycleService whenever an OperationPlan
+     * is created, updated, cancelled, or transitions state. Updates every
+     * currently-active TacticalBattleState in place so in-flight battles see the
+     * new mission objective (or removal on CANCELLED) without needing a DB
+     * round-trip from the tick loop.
+     *
+     * Thread safety: both TacticalBattleState.missionObjectiveByFleetId and
+     * operationParticipantFleetIds are ConcurrentHashMap-backed — the tick loop
+     * reads at Step 0.6 while this method writes from command / scheduler threads.
+     *
+     * COMPLETED intentionally leaves the map untouched: a completed operation
+     * only affects future battles and merit credit filtering; current battles
+     * continue to respect the objective until they end naturally.
+     */
+    fun syncOperationToActiveBattles(operation: OperationPlan) {
+        for ((_, state) in activeBattles) {
+            when (operation.status) {
+                OperationStatus.CANCELLED -> {
+                    for (fleetId in operation.participantFleetIds) {
+                        state.missionObjectiveByFleetId.remove(fleetId)
+                        state.operationParticipantFleetIds.remove(fleetId)
+                    }
+                }
+                OperationStatus.PENDING, OperationStatus.ACTIVE -> {
+                    for (fleetId in operation.participantFleetIds) {
+                        state.missionObjectiveByFleetId[fleetId] = operation.objective
+                        state.operationParticipantFleetIds.add(fleetId)
+                    }
+                }
+                OperationStatus.COMPLETED -> {
+                    // Leave the mission in place until the battle ends naturally;
+                    // COMPLETED only affects future battles and merit credit filtering.
+                }
+            }
+        }
     }
 
     /**
