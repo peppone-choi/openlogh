@@ -9,7 +9,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { frontApi } from '@/lib/gameApi';
 import { subscribeWebSocket } from '@/lib/websocket';
 import type { FrontInfoResponse } from '@/types';
-import { MapViewer } from '@/components/game/map-viewer';
+import { GalaxyMap } from '@/components/galaxy/GalaxyMap';
 import { CommandPanel } from '@/components/game/command-panel';
 import { LoadingState } from '@/components/game/loading-state';
 import { Button } from '@/components/ui/8bit/button';
@@ -145,7 +145,6 @@ export function GameDashboard() {
     if (loading) return <LoadingState />;
 
     const global = frontInfo?.global;
-    const mapCode = (currentWorld.config as Record<string, string>)?.mapCode ?? 'che';
 
     return (
         <div id="container" className="bg-[#0a0e1a] text-gray-200">
@@ -255,7 +254,7 @@ export function GameDashboard() {
                         style={{ aspectRatio: '700 / 500' }}
                         data-tutorial="map-viewer"
                     >
-                        <MapViewer worldId={currentWorld.id} mapCode={mapCode} />
+                        <GalaxyMap sessionId={currentWorld.id} compact />
                     </div>
                     <div className="flex-1 overflow-y-auto lg:max-h-[500px]">
                         {myOfficer && (

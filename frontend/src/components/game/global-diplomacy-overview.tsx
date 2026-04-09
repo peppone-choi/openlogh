@@ -3,7 +3,7 @@
 import { Map as MapIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/8bit/card';
 import { NationBadge } from '@/components/game/nation-badge';
-import { MapViewer } from '@/components/game/map-viewer';
+import { GalaxyMap } from '@/components/galaxy/GalaxyMap';
 import type { City, Diplomacy, Nation } from '@/types';
 
 const STATE_LABELS: Record<string, string> = {
@@ -93,7 +93,7 @@ export function GlobalDiplomacyOverview({
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <MapViewer worldId={worldId} compact />
+                        <GalaxyMap sessionId={worldId} compact hideDetailPanel interactive={false} />
                     </CardContent>
                 </Card>
             )}

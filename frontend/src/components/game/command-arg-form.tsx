@@ -10,7 +10,7 @@ import { useWorldStore } from '@/stores/worldStore';
 import type { City, CommandArg, General, Nation } from '@/types';
 import { CITY_LEVEL_NAMES } from '@/lib/game-utils';
 // CrewTypeBrowser, EquipmentBrowser, DeploymentSelector removed (삼국지 컴포넌트 삭제 — Phase 06-08)
-import { MapViewer } from './map-viewer';
+import { GalaxyMap } from '@/components/galaxy/GalaxyMap';
 
 /** Arg schema for each command that requires user input */
 type ArgField =
@@ -630,10 +630,11 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
                             </select>
                         </div>
                         <div className="w-full max-w-lg mx-auto overflow-hidden rounded">
-                            <MapViewer
-                                worldId={currentWorld?.id ?? 0}
+                            <GalaxyMap
+                                sessionId={currentWorld?.id ?? 0}
                                 compact
-                                onCitySelect={(cityId: number) => setValue(field.key, cityId.toString())}
+                                hideDetailPanel
+                                onSystemSelect={(mapStarId: number) => setValue(field.key, mapStarId.toString())}
                             />
                         </div>
                     </div>
