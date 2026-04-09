@@ -1,5 +1,6 @@
 package com.openlogh.engine.tactical
 
+import com.openlogh.engine.tactical.ai.MissionObjective
 import com.openlogh.model.EnergyAllocation
 import com.openlogh.model.Formation
 import com.openlogh.model.UnitStance
@@ -288,5 +289,90 @@ class TacticalBattleEngineTest {
         assertTrue(largeUnit.isFlagship,
             "ships 최대 유닛(fleetId=3, ships=200)이 기함으로 승격되어야 함")
         assertFalse(smallUnit.isFlagship, "소규모 부대는 기함으로 승격되지 않아야 함")
+    }
+
+    // ── Phase 12 Plan 03: mission objective read-through cache (Step 0.6) ──
+
+    /**
+     * Phase 12 D-06/D-09: Step 0.6 read-through refresh.
+     * When `state.missionObjectiveByFleetId[fleetId]` is populated, the engine must
+     * propagate it into `unit.missionObjective` at tick start, BEFORE TacticalAIRunner
+     * consumes it (TacticalAIRunner.kt:77).
+     */
+    @Test
+    fun `mission read through refreshes unit objective at tick start`() {
+        val engine = TacticalBattleEngine()
+        val unit = TacticalUnit(
+            fleetId = 42L, officerId = 101L, officerName = "테스트",
+            factionId = 1L, side = BattleSide.ATTACKER,
+            posX = 100.0, posY = 300.0,
+            hp = 1000, maxHp = 1000, ships = 300, maxShips = 300,
+            training = 80, morale = 80,
+            leadership = 50, command = 50, intelligence = 50,
+            mobility = 50, attack = 50, defense = 50,
+            missionObjective = MissionObjective.DEFENSE,
+        )
+        // At least one opposing unit so the engine tick does not fall out
+        // of combat state. Place it far away to avoid interference.
+        val enemy = TacticalUnit(
+            fleetId = 99L, officerId = 201L, officerName = "적",
+            factionId = 2L, side = BattleSide.DEFENDER,
+            posX = 900.0, posY = 300.0,
+            hp = 1000, maxHp = 1000, ships = 300, maxShips = 300,
+            training = 80, morale = 80,
+            leadership = 50, command = 50, intelligence = 50,
+            mobility = 50, attack = 50, defense = 50,
+        )
+        val state = TacticalBattleState(
+            battleId = 1L, starSystemId = 100L,
+            units = mutableListOf(unit, enemy),
+        )
+        state.missionObjectiveByFleetId[42L] = MissionObjective.CONQUEST
+
+        engine.processTick(state, Random(0))
+
+        assertEquals(
+            MissionObjective.CONQUEST,
+            unit.missionObjective,
+            "Step 0.6 must propagate map value into unit.missionObjective before AI runs",
+        )
+    }
+
+    /**
+     * Phase 12 D-10: Non-participant fleets (not present in the map) keep their
+     * existing missionObjective — Step 0.6 absence means no mutation.
+     */
+    @Test
+    fun `non_participant_uses_default`() {
+        val engine = TacticalBattleEngine()
+        val unit = TacticalUnit(
+            fleetId = 77L, officerId = 101L, officerName = "NP",
+            factionId = 1L, side = BattleSide.ATTACKER,
+            posX = 100.0, posY = 300.0,
+            hp = 1000, maxHp = 1000, ships = 300, maxShips = 300,
+            training = 80, morale = 80,
+            leadership = 50, command = 50, intelligence = 50,
+            mobility = 50, attack = 50, defense = 50,
+            missionObjective = MissionObjective.SWEEP,  // pre-seeded — should not change
+        )
+        val enemy = TacticalUnit(
+            fleetId = 88L, officerId = 201L, officerName = "E",
+            factionId = 2L, side = BattleSide.DEFENDER,
+            posX = 900.0, posY = 300.0,
+            hp = 1000, maxHp = 1000, ships = 300, maxShips = 300,
+            training = 80, morale = 80,
+            leadership = 50, command = 50, intelligence = 50,
+            mobility = 50, attack = 50, defense = 50,
+        )
+        val state = TacticalBattleState(
+            battleId = 1L, starSystemId = 100L,
+            units = mutableListOf(unit, enemy),
+        )
+        // Intentionally DO NOT add fleetId=77 to state.missionObjectiveByFleetId.
+
+        engine.processTick(state, Random(0))
+
+        // Step 0.6 absence = no mutation. Pre-seeded SWEEP preserved.
+        assertEquals(MissionObjective.SWEEP, unit.missionObjective)
     }
 }

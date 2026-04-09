@@ -12,6 +12,7 @@ import com.openlogh.model.ShipSubtype
 import com.openlogh.model.TacticalWeaponType
 import com.openlogh.model.UnitStance
 import com.openlogh.service.ShipStatRegistry
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.math.*
 import kotlin.random.Random
@@ -192,6 +193,22 @@ data class TacticalBattleState(
     /** Connected player officer IDs for online status tracking (Phase 9: priority ordering) */
     val connectedPlayerOfficerIds: MutableSet<Long> = mutableSetOf(),
 
+    /**
+     * Phase 12 D-06/D-09: SoT for mission objective per fleet.
+     * Populated by BattleTriggerService at battle init and by
+     * TacticalBattleService.syncOperationToActiveBattles on OperationPlan CRUD.
+     * Read-through cached into TacticalUnit.missionObjective at tick start (Step 0.6).
+     * ConcurrentHashMap because the tick loop reads while the sync channel writes.
+     */
+    val missionObjectiveByFleetId: MutableMap<Long, com.openlogh.engine.tactical.ai.MissionObjective> = ConcurrentHashMap(),
+
+    /**
+     * Phase 12 D-11/D-13: Fleet IDs that belong to a real OperationPlan
+     * (NOT personality-defaulted). Used by TacticalBattleService.endBattle
+     * to filter merit bonus recipients. CANCELLED sync channel removes entries here.
+     */
+    val operationParticipantFleetIds: MutableSet<Long> = java.util.Collections.newSetFromMap(ConcurrentHashMap()),
+
     /** Current tick counter (alias for tickCount, used by command hierarchy logic) */
     var currentTick: Int = 0,
 )
@@ -251,6 +268,16 @@ class TacticalBattleEngine(
 
         // Step 0.5: Process out-of-CRC units (Phase 9 Plan 03)
         processOutOfCrcUnits(state)
+
+        // Step 0.6: Phase 12 — read-through mission objective cache refresh.
+        // Must run BEFORE TacticalAIRunner.processAITick because the runner reads
+        // unit.missionObjective at TacticalAIRunner.kt:77. Absence in the map leaves
+        // the existing value untouched (BattleTriggerService has already seeded it
+        // via defaultForPersonality for non-participants at battle init).
+        for (unit in state.units) {
+            if (!unit.isAlive) continue
+            state.missionObjectiveByFleetId[unit.fleetId]?.let { unit.missionObjective = it }
+        }
 
         // Step 0.7: Process tactical AI for NPC/offline units (Phase 11)
         TacticalAIRunner.processAITick(state)
