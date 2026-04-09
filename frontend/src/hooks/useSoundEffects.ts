@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-type SoundType = 'turnComplete' | 'battleStart' | 'newMessage' | 'notification';
+// Phase 14 Plan 14-15 (FE-04 / D-14 / D-15) — succession feedback sounds added.
+// `successionStart` = low descending triangle (tension); `flagshipDestroyed` =
+// deep sawtooth thud (impact). Both tunings were chosen to pair with the
+// 0.5s Konva ring flash + toast without overlapping the `battleStart` motif.
+export type SoundType =
+    | 'turnComplete'
+    | 'battleStart'
+    | 'newMessage'
+    | 'notification'
+    | 'successionStart'
+    | 'flagshipDestroyed';
 
 const FREQUENCIES: Record<SoundType, { freq: number[]; duration: number[]; type: OscillatorType }> = {
     turnComplete: {
@@ -17,6 +27,17 @@ const FREQUENCIES: Record<SoundType, { freq: number[]; duration: number[]; type:
     },
     newMessage: { freq: [880, 1047], duration: [80, 120], type: 'sine' },
     notification: { freq: [660, 880], duration: [100, 150], type: 'triangle' },
+    // Phase 14 FE-04 D-15 — new succession feedback sounds.
+    successionStart: {
+        freq: [330, 277, 220],
+        duration: [150, 150, 300],
+        type: 'triangle',
+    },
+    flagshipDestroyed: {
+        freq: [110, 82, 55],
+        duration: [100, 150, 400],
+        type: 'sawtooth',
+    },
 };
 
 const STORAGE_KEY = 'openlogh:sound-enabled';

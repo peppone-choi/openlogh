@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { toast } from 'sonner';
 import type {
     TacticalBattle,
     TacticalUnit,
@@ -14,6 +15,11 @@ import {
     computeVisibleEnemies,
     updateLastSeenEnemyPositions,
 } from '@/lib/fogOfWar';
+import { playSoundEffect } from '@/hooks/useSoundEffects';
+
+// Phase 14 FE-04 / D-14 — how long a flagship-destroyed ring flash stays on
+// the Konva layer (wall-clock millis, pruned on the next onBattleTick).
+const FLAGSHIP_FLASH_DURATION_MS = 500;
 
 /**
  * Phase 14 D-20 — last-seen ghost record for the fog-of-war layer (14-11).
@@ -155,6 +161,83 @@ export const useTacticalStore = create<TacticalState>((set, get) => ({
                 );
             }
 
+            // ── Phase 14 FE-04 (14-15) — succession feedback event processing ──
+            //
+            // Start from the previous state (prune expired flashes by
+            // wall-clock), then walk this tick's events to register new flashes,
+            // toggle succession bookkeeping, fire sounds + Sonner toasts.
+            //
+            // Per D-13..D-16 / UI-SPEC Section D:
+            //   * FLAGSHIP_DESTROYED  → 0.5s ring flash + 'flagshipDestroyed' sfx
+            //   * SUCCESSION_STARTED  → bookkeeping add + 'successionStart' sfx
+            //                           + destructive toast ("기함 격침 …")
+            //   * SUCCESSION_COMPLETED → bookkeeping remove + success toast
+            //                            ("지휘 인수 …")
+            //   * JAMMING_ACTIVE      → (state-only; CommandHierarchyDto
+            //                           carries the persistent flag. 14-15 does
+            //                           not fire a toast for this; 14-17's
+            //                           comm-jam indicator handles it.)
+            const flashExpiry = now + FLAGSHIP_FLASH_DURATION_MS;
+            const prunedFlashes = state.activeFlagshipDestroyedFleetIds.filter(
+                (entry) => entry.expiresAt > now,
+            );
+            const newFlashes = [...prunedFlashes];
+            let newSuccessions = [...state.activeSuccessionFleetIds];
+
+            for (const ev of data.events) {
+                if (ev.type === 'FLAGSHIP_DESTROYED' && ev.sourceUnitId) {
+                    // De-dup by fleetId + keep only the newest expiry.
+                    const existingIdx = newFlashes.findIndex(
+                        (f) => f.fleetId === ev.sourceUnitId,
+                    );
+                    if (existingIdx >= 0) {
+                        newFlashes[existingIdx] = {
+                            fleetId: ev.sourceUnitId,
+                            expiresAt: flashExpiry,
+                        };
+                    } else {
+                        newFlashes.push({
+                            fleetId: ev.sourceUnitId,
+                            expiresAt: flashExpiry,
+                        });
+                    }
+                    playSoundEffect('flagshipDestroyed');
+                    continue;
+                }
+                if (ev.type === 'SUCCESSION_STARTED' && ev.sourceUnitId) {
+                    if (!newSuccessions.includes(ev.sourceUnitId)) {
+                        newSuccessions.push(ev.sourceUnitId);
+                    }
+                    playSoundEffect('successionStart');
+                    // D-13 Korean copy from UI-SPEC Section D Phase 1c.
+                    const detail = ev.detail && ev.detail.length > 0
+                        ? ev.detail
+                        : '사령관 전사';
+                    toast.warning('기함 격침 — ' + detail + ', 30틱 후 지휘권이 승계됩니다.', {
+                        id: 'succ-' + ev.sourceUnitId,
+                        duration: 6000,
+                    });
+                    continue;
+                }
+                if (ev.type === 'SUCCESSION_COMPLETED') {
+                    // targetUnitId = old commander fleetId (removed from active list)
+                    // sourceUnitId = new commander fleetId (future FlagshipFlash target)
+                    if (ev.targetUnitId) {
+                        newSuccessions = newSuccessions.filter(
+                            (id) => id !== ev.targetUnitId,
+                        );
+                    }
+                    // D-16 Korean copy from UI-SPEC Section D Phase 3b.
+                    const detail = ev.detail && ev.detail.length > 0
+                        ? ev.detail
+                        : '새 사령관';
+                    toast.success('지휘 인수 — ' + detail + '가 지휘권을 인수했습니다.', {
+                        duration: 4000,
+                    });
+                    continue;
+                }
+            }
+
             const nextBattle: TacticalBattle | null = prevBattle
                 ? {
                       ...prevBattle,
@@ -179,12 +262,9 @@ export const useTacticalStore = create<TacticalState>((set, get) => ({
                 myFormation: myUnit?.formation ?? state.myFormation,
                 // Phase 14 FE-05 (14-11) — fog ghosts computed above.
                 lastSeenEnemyPositions: lastSeen,
-                // 14-14 still owns succession bookkeeping.
-                activeSuccessionFleetIds: state.activeSuccessionFleetIds,
-                activeFlagshipDestroyedFleetIds:
-                    state.activeFlagshipDestroyedFleetIds.filter(
-                        (entry) => entry.expiresAt > now,
-                    ),
+                // Phase 14 FE-04 (14-15) — succession feedback bookkeeping.
+                activeSuccessionFleetIds: newSuccessions,
+                activeFlagshipDestroyedFleetIds: newFlashes,
             };
         });
     },
