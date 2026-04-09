@@ -71,3 +71,34 @@ Either:
 
 This is pre-existing breakage from before Phase 14 started — not a regression introduced by Wave 2 type-sync work.
 
+
+## Pre-existing DetectionServiceTest failure (found during 14-03 regression verification)
+
+Discovered while running `./gradlew :game-app:test --tests "com.openlogh.engine.tactical.*"` as the plan 14-03 regression check after Task 1 committed. Out of 247 tactical-package tests, **246 pass and 1 fails**:
+
+| Test | File | Error |
+| ---- | ---- | ----- |
+| `commandRange increases by expansionRate each tick up to maxRange` | `backend/game-app/src/test/kotlin/com/openlogh/engine/tactical/DetectionServiceTest.kt:176` | `expected: <100.0> but was: <6.0>` — after 301 ticks on a unit with `CommandRange(currentRange=0, maxRange=100, expansionRate=1.0)`, the currentRange only reached 6.0 instead of capping at 100.0. |
+
+### Why this is pre-existing (not caused by 14-03)
+
+1. **Git blame:** DetectionServiceTest.kt was last touched in commit `ec65d2f4 chore(11-03): sync test files from main for compilation` — well before any Phase 14 work. My 14-03 commit `8532a648` is the first Phase 14 modification touching the tactical engine file.
+2. **Logical isolation:** My change adds `unit.sensorRange = SensorRangeFormula.compute(unit)` AFTER the existing `updateCommandRange(unit)` call in the tick loop. The commandRange expansion path (`CommandRange.tick()` → `currentRange + expansionRate`) is entirely untouched by 14-03.
+3. **Root cause (likely):** Step 0.5 of the tick loop (`processOutOfCrcUnits`) runs BEFORE Step 1 (`updateCommandRange`), and `OutOfCrcBehavior.processOutOfCrcUnit` (Phase 9) may call `CommandRange.resetOnCommand()` on units whose commander is out of CRC. The test sets up a single unit with no sub-commander + a distant enemy, which likely triggers the OutOfCrc reset path on most ticks, preventing the currentRange from ever accumulating past ~6.
+4. **Test was never updated for Phase 9 CRC refactors:** the Phase 9 CRC gating landed well after DetectionServiceTest's last touch, and the test assertion still assumes the Phase 3 "no CRC gating" behavior.
+
+Plan 14-03's own test (`SensorRangeComputationTest.kt`) passes 5/5 at 100% in isolation.
+
+### Why not fixed here
+
+Plan 14-03 scope is strictly "add TacticalUnit.sensorRange field + per-tick SensorRangeFormula computation + DTO wiring". Fixing DetectionServiceTest's Phase 9 CRC-interaction assumption is a test-maintenance task belonging to whatever plan owns DetectionServiceTest (originally Phase 03, later touched by 08-02 and 11-03 chores).
+
+Per the GSD scope boundary:
+> Only auto-fix issues DIRECTLY caused by the current task's changes. Pre-existing warnings, linting errors, or failures in unrelated files are out of scope.
+
+### Suggested owner
+
+A future `/gsd:debug` session or Phase 9 follow-up plan should update `DetectionServiceTest > commandRange increases by expansionRate each tick up to maxRange` to either:
+1. Construct the test state so units are never flagged as OutOfCrc (e.g., place a flagship/commander within range), or
+2. Move the commandRange expansion assertion to `CrcValidatorTest` / `CommandRangeTest` where Phase 9 CRC context is authoritative, and delete it from DetectionServiceTest (whose scope is just the detection matrix).
+

@@ -225,9 +225,9 @@ Plans:
 - [ ] 14-03-PLAN.md — Backend — sensorRange field + computation + DTO wiring
 - [x] 14-04-PLAN.md — Backend — Operations WebSocket channel broadcast
 - [x] 14-05-PLAN.md — Wave 0 — Test scaffold stubs for all Phase 14 requirements
-- [ ] 14-06-PLAN.md — Frontend — TypeScript type sync with Phase 14 DTO extensions
+- [x] 14-06-PLAN.md — Frontend — TypeScript type sync with Phase 14 DTO extensions
 - [x] 14-07-PLAN.md — Frontend dependencies — add @dnd-kit, remove @react-three
-- [ ] 14-08-PLAN.md — Frontend — Remove R3F files + @react-three deps
+- [x] 14-08-PLAN.md — Frontend — Remove R3F files + @react-three deps
 - [ ] 14-09-PLAN.md — Frontend — CommandRangeCircle rewrite (server-driven, no local animation)
 - [ ] 14-10-PLAN.md — Frontend — BattleMap layer restructure + tacticalStore hierarchy reducer
 - [ ] 14-11-PLAN.md — Frontend — Fog-of-war reducer + FogLayer rendering
