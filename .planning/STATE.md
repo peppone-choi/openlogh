@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: 전술전 지휘체계 + AI
-status: verifying
-stopped_at: Phase 14 context gathered
-last_updated: "2026-04-09T06:18:41.036Z"
-last_activity: 2026-04-09
+status: Wave 0 scaffolds shipped; Wave 2-5 plans can begin
+stopped_at: Completed 14-05-PLAN.md (Wave 0 scaffolds)
+last_updated: "2026-04-09T10:22:42.914Z"
+last_activity: 2026-04-09 -- Plan 14-05 completed in parallel Wave 1
 progress:
   total_phases: 22
   completed_phases: 17
-  total_plans: 97
-  completed_plans: 88
-  percent: 0
+  total_plans: 115
+  completed_plans: 90
+  percent: 77
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-04-09
+Phase: 14 (frontend-integration) — EXECUTING (Wave 1 parallel)
+Plan: 14-05 complete (Wave 0 scaffolds) · 17 plans still incomplete
+Status: Wave 0 scaffolds shipped; Wave 2-5 plans can begin
+Last activity: 2026-04-09 -- Plan 14-05 completed in parallel Wave 1
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████████░░] 77%
 
 ## Performance Metrics
 
@@ -75,6 +75,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 12 P04 | 10min | 3 tasks | 12 files |
 | Phase 13-ai P01 | 6min | 2 tasks | 8 files |
 | Phase 13-ai P02 | 9min | 2 tasks | 2 files |
+| Phase 14-frontend-integration P05 | 8min | 2 tasks | 21 files |
+| Phase 14 P07 | 12min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -137,6 +139,10 @@ Recent decisions affecting current work:
 - [Phase 13-ai]: Plan 13-02: Synthetic enemy Fleet(id=-officerId, currentUnits=officer.ships/300) constructed from enemy Officer.ships when enemy FleetRepository not queryable without N+1
 - [Phase 13-ai]: Plan 13-02: StubCommandExecutor subclass pattern (mirrors CommandProposalServiceTest SuccessCommandExecutor) used because Mockito cannot stub Kotlin suspend functions without mockito-kotlin (Phase 12 D-17)
 - [Phase 13-ai]: Plan 13-02: 삼국지 legacy strings (급습/의병모집/필사즉생/strategicCmdLimit) fully removed from FactionAI and NationAITest per D-08
+- [Phase 14]: Plan 14-05: Wave 0 scaffold-first TDD — 15 Vitest stubs + 5 Playwright stubs + createFixtureBattle() factory created so every Wave 2-5 `<automated>` verify command points to an existing file (Nyquist compliance)
+- [Phase 14]: Plan 14-05: no-r3f-imports regression guard runs in Wave 0 tolerance mode (scanner asserts Array.isArray only); plan 14-08 will flip to `expect(offenders).toHaveLength(0)` after R3F removal
+- [Phase 14]: Plan 14-05: Fixture factory uses `as unknown as TacticalBattle` for hierarchy fields until plan 14-06 extends the TacticalBattle type; cast becomes redundant and removable then
+- [Phase 14]: Plan 14-05: Replaced suggested `glob` npm import with Node built-in `fs.readdirSync + statSync` recursive walk — glob is not in frontend/package.json and adding it was out of scope
 
 ### Pending Todos
 
@@ -146,10 +152,11 @@ None yet.
 
 - [Phase 8]: Exact field differences between TacticalCombatEngine.TacticalUnit and TacticalBattleEngine.TacticalUnit need a diff at kickoff
 - [Phase 8]: OperationPlan entity design decision needed: new table vs enriched JSONB
-- [Phase 14]: CRC rendering layer (Konva vs R3F) must be confirmed before UI work
+- [Phase 14]: CRC rendering layer (Konva vs R3F) must be confirmed before UI work — resolved by D-25 (R3F removed); blocked pending plan 14-08 execution
+- [Phase 14]: Pre-existing test failures logged to `.planning/phases/14-frontend-integration/deferred-items.md` — 7 failures in 3 files (command-select-form, game-dashboard, record-zone) unrelated to Wave 0 scope
 
 ## Session Continuity
 
-Last session: 2026-04-09T06:18:41.023Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-frontend-integration/14-CONTEXT.md
+Last session: 2026-04-09T10:20:42.638Z
+Stopped at: Completed 14-05-PLAN.md (Wave 0 scaffolds)
+Resume file: None

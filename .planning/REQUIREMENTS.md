@@ -110,11 +110,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OPS-03 | Phase 12 | Complete |
 | SAI-01 | Phase 13 | Complete |
 | SAI-02 | Phase 13 | Complete |
-| FE-01 | Phase 14 | Pending |
-| FE-02 | Phase 14 | Pending |
-| FE-03 | Phase 14 | Pending |
-| FE-04 | Phase 14 | Pending |
-| FE-05 | Phase 14 | Pending |
+| FE-01 | Phase 14 | In Progress (scaffolds ready) |
+| FE-02 | Phase 14 | In Progress (scaffolds ready) |
+| FE-03 | Phase 14 | In Progress (scaffolds ready) |
+| FE-04 | Phase 14 | In Progress (scaffolds ready) |
+| FE-05 | Phase 14 | In Progress (scaffolds ready) |
 
 **Coverage:**
 - v2.1 requirements: 30 total
