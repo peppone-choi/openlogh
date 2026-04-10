@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.2
-milestone_name: upstream 버그픽스 동기화
-status: verifying
-stopped_at: Completed 22-03-PLAN.md (EconomyService per-resource event schedule split — 16 new tests, 64 total in regression, 0 failures)
-last_updated: "2026-04-10T06:39:20.414Z"
-last_activity: 2026-04-10
+milestone: v2.3
+milestone_name: Gin7 economy pipeline full port
+status: executing
+stopped_at: Completed 23-03-PLAN.md (Gin7EconomyService.processWarIncome port — 5 new tests, upstream a7a19cc3 body faithful, parallel with siblings 23-01/23-02)
+last_updated: "2026-04-10T07:10:23.354Z"
+last_activity: 2026-04-10 -- Phase 23 execution started
 progress:
-  total_phases: 23
+  total_phases: 24
   completed_phases: 19
-  total_plans: 118
-  completed_plans: 109
+  total_plans: 128
+  completed_plans: 110
   percent: 93
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** gin7 조직 시뮬레이션 — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 22 — upstream-bugfix-sync
+**Current focus:** Phase 23 — gin7-economy-port
 
 ## Current Position
 
-Phase: 22 (upstream-bugfix-sync) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
-Last activity: 2026-04-10
+Phase: 23 (gin7-economy-port) — EXECUTING
+Plan: 1 of 10
+Status: Executing Phase 23
+Last activity: 2026-04-10 -- Phase 23 execution started
 
 Progress: [█████████▓] 93%
 
@@ -96,6 +96,7 @@ Progress: [█████████▓] 93%
 | Phase 22 P01 | 5m | 2 tasks | 2 files |
 | Phase 22-upstream-bugfix-sync P22-02 | 7min | 2 tasks | 2 files |
 | Phase 22-upstream-bugfix-sync P22-03 | 14m | 4 tasks | 5 files |
+| Phase 23 P03 | 12m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -216,6 +217,7 @@ Recent decisions affecting current work:
 - [Phase 22]: Plan 22-02: Ported upstream a7a19cc3 probability gate to OfficerAI.doDonate (primary) + doNpcDedicate (secondary, LOGH-only) — excess funds/supplies branches now gated by rng < (res/req - 0.5) with reqX > 0 divide-by-zero guards
 - [Phase 22-upstream-bugfix-sync]: Plan 22-03: EconomyService per-resource event schedule ported (upstream a7a19cc3) — processIncomeEvent/processSemiAnnualEvent take resource: String parameter, ProcessIncomeAction/ProcessSemiAnnualAction read params['resource'], preUpdateMonthly/postUpdateMonthly explicit no-op KDoc, processWarIncomeEvent test entry point added, 1-arg overloads kept as @Deprecated bridges, 16 new tests RED→GREEN
 - [Phase 22-upstream-bugfix-sync]: Plan 22-03 Pipeline Investigation: LOGH does NOT exhibit upstream 12x drain bug today (legacy EconomyService stubs are no-ops, Gin7EconomyService.processMonthly handles tax+growth without salary outlay, no scenario JSON references ProcessIncome/ProcessSemiAnnual events). API contract still ported so future Phase 4 wire-up cannot reintroduce the bug — structural guard via require() validation + KDoc + RED-locked tests.
+- [Phase 23]: Plan 23-03: processWarIncome upstream body has no warState filter (plan text was wrong) — gate is planet.dead>0, formula is faction.funds+=dead/10 + planet.population+=(dead*0.2).coerceAtMost(headroom), plan EC-03 semantic text deferred to 23-10 cleanup
 
 ### Pending Todos
 
@@ -230,6 +232,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T06:39:03.969Z
-Stopped at: Completed 22-03-PLAN.md (EconomyService per-resource event schedule split — 16 new tests, 64 total in regression, 0 failures)
+Last session: 2026-04-10T07:10:18.487Z
+Stopped at: Completed 23-03-PLAN.md (Gin7EconomyService.processWarIncome port — 5 new tests, upstream a7a19cc3 body faithful, parallel with siblings 23-01/23-02)
 Resume file: None
