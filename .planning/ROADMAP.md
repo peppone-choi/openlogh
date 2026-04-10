@@ -3,7 +3,8 @@
 ## Milestones
 
 - ✅ **v2.0 gin7 게임 로직 전면 재작성** - Phases 1-7 (shipped 2026-04-06)
-- 🚧 **v2.1 전술전 지휘체계 + AI** - Phases 8-14 (in progress)
+- ✅ **v2.1 전술전 지휘체계 + AI** - Phases 8-14 (shipped 2026-04-09)
+- 🚧 **v2.2 upstream 버그픽스 동기화** - Phase 22 (in progress)
 
 ## Phases
 
@@ -29,6 +30,10 @@
 - [x] **Phase 12: 작전 연동** - 작전계획-전술전 연결, 작전 참가 부대 공적 보너스, 발령-도달 시작 (2026-04-09)
 - [x] **Phase 13: 전략 AI** - 진영 AI 자동 작전 수립, 전력 평가 기반 작전 유형 선택 (2026-04-09)
 - [x] **Phase 14: 프론트엔드 통합** - CRC 시각화, 분함대 패널, 권한 기반 UI 제한, 승계 피드백, 안개 효과 (2026-04-09)
+
+### v2.2 upstream 버그픽스 동기화
+
+- [ ] **Phase 22: upstream bugfix sync** - opensamguk `a7a19cc3` NPC 금 증발 버그 포팅 (FactionAI 산식, OfficerAI donate 게이트, EconomyService 스케줄 분리)
 
 ## Phase Details
 
@@ -240,9 +245,24 @@ Plans:
 - [x] 14-18-PLAN.md — Frontend — Battle end modal with merit breakdown (D-32..D-34)
 **UI hint**: yes
 
+### Phase 22: upstream bugfix sync
+**Goal**: upstream opensamguk 커밋 `a7a19cc3` (NPC 국가/장수 금 증발 버그)의 LOGH 도메인 포팅 완료 — NPC 팩션이 연간 12배 드레인 없이 정상 운영되는 것을 검증
+**Depends on**: Phase 14 (v2.1 milestone 완료)
+**Requirement IDs**: US-01, US-02, US-03
+**Must Haves**:
+- FactionAI.adjustTaxAndBill legacy-correct `sum(getBill(dedication))` 산식
+- OfficerAI.doDonate 확률 게이트 (excess funds/supplies 브랜치)
+- EconomyService 월별 스케줄 분리 (1월=funds, 7월=supplies) OR Gin7EconomyService 경로 포팅
+- 24틱 regression invariant: 빈 NPC 월드에서 total faction funds 감소 < 10%
+**Plans**:
+- [ ] 22-01-PLAN.md — FactionAI bill formula port
+- [ ] 22-02-PLAN.md — OfficerAI doDonate probability gate port
+- [ ] 22-03-PLAN.md — EconomyService schedule split port
+**UI hint**: no
+
 ## Progress
 
-**Execution Order:** 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14
+**Execution Order:** 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 22
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -260,3 +280,4 @@ Plans:
 | 12. 작전 연동 | v2.1 | 4/4 | Complete    | 2026-04-09 |
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
 | 14. 프론트엔드 통합 | v2.1 | 18/18 | Complete    | 2026-04-09 |
+| 22. upstream bugfix sync | v2.2 | 0/3 | In Progress    | - |
