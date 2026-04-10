@@ -203,9 +203,11 @@ class EconomyService @Autowired constructor(
      * ONCE per year per resource (gold in Jan, rice in Jul). Calling it monthly
      * results in the upstream 12x salary drain bug.
      *
-     * TODO Phase 4: wire to gin7 income calculation in Gin7EconomyService. Today
-     * this is a no-op stub that only validates the resource literal — sufficient
-     * for the action layer + scenario JSON contract.
+     * Phase 23-10 wired: routes to `Gin7EconomyService.processIncome(world, resource)`
+     * which implements the per-resource body + officer salary outlay (on the gold
+     * branch only). When `gin7EconomyService` is absent (legacy 7-arg test
+     * constructor), this is a no-op — production wiring always provides Gin7 via
+     * the 8-arg constructor / Spring DI.
      *
      * @param world the active session
      * @param resource "gold" (→ funds) or "rice" (→ supplies)
@@ -216,8 +218,12 @@ class EconomyService @Autowired constructor(
         require(resource == "gold" || resource == "rice") {
             "Invalid resource for processIncomeEvent: $resource (expected 'gold' or 'rice')"
         }
-        // TODO Phase 4: route to gin7EconomyService.processIncomeEvent(world, resource)
-        log.debug("[World {}] processIncomeEvent({}): stub (Phase 4 pending)", world.id, resource)
+        val gin7 = gin7EconomyService
+        if (gin7 != null) {
+            gin7.processIncome(world, resource)
+            return
+        }
+        log.debug("[World {}] processIncomeEvent({}): no gin7 wiring (legacy test ctor)", world.id, resource)
     }
 
     /**
@@ -249,6 +255,11 @@ class EconomyService @Autowired constructor(
      * triggered from both postUpdateMonthly AND the scenario event, resulting in 4x
      * decay. The fix splits the work per resource and runs each exactly once per year.
      *
+     * Phase 23-10 wired: routes to `Gin7EconomyService.processSemiAnnual(world, resource)`
+     * which applies the progressive-bracket decay to faction treasury and officer
+     * personal stockpiles for a single resource. When `gin7EconomyService` is
+     * absent (legacy 7-arg test constructor), this is a no-op.
+     *
      * @param world the active session
      * @param resource "gold" (→ funds decay) or "rice" (→ supplies decay)
      * @throws IllegalArgumentException if resource is anything other than "gold" or "rice"
@@ -258,8 +269,12 @@ class EconomyService @Autowired constructor(
         require(resource == "gold" || resource == "rice") {
             "Invalid resource for processSemiAnnualEvent: $resource (expected 'gold' or 'rice')"
         }
-        // TODO Phase 4: route to gin7EconomyService.processSemiAnnualEvent(world, resource)
-        log.debug("[World {}] processSemiAnnualEvent({}): stub (Phase 4 pending)", world.id, resource)
+        val gin7 = gin7EconomyService
+        if (gin7 != null) {
+            gin7.processSemiAnnual(world, resource)
+            return
+        }
+        log.debug("[World {}] processSemiAnnualEvent({}): no gin7 wiring (legacy test ctor)", world.id, resource)
     }
 
     /**
@@ -278,30 +293,47 @@ class EconomyService @Autowired constructor(
      * Public test entry point for war income processing.
      *
      * Upstream a7a19cc3 added this as a public method so tests can drive war-income
-     * generation without going through the full event scheduler. LOGH currently has
-     * no war-income calculation (Phase 4 TODO), so this is a no-op stub that exists
-     * solely to satisfy the upstream API contract.
+     * generation without going through the full event scheduler.
      *
      * Distinct from processIncomeEvent: war income is paid every month (not just
-     * Jan/Jul) per legacy hwe/sammo/Event/Action/ProcessWarIncome.php, and applies
-     * only to factions in war_state > 0.
+     * Jan/Jul) per legacy hwe/sammo/Event/Action/ProcessWarIncome.php. The actual
+     * upstream body is **casualty salvage** keyed on `planet.dead > 0` — not a
+     * `war_state > 0` gate as earlier KDoc stated. This Plan 23-03 correction is
+     * documented in Phase 23 CONTEXT.md (EC-03 port drift).
      *
-     * TODO Phase 4: wire to gin7EconomyService war-income calculation.
+     * Phase 23-10 wired: routes to `Gin7EconomyService.processWarIncome(world)`.
+     * When `gin7EconomyService` is absent (legacy 7-arg test constructor), this is
+     * a no-op.
      */
     @Transactional
     fun processWarIncomeEvent(world: SessionState) {
-        // TODO Phase 4: route to gin7EconomyService.processWarIncomeEvent(world)
-        log.debug("[World {}] processWarIncomeEvent: stub (Phase 4 pending)", world.id)
+        val gin7 = gin7EconomyService
+        if (gin7 != null) {
+            gin7.processWarIncome(world)
+            return
+        }
+        log.debug("[World {}] processWarIncomeEvent: no gin7 wiring (legacy test ctor)", world.id)
     }
 
     /**
-     * Public entry point for event-driven nation level update.
-     * TODO Phase 4: wire to gin7 faction rank calculation.
+     * Public entry point for event-driven faction rank update.
+     *
+     * Phase 23-10 wired: routes to `Gin7EconomyService.updateFactionRank(world)`.
+     * The actual formula is `count(planet.level >= 4)` against
+     * `FACTION_RANK_THRESHOLDS` (10-level table), **not** a `military_power +
+     * population` composite — the earlier plan text was a Plan 23-05 drift that
+     * Phase 23 CONTEXT.md documents. Method name retained as
+     * `updateNationLevelEvent` to preserve call-site compatibility
+     * (`UpdateNationLevelAction`, `EventServiceTest`).
      */
     @Transactional
     fun updateNationLevelEvent(world: SessionState) {
-        // TODO Phase 4: gin7EconomyService.updateNationLevelEvent(world)
-        log.debug("[World {}] updateNationLevelEvent: stub (Phase 4 pending)", world.id)
+        val gin7 = gin7EconomyService
+        if (gin7 != null) {
+            gin7.updateFactionRank(world)
+            return
+        }
+        log.debug("[World {}] updateNationLevelEvent: no gin7 wiring (legacy test ctor)", world.id)
     }
 
     // ── Supply state calculation (map-connectivity based — gin7 compatible) ──
@@ -401,10 +433,22 @@ class EconomyService @Autowired constructor(
      * 연초 통계: 국가 국력(power)·장수수(gennum) 갱신.
      * TurnService에서 매년 1월에 호출.
      *
-     * 국력 = (자원/100 + 기술 + 도시파워 + 장수능력 + 숙련/1000 + 경험공헌/100) / 10
+     * Phase 23-10: delegates to `Gin7EconomyService.processYearlyStatistics` when
+     * available. The legacy body below is retained as dead-for-production code
+     * for the pre-23-07 7-arg constructor test path; production wiring always
+     * routes through Gin7.
      */
     @Transactional
     fun processYearlyStatistics(world: SessionState) {
+        val gin7 = gin7EconomyService
+        if (gin7 != null) {
+            gin7.processYearlyStatistics(world)
+            return
+        }
+        processYearlyStatisticsLegacy(world)
+    }
+
+    private fun processYearlyStatisticsLegacy(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
         val nations = ports.allFactions().map { it.toEntity() }
         val cities = ports.allPlanets().map { it.toEntity() }
@@ -480,8 +524,21 @@ class EconomyService @Autowired constructor(
     }
 
     // ── Phase A3: processDisasterOrBoom ──
+    //
+    // Phase 23-10: delegates to `Gin7EconomyService.processDisasterOrBoom` when
+    // available. Legacy body retained as dead-for-production code (see KDoc
+    // on processYearlyStatistics above for rationale).
 
     fun processDisasterOrBoom(world: SessionState) {
+        val gin7 = gin7EconomyService
+        if (gin7 != null) {
+            gin7.processDisasterOrBoom(world)
+            return
+        }
+        processDisasterOrBoomLegacy(world)
+    }
+
+    private fun processDisasterOrBoomLegacy(world: SessionState) {
         val startYear = try {
             (world.config["startYear"] as? Number)?.toInt() ?: world.currentYear.toInt()
         } catch (e: Exception) {
@@ -644,8 +701,20 @@ class EconomyService @Autowired constructor(
     }
 
     // ── Phase A3: randomizeCityTradeRate ──
+    //
+    // Phase 23-10: delegates to `Gin7EconomyService.randomizePlanetTradeRate`
+    // when available. Legacy body retained as dead-for-production code.
 
     fun randomizeCityTradeRate(world: SessionState) {
+        val gin7 = gin7EconomyService
+        if (gin7 != null) {
+            gin7.randomizePlanetTradeRate(world)
+            return
+        }
+        randomizeCityTradeRateLegacy(world)
+    }
+
+    private fun randomizeCityTradeRateLegacy(world: SessionState) {
         val ports = worldPortFactory.create(world.id.toLong())
         val cities = ports.allPlanets().map { it.toEntity() }
         val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
