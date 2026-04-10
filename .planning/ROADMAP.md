@@ -5,7 +5,7 @@
 - ✅ **v2.0 gin7 게임 로직 전면 재작성** - Phases 1-7 (shipped 2026-04-06)
 - ✅ **v2.1 전술전 지휘체계 + AI** - Phases 8-14 (shipped 2026-04-09)
 - ✅ **v2.2 upstream 버그픽스 동기화** - Phase 22 (shipped 2026-04-10)
-- 🚧 **v2.3 Gin7 economy pipeline full port** - Phase 23 (in progress)
+- ✅ **v2.3 Gin7 economy pipeline full port** - Phase 23 (shipped 2026-04-10)
 
 ## Phases
 
@@ -38,7 +38,7 @@
 
 ### v2.3 Gin7 economy pipeline full port
 
-- [ ] **Phase 23: gin7 economy full port** - legacy EconomyService 9개 메서드 Gin7으로 전면 포팅, 파이프라인 wire-up, 24-tick drain invariant 활성화, 205 legacy 테스트 감사
+- [x] **Phase 23: gin7 economy full port** - legacy EconomyService 9개 메서드 Gin7으로 전면 포팅, 파이프라인 wire-up, 24-tick drain invariant 활성화, 221 legacy 테스트 감사 (2026-04-10)
 
 ## Phase Details
 

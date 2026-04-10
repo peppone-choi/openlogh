@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Gin7 economy pipeline full port
-status: executing
-stopped_at: Completed 23-07-PLAN.md (processYearlyStatistics port — 5/5 tests pass; sibling 23-08 cross-commit sweep recovered via audit-trail empty commit feefe0f8)
-last_updated: "2026-04-10T08:25:04.730Z"
+status: ready-for-next-milestone
+stopped_at: Completed 23-10-PLAN.md (pipeline wire-up + 24-tick drain invariant + 221-failure legacy audit — Phase 23 COMPLETE, v2.3 SHIPPED)
+last_updated: "2026-04-10T08:56:22Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 24
-  completed_phases: 19
+  completed_phases: 20
   total_plans: 128
-  completed_plans: 118
-  percent: 93
+  completed_plans: 128
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 ## Current Position
 
-Phase: 23 (gin7-economy-port) — EXECUTING
-Plan: 6 of 10
-Status: Ready to execute
+Phase: 23 (gin7-economy-port) — COMPLETE
+Plan: 10 of 10
+Status: Phase 23 complete — v2.3 milestone SHIPPED
 Last activity: 2026-04-10
 
-Progress: [█████████▓] 93%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -105,6 +105,7 @@ Progress: [█████████▓] 93%
 | Phase 23-gin7-economy-port P23-08 | 16min | 2 tasks | 2 files |
 | Phase 23 P07 | 34min | 2 tasks | 2 files |
 | Phase 23-gin7-economy-port P23-09 | 35m | 2 tasks | 2 files |
+| Phase 23-gin7-economy-port P23-10 | 13min | 6 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -240,10 +241,17 @@ Recent decisions affecting current work:
 - [Phase 23-gin7-economy-port]: Plan 23-04: Task 2 GREEN source edits to Gin7EconomyService.kt (payOfficerSalaries + BillFormula import + processIncome wiring) absorbed into sibling 23-05 commit d193138f via parallel-wave git-add race; canonical attribution in 23-04-SUMMARY.md
 - [Phase 23]: Plan 23-08: processDisasterOrBoom uses method-param kotlin.random.Random (not ctor DeterministicRng) — enables AlwaysZeroRandom/AlwaysHighRandom stubs + seeded runs. Korean event templates preserved verbatim; historyService/MessageRepository calls stubbed to logger.info with TODO(23-10) markers. Officer injury loop null-guarded for 2-arg test ctor parity.
 - [Phase 23]: Plan 23-07: processYearlyStatistics drops legacy dex1..dex5 term (LOGH has no ship-class-mastery fields) and uses LOGH 8-stat sum for statPower instead of 3-stat+npcBias — documented as Rule 1 LOGH domain adaptation
+- [Phase 23-gin7-economy-port]: Plan 23-10: Route legacy EconomyService stubs to Gin7 via optional nullable ctor param (8-arg prod ctor routes, 7-arg legacy test ctor falls through to retained *Legacy private helpers) — preserves pre-23 test compat while activating Gin7 under Spring DI
+- [Phase 23-gin7-economy-port]: Plan 23-10: Direct TickEngine invocation chosen over scenario event JSON because zero scenario data declares ProcessIncome/ProcessSemiAnnual events today (grep returned 0 matches in backend/shared/src/main/resources/data) — task checklist allowed this path, avoids scenario-data scope creep
+- [Phase 23-gin7-economy-port]: Plan 23-10: Monthly pipeline 9-step order — processMonthly → processIncome(res) → processSemiAnnual(res) → processWarIncome → updatePlanetSupplyState → processDisasterOrBoom → randomizePlanetTradeRate → [month==1: processYearlyStatistics, updateFactionRank] → broadcast; per-step try/catch isolates subsystem failures
+- [Phase 23-gin7-economy-port]: Plan 23-10: EconomyPipelineRegressionTest uses Mockito.thenAnswer with mutable list backing stores (not SpringBootTest) — 2.5s vs ~20s startup, mirrors Wave 1-3 Gin7 test pattern; 5/5 tests passed on first GREEN run (no iteration needed, pipeline already correct)
+- [Phase 23-gin7-economy-port]: Plan 23-10: Task 1 scope extended beyond the 4 named stubs to also route processYearlyStatistics/processDisasterOrBoom/randomizeCityTradeRate (Rule 2 — without these the turn-based InMemoryTurnProcessor path would split from realtime TickEngine path and drain invariant would only hold on one side)
+- [Phase 23-gin7-economy-port]: Plan 23-10: Full suite 1973 tests, 221 failures — all pre-existing legacy 삼국지 parity or Spring context harness issues, zero new failures from Phase 23. Categorized audit: 110 tests retireable with zero risk (COVERED+OBSOLETE), 104 need migration (MIGRATABLE+BROKEN), 7 out-of-scope
+- [Phase 23-gin7-economy-port]: Plan 23-10: REQUIREMENTS.md EC-03 corrected from warState>0 gate to planet.dead>0 casualty salvage; EC-05 corrected from military_power composite to count(planet.level>=4) threshold walk; EC-10 marked complete; all EC-01..EC-10 traceability set to Complete → v2.3 milestone SHIPPED
 
 ### Pending Todos
 
-None yet.
+None — Phase 23 complete. Ready for v2.4 milestone planning.
 
 ### Blockers/Concerns
 
