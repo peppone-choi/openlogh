@@ -257,7 +257,7 @@ Plans:
 **Plans**:
 - [x] 22-01-PLAN.md — FactionAI bill formula port
 - [x] 22-02-PLAN.md — OfficerAI doDonate probability gate port
-- [ ] 22-03-PLAN.md — EconomyService schedule split port
+- [x] 22-03-PLAN.md — EconomyService schedule split port
 **UI hint**: no
 
 ## Progress
@@ -280,4 +280,4 @@ Plans:
 | 12. 작전 연동 | v2.1 | 4/4 | Complete    | 2026-04-09 |
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
 | 14. 프론트엔드 통합 | v2.1 | 18/18 | Complete    | 2026-04-09 |
-| 22. upstream bugfix sync | v2.2 | 2/3 | In Progress|  |
+| 22. upstream bugfix sync | v2.2 | 3/3 | Complete   | 2026-04-10 |

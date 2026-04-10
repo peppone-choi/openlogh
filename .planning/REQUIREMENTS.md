@@ -66,7 +66,7 @@ Requirements for milestone v2.2: upstream opensamguk 버그픽스 동기화. Eac
 
 - [x] **US-01**: FactionAI.adjustTaxAndBill이 `sum(getBill(dedication))` 기반 legacy-correct 산식을 사용한다 (NPC 팩션 funds 드레인 버그 차단)
 - [x] **US-02**: OfficerAI.doDonate의 "excess resource" 브랜치들이 확률 게이트로 보호된다 (무조건 기부 버그 차단)
-- [ ] **US-03**: EconomyService의 월별 income/salary/decay 처리가 legacy 스케줄(1월=funds, 7월=supplies)로 분리되어 연간 12배 드레인이 제거된다
+- [x] **US-03**: EconomyService의 월별 income/salary/decay 처리가 legacy 스케줄(1월=funds, 7월=supplies)로 분리되어 연간 12배 드레인이 제거된다
 
 **Regression invariant:** 빈 NPC 월드를 24틱 실행해도 total faction funds 감소 < 10%
 

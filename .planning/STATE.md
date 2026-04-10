@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: upstream 버그픽스 동기화
-status: executing
-stopped_at: Completed 22-02-PLAN.md (OfficerAI.doDonate probability gate — primary + secondary sites gated, 4 new tests passing, 0 regressions)
-last_updated: "2026-04-10T06:17:32.651Z"
+status: verifying
+stopped_at: Completed 22-03-PLAN.md (EconomyService per-resource event schedule split — 16 new tests, 64 total in regression, 0 failures)
+last_updated: "2026-04-10T06:39:20.414Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 23
-  completed_phases: 18
+  completed_phases: 19
   total_plans: 118
-  completed_plans: 108
+  completed_plans: 109
   percent: 93
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 
 Phase: 22 (upstream-bugfix-sync) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-10
 
 Progress: [█████████▓] 93%
@@ -95,6 +95,7 @@ Progress: [█████████▓] 93%
 | Phase 14 P17 | 20min | 2 tasks | 7 files |
 | Phase 22 P01 | 5m | 2 tasks | 2 files |
 | Phase 22-upstream-bugfix-sync P22-02 | 7min | 2 tasks | 2 files |
+| Phase 22-upstream-bugfix-sync P22-03 | 14m | 4 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -213,6 +214,8 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-17: Task 1 files (galaxyStore, OperationsOverlay, OperationsSidePanel, GalaxyMap, OperationsOverlay.test, map-canvas) absorbed into sibling Wave 5 commit eb9112bb under feat(14-18): header due to parallel git-add race; Task 2 (command-panel 작전계획 button) committed cleanly at cbcc9b36 under feat(14-17). Canonical attribution lives in 14-17-SUMMARY.md — same pattern as 14-09/14-10/14-14/14-16.
 - [Phase 22]: Plan 22-01: getBillFromDedication arithmetic correction — plan listed 4400 for ded=10000 but legacy PHP formula yields 2400 (sqrt(10000)/10=10, *200+400). Test asserts the legacy-correct value.
 - [Phase 22]: Plan 22-02: Ported upstream a7a19cc3 probability gate to OfficerAI.doDonate (primary) + doNpcDedicate (secondary, LOGH-only) — excess funds/supplies branches now gated by rng < (res/req - 0.5) with reqX > 0 divide-by-zero guards
+- [Phase 22-upstream-bugfix-sync]: Plan 22-03: EconomyService per-resource event schedule ported (upstream a7a19cc3) — processIncomeEvent/processSemiAnnualEvent take resource: String parameter, ProcessIncomeAction/ProcessSemiAnnualAction read params['resource'], preUpdateMonthly/postUpdateMonthly explicit no-op KDoc, processWarIncomeEvent test entry point added, 1-arg overloads kept as @Deprecated bridges, 16 new tests RED→GREEN
+- [Phase 22-upstream-bugfix-sync]: Plan 22-03 Pipeline Investigation: LOGH does NOT exhibit upstream 12x drain bug today (legacy EconomyService stubs are no-ops, Gin7EconomyService.processMonthly handles tax+growth without salary outlay, no scenario JSON references ProcessIncome/ProcessSemiAnnual events). API contract still ported so future Phase 4 wire-up cannot reintroduce the bug — structural guard via require() validation + KDoc + RED-locked tests.
 
 ### Pending Todos
 
@@ -227,6 +230,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T06:17:32.640Z
-Stopped at: Completed 22-02-PLAN.md (OfficerAI.doDonate probability gate — primary + secondary sites gated, 4 new tests passing, 0 regressions)
+Last session: 2026-04-10T06:39:03.969Z
+Stopped at: Completed 22-03-PLAN.md (EconomyService per-resource event schedule split — 16 new tests, 64 total in regression, 0 failures)
 Resume file: None
