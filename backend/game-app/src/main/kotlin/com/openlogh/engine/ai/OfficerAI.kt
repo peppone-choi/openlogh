@@ -2384,25 +2384,30 @@ class OfficerAI(
         var donateGold = false
         var donateRice = false
 
-        // Check gold
+        // Check gold — legacy probability gate (PHP doNPC헌납 line 2841; upstream a7a19cc3)
         if (nation.funds < nationPolicy.reqNationGold && general.funds > reqGold * 1.5) {
-            if (rng.nextDouble() < (general.funds.toDouble() / reqGold - 0.5)) {
+            if (reqGold > 0 && rng.nextDouble() < (general.funds.toDouble() / reqGold - 0.5)) {
                 donateGold = true
             }
         }
-        // Excess gold even if nation doesn't need it
+        // Excess gold — still gated by probability (parity fix: previously unconditional)
         if (!donateGold && general.funds > reqGold * 5 && general.funds > 5000) {
-            donateGold = true
+            if (reqGold > 0 && rng.nextDouble() < (general.funds.toDouble() / reqGold - 0.5)) {
+                donateGold = true
+            }
         }
 
         // Check rice
         if (nation.supplies < nationPolicy.reqNationRice && general.supplies > reqRice * 1.5) {
-            if (rng.nextDouble() < (general.supplies.toDouble() / reqRice - 0.5)) {
+            if (reqRice > 0 && rng.nextDouble() < (general.supplies.toDouble() / reqRice - 0.5)) {
                 donateRice = true
             }
         }
+        // Excess rice — still gated by probability (parity fix: previously unconditional)
         if (!donateRice && general.supplies > reqRice * 5 && general.supplies > 5000) {
-            donateRice = true
+            if (reqRice > 0 && rng.nextDouble() < (general.supplies.toDouble() / reqRice - 0.5)) {
+                donateRice = true
+            }
         }
 
         // Emergency: nation rice is critically low
@@ -3936,10 +3941,13 @@ class OfficerAI(
                     continue
                 }
 
-                // Excess resources (5x threshold and >= 5000)
+                // Excess resources (5x threshold and >= 5000) — parity fix (upstream a7a19cc3):
+                // previously unconditional, now gated by the same legacy probability formula.
                 if (gRes >= reqD * 5 && gRes >= 5000) {
-                    val amount = gRes - reqD
-                    candidates.add(DonateCandidate(isGold, amount, amount))
+                    if (reqD > 0 && rng.nextDouble() < (gRes.toDouble() / reqD - 0.5)) {
+                        val amount = gRes - reqD
+                        candidates.add(DonateCandidate(isGold, amount, amount))
+                    }
                     continue
                 }
 
