@@ -255,7 +255,7 @@ Plans:
 - EconomyService 월별 스케줄 분리 (1월=funds, 7월=supplies) OR Gin7EconomyService 경로 포팅
 - 24틱 regression invariant: 빈 NPC 월드에서 total faction funds 감소 < 10%
 **Plans**:
-- [ ] 22-01-PLAN.md — FactionAI bill formula port
+- [x] 22-01-PLAN.md — FactionAI bill formula port
 - [ ] 22-02-PLAN.md — OfficerAI doDonate probability gate port
 - [ ] 22-03-PLAN.md — EconomyService schedule split port
 **UI hint**: no
@@ -280,4 +280,4 @@ Plans:
 | 12. 작전 연동 | v2.1 | 4/4 | Complete    | 2026-04-09 |
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
 | 14. 프론트엔드 통합 | v2.1 | 18/18 | Complete    | 2026-04-09 |
-| 22. upstream bugfix sync | v2.2 | 0/3 | In Progress    | - |
+| 22. upstream bugfix sync | v2.2 | 1/3 | In Progress|  |

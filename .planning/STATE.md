@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: 전술전 지휘체계 + AI
-status: completed
-stopped_at: Completed 14-17-PLAN.md (parallel Wave 5 — galaxy ops overlay + F1 + side panel + 작전계획 command-panel entry) — Phase 14 18/18 complete
-last_updated: "2026-04-09T13:07:28.049Z"
-last_activity: 2026-04-09
+milestone: v2.2
+milestone_name: upstream 버그픽스 동기화
+status: executing
+stopped_at: Completed 22-01-PLAN.md (FactionAI bill formula port)
+last_updated: "2026-04-10T06:14:21.900Z"
+last_activity: 2026-04-10
 progress:
-  total_phases: 22
+  total_phases: 23
   completed_phases: 18
-  total_plans: 115
-  completed_plans: 106
+  total_plans: 118
+  completed_plans: 107
   percent: 93
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-07)
 
 **Core value:** gin7 조직 시뮬레이션 — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
-**Current focus:** Phase 13 — ai
+**Current focus:** Phase 22 — upstream-bugfix-sync
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
-Status: All Wave 5 plans (14-17, 14-18) complete — Phase 14 frontend integration fully satisfied across FE-01..FE-05
-Last activity: 2026-04-09
+Phase: 22 (upstream-bugfix-sync) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-04-10
 
 Progress: [█████████▓] 93%
 
@@ -93,6 +93,7 @@ Progress: [█████████▓] 93%
 | Phase 14 P14 | 70min | 3 tasks | 8 files |
 | Phase 14 P18 | 12min | 1 tasks | 4 files |
 | Phase 14 P17 | 20min | 2 tasks | 7 files |
+| Phase 22 P01 | 5m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -209,6 +210,7 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-17: F1 + Esc bindings via useHotkeys disabled in publicMode (no session, no WebSocket); useHotkeys already preventDefault()s F1 so browser native help never pops
 - [Phase 14]: Plan 14-17: '작전계획' command-panel entry routes through existing /processing?command=작전계획 flow — no new endpoint, no new store action, mirrors recent-actions bar pattern for COMMAND_ARGS-form commands
 - [Phase 14]: Plan 14-17: Task 1 files (galaxyStore, OperationsOverlay, OperationsSidePanel, GalaxyMap, OperationsOverlay.test, map-canvas) absorbed into sibling Wave 5 commit eb9112bb under feat(14-18): header due to parallel git-add race; Task 2 (command-panel 작전계획 button) committed cleanly at cbcc9b36 under feat(14-17). Canonical attribution lives in 14-17-SUMMARY.md — same pattern as 14-09/14-10/14-14/14-16.
+- [Phase 22]: Plan 22-01: getBillFromDedication arithmetic correction — plan listed 4400 for ded=10000 but legacy PHP formula yields 2400 (sqrt(10000)/10=10, *200+400). Test asserts the legacy-correct value.
 
 ### Pending Todos
 
@@ -223,6 +225,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T12:25:00.000Z
-Stopped at: Completed 14-17-PLAN.md (parallel Wave 5 — galaxy ops overlay + F1 + side panel + 작전계획 command-panel entry) — Phase 14 18/18 complete
+Last session: 2026-04-10T06:14:14.861Z
+Stopped at: Completed 22-01-PLAN.md (FactionAI bill formula port)
 Resume file: None
