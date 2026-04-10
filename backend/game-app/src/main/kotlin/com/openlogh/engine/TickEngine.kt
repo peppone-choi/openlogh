@@ -173,6 +173,26 @@ class TickEngine(
 
     /**
      * Run the monthly pipeline: gin7 경제 파이프라인 (세율/납입 + 행성자원 성장) + broadcast.
+     *
+     * Phase 23-10: activates the legacy-correct per-resource event schedule
+     * directly on the TickEngine path (TickEngine drives the real-time/WebSocket
+     * realtime-mode sessions; [InMemoryTurnProcessor] drives the turn-based mode
+     * and already routes through EconomyService which now delegates to Gin7).
+     *
+     * Execution order within a month boundary:
+     *   1. Gin7 monthly base (tax on month 1/4/7/10, approval, planet growth)
+     *   2. Per-resource income event (month 1 → gold/funds, month 7 → rice/supplies)
+     *      — rice branch is a no-op until a future phase adds rice production
+     *   3. Per-resource semi-annual decay (month 1 → gold, month 7 → rice)
+     *   4. War income (every month — casualty salvage on planet.dead > 0)
+     *   5. Supply-state recompute (every month — BFS from capital, isolation decay)
+     *   6. Disaster/boom roll (every month, probabilistic)
+     *   7. Trade-rate randomization (every month, level-gated probability)
+     *   8. Yearly statistics refresh (month 1 only — military_power recompute)
+     *   9. Annual faction rank recalc (month 1 only — count(planet.level>=4))
+     *
+     * Every step is wrapped in try/catch so one subsystem failure does not
+     * block the others. Logging identifies the failing step for triage.
      */
     private fun runMonthlyPipeline(world: SessionState) {
         logger.info(
@@ -180,11 +200,85 @@ class TickEngine(
             world.id, world.currentYear, world.currentMonth
         )
 
-        // Gin7 경제 파이프라인: 세율/납입 + 행성자원 성장
+        val month = world.currentMonth.toInt()
+
+        // 1. Gin7 monthly base
         try {
             gin7EconomyService.processMonthly(world)
         } catch (e: Exception) {
-            logger.warn("Economy pipeline error for world {}: {}", world.id, e.message)
+            logger.warn("Gin7.processMonthly error for world {}: {}", world.id, e.message)
+        }
+
+        // 2. Per-resource income event — legacy month 1/7 schedule
+        if (month == 1) {
+            try {
+                gin7EconomyService.processIncome(world, "gold")
+            } catch (e: Exception) {
+                logger.warn("Gin7.processIncome(gold) error for world {}: {}", world.id, e.message)
+            }
+        } else if (month == 7) {
+            try {
+                gin7EconomyService.processIncome(world, "rice")
+            } catch (e: Exception) {
+                logger.warn("Gin7.processIncome(rice) error for world {}: {}", world.id, e.message)
+            }
+        }
+
+        // 3. Per-resource semi-annual decay — legacy month 1/7 schedule
+        if (month == 1) {
+            try {
+                gin7EconomyService.processSemiAnnual(world, "gold")
+            } catch (e: Exception) {
+                logger.warn("Gin7.processSemiAnnual(gold) error for world {}: {}", world.id, e.message)
+            }
+        } else if (month == 7) {
+            try {
+                gin7EconomyService.processSemiAnnual(world, "rice")
+            } catch (e: Exception) {
+                logger.warn("Gin7.processSemiAnnual(rice) error for world {}: {}", world.id, e.message)
+            }
+        }
+
+        // 4. War income — casualty salvage (every month)
+        try {
+            gin7EconomyService.processWarIncome(world)
+        } catch (e: Exception) {
+            logger.warn("Gin7.processWarIncome error for world {}: {}", world.id, e.message)
+        }
+
+        // 5. Supply-state recompute (every month)
+        try {
+            gin7EconomyService.updatePlanetSupplyState(world)
+        } catch (e: Exception) {
+            logger.warn("Gin7.updatePlanetSupplyState error for world {}: {}", world.id, e.message)
+        }
+
+        // 6. Disaster/boom roll (every month)
+        try {
+            gin7EconomyService.processDisasterOrBoom(world)
+        } catch (e: Exception) {
+            logger.warn("Gin7.processDisasterOrBoom error for world {}: {}", world.id, e.message)
+        }
+
+        // 7. Trade-rate randomization (every month)
+        try {
+            gin7EconomyService.randomizePlanetTradeRate(world)
+        } catch (e: Exception) {
+            logger.warn("Gin7.randomizePlanetTradeRate error for world {}: {}", world.id, e.message)
+        }
+
+        // 8. Yearly statistics + 9. Faction rank — annual (month 1)
+        if (month == 1) {
+            try {
+                gin7EconomyService.processYearlyStatistics(world)
+            } catch (e: Exception) {
+                logger.warn("Gin7.processYearlyStatistics error for world {}: {}", world.id, e.message)
+            }
+            try {
+                gin7EconomyService.updateFactionRank(world)
+            } catch (e: Exception) {
+                logger.warn("Gin7.updateFactionRank error for world {}: {}", world.id, e.message)
+            }
         }
 
         gameEventService.broadcastTurnAdvance(
