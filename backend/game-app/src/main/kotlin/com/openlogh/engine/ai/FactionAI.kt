@@ -18,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
+import kotlin.math.ceil
 import kotlin.math.sqrt
 import kotlin.random.Random
 
@@ -314,15 +315,28 @@ class FactionAI(
         }
     }
 
-    // TODO: This simplified tax/bill adjustment does NOT match PHP OfficerAI.php's
-    //  chooseTexRate/chooseGoldBillRate/chooseRiceBillRate formulas. The PHP-matching
-    //  implementations exist in OfficerAI.kt (chooseTexRate, chooseGoldBillRate,
-    //  chooseRiceBillRate) but are called from OfficerAI.chooseNationTurn() which is
-    //  currently NOT wired into TurnService. This method should be replaced by the
-    //  OfficerAI rate choosers once chooseNationTurn is integrated into the turn pipeline.
+    /**
+     * Simplified tax/bill adjustment. Not full legacy parity with
+     * chooseTexRate/chooseGoldBillRate/chooseRiceBillRate (which live in OfficerAI.kt
+     * and are invoked from chooseNationTurn), but uses the CORRECT legacy salary
+     * outcome formula so it no longer drains the treasury.
+     *
+     * Previously totalBill was computed as `(officers + planets) * faction.taxRate`
+     * which underestimated actual salary by ~4x. Fixed to use legacy
+     * `sum(getBill(dedication))` where `getBill(ded) = getDedLevel(ded) * 200 + 400`.
+     *
+     * Ported from upstream commit a7a19cc3 (NationAI.adjustTaxAndBill).
+     * Legacy reference: hwe/func_converter.php getBill() / getDedLevel().
+     */
     private fun adjustTaxAndBill(writePort: WorldWritePort, nation: Faction, nationCities: List<Planet>, nationGenerals: List<Officer>) {
         val totalResources = nation.funds + nation.supplies
-        val totalBill = (nationGenerals.size + nationCities.size) * nation.taxRate.toInt().coerceAtLeast(0)
+
+        // Legacy-correct total monthly salary outcome at taxRate=100 (== sum of per-officer bill).
+        // Filters out NPC graveyard officers (npcState=5) so they do not contribute to outlay.
+        val activeOfficers = nationGenerals.filter { it.npcState.toInt() != 5 }
+        val baseOutcome = activeOfficers.sumOf { getBillFromDedication(it.dedication) }
+        // Actual outcome at current tax rate (faction.taxRate is a % of baseOutcome).
+        val totalBill = (baseOutcome * nation.taxRate.toInt() / 100).coerceAtLeast(0)
 
         var changed = false
         var newRateTmp = nation.conscriptionRateTmp.toInt()
@@ -336,8 +350,8 @@ class FactionAI(
 
         var newBill = nation.taxRate.toInt()
         if (totalBill > 0) {
-            if (nation.funds < totalBill * 3 && newBill > 0) {
-                newBill = (newBill - 5).coerceAtLeast(0)
+            if (nation.funds < totalBill * 3 && newBill > 20) {
+                newBill = (newBill - 5).coerceAtLeast(20)
                 changed = true
             } else if (nation.funds > totalBill * 10 && newBill < 100) {
                 newBill = (newBill + 5).coerceAtMost(100)
@@ -347,9 +361,19 @@ class FactionAI(
 
         if (changed) {
             nation.conscriptionRateTmp = newRateTmp.coerceIn(0, 100).toShort()
-            nation.taxRate = newBill.coerceIn(0, 200).toShort()
+            nation.taxRate = newBill.coerceIn(20, 200).toShort()
             writePort.putFaction(nation.toSnapshot())
         }
+    }
+
+    /**
+     * Legacy hwe/func_converter.php getBill() / getDedLevel():
+     *   getBill(ded) = getDedLevel(ded) * 200 + 400
+     *   getDedLevel(ded) = clamp(ceil(sqrt(ded) / 10), 0, maxDedLevel=30)
+     */
+    private fun getBillFromDedication(dedication: Int): Int {
+        val dedLevel = ceil(sqrt(dedication.toDouble()) / 10.0).toInt().coerceIn(0, 30)
+        return dedLevel * 200 + 400
     }
 
     private fun selectRewardTarget(nationGenerals: List<Officer>, rng: Random): Officer? {
