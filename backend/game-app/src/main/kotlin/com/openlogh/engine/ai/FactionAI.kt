@@ -5,7 +5,9 @@ import com.openlogh.command.CommandExecutor
 import com.openlogh.engine.ai.strategic.FleetAllocator
 import com.openlogh.engine.ai.strategic.OperationTargetSelector
 import com.openlogh.engine.ai.strategic.StrategicPowerScorer
+import com.openlogh.engine.economy.BillFormula
 import com.openlogh.engine.turn.cqrs.persist.JpaWorldPortFactory
+import kotlin.math.sqrt
 import com.openlogh.engine.turn.cqrs.persist.WorldPorts
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
@@ -18,8 +20,6 @@ import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
-import kotlin.math.ceil
-import kotlin.math.sqrt
 import kotlin.random.Random
 
 @Service
@@ -370,11 +370,15 @@ class FactionAI(
      * Legacy hwe/func_converter.php getBill() / getDedLevel():
      *   getBill(ded) = getDedLevel(ded) * 200 + 400
      *   getDedLevel(ded) = clamp(ceil(sqrt(ded) / 10), 0, maxDedLevel=30)
+     *
+     * Phase 23-04: canonical implementation extracted to
+     * [com.openlogh.engine.economy.BillFormula] so it can be shared with
+     * [com.openlogh.engine.Gin7EconomyService.payOfficerSalaries]. This private
+     * helper is retained as a thin delegator so the Phase 22-01
+     * `FactionAIBillFormulaTest` reflection test continues to pass unchanged.
      */
-    private fun getBillFromDedication(dedication: Int): Int {
-        val dedLevel = ceil(sqrt(dedication.toDouble()) / 10.0).toInt().coerceIn(0, 30)
-        return dedLevel * 200 + 400
-    }
+    private fun getBillFromDedication(dedication: Int): Int =
+        BillFormula.fromDedication(dedication)
 
     private fun selectRewardTarget(nationGenerals: List<Officer>, rng: Random): Officer? {
         val playerCandidates = nationGenerals.filter {
