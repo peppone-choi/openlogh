@@ -241,7 +241,7 @@ class EventActionServiceTest {
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city1, city2))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city1, city2))
 
-            service.changeCity(createWorld(), null, mapOf("approval" to 50))
+            service.changeCity(createWorld(), null, mapOf("trust" to 50))
 
             assertEquals(50f, city1.approval, 0.01f)
             assertEquals(50f, city2.approval, 0.01f)
@@ -266,7 +266,7 @@ class EventActionServiceTest {
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(freeCity, occupiedCity))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(freeCity))
 
-            service.changeCity(createWorld(), "free", mapOf("approval" to 100))
+            service.changeCity(createWorld(), "free", mapOf("trust" to 100))
 
             assertEquals(100f, freeCity.approval, 0.01f)
             // occupied city should be unchanged
@@ -280,7 +280,7 @@ class EventActionServiceTest {
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
 
             // "+100" should add 100 to current production
-            service.changeCity(createWorld(), null, mapOf("production" to "+100"))
+            service.changeCity(createWorld(), null, mapOf("agri" to "+100"))
 
             assertEquals(500, city.production)
         }
@@ -291,7 +291,7 @@ class EventActionServiceTest {
             `when`(planetRepository.findBySessionId(1L)).thenReturn(listOf(city))
             `when`(planetRepository.saveAll(anyNonNull<List<Planet>>())).thenReturn(listOf(city))
 
-            service.changeCity(createWorld(), null, mapOf("approval" to 200))
+            service.changeCity(createWorld(), null, mapOf("trust" to 200))
 
             assertEquals(100f, city.approval, 0.01f)
         }
@@ -476,7 +476,7 @@ class EventActionServiceTest {
 
             val params = mapOf(
                 "name" to "테스트장수",
-                "factionId" to 2,
+                "nationId" to 2,
                 "leadership" to 80,
                 "strength" to 70,
                 "intel" to 60,

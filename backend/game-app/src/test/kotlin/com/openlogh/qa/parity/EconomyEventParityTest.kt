@@ -1,6 +1,7 @@
 package com.openlogh.qa.parity
 
 import com.openlogh.engine.EconomyService
+import com.openlogh.engine.Gin7EconomyService
 import com.openlogh.engine.turn.cqrs.persist.toEntity
 import com.openlogh.engine.turn.cqrs.persist.toSnapshot
 import com.openlogh.entity.Planet
@@ -43,6 +44,7 @@ import org.mockito.Mockito.`when`
 class EconomyEventParityTest {
 
     private lateinit var service: EconomyService
+    private lateinit var gin7Service: Gin7EconomyService
     private lateinit var planetRepository: PlanetRepository
     private lateinit var factionRepository: FactionRepository
     private lateinit var officerRepository: OfficerRepository
@@ -63,6 +65,7 @@ class EconomyEventParityTest {
             mock(MessageRepository::class.java), mapService,
             mock(HistoryService::class.java), mock(InheritanceService::class.java),
         )
+        gin7Service = Gin7EconomyService(factionRepository, planetRepository, officerRepository, mapService)
         wireRepos()
         `when`(mapService.getAdjacentCities(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt()))
             .thenReturn(emptyList())
@@ -88,15 +91,33 @@ class EconomyEventParityTest {
             cities[city.id] = city.toSnapshot().toEntity()
             city
         }
+        `when`(planetRepository.saveAll(ArgumentMatchers.anyList<Planet>())).thenAnswer { inv ->
+            @Suppress("UNCHECKED_CAST")
+            val saved = inv.arguments[0] as List<Planet>
+            saved.forEach { city -> cities[city.id] = city.toSnapshot().toEntity() }
+            saved
+        }
         `when`(factionRepository.save(ArgumentMatchers.any(Faction::class.java))).thenAnswer { inv ->
             val nation = inv.arguments[0] as Faction
             nations[nation.id] = nation.toSnapshot().toEntity()
             nation
         }
+        `when`(factionRepository.saveAll(ArgumentMatchers.anyList<Faction>())).thenAnswer { inv ->
+            @Suppress("UNCHECKED_CAST")
+            val saved = inv.arguments[0] as List<Faction>
+            saved.forEach { faction -> nations[faction.id] = faction.toSnapshot().toEntity() }
+            saved
+        }
         `when`(officerRepository.save(ArgumentMatchers.any(Officer::class.java))).thenAnswer { inv ->
             val general = inv.arguments[0] as Officer
             generals[general.id] = general.toSnapshot().toEntity()
             general
+        }
+        `when`(officerRepository.saveAll(ArgumentMatchers.anyList<Officer>())).thenAnswer { inv ->
+            @Suppress("UNCHECKED_CAST")
+            val saved = inv.arguments[0] as List<Officer>
+            saved.forEach { officer -> generals[officer.id] = officer.toSnapshot().toEntity() }
+            saved
         }
     }
 
@@ -160,387 +181,6 @@ class EconomyEventParityTest {
         officerPlanet = officerPlanet, npcState = npcState,
     )
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Semi-Annual Events (January / July)
-    // Legacy ProcessSemiAnnual.php::run():
-    //   Step 1: ALL cities get 0.99 decay on production/commerce/security/orbitalDefense/fortress + dead=0
-    //   Step 2: popIncrease() applies growth ONLY to supplied nation cities
-    //
-    // CRITICAL: Legacy decays ALL cities first (line 75-82), then grows supplied.
-    //   Net effect on supplied city: value * 0.99 * (1 + genericRatio)
-    // ────────────────────────────────────────────────────────────────────────
-
-    @Nested
-    @DisplayName("Semi-Annual Events (1/7) — ProcessSemiAnnual.php")
-    inner class SemiAnnual {
-
-        @Test
-        @DisplayName("Semi-annual only triggers on month 1 and 7")
-        fun `semi-annual month guard`() {
-            val c = city(production = 500)
-            val n = nation(rateTmp = 15)
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            // Month 3: no semi-annual growth
-            service.postUpdateMonthly(world(month = 3))
-            val agriMonth3 = cities[1L]!!.production
-
-            // Reset and test month 1
-            seed(listOf(city(production = 500)), listOf(nation(rateTmp = 15)), listOf(general(funds = 0, supplies = 0)))
-            service.postUpdateMonthly(world(month = 1))
-            val agriMonth1 = cities[1L]!!.production
-
-            // Month 1 should have infrastructure change; month 3 should not
-            assertThat(agriMonth1).isNotEqualTo(agriMonth3)
-        }
-
-        @Test
-        @DisplayName("Dead troops reset to 0 at start of semi-annual")
-        fun `dead reset to zero`() {
-            val c = city(dead = 500)
-            val n = nation()
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            service.postUpdateMonthly(world(month = 1))
-
-            assertThat(cities[1L]!!.dead).isEqualTo(0)
-        }
-
-        // ── Population Growth ──
-        // Legacy: population = least(populationMax, BASE_POP_INCREASE + population * (1 + popRatio * (1 ± security/securityMax/10)))
-        //   popRatio = (30 - taxRate) / 200
-
-        @ParameterizedTest
-        @CsvSource(
-            // taxRate, expectedPopRatio (= (30-tax)/200)
-            "5,   0.125",     // (30-5)/200 = 0.125 = 12.5%
-            "15,  0.075",     // (30-15)/200 = 0.075 = 7.5%
-            "20,  0.05",      // (30-20)/200 = 0.05 = 5%
-            "30,  0.0",       // (30-30)/200 = 0 = 0%
-            "50, -0.1",       // (30-50)/200 = -0.1 = -10%
-        )
-        @DisplayName("popRatio = (30 - taxRate) / 200")
-        fun `population ratio formula`(taxRate: Int, expectedRatio: Double) {
-            val actualRatio = (30.0 - taxRate) / 200
-            assertThat(actualRatio).isCloseTo(expectedRatio, within(0.001))
-        }
-
-        @Test
-        @DisplayName("Population growth with positive popRatio includes security bonus")
-        fun `population growth positive ratio`() {
-            // population=10000, taxRate=15, security=500, securityMax=1000
-            // popRatio = (30-15)/200 = 0.075
-            // secuBonus = security/securityMax/10 = 0.05
-            // newPop = least(populationMax, 5000 + 10000 * (1 + 0.075 * (1 + 0.05)))
-            //        = least(50000, 5000 + 10000 * 1.07875) = 15787
-            val c = city(population = 10000, populationMax = 50000, security = 500, securityMax = 1000)
-            val n = nation(rateTmp = 15)
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            service.postUpdateMonthly(world(month = 1))
-
-            val updatedPop = cities[1L]!!.population
-            // Expected: 5000 + 10000 * (1 + 0.075 * 1.05) = 5000 + 10787 = 15787
-            assertThat(updatedPop).isCloseTo(15787, within(10))
-        }
-
-        @Test
-        @DisplayName("Population growth with negative popRatio reverses security bonus")
-        fun `population growth negative ratio`() {
-            // population=10000, taxRate=50, security=500, securityMax=1000
-            // popRatio = (30-50)/200 = -0.1
-            // Since popRatio < 0: newPop = 5000 + 10000 * (1 + (-0.1) * (1 - 0.05))
-            //                             = 5000 + 10000 * (1 - 0.095) = 5000 + 9050 = 14050
-            val c = city(population = 10000, populationMax = 50000, security = 500, securityMax = 1000)
-            val n = nation(rateTmp = 50)
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            service.postUpdateMonthly(world(month = 1))
-
-            val updatedPop = cities[1L]!!.population
-            assertThat(updatedPop).isCloseTo(14050, within(10))
-        }
-
-        @Test
-        @DisplayName("Population capped at populationMax")
-        fun `population capped at max`() {
-            val c = city(population = 49000, populationMax = 50000, security = 1000, securityMax = 1000)
-            val n = nation(rateTmp = 5)  // very low tax -> high growth
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            service.postUpdateMonthly(world(month = 1))
-
-            assertThat(cities[1L]!!.population).isLessThanOrEqualTo(50000)
-        }
-
-        // ── Infrastructure Growth ──
-        // Legacy: value = least(max, value * (1 + genericRatio))
-        //   genericRatio = (20 - taxRate) / 200
-        //
-        // IMPORTANT: Legacy applies 0.99 decay to ALL cities FIRST (ProcessSemiAnnual.php:75-82),
-        // then applies growth to supplied cities. Net for supplied: value * 0.99 * (1 + genericRatio)
-
-        @ParameterizedTest
-        @CsvSource(
-            // taxRate, genericRatio
-            "0,   0.1",       // (20-0)/200 = 0.1 = 10% growth
-            "10,  0.05",      // (20-10)/200 = 0.05 = 5%
-            "15,  0.025",     // (20-15)/200 = 0.025 = 2.5%
-            "20,  0.0",       // (20-20)/200 = 0 = 0%
-            "30, -0.05",      // (20-30)/200 = -0.05 = -5%
-        )
-        @DisplayName("genericRatio = (20 - taxRate) / 200")
-        fun `generic ratio formula`(taxRate: Int, expectedRatio: Double) {
-            val actualRatio = (20.0 - taxRate) / 200
-            assertThat(actualRatio).isCloseTo(expectedRatio, within(0.001))
-        }
-
-        @Test
-        @DisplayName("Supplied city infrastructure grows by genericRatio after 0.99 pre-decay")
-        fun `infrastructure growth with pre-decay`() {
-            // Legacy: production = production * 0.99 (pre-decay), then production = least(max, production * (1 + genericRatio))
-            // production=500, taxRate=15, genericRatio=(20-15)/200=0.025
-            // After pre-decay: 500 * 0.99 = 495
-            // After growth: 495 * 1.025 = 507.375 -> 507
-            val c = city(production = 500, productionMax = 1000)
-            val n = nation(rateTmp = 15)
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            service.postUpdateMonthly(world(month = 1))
-
-            val updatedAgri = cities[1L]!!.production
-            // Legacy: supplied nation cities get 0.99 pre-decay then growth
-            // 500 * 0.99 = 495, then 495 * 1.025 = 507.375 -> 507
-            val expected = (500 * 0.99 * 1.025).toInt()  // 507
-
-            assertThat(updatedAgri)
-                .describedAs("Supplied city production grows by genericRatio without pre-decay")
-                .isEqualTo(expected)
-        }
-
-        @Test
-        @DisplayName("Infrastructure capped at max values")
-        fun `infrastructure capped at max`() {
-            val c = city(production = 990, productionMax = 1000, commerce = 995, commerceMax = 1000)
-            val n = nation(rateTmp = 15)
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            service.postUpdateMonthly(world(month = 1))
-
-            assertThat(cities[1L]!!.production).isLessThanOrEqualTo(1000)
-            assertThat(cities[1L]!!.commerce).isLessThanOrEqualTo(1000)
-        }
-
-        // ── Trust Adjustment ──
-        // Legacy: approval = greatest(0, least(100, approval + (20 - taxRate)))
-
-        @ParameterizedTest
-        @CsvSource(
-            "80,  15,  85",    // 80 + (20-15) = 85
-            "80,  20,  80",    // 80 + (20-20) = 80
-            "80,  30,  70",    // 80 + (20-30) = 70
-            "95,  10,  100",   // 95 + (20-10) = 105 -> capped at 100
-            "5,   25,  0",     // 5 + (20-25) = 0 -> clamped at 0
-        )
-        @DisplayName("Trust adjustment: approval += (20 - taxRate), clamped [0, 100]")
-        fun `approval adjustment`(initialTrust: Float, taxRate: Int, expectedTrust: Float) {
-            val c = city(approval = initialTrust)
-            val n = nation(rateTmp = taxRate.toShort())
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            service.postUpdateMonthly(world(month = 1))
-
-            assertThat(cities[1L]!!.approval).isEqualTo(expectedTrust)
-        }
-    }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // Neutral City Decay
-    // Legacy ProcessSemiAnnual.php (func_time_event.php:42-49):
-    //   nation=0 cities: approval=50, infra *= 0.99
-    // ────────────────────────────────────────────────────────────────────────
-
-    @Nested
-    @DisplayName("Neutral City Decay — func_time_event.php:42")
-    inner class NeutralCityDecay {
-
-        @Test
-        @DisplayName("Neutral cities get single 0.99 decay on semi-annual")
-        fun `neutral city decays`() {
-            val c = city(id = 1, factionId = 0, production = 1000, commerce = 1000, security = 1000, orbitalDefense = 1000, fortress = 1000)
-            seed(listOf(c), emptyList(), emptyList())
-
-            service.postUpdateMonthly(world(month = 1))
-
-            val updated = cities[1L]!!
-            assertThat(updated.production).isEqualTo(990)
-            assertThat(updated.commerce).isEqualTo(990)
-            assertThat(updated.security).isEqualTo(990)
-            assertThat(updated.orbitalDefense).isEqualTo(990)
-            assertThat(updated.fortress).isEqualTo(990)
-        }
-
-        @Test
-        @DisplayName("Neutral city approval resets to 50 on semi-annual")
-        fun `neutral city approval resets`() {
-            val c = city(id = 1, factionId = 0, approval = 80f)
-            seed(listOf(c), emptyList(), emptyList())
-
-            service.postUpdateMonthly(world(month = 1))
-
-            assertThat(cities[1L]!!.approval).isEqualTo(50f)
-        }
-
-        @Test
-        @DisplayName("Neutral city dead resets to 0")
-        fun `neutral city dead resets`() {
-            val c = city(id = 1, factionId = 0, dead = 300)
-            seed(listOf(c), emptyList(), emptyList())
-
-            service.postUpdateMonthly(world(month = 1))
-
-            assertThat(cities[1L]!!.dead).isEqualTo(0)
-        }
-    }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // Non-Supplied City Decay
-    // Legacy: non-supplied nation cities get 0.99 decay (same as neutral)
-    //         but do NOT get growth from popIncrease()
-    // ────────────────────────────────────────────────────────────────────────
-
-    @Nested
-    @DisplayName("Non-Supplied City Decay — ProcessSemiAnnual.php")
-    inner class NonSuppliedCityDecay {
-
-        @Test
-        @DisplayName("Non-supplied nation city gets 0.99 decay during semi-annual")
-        fun `non-supplied city decays`() {
-            val c = city(supplyState = 0, production = 1000, commerce = 1000)
-            val n = nation()
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            service.postUpdateMonthly(world(month = 1))
-
-            val updated = cities[1L]!!
-            assertThat(updated.production).isEqualTo(990)
-            assertThat(updated.commerce).isEqualTo(990)
-        }
-
-        @Test
-        @DisplayName("Supplied nation city grows (not just decays)")
-        fun `supplied city grows`() {
-            val c = city(supplyState = 1, production = 500, productionMax = 1000)
-            val n = nation(rateTmp = 15)  // genericRatio = 0.025 > 0
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            service.postUpdateMonthly(world(month = 1))
-
-            // With pre-decay + growth: 500 * 0.99 * 1.025 = 507 > 500
-            assertThat(cities[1L]!!.production).isGreaterThan(500)
-        }
-    }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // BFS Supply Chain
-    // ────────────────────────────────────────────────────────────────────────
-
-    @Nested
-    @DisplayName("BFS Supply Chain")
-    inner class SupplyChain {
-
-        @Test
-        @DisplayName("BFS from capital marks connected cities as supplied")
-        fun `bfs supply from capital`() {
-            val c1 = city(id = 1, supplyState = 0)
-            val c2 = city(id = 2, supplyState = 0)
-            val c3 = city(id = 3, supplyState = 0)
-            val n = nation(capitalPlanetId = 1)
-            val g = general()
-
-            `when`(mapService.getAdjacentCities("che", 1)).thenReturn(listOf(2))
-            `when`(mapService.getAdjacentCities("che", 2)).thenReturn(listOf(1, 3))
-            `when`(mapService.getAdjacentCities("che", 3)).thenReturn(listOf(2))
-
-            seed(listOf(c1, c2, c3), listOf(n), listOf(g))
-            service.postUpdateMonthly(world(month = 3))
-
-            assertThat(cities[1L]!!.supplyState.toInt()).isEqualTo(1)
-            assertThat(cities[2L]!!.supplyState.toInt()).isEqualTo(1)
-            assertThat(cities[3L]!!.supplyState.toInt()).isEqualTo(1)
-        }
-
-        @Test
-        @DisplayName("Isolated city marked as unsupplied with penalty")
-        fun `isolated city penalized`() {
-            val c1 = city(id = 1, population = 10000, approval = 80f, production = 500, commerce = 500)
-            val c2 = city(id = 2, population = 10000, approval = 80f, production = 500, commerce = 500)
-            val n = nation(capitalPlanetId = 1)
-            val g = general(planetId = 1)
-
-            // No adjacency -> c2 is isolated
-            `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
-            `when`(mapService.getAdjacentCities("che", 2)).thenReturn(emptyList())
-
-            seed(listOf(c1, c2), listOf(n), listOf(g))
-            service.postUpdateMonthly(world(month = 3))
-
-            val updated2 = cities[2L]!!
-            // Unsupplied penalty: population * 0.9, approval * 0.9, infra * 0.9
-            assertThat(updated2.population).isEqualTo(9000)
-            assertThat(updated2.approval).isEqualTo(72f)
-            assertThat(updated2.production).isEqualTo(450)
-            assertThat(updated2.commerce).isEqualTo(450)
-            assertThat(updated2.supplyState.toInt()).isEqualTo(0)
-        }
-
-        @Test
-        @DisplayName("Trust < 30 on unsupplied non-capital city -> neutralized")
-        fun `approval below 30 neutralizes city`() {
-            val c1 = city(id = 1)  // capital
-            val c2 = city(id = 2, approval = 25f)  // low approval, isolated
-            val n = nation(capitalPlanetId = 1)
-            val g = general(planetId = 1)
-
-            `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
-            `when`(mapService.getAdjacentCities("che", 2)).thenReturn(emptyList())
-
-            seed(listOf(c1, c2), listOf(n), listOf(g))
-            service.postUpdateMonthly(world(month = 3))
-
-            // approval = 25 * 0.9 = 22.5 < 30 -> city neutralized
-            val updated2 = cities[2L]!!
-            assertThat(updated2.factionId).isEqualTo(0L)
-        }
-
-        @Test
-        @DisplayName("Capital city is never neutralized even with low approval")
-        fun `capital never neutralized`() {
-            val c1 = city(id = 1, approval = 10f)  // capital with very low approval
-            val n = nation(capitalPlanetId = 1)
-            val g = general(planetId = 1)
-
-            `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
-
-            seed(listOf(c1), listOf(n), listOf(g))
-            service.postUpdateMonthly(world(month = 3))
-
-            // Capital should remain owned even with approval < 30
-            assertThat(cities[1L]!!.factionId).isEqualTo(1L)
-        }
-    }
-
-    // ────────────────────────────────────────────────────────────────────────
     // Disaster / Boom System
     // Legacy RaiseDisaster.php:
     //   - First 3 years from startYear: skip
@@ -793,141 +433,60 @@ class EconomyEventParityTest {
             assertThat(powerHigh).isGreaterThan(powerLow)
         }
     }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // PHP-Verified: Population Increase Golden Values
-    // Legacy func_time_event.php popIncrease():
-    //   popRatio = (30 - taxRate) / 200
-    //   if popRatio >= 0: newPop = least(populationMax, BASE_POP_INCREASE + population * (1 + popRatio * (1 + security/securityMax/10)))
-    //   if popRatio < 0:  newPop = least(populationMax, BASE_POP_INCREASE + population * (1 + popRatio * (1 - security/securityMax/10)))
-    //   BASE_POP_INCREASE = 5000
-    // ────────────────────────────────────────────────────────────────────────
-
     @Nested
-    @DisplayName("PHP-Verified Population Golden Values — func_time_event.php:popIncrease")
+    @DisplayName("Gin7 Monthly Population Growth")
     inner class PopulationGoldenValues {
 
         @ParameterizedTest
         @CsvSource(
-            // population, populationMax, security, securityMax, taxRate, expectedPop
-            // Case 1: population=1000, populationMax=50000, security=500, securityMax=1000, tax=15
-            //   popRatio=(30-15)/200=0.075, secuBonus=500/1000/10=0.05
-            //   newPop=least(50000, 5000 + 1000*(1+0.075*(1+0.05))) = 5000+1078 = 6078
-            "1000,  50000, 500, 1000, 15, 6078",
-            // Case 2: population=5000, populationMax=50000, security=500, securityMax=1000, tax=15
-            //   newPop=least(50000, 5000 + 5000*(1+0.075*1.05)) = 5000+5393 = 10393
-            "5000,  50000, 500, 1000, 15, 10393",
-            // Case 3: population=9000, populationMax=10000, security=500, securityMax=1000, tax=15
-            //   newPop=least(10000, 5000 + 9000*1.07875) = least(10000, 5000+9708) = 10000 (capped)
-            "9000,  10000, 500, 1000, 15, 10000",
-            // Case 4: population=10000, populationMax=50000, security=500, securityMax=1000, tax=50 (negative popRatio)
-            //   popRatio=(30-50)/200=-0.1, secuBonus reverses: (1-0.05)=0.95
-            //   newPop=least(50000, 5000+10000*(1+(-0.1)*0.95)) = 5000+10000*0.905 = 5000+9050 = 14050
-            "10000, 50000, 500, 1000, 50, 14050",
-            // Case 5: population=10000, populationMax=50000, security=0, securityMax=1000, tax=20
-            //   popRatio=(30-20)/200=0.05, secuBonus=0/1000/10=0
-            //   newPop=5000+10000*(1+0.05*1.0) = 5000+10500 = 15500
-            "10000, 50000, 0,   1000, 20, 15500",
-            // Case 6: population=10000, populationMax=50000, security=1000, securityMax=1000, tax=20
-            //   popRatio=0.05, secuBonus=1000/1000/10=0.1
-            //   newPop=5000+10000*(1+0.05*1.1) = 5000+10550 = 15550
-            "10000, 50000, 1000,1000, 20, 15550",
+            "1000, 50000, 1004",
+            "5000, 50000, 5024",
+            "9000, 10000, 9044",
+            "49999, 50000, 50000",
         )
-        @DisplayName("popIncrease PHP-traced golden values")
-        fun `population increase golden values`(
-            population: Int, populationMax: Int, security: Int, securityMax: Int, taxRate: Int, expectedPop: Int,
-        ) {
-            val c = city(population = population, populationMax = populationMax, security = security, securityMax = securityMax)
-            val n = nation(rateTmp = taxRate.toShort())
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
+        @DisplayName("Monthly growth is population times 1.005 with max cap")
+        fun `population growth golden values`(population: Int, populationMax: Int, expectedPop: Int) {
+            val planet = city(population = population, populationMax = populationMax, supplyState = 1)
+            val faction = nation(bill = 20)
+            seed(listOf(planet), listOf(faction), emptyList())
 
-            service.postUpdateMonthly(world(month = 1))
+            gin7Service.processMonthly(world(month = 3))
 
-            assertThat(cities[1L]!!.population)
-                .describedAs("Pop: population=$population populationMax=$populationMax security=$security/$securityMax tax=$taxRate")
-                .isCloseTo(expectedPop, within(10))
+            assertThat(cities[1L]!!.population).isEqualTo(expectedPop)
         }
 
         @Test
-        @DisplayName("농업국 popGrowthMultiplier=1.05 increases population growth")
-        fun `agricultural nation population growth bonus`() {
-            val c = city(population = 10000, populationMax = 50000, security = 500, securityMax = 1000)
-            val g = general(funds = 0, supplies = 0)
+        @DisplayName("Unsupplied planet does not receive monthly population growth")
+        fun `unsupplied planet does not grow`() {
+            val planet = city(population = 10000, populationMax = 50000, supplyState = 0)
+            val faction = nation(bill = 20)
+            seed(listOf(planet), listOf(faction), emptyList())
 
-            // Default (중립)
-            seed(listOf(c), listOf(nation(rateTmp = 15, factionType = "che_중립")), listOf(g))
-            service.postUpdateMonthly(world(month = 1))
-            val popDefault = cities[1L]!!.population
+            gin7Service.processMonthly(world(month = 3))
 
-            // 농업국 (popGrowthMultiplier=1.05)
-            seed(listOf(city(population = 10000, populationMax = 50000, security = 500, securityMax = 1000)),
-                listOf(nation(rateTmp = 15, factionType = "che_농업국")),
-                listOf(general(funds = 0, supplies = 0)))
-            service.postUpdateMonthly(world(month = 1))
-            val popAgri = cities[1L]!!.population
-
-            // 농업국 should have higher population growth
-            assertThat(popAgri).isGreaterThan(popDefault)
+            assertThat(cities[1L]!!.population).isEqualTo(10000)
         }
-    }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PHP-Verified: Infrastructure Growth Golden Values
-    // Legacy ProcessSemiAnnual.php:
-    //   Step 1: ALL cities: infra *= 0.99 (decay)
-    //   Step 2: Supplied cities: infra = least(max, infra * (1 + genericRatio))
-    //     genericRatio = (20 - taxRate) / 200
-    //   Net for supplied: value * 0.99 * (1 + genericRatio)
-    // ────────────────────────────────────────────────────────────────────────
+        @Test
+        @DisplayName("Faction type no longer changes monthly population growth")
+        fun `faction type does not modify monthly growth`() {
+            seed(
+                listOf(city(population = 10000, populationMax = 50000)),
+                listOf(nation(bill = 20, factionType = "che_중립")),
+                emptyList(),
+            )
+            gin7Service.processMonthly(world(month = 3))
+            val defaultPop = cities[1L]!!.population
 
-    @Nested
-    @DisplayName("PHP-Verified Infrastructure Growth — ProcessSemiAnnual.php")
-    inner class InfrastructureGrowthGoldenValues {
+            seed(
+                listOf(city(population = 10000, populationMax = 50000)),
+                listOf(nation(bill = 20, factionType = "che_농업국")),
+                emptyList(),
+            )
+            gin7Service.processMonthly(world(month = 3))
+            val agriPop = cities[1L]!!.population
 
-        @ParameterizedTest
-        @CsvSource(
-            // field, initial, max, taxRate, expectedAfter
-            // Case 1: production=500, max=1000, tax=15, genericRatio=(20-15)/200=0.025
-            //   500*0.99=495, 495*1.025=507.375 -> 507
-            "500, 1000, 15, 507",
-            // Case 2: production=100, max=1000, tax=15
-            //   100*0.99=99, 99*1.025=101.475 -> 101
-            "100, 1000, 15, 101",
-            // Case 3: production=900, max=1000, tax=15
-            //   900*0.99=891, 891*1.025=913.275 -> 913
-            "900, 1000, 15, 913",
-            // Case 4: production=990, max=1000, tax=15
-            //   990*0.99=980, 980*1.025=1004.5 -> capped at 1000
-            "990, 1000, 15, 1000",
-            // Case 5: production=500, max=1000, tax=0, genericRatio=(20-0)/200=0.1
-            //   500*0.99=495, 495*1.1=544.5 -> 544
-            "500, 1000, 0,  544",
-            // Case 6: production=500, max=1000, tax=30, genericRatio=(20-30)/200=-0.05
-            //   500*0.99=495, 495*0.95=470.25 -> 470
-            "500, 1000, 30, 470",
-        )
-        @DisplayName("Infrastructure growth = decay(0.99) then grow by genericRatio")
-        fun `infrastructure growth golden values`(
-            initial: Int, max: Int, taxRate: Int, expected: Int,
-        ) {
-            val c = city(production = initial, productionMax = max, commerce = initial, commerceMax = max,
-                security = initial, securityMax = max, orbitalDefense = initial, orbitalDefenseMax = max,
-                fortress = initial, fortressMax = max)
-            val n = nation(rateTmp = taxRate.toShort())
-            val g = general(funds = 0, supplies = 0)
-            seed(listOf(c), listOf(n), listOf(g))
-
-            service.postUpdateMonthly(world(month = 1))
-
-            val updated = cities[1L]!!
-            // All infra fields follow the same formula
-            assertThat(updated.production)
-                .describedAs("Agri: $initial -> decay+grow with tax=$taxRate")
-                .isCloseTo(expected, within(1))
-            assertThat(updated.commerce)
-                .describedAs("Comm: $initial -> decay+grow with tax=$taxRate")
-                .isCloseTo(expected, within(1))
+            assertThat(agriPop).isEqualTo(defaultPop)
         }
     }
 
@@ -1015,75 +574,54 @@ class EconomyEventParityTest {
             assertThat(actualBoom).isCloseTo(boomProb, within(0.0001))
         }
     }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // PHP-Verified: Faction Level Thresholds
-    // Legacy UpdateNationLevel.php:41-50:
-    //   nationLevelByCityCnt = [0, 1, 2, 5, 8, 11, 16, 21]  (PHP 8-level)
-    //   opensamguk extension: [0, 1, 2, 4, 6, 9, 12, 16, 20, 25] (10-level)
-    //   Level only increases. Reward: newLevel * 1000 gold + rice.
-    // ────────────────────────────────────────────────────────────────────────
-
     @Nested
-    @DisplayName("PHP-Verified Nation Level — UpdateNationLevel.php")
+    @DisplayName("Gin7 Faction Rank Golden Values")
     inner class NationLevelGoldenValues {
 
         @ParameterizedTest
         @CsvSource(
-            // highCityCount, expectedLevel, expectedRewardIfFromZero
-            //   opensamguk thresholds: [0,1,2,4,6,9,12,16,20,25]
-            "0,  0, 0",
-            "1,  1, 1000",
-            "2,  2, 2000",
-            "3,  2, 2000",
-            "4,  3, 3000",
-            "6,  4, 4000",
-            "9,  5, 5000",
-            "12, 6, 6000",
-            "16, 7, 7000",
-            "20, 8, 8000",
-            "25, 9, 9000",
-            "30, 9, 9000",
+            "0, 0",
+            "1, 1",
+            "2, 2",
+            "3, 2",
+            "4, 3",
+            "6, 4",
+            "9, 5",
+            "12, 6",
+            "16, 7",
+            "20, 8",
+            "25, 9",
+            "30, 9",
         )
-        @DisplayName("Nation level + reward by high city count")
-        fun `nation level and reward golden values`(highCityCount: Int, expectedLevel: Int, expectedReward: Int) {
-            val cityList = if (highCityCount == 0) {
+        @DisplayName("Faction rank follows the 10-level Gin7 threshold table")
+        fun `faction rank golden values`(highCityCount: Int, expectedLevel: Int) {
+            val planetList = if (highCityCount == 0) {
                 listOf(city(level = 2))
             } else {
                 (1..highCityCount.toLong()).map { city(id = it, level = 5) }
             }
-            val n = nation(level = 0, funds = 0, supplies = 0)
-            val g = general()
-            seed(cityList, listOf(n), listOf(g))
+            val faction = nation(level = 0, funds = 0, supplies = 0)
+            seed(planetList, listOf(faction), emptyList())
 
-            service.postUpdateMonthly(world(month = 3))
+            gin7Service.updateFactionRank(world(month = 1))
 
             assertThat(nations[1L]!!.factionRank.toInt())
-                .describedAs("Level for $highCityCount high cities")
+                .describedAs("Rank for $highCityCount high-level planets")
                 .isEqualTo(expectedLevel)
-            assertThat(nations[1L]!!.funds)
-                .describedAs("Gold reward for level $expectedLevel")
-                .isEqualTo(expectedReward)
-            assertThat(nations[1L]!!.supplies)
-                .describedAs("Rice reward for level $expectedLevel")
-                .isEqualTo(expectedReward)
         }
 
         @Test
-        @DisplayName("Level-up from non-zero: reward based on new level, not delta")
-        fun `level up from non zero base`() {
-            // Start at level 2, increase to 4 (needs 6 high cities)
-            val cityList = (1..6L).map { city(id = it, level = 5) }
-            val n = nation(level = 2, funds = 5000, supplies = 5000)
-            val g = general()
-            seed(cityList, listOf(n), listOf(g))
+        @DisplayName("Rank update leaves funds and supplies untouched")
+        fun `rank update has no reward side effect`() {
+            val planetList = (1..6L).map { city(id = it, level = 5) }
+            val faction = nation(level = 2, funds = 5000, supplies = 5000)
+            seed(planetList, listOf(faction), emptyList())
 
-            service.postUpdateMonthly(world(month = 3))
+            gin7Service.updateFactionRank(world(month = 1))
 
             assertThat(nations[1L]!!.factionRank.toInt()).isEqualTo(4)
-            // Reward = newLevel * 1000 = 4000
-            assertThat(nations[1L]!!.funds).isEqualTo(5000 + 4000)
-            assertThat(nations[1L]!!.supplies).isEqualTo(5000 + 4000)
+            assertThat(nations[1L]!!.funds).isEqualTo(5000)
+            assertThat(nations[1L]!!.supplies).isEqualTo(5000)
         }
     }
 
@@ -1202,63 +740,79 @@ class EconomyEventParityTest {
             assertThat(powerLarge).isGreaterThan(powerSmall)
         }
     }
-
-    // ────────────────────────────────────────────────────────────────────────
-    // PHP-Verified: Supply Chain penalty effects
-    // Legacy: unsupplied city gets population*0.9, approval*0.9, infra*0.9
-    //   If approval < 30 after penalty (and not capital) -> neutralized (factionId=0)
-    // ────────────────────────────────────────────────────────────────────────
-
     @Nested
-    @DisplayName("PHP-Verified Supply Penalty Golden Values")
+    @DisplayName("Gin7 Supply Penalty Golden Values")
     inner class SupplyPenaltyGoldenValues {
 
         @ParameterizedTest
         @CsvSource(
-            // population, approval, production, expectedPop, expectedTrust, expectedAgri
-            "10000, 80.0, 500, 9000, 72.0, 450",   // 10000*0.9=9000, 80*0.9=72, 500*0.9=450
-            "5000,  50.0, 800, 4500, 45.0, 720",    // 5000*0.9=4500, 50*0.9=45, 800*0.9=720
-            "1000,  33.0, 100, 900,  29.7, 90",     // 1000*0.9=900, 33*0.9=29.7, 100*0.9=90
+            "10000, 80.0, 500, 9000, 72.0, 450",
+            "5000, 50.0, 800, 4500, 45.0, 720",
+            "1000, 33.0, 100, 900, 29.7, 90",
         )
-        @DisplayName("Unsupplied city penalty: all stats * 0.9")
-        fun `unsupplied penalty golden values`(
+        @DisplayName("Isolated planet penalty decays population approval and production by 10 percent")
+        fun `isolated planet penalty golden values`(
             population: Int, approval: Float, production: Int,
-            expectedPop: Int, expectedTrust: Float, expectedAgri: Int,
+            expectedPop: Int, expectedApproval: Float, expectedProduction: Int,
         ) {
-            val c1 = city(id = 1)  // capital
-            val c2 = city(id = 2, population = population, approval = approval, production = production, commerce = production, commerceMax = 1000)
-            val n = nation(capitalPlanetId = 1)
-            val g = general(planetId = 1)
+            val capital = city(id = 1)
+            val isolated = city(
+                id = 2,
+                population = population,
+                approval = approval,
+                production = production,
+                productionMax = 1000,
+                commerce = production,
+                commerceMax = 1000,
+            )
+            val faction = nation(capitalPlanetId = 1)
+            val currentWorld = world(month = 3).apply { config["mapCode"] = "test" }
 
-            `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
-            `when`(mapService.getAdjacentCities("che", 2)).thenReturn(emptyList())
+            `when`(mapService.getAdjacentCities("test", 1)).thenReturn(emptyList())
+            `when`(mapService.getAdjacentCities("test", 2)).thenReturn(emptyList())
 
-            seed(listOf(c1, c2), listOf(n), listOf(g))
-            service.postUpdateMonthly(world(month = 3))
+            seed(listOf(capital, isolated), listOf(faction), emptyList())
+            gin7Service.updatePlanetSupplyState(currentWorld)
 
-            val updated2 = cities[2L]!!
-            assertThat(updated2.population).isCloseTo(expectedPop, within(1))
-            assertThat(updated2.approval).isCloseTo(expectedTrust, within(0.1f))
-            assertThat(updated2.production).isCloseTo(expectedAgri, within(1))
+            val updated = cities[2L]!!
+            assertThat(updated.population).isCloseTo(expectedPop, within(1))
+            assertThat(updated.approval).isCloseTo(expectedApproval, within(0.1f))
+            assertThat(updated.production).isCloseTo(expectedProduction, within(1))
         }
 
         @Test
-        @DisplayName("Trust exactly at 30 after penalty does NOT neutralize")
-        fun `approval at 30 boundary not neutralized`() {
-            // approval = 33.33... -> after 0.9: 30.0 exactly -> NOT < 30 -> stays
-            val c1 = city(id = 1)
-            val c2 = city(id = 2, approval = 33.4f)
-            val n = nation(capitalPlanetId = 1)
-            val g = general(planetId = 1)
+        @DisplayName("Approval below 30 after decay neutralizes the isolated planet")
+        fun `approval below 30 neutralizes`() {
+            val capital = city(id = 1)
+            val isolated = city(id = 2, approval = 33.0f)
+            val faction = nation(capitalPlanetId = 1)
+            val currentWorld = world(month = 3).apply { config["mapCode"] = "test" }
 
-            `when`(mapService.getAdjacentCities("che", 1)).thenReturn(emptyList())
-            `when`(mapService.getAdjacentCities("che", 2)).thenReturn(emptyList())
+            `when`(mapService.getAdjacentCities("test", 1)).thenReturn(emptyList())
+            `when`(mapService.getAdjacentCities("test", 2)).thenReturn(emptyList())
 
-            seed(listOf(c1, c2), listOf(n), listOf(g))
-            service.postUpdateMonthly(world(month = 3))
+            seed(listOf(capital, isolated), listOf(faction), emptyList())
+            gin7Service.updatePlanetSupplyState(currentWorld)
 
-            // 33.4 * 0.9 = 30.06 >= 30 -> not neutralized
+            assertThat(cities[2L]!!.factionId).isEqualTo(0L)
+        }
+
+        @Test
+        @DisplayName("Approval at or above 30 after decay does not neutralize")
+        fun `approval boundary does not neutralize`() {
+            val capital = city(id = 1)
+            val isolated = city(id = 2, approval = 33.4f)
+            val faction = nation(capitalPlanetId = 1)
+            val currentWorld = world(month = 3).apply { config["mapCode"] = "test" }
+
+            `when`(mapService.getAdjacentCities("test", 1)).thenReturn(emptyList())
+            `when`(mapService.getAdjacentCities("test", 2)).thenReturn(emptyList())
+
+            seed(listOf(capital, isolated), listOf(faction), emptyList())
+            gin7Service.updatePlanetSupplyState(currentWorld)
+
             assertThat(cities[2L]!!.factionId).isEqualTo(1L)
         }
     }
+
 }

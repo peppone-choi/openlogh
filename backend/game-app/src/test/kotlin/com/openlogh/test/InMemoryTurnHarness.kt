@@ -2,6 +2,7 @@ package com.openlogh.test
 
 import com.openlogh.command.CommandExecutor
 import com.openlogh.command.CommandRegistry
+import com.openlogh.command.Gin7CommandRegistry
 import com.openlogh.engine.*
 // BattleService removed in Phase 1 (삼국지 전투 엔진 삭제)
 import com.openlogh.engine.ai.OfficerAI
@@ -27,16 +28,6 @@ import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
 import java.util.Optional
 import java.util.concurrent.atomic.AtomicLong
-
-/**
- * Stub replacing deleted TurnService (삼국지 턴 서비스 삭제됨, Phase 1).
- * Callers that need processWorld should be updated to use TickEngine directly.
- */
-class StubTurnService {
-    fun processWorld(world: SessionState) {
-        // no-op stub — TurnService was removed in Phase 1
-    }
-}
 
 class InMemoryTurnHarness {
     private val worlds = mutableMapOf<Short, SessionState>()
@@ -70,7 +61,7 @@ class InMemoryTurnHarness {
     private val statChangeService: StatChangeService = mock(StatChangeService::class.java)
     private val modifierService: ModifierService = mock(ModifierService::class.java)
 
-    val commandRegistry = CommandRegistry()
+    val commandRegistry: CommandRegistry = Gin7CommandRegistry()
     private val messageService: com.openlogh.service.MessageService = mock(com.openlogh.service.MessageService::class.java)
     val commandExecutor = CommandExecutor(
         commandRegistry,
@@ -106,8 +97,36 @@ class InMemoryTurnHarness {
         UnificationCheckStep(unificationService),
     ))
 
-    // TurnService and FieldBattleTrigger removed in Phase 1 — replaced by TickEngine pipeline
-    // Integration tests that called turnService.processWorld() need to be updated to use TickEngine
+    inner class StubTurnService {
+        fun processWorld(world: SessionState) {
+            val officerTurnSnapshot = generalTurns.toMap()
+            officerTurnSnapshot.forEach { (officerId, turns) ->
+                val officer = officers[officerId] ?: return@forEach
+                val lastTurn = turns.maxByOrNull { it.turnIdx } ?: return@forEach
+                officer.lastTurn = mutableMapOf(
+                    "command" to lastTurn.actionCode,
+                    "turnIdx" to lastTurn.turnIdx,
+                )
+            }
+            generalTurns.clear()
+            nationTurns.clear()
+
+            val tickSeconds = world.tickSeconds.toLong().coerceAtLeast(1)
+            val elapsedSeconds = world.updatedAt?.let { java.time.Duration.between(it, OffsetDateTime.now()).seconds } ?: tickSeconds
+            val ticksToProcess = (elapsedSeconds / tickSeconds).coerceAtLeast(1)
+
+            repeat(ticksToProcess.toInt()) {
+                val nextMonth = (world.currentMonth.toInt() % 12) + 1
+                world.currentMonth = nextMonth.toShort()
+                if (nextMonth == 1) {
+                    world.currentYear = (world.currentYear + 1).toShort()
+                }
+                unificationService.checkAndSettleUnification(world)
+            }
+            worlds[world.id] = world
+        }
+    }
+
     val turnService: StubTurnService = StubTurnService()
 
     init {

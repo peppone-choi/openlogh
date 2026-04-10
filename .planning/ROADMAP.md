@@ -6,6 +6,7 @@
 - ✅ **v2.1 전술전 지휘체계 + AI** - Phases 8-14 (shipped 2026-04-09)
 - ✅ **v2.2 upstream 버그픽스 동기화** - Phase 22 (shipped 2026-04-10)
 - ✅ **v2.3 Gin7 economy pipeline full port** - Phase 23 (shipped 2026-04-10)
+- ✅ **v2.4 legacy test cleanup** - Phase 24 (shipped 2026-04-10)
 
 ## Phases
 
@@ -27,7 +28,7 @@
 - [x] **Phase 8: 엔진 통합 + 커맨드 버퍼** - 듀얼 전술 엔진 통합, 커맨드 버퍼 동시성 보장, 지휘 계층 데이터 모델 수립
 - [x] **Phase 9: 지휘권 분배 + 커맨드레인지서클** - 분함대 배정, 우선순위 기반 지휘권, CRC 명령 전달, 통신 방해
 - [x] **Phase 10: 지휘 승계** - 후계자 지명, 부상/사망 구분, 30틱 공백, 자동 승계, 체계 붕괴
-- [ ] **Phase 11: 전술 AI** - 작전 목적 기반 AI 행동, 성격 기반 전술, 위협 평가, 에너지/진형 자동 조정
+- [x] **Phase 11: 전술 AI** - 작전 목적 기반 AI 행동, 성격 기반 전술, 위협 평가, 에너지/진형 자동 조정 (2026-04-08)
 - [x] **Phase 12: 작전 연동** - 작전계획-전술전 연결, 작전 참가 부대 공적 보너스, 발령-도달 시작 (2026-04-09)
 - [x] **Phase 13: 전략 AI** - 진영 AI 자동 작전 수립, 전력 평가 기반 작전 유형 선택 (2026-04-09)
 - [x] **Phase 14: 프론트엔드 통합** - CRC 시각화, 분함대 패널, 권한 기반 UI 제한, 승계 피드백, 안개 효과 (2026-04-09)
@@ -39,6 +40,10 @@
 ### v2.3 Gin7 economy pipeline full port
 
 - [x] **Phase 23: gin7 economy full port** - legacy EconomyService 9개 메서드 Gin7으로 전면 포팅, 파이프라인 wire-up, 24-tick drain invariant 활성화, 221 legacy 테스트 감사 (2026-04-10)
+
+### v2.4 legacy test cleanup
+
+- [x] **Phase 24: legacy-test-cleanup** - COVERED / OBSOLETE legacy 경제 parity 테스트 retire + MIGRATABLE LOGH 도메인 포팅 + 59-failure regression gate (2026-04-10)
 
 ## Phase Details
 
@@ -285,12 +290,29 @@ Plans:
 - [x] 23-07-PLAN.md — Gin7.processYearlyStatistics
 - [x] 23-08-PLAN.md — Gin7.processDisasterOrBoom
 - [x] 23-09-PLAN.md — Gin7.randomizePlanetTradeRate
-- [ ] 23-10-PLAN.md — Pipeline wire-up + 24-tick regression + legacy test audit
+- [x] 23-10-PLAN.md — Pipeline wire-up + 24-tick regression + legacy test audit
+**UI hint**: no
+
+### Phase 24: legacy-test-cleanup
+**Goal**: Phase 23 audit 가 분류한 legacy 경제 parity 실패를 정리해 retireable test 를 삭제하고, 필요한 테스트는 LOGH 도메인으로 포팅하며, clean full-suite failure baseline 을 59까지 낮춘다
+**Depends on**: Phase 23
+**Requirement IDs**: TC-01..TC-04
+**Must Haves**:
+- COVERED 60 failures 삭제 전 Gin7 replacement coverage 재검증
+- OBSOLETE 30 failures 삭제
+- MIGRATABLE 70 failures 를 Faction / Officer / Planet / funds / supplies 매핑으로 포팅
+- clean `./gradlew :game-app:test --continue` 결과를 59 failures(BROKEN 37 + OUT-OF-SCOPE 22) 까지 낮추기
+- 남은 BROKEN / OUT-OF-SCOPE suite 를 Phase 24 deferred backlog 로 이관
+**Plans**:
+- [x] 24-01-PLAN.md — COVERED legacy suites retire
+- [x] 24-02-PLAN.md — OBSOLETE legacy suites delete
+- [x] 24-03-PLAN.md — MIGRATABLE legacy suites port to LOGH domain
+- [x] 24-04-PLAN.md — regression gate + deferred backlog handoff
 **UI hint**: no
 
 ## Progress
 
-**Execution Order:** 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 22 -> 23
+**Execution Order:** 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 22 -> 23 -> 24
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -309,4 +331,5 @@ Plans:
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
 | 14. 프론트엔드 통합 | v2.1 | 18/18 | Complete    | 2026-04-09 |
 | 22. upstream bugfix sync | v2.2 | 3/3 | Complete   | 2026-04-10 |
-| 23. gin7 economy full port | v2.3 | 9/10 | In Progress|  |
+| 23. gin7 economy full port | v2.3 | 10/10 | Complete | 2026-04-10 |
+| 24. legacy-test-cleanup | v2.4 | 4/4 | Complete | 2026-04-10 |

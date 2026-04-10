@@ -274,7 +274,7 @@ class ScenarioServiceTest {
             world
         }
 
-        `when`(mapService.getCities("che")).thenReturn(
+        `when`(mapService.getCities("logh")).thenReturn(
             listOf(
                 CityConst(1, "업", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
                 CityConst(2, "허창", 8, 2, 1000, 100, 100, 100, 100, 100, 20, 20, emptyList()),
@@ -346,7 +346,7 @@ class ScenarioServiceTest {
             world
         }
 
-        `when`(mapService.getCities("che")).thenReturn(
+        `when`(mapService.getCities("logh")).thenReturn(
             listOf(
                 CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
             ),
@@ -407,7 +407,7 @@ class ScenarioServiceTest {
             world
         }
 
-        `when`(mapService.getCities("che")).thenReturn(
+        `when`(mapService.getCities("logh")).thenReturn(
             listOf(
                 CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
             ),
@@ -478,7 +478,7 @@ class ScenarioServiceTest {
             world
         }
 
-        `when`(mapService.getCities("che")).thenReturn(
+        `when`(mapService.getCities("logh")).thenReturn(
             listOf(
                 CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
             ),
@@ -557,7 +557,7 @@ class ScenarioServiceTest {
             world.id = 1
             world
         }
-        `when`(mapService.getCities("che")).thenReturn(
+        `when`(mapService.getCities("logh")).thenReturn(
             listOf(
                 CityConst(1, "낙양", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),
                 CityConst(2, "남피", 8, 1, 1000, 100, 100, 100, 100, 100, 10, 10, emptyList()),

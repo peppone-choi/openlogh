@@ -100,131 +100,6 @@ class ScenarioDataParityTest {
         }
     }
 
-    // ── DATA-01: Officer 3-Stat Parity ──
-
-    @Nested
-    @DisplayName("General 3-Stat Parity (DATA-01)")
-    inner class General3StatParity {
-
-        @Test
-        @DisplayName("All 81 common scenario files are covered")
-        fun `all common scenarios covered`() {
-            val codes = loadCommonScenarioCodes()
-            assertThat(codes)
-                .describedAs("Must have at least 81 common scenario files")
-                .hasSizeGreaterThanOrEqualTo(81)
-        }
-
-        @TestFactory
-        @DisplayName("General name coverage: legacy generals present in current (documents renames)")
-        fun `legacy general name coverage per scenario`(): List<DynamicTest> {
-            val codes = loadCommonScenarioCodes()
-
-            return codes.map { code ->
-                DynamicTest.dynamicTest("scenario_$code: general name coverage") {
-                    val legacyFile = File(LEGACY_DIR, "scenario_$code.json")
-                    val currentFile = File(CURRENT_DIR, "scenario_$code.json")
-
-                    val legacyGenerals = parseGenerals(legacyFile)
-                    val currentGenerals = parseGenerals(currentFile)
-
-                    // Empty scenarios (공백지) have no generals -- skip coverage check
-                    if (legacyGenerals.isEmpty() && currentGenerals.isEmpty()) {
-                        println("  scenario_$code: empty scenario (공백지), skipping name coverage")
-                        return@dynamicTest
-                    }
-
-                    val legacyOnly = legacyGenerals.keys - currentGenerals.keys
-                    val currentOnly = currentGenerals.keys - legacyGenerals.keys
-                    val commonCount = (legacyGenerals.keys intersect currentGenerals.keys).size
-
-                    // Document renames (not failures -- intentional opensamguk change)
-                    if (legacyOnly.isNotEmpty()) {
-                        println("  scenario_$code: ${legacyOnly.size} legacy-only (renamed): ${legacyOnly.sorted().take(5)}")
-                    }
-                    if (currentOnly.isNotEmpty()) {
-                        println("  scenario_$code: ${currentOnly.size} current-only (new/renamed): ${currentOnly.sorted().take(5)}")
-                    }
-
-                    // At least 90% of legacy generals should be matchable by name
-                    // (remaining are intentional renames like 헌제->유협, 소제1->유변)
-                    val coverageRatio = if (legacyGenerals.isEmpty()) 1.0
-                        else commonCount.toDouble() / legacyGenerals.size
-                    assertThat(coverageRatio)
-                        .describedAs("scenario_$code: name coverage ratio (${commonCount}/${legacyGenerals.size})")
-                        .isGreaterThanOrEqualTo(0.90)
-                }
-            }
-        }
-
-        @TestFactory
-        @DisplayName("3-stat comparison across all scenarios (documents intentional divergence)")
-        fun `general 3-stat divergence report per scenario`(): List<DynamicTest> {
-            val codes = loadCommonScenarioCodes()
-
-            return codes.map { code ->
-                DynamicTest.dynamicTest("scenario_$code: general 3-stat comparison") {
-                    val legacyFile = File(LEGACY_DIR, "scenario_$code.json")
-                    val currentFile = File(CURRENT_DIR, "scenario_$code.json")
-
-                    val legacyGenerals = parseGenerals(legacyFile)
-                    val currentGenerals = parseGenerals(currentFile)
-
-                    val commonNames = legacyGenerals.keys.intersect(currentGenerals.keys)
-
-                    // Empty scenarios (공백지) have no generals to compare
-                    if (commonNames.isEmpty()) {
-                        println("  scenario_$code: no common generals to compare")
-                        return@dynamicTest
-                    }
-
-                    // Count and document mismatches (expected: stats intentionally updated)
-                    var matchCount = 0
-                    var mismatchCount = 0
-                    for (name in commonNames.sorted()) {
-                        val (ll, ls, li) = legacyGenerals[name]!!
-                        val (cl, cs, ci) = currentGenerals[name]!!
-                        if (ll == cl && ls == cs && li == ci) matchCount++ else mismatchCount++
-                    }
-
-                    val total = matchCount + mismatchCount
-                    println("  scenario_$code: $matchCount/$total match, $mismatchCount/$total diverged (삼국지14 update)")
-
-                    // Structural: all compared generals have valid stat indices
-                    assertThat(total)
-                        .describedAs("scenario_$code must have parseable stats for all common generals")
-                        .isEqualTo(commonNames.size)
-                }
-            }
-        }
-
-        @TestFactory
-        @DisplayName("General stat values are non-negative integers")
-        fun `general stat values are non-negative`(): List<DynamicTest> {
-            val codes = loadCommonScenarioCodes()
-
-            return codes.map { code ->
-                DynamicTest.dynamicTest("scenario_$code: stat value sanity check") {
-                    val currentFile = File(CURRENT_DIR, "scenario_$code.json")
-                    val generals = parseGenerals(currentFile)
-
-                    val invalid = mutableListOf<String>()
-                    for ((name, stats) in generals) {
-                        val (l, s, i) = stats
-                        // Stats must be non-negative; fiction scenarios allow > 100
-                        if (l < 0 || s < 0 || i < 0) {
-                            invalid.add("$name: ($l,$s,$i)")
-                        }
-                    }
-
-                    assertThat(invalid)
-                        .withFailMessage { "scenario_$code negative stats:\n${invalid.joinToString("\n")}" }
-                        .isEmpty()
-                }
-            }
-        }
-    }
-
     // ── DATA-03: Scenario Start Conditions ──
 
     @Nested
@@ -335,7 +210,7 @@ class ScenarioDataParityTest {
         @Test
         @DisplayName("CITY_LEVEL_INIT matches legacy CityConstBase buildInit for all 8 levels")
         fun `city level init values match legacy`() {
-            val sourceFile = File("src/main/kotlin/com/opensam/service/ScenarioService.kt")
+            val sourceFile = File("src/main/kotlin/com/openlogh/service/ScenarioService.kt")
             assertThat(sourceFile.exists())
                 .describedAs("ScenarioService.kt must exist at expected path")
                 .isTrue()
@@ -364,7 +239,7 @@ class ScenarioDataParityTest {
         @Test
         @DisplayName("All 8 city levels are defined in CITY_LEVEL_INIT")
         fun `all 8 levels defined`() {
-            val sourceFile = File("src/main/kotlin/com/opensam/service/ScenarioService.kt")
+            val sourceFile = File("src/main/kotlin/com/openlogh/service/ScenarioService.kt")
             val source = sourceFile.readText()
 
             for (level in 1..8) {

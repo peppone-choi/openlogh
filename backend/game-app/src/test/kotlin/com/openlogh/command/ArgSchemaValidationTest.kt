@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class ArgSchemaValidationTest {
 
     @Test
-    fun `dest city schema parses aliases and emits legacy keys`() {
+    fun `dest planet schema parses current aliases and emits legacy keys`() {
         val validated = ArgSchemas.destPlanet.parse(mapOf("planetId" to "12"))
 
         assertTrue(validated.ok())
@@ -39,7 +39,7 @@ class ArgSchemaValidationTest {
     }
 
     @Test
-    fun `foundNation schema defaults nationType to legacy che_도적`() {
+    fun `found faction schema defaults nation type and color`() {
         val validated = ArgSchemas.foundNation.parse(mapOf("factionName" to "테스트국"))
 
         assertTrue(validated.ok())
@@ -49,12 +49,12 @@ class ArgSchemaValidationTest {
     }
 
     @Test
-    fun `all registered commands have schema entries`() {
-        val registry = CommandRegistry()
-        val registered = registry.getGeneralCommandNames() + registry.getNationCommandNames()
+    fun `all registered gin7 commands resolve a schema object`() {
+        val registry = Gin7CommandRegistry()
+        val registered = registry.getGeneralCommandNames()
 
-        assertEquals(101, registered.size)
-        assertEquals(101, COMMAND_SCHEMAS.size)
-        assertTrue(registered.all { it in COMMAND_SCHEMAS.keys })
+        assertEquals(82, registered.size)
+        assertTrue(registered.all { registry.getOfficerSchema(it) is ArgSchema })
+        assertEquals(ArgSchemas.destPlanet, registry.getOfficerSchema("워프항행"))
     }
 }

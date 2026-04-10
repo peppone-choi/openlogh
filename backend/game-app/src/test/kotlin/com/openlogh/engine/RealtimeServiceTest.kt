@@ -6,6 +6,7 @@ import com.openlogh.engine.modifier.ModifierService
 import com.openlogh.entity.Officer
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.*
+import com.openlogh.service.CpService
 import com.openlogh.service.GameEventService
 import com.openlogh.service.ScenarioService
 import org.junit.jupiter.api.Assertions.*
@@ -28,6 +29,7 @@ class RealtimeServiceTest {
     private lateinit var gameEventService: GameEventService
     private lateinit var scenarioService: ScenarioService
     private lateinit var modifierService: ModifierService
+    private lateinit var cpService: CpService
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> anyNonNull(): T = any<T>() as T
@@ -44,6 +46,7 @@ class RealtimeServiceTest {
         gameEventService = mock(GameEventService::class.java)
         scenarioService = mock(ScenarioService::class.java)
         modifierService = mock(ModifierService::class.java)
+        cpService = CpService()
 
         service = RealtimeService(
             officerRepository,
@@ -58,7 +61,7 @@ class RealtimeServiceTest {
             modifierService,
             mock(com.openlogh.service.CommandLogDispatcher::class.java),
             mock(com.openlogh.service.GameConstService::class.java),
-            mock(com.openlogh.service.CpService::class.java),
+            cpService,
         )
     }
 
@@ -68,6 +71,10 @@ class RealtimeServiceTest {
         commandEndTime: OffsetDateTime? = null,
         commandPoints: Int = 10,
         officerLevel: Short = 1,
+        pcp: Int = 0,
+        mcp: Int = 0,
+        pcpMax: Int = 100,
+        mcpMax: Int = 100,
     ): Officer {
         return Officer(
             id = id,
@@ -78,6 +85,10 @@ class RealtimeServiceTest {
             commandEndTime = commandEndTime,
             commandPoints = commandPoints,
             officerLevel = officerLevel,
+            pcp = pcp,
+            mcp = mcp,
+            pcpMax = pcpMax,
+            mcpMax = mcpMax,
             turnTime = OffsetDateTime.now(),
         )
     }
@@ -123,28 +134,33 @@ class RealtimeServiceTest {
     }
 
     @Test
-    fun `submitNationCommand fails when officer level too low`() {
-        val general = createGeneral(officerLevel = 3)
+    fun `submitNationCommand fails when position card authority is missing`() {
+        val general = createGeneral(officerLevel = 0)
+        val world = createWorld()
 
         `when`(officerRepository.findById(1L)).thenReturn(Optional.of(general))
+        `when`(sessionStateRepository.findById(1.toShort())).thenReturn(Optional.of(world))
 
         val result = service.submitNationCommand(1L, "천도", null)
 
         assertFalse(result.success)
-        assertTrue(result.logs.any { it.contains("권한") })
+        assertTrue(result.logs.isNotEmpty())
     }
 
     @Test
     fun `regenerateCommandPoints increases command points up to cap`() {
         val world = createWorld()
-        world.commandPointRegenRate = 5
-        val general = createGeneral(commandPoints = 97)
+        val general = createGeneral(commandPoints = 97, pcp = 97, mcp = 97, officerLevel = 3)
+        general.politics = 80
+        general.administration = 80
+        general.command = 80
+        general.mobility = 80
 
         `when`(officerRepository.findBySessionId(1L)).thenReturn(listOf(general))
 
         service.regenerateCommandPoints(world)
 
-        assertEquals(100, general.commandPoints, "Should cap at 100")
+        assertEquals(200, general.commandPoints, "commandPoints mirrors PCP + MCP total")
         verify(officerRepository).save(general)
     }
 

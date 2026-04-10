@@ -1,4 +1,4 @@
-# Requirements: Open LOGH v2.1
+# Requirements: Open LOGH v2.4
 
 **Defined:** 2026-04-07
 **Core Value:** gin7 조직 시뮬레이션 — 직무권한카드 기반 커맨드 시스템으로 다수 플레이어가 계급 구조 안에서 명령/제안/인사/정치를 수행
@@ -85,9 +85,20 @@ Requirements for milestone v2.3: Gin7 Economy Pipeline full port. Each maps to P
 - [x] **EC-07**: Gin7EconomyService.processYearlyStatistics 가 매년 1월 국력/officerCount 갱신을 수행한다
 - [x] **EC-08**: Gin7EconomyService.processDisasterOrBoom 이 확률 기반 재해/호황 이벤트를 생성한다
 - [x] **EC-09**: Gin7EconomyService.randomizePlanetTradeRate 가 주기적으로 행성 교역률을 랜덤화한다
-- [x] **EC-10**: 모든 EconomyService stub 이 Gin7 route 로 연결되고 24-tick drain invariant (<10%) 가 통과하며 205 legacy 테스트가 감사 문서로 분류된다
+- [x] **EC-10**: 모든 EconomyService stub 이 Gin7 route 로 연결되고 24-tick drain invariant (<10%) 가 통과하며 221 legacy 테스트가 감사 문서로 분류된다
 
 **Regression invariant:** 빈 NPC 월드를 24틱 실행했을 때 total faction funds 감소 < 10%
+
+## v2.4 Requirements
+
+Requirements for milestone v2.4: legacy test cleanup. Each maps to Phase 24 plans.
+
+### Test Cleanup (TC)
+
+- [x] **TC-01**: `legacy-test-audit.md` 의 COVERED 60 failures 를 Gin7 대체 테스트 커버리지 확인 후 retire 한다
+- [x] **TC-02**: LOGH 에 존재하지 않는 legacy-only 동작을 검증하던 OBSOLETE 30 failures 를 삭제한다
+- [x] **TC-03**: MIGRATABLE 70 failures 를 LOGH 도메인 매핑(Faction/Officer/Planet, funds/supplies)으로 포팅한다
+- [x] **TC-04**: clean regression gate 결과가 59 failures(BROKEN 37 + OUT-OF-SCOPE 22) 까지 내려가고, 남은 suite 들이 Phase 24 deferred backlog 로 이관된다
 
 ## Future Requirements
 
@@ -159,6 +170,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EC-08 | Phase 23 | Complete |
 | EC-09 | Phase 23 | Complete |
 | EC-10 | Phase 23 | Complete |
+| TC-01 | Phase 24 | Complete |
+| TC-02 | Phase 24 | Complete |
+| TC-03 | Phase 24 | Complete |
+| TC-04 | Phase 24 | Complete |
 
 **Coverage:**
 - v2.1 requirements: 30 total
@@ -167,4 +182,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-07*
-*Last updated: 2026-04-07 after roadmap creation*
+*Last updated: 2026-04-10 after v2.4 / Phase 24 scaffold*

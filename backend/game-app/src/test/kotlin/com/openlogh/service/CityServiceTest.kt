@@ -27,7 +27,7 @@ class PlanetServiceTest {
         officerRepository = mock(OfficerRepository::class.java)
         factionRepository = mock(FactionRepository::class.java)
 
-        `when`(mapService.getCities("che")).thenReturn(
+        `when`(mapService.getCities("logh")).thenReturn(
             listOf(
                 CityConst(
                     id = 9,

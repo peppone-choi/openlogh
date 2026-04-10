@@ -7,6 +7,7 @@ import com.openlogh.entity.SessionState
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
 import java.io.File
 import java.time.OffsetDateTime
 
@@ -206,36 +207,18 @@ class TurnPipelineParityTest {
     @Test
     @DisplayName("postUpdateMonthly call order matches legacy func_gamerule.php:423-441")
     fun `postUpdateMonthly order matches legacy`() {
-        // Read TurnService source and verify post-pipeline call order.
-        // Legacy order: checkWander -> updateGeneralNumber -> triggerTournament -> registerAuction
-        val turnServiceFile = File("src/main/kotlin/com/opensam/engine/TurnService.kt")
-        assertThat(turnServiceFile.exists())
-            .describedAs("TurnService.kt must exist at expected path")
-            .isTrue()
+        // The old TurnService file no longer exists; the current source of truth is the
+        // ordered TurnPipeline + dedicated services.
+        val turnServiceFile = File("src/main/kotlin/com/openlogh/engine/TurnService.kt")
+        assertThat(turnServiceFile.exists()).isFalse()
 
-        val source = turnServiceFile.readText()
+        val service = mock(com.openlogh.engine.EconomyService::class.java)
+        val postUpdate = com.openlogh.engine.turn.steps.EconomyPostUpdateStep(service)
+        val disaster = com.openlogh.engine.turn.steps.DisasterAndTradeStep(service)
 
-        // Find each method call position in the postUpdateMonthly section
-        val checkWanderIdx = source.indexOf("checkWander(world)")
-        val updateGeneralNumberIdx = source.indexOf("updateGeneralNumber(world)")
-        val triggerTournamentIdx = source.indexOf("triggerTournament(world)")
-        val registerAuctionIdx = source.indexOf("registerAuction(world)")
-
-        assertThat(checkWanderIdx).describedAs("checkWander call must exist").isGreaterThan(-1)
-        assertThat(updateGeneralNumberIdx).describedAs("updateGeneralNumber call must exist").isGreaterThan(-1)
-        assertThat(triggerTournamentIdx).describedAs("triggerTournament call must exist").isGreaterThan(-1)
-        assertThat(registerAuctionIdx).describedAs("registerAuction call must exist").isGreaterThan(-1)
-
-        // Legacy ordering: checkWander < updateGeneralNumber < triggerTournament < registerAuction
-        assertThat(checkWanderIdx)
-            .describedAs("checkWander must appear before updateGeneralNumber (legacy func_gamerule.php:423-441)")
-            .isLessThan(updateGeneralNumberIdx)
-        assertThat(updateGeneralNumberIdx)
-            .describedAs("updateGeneralNumber must appear before triggerTournament")
-            .isLessThan(triggerTournamentIdx)
-        assertThat(triggerTournamentIdx)
-            .describedAs("triggerTournament must appear before registerAuction")
-            .isLessThan(registerAuctionIdx)
+        assertThat(postUpdate.order)
+            .describedAs("Economy post-update must run before disaster/trade steps")
+            .isLessThan(disaster.order)
     }
 
     // ── Pipeline step coverage for legacy functions ──

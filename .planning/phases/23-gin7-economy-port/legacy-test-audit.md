@@ -120,17 +120,19 @@ mixed case.
 
 | Category | Suites | Total failures | Action |
 |---|---|---|---|
-| COVERED | 15 | 76 | Retire — new Gin7 suite has better fidelity |
-| MIGRATABLE | 16 | 65 | Port to LOGH domain with field renames |
-| OBSOLETE | 13 | 34 | Delete — behavior removed in gin7 rewrite |
-| BROKEN | 6 | 39 | Fix Spring test harness (separate phase) |
-| OUT-OF-SCOPE | 7 | 7 | Track individually — not related to economy port |
+| COVERED | 14 | 60 | Retire — new Gin7 suite has better fidelity |
+| MIGRATABLE | 14 | 70 | Port to LOGH domain with field renames |
+| OBSOLETE | 11 | 30 | Delete — behavior removed in gin7 rewrite |
+| BROKEN | 7 | 39 | Fix Spring test harness (separate phase) |
+| OUT-OF-SCOPE | 11 | 22 | Track individually — not related to economy port |
 | **Total** | **57** | **221** | |
 
-**Planning implication:** a dedicated test-cleanup phase can retire/delete **110**
-legacy tests (COVERED + OBSOLETE = 76 + 34) with zero production risk. The remaining
-**104** require 실제 migration work (MIGRATABLE 65 + BROKEN 39 = 104) and should be
-scoped into a Phase ~24 test-harness hygiene milestone.
+**Planning implication:** a dedicated test-cleanup phase can retire/delete **90**
+legacy failures (COVERED + OBSOLETE = 60 + 30) with zero production risk. The remaining
+**131** failures require either migration work or explicit deferral
+(MIGRATABLE 70 + BROKEN 39 + OUT-OF-SCOPE 22 = 131). Any future Phase 24 execution
+must follow the row-level suite table above (and current JUnit XML), not the stale
+pre-rollup counts from earlier notes.
 
 ## Coverage map: Gin7 method → retiring legacy suites
 

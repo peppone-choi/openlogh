@@ -193,35 +193,6 @@ class ConstraintParityTest {
         }
     }
 
-    @Nested
-    @DisplayName("RemainCityCapacity")
-    inner class CityCapacityParity {
-
-        @Test
-        fun `passes when current below max`() {
-            val city = createCity(production = 999, productionMax = 1000)
-            assertEquals(ConstraintResult.Pass,
-                RemainCityCapacity("production", "농업").test(ctx(createGeneral(), city = city)))
-        }
-
-        @Test
-        fun `fails when current equals max`() {
-            val city = createCity(production = 1000, productionMax = 1000)
-            assertTrue(RemainCityCapacity("production", "농업").test(ctx(createGeneral(), city = city)) is ConstraintResult.Fail)
-        }
-
-        @Test
-        fun `works for all city keys`() {
-            for ((key, displayName) in listOf("production" to "농업", "commerce" to "상업", "security" to "치안", "orbitalDefense" to "수비", "fortress" to "성벽")) {
-                val city = createCity(production = 999, commerce = 999, security = 999, orbitalDefense = 999, fortress = 999,
-                    productionMax = 1000, commerceMax = 1000, securityMax = 1000, orbitalDefenseMax = 1000, fortressMax = 1000)
-                assertEquals(ConstraintResult.Pass,
-                    RemainCityCapacity(key, displayName).test(ctx(createGeneral(), city = city)),
-                    "Should pass for $key")
-            }
-        }
-    }
-
     // ──────────────────────────────────────────────────
     //  Officer level constraints
     // ──────────────────────────────────────────────────

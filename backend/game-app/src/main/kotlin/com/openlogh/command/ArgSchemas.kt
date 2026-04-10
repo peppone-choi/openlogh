@@ -37,7 +37,7 @@ object ArgSchemas {
         listOf(
             Field(
                 "destCityId",
-                aliases = listOf("destCityID", "cityId", "targetCityId"),
+                aliases = listOf("destCityID", "cityId", "targetCityId", "planetId", "targetPlanetId"),
                 required = true,
                 parser = ::parseLong,
             )

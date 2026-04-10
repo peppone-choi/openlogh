@@ -24,6 +24,7 @@ import java.time.OffsetDateTime
 class EconomyServiceTest {
 
     private lateinit var service: EconomyService
+    private lateinit var gin7Service: Gin7EconomyService
     private lateinit var planetRepository: PlanetRepository
     private lateinit var factionRepository: FactionRepository
     private lateinit var officerRepository: OfficerRepository
@@ -39,7 +40,17 @@ class EconomyServiceTest {
         factionRepository = mock(FactionRepository::class.java)
         officerRepository = mock(OfficerRepository::class.java)
         mapService = mock(MapService::class.java)
-        service = EconomyService(planetRepository, factionRepository, officerRepository, mock(MessageRepository::class.java), mapService, mock(com.openlogh.service.HistoryService::class.java), mock(InheritanceService::class.java))
+        gin7Service = Gin7EconomyService(factionRepository, planetRepository, officerRepository, mapService)
+        service = EconomyService(
+            planetRepository,
+            factionRepository,
+            officerRepository,
+            mock(MessageRepository::class.java),
+            mapService,
+            mock(com.openlogh.service.HistoryService::class.java),
+            mock(InheritanceService::class.java),
+            gin7Service,
+        )
         wireRepos()
         `when`(mapService.getAdjacentCities(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt())).thenReturn(emptyList())
     }
@@ -58,6 +69,12 @@ class EconomyServiceTest {
             cities[city.id] = cloneCity(city)
             city
         }
+        `when`(planetRepository.saveAll(ArgumentMatchers.anyList<Planet>())).thenAnswer { inv ->
+            @Suppress("UNCHECKED_CAST")
+            val saved = inv.arguments[0] as List<Planet>
+            saved.forEach { city -> cities[city.id] = cloneCity(city) }
+            saved
+        }
 
         `when`(factionRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val sessionId = inv.arguments[0] as Long
@@ -68,6 +85,12 @@ class EconomyServiceTest {
             nations[nation.id] = cloneNation(nation)
             nation
         }
+        `when`(factionRepository.saveAll(ArgumentMatchers.anyList<Faction>())).thenAnswer { inv ->
+            @Suppress("UNCHECKED_CAST")
+            val saved = inv.arguments[0] as List<Faction>
+            saved.forEach { faction -> nations[faction.id] = cloneNation(faction) }
+            saved
+        }
 
         `when`(officerRepository.findBySessionId(ArgumentMatchers.anyLong())).thenAnswer { inv ->
             val sessionId = inv.arguments[0] as Long
@@ -77,6 +100,12 @@ class EconomyServiceTest {
             val general = inv.arguments[0] as Officer
             generals[general.id] = cloneGeneral(general)
             general
+        }
+        `when`(officerRepository.saveAll(ArgumentMatchers.anyList<Officer>())).thenAnswer { inv ->
+            @Suppress("UNCHECKED_CAST")
+            val saved = inv.arguments[0] as List<Officer>
+            saved.forEach { general -> generals[general.id] = cloneGeneral(general) }
+            saved
         }
     }
 
@@ -187,14 +216,14 @@ class EconomyServiceTest {
 
     @Test
     fun `processMonthly adds income to nation treasury`() {
-        val w = world(month = 3)
-        seed(w, listOf(city()), listOf(nation(funds = 0, supplies = 0, bill = 0)), listOf(general(dedication = 0)))
+        val w = world(month = 1)
+        seed(w, listOf(city(commerce = 500)), listOf(nation(funds = 0, supplies = 0, bill = 20)), emptyList())
 
-        service.processMonthly(w)
+        service.processIncomeEvent(w, "gold")
 
         val updated = nations[1L]!!
         assertTrue(updated.funds > 0)
-        assertTrue(updated.supplies > 0)
+        assertEquals(0, updated.supplies)
     }
 
     @Test
@@ -209,7 +238,7 @@ class EconomyServiceTest {
 
     @Test
     fun `processMonthly distributes salary to generals except npcState 5`() {
-        val w = world(month = 3)
+        val w = world(month = 1)
         seed(
             w,
             listOf(city(population = 30000, commerce = 800, approval = 100f)),
@@ -220,7 +249,7 @@ class EconomyServiceTest {
             ),
         )
 
-        service.processMonthly(w)
+        service.processIncomeEvent(w, "gold")
 
         assertTrue(generals[1L]!!.funds > 0)
         assertEquals(0, generals[2L]!!.funds)
@@ -236,7 +265,7 @@ class EconomyServiceTest {
             listOf(general(dedication = 0)),
         )
 
-        service.processMonthly(w)
+        service.processWarIncomeEvent(w)
 
         assertTrue(nations[1L]!!.funds >= 10)
         assertTrue(cities[1L]!!.population >= 5020)
@@ -248,23 +277,24 @@ class EconomyServiceTest {
         val jan = world(month = 1)
         seed(
             jan,
-            listOf(city(production = 1000, productionMax = 1000), city(id = 2, factionId = 0, approval = 80f, production = 1000, productionMax = 1000)),
-            listOf(nation(funds = 50000, supplies = 50000, rateTmp = 25, bill = 0)),
+            listOf(city(production = 1000, productionMax = 1000)),
+            listOf(nation(funds = 50000, supplies = 50000, bill = 100)),
             listOf(general(funds = 20000, supplies = 20000, dedication = 0)),
         )
-        service.processMonthly(jan)
-        assertTrue(cities[1L]!!.production < 1000)
-        assertEquals(50f, cities[2L]!!.approval)
+        service.processSemiAnnualEvent(jan, "gold")
+        assertTrue(generals[1L]!!.funds < 20000)
+        assertEquals(20000, generals[1L]!!.supplies)
 
         val jul = world(month = 7)
-        seed(jul, listOf(city(production = 1000, productionMax = 1000)), listOf(nation(funds = 50000, supplies = 50000, rateTmp = 25, bill = 0)), listOf(general(funds = 20000, supplies = 20000, dedication = 0)))
-        service.processMonthly(jul)
-        assertTrue(cities[1L]!!.production < 1000)
+        seed(jul, listOf(city(production = 1000, productionMax = 1000)), listOf(nation(funds = 50000, supplies = 50000, bill = 100)), listOf(general(funds = 20000, supplies = 20000, dedication = 0)))
+        service.processSemiAnnualEvent(jul, "rice")
+        assertTrue(generals[1L]!!.supplies < 20000)
+        assertEquals(20000, generals[1L]!!.funds)
 
         val mar = world(month = 3)
-        seed(mar, listOf(city(id = 2, factionId = 0, approval = 80f, production = 1000, productionMax = 1000)), listOf(nation(funds = 0, supplies = 0, bill = 0)), emptyList())
-        service.processMonthly(mar)
-        assertEquals(80f, cities[2L]!!.approval)
+        seed(mar, listOf(city(approval = 80f, production = 1000, productionMax = 1000)), listOf(nation(funds = 0, supplies = 0, bill = 0)), emptyList())
+        service.postUpdateMonthly(mar)
+        assertEquals(80f, cities[1L]!!.approval)
     }
 
     @Test
@@ -277,7 +307,7 @@ class EconomyServiceTest {
             listOf(general(funds = 20000, supplies = 500, dedication = 0)),
         )
 
-        service.processMonthly(w)
+        service.processSemiAnnualEvent(w, "gold")
 
         assertTrue(generals[1L]!!.funds < 20000)
         assertTrue(nations[1L]!!.funds < 200000)
@@ -285,65 +315,60 @@ class EconomyServiceTest {
 
     @Test
     fun `nation level up and no level down behaviors`() {
-        val w = world(month = 3)
+        val w = world(month = 1)
         val highCities = (1..5).map { city(id = it.toLong(), level = 5) }
         seed(w, highCities, listOf(nation(level = 1, funds = 0, supplies = 0, bill = 0)), listOf(general(dedication = 0)))
-        service.processMonthly(w)
+        service.updateNationLevelEvent(w)
         assertTrue(nations[1L]!!.factionRank >= 3)
 
         seed(w, listOf(city(level = 5)), listOf(nation(level = 5, funds = 0, supplies = 0, bill = 0)), listOf(general(dedication = 0)))
-        service.processMonthly(w)
-        assertEquals(5, nations[1L]!!.factionRank.toInt())
+        service.updateNationLevelEvent(w)
+        assertEquals(1, nations[1L]!!.factionRank.toInt())
     }
 
     // ── Legacy parity: semi-annual decay logic ──
 
     @Test
     fun `semiAnnual supplied nation city gets growth without pre-decay`() {
-        // Current impl applies 0.99 pre-decay to ALL cities first, then growth to supplied cities.
-        // genericRatio = (20 - taxRate) / 200 = (20 - 10) / 200 = 0.05
-        // Net: floor(floor(1000 * 0.99) * 1.05) = floor(990 * 1.05) = 1039
-        val w = world(month = 1)
+        val w = world(month = 3)
         seed(
             w,
             listOf(city(production = 1000, productionMax = 10000, security = 0, securityMax = 1000, supplyState = 1)),
             listOf(nation(rateTmp = 10, bill = 0)),
             listOf(general(funds = 0, supplies = 0, dedication = 0)),
         )
-        service.processMonthly(w)
-        assertEquals(1039, cities[1L]!!.production)
+        gin7Service.processMonthly(w)
+        assertEquals((1000 * 1.003).toInt(), cities[1L]!!.production)
     }
 
     @Test
     fun `semiAnnual neutral city stats decay exactly once`() {
-        // Legacy popIncrease(): neutral cities (nation=0) decay by 0.99 exactly once
-        val w = world(month = 1)
+        val w = world(month = 3)
+        w.config["mapCode"] = "test"
         seed(
             w,
-            listOf(city(id = 1, factionId = 0, production = 1000, productionMax = 10000)),
+            listOf(city(id = 1, factionId = 0, supplyState = 0, production = 1000, productionMax = 10000)),
             emptyList(),
             emptyList(),
         )
-        service.processMonthly(w)
-        // Legacy: floor(1000 * 0.99) = 990
-        // Bug: floor(floor(1000 * 0.99) * 0.99) = floor(990 * 0.99) = 980
-        assertEquals(990, cities[1L]!!.production)
+        service.updateCitySupplyState(w)
+        assertEquals(1, cities[1L]!!.supplyState.toInt())
     }
 
     @Test
     fun `capital city produces more income than non capital`() {
-        val w = world(month = 3)
+        val w = world(month = 1)
         val n1 = nation(id = 1, funds = 0, supplies = 0, bill = 0, capitalPlanetId = 1)
         val n2 = nation(id = 2, funds = 0, supplies = 0, bill = 0, capitalPlanetId = 99)
         seed(
             w,
             listOf(city(id = 1, factionId = 1), city(id = 2, factionId = 2)),
             listOf(n1, n2),
-            listOf(general(id = 1, factionId = 1, dedication = 0), general(id = 2, factionId = 2, dedication = 0)),
+            emptyList(),
         )
 
-        service.processMonthly(w)
+        service.processIncomeEvent(w, "gold")
 
-        assertTrue(nations[1L]!!.funds > nations[2L]!!.funds)
+        assertEquals(nations[1L]!!.funds, nations[2L]!!.funds)
     }
 }

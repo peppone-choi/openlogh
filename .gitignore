@@ -77,3 +77,4 @@ legacy-core/
 legacy-docker-src/
 .claude/worktrees/
 .worktrees/
+.omx/

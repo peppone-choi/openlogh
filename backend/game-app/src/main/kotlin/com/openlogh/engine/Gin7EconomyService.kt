@@ -10,6 +10,7 @@ import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.PlanetRepository
 import com.openlogh.service.MapService
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -26,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional
  * 고립 행성(supplyState=0)은 세금 징수에서 제외되며 자원 성장도 없다.
  */
 @Service
-class Gin7EconomyService(
+class Gin7EconomyService @Autowired constructor(
     private val factionRepository: FactionRepository,
     private val planetRepository: PlanetRepository,
     private val officerRepository: OfficerRepository? = null,

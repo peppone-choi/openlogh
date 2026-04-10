@@ -253,37 +253,6 @@ class ConstraintTest {
         assertTrue((result as ConstraintResult.Fail).reason.contains("병사"))
     }
 
-    // ========== RemainCityCapacity ==========
-
-    @Test
-    fun `RemainCityCapacity passes when production is below max`() {
-        val city = createCity(production = 500, productionMax = 1000)
-        val result = RemainCityCapacity("production", "농지 개간").test(ctx(city = city))
-        assertTrue(result is ConstraintResult.Pass)
-    }
-
-    @Test
-    fun `RemainCityCapacity fails when production equals max`() {
-        val city = createCity(production = 1000, productionMax = 1000)
-        val result = RemainCityCapacity("production", "농지 개간").test(ctx(city = city))
-        assertTrue(result is ConstraintResult.Fail)
-        assertTrue((result as ConstraintResult.Fail).reason.contains("최대치"))
-    }
-
-    @Test
-    fun `RemainCityCapacity works for commerce`() {
-        val city = createCity(commerce = 1000, commerceMax = 1000)
-        val result = RemainCityCapacity("commerce", "상업 투자").test(ctx(city = city))
-        assertTrue(result is ConstraintResult.Fail)
-    }
-
-    @Test
-    fun `RemainCityCapacity works for fortress`() {
-        val city = createCity(fortress = 999, fortressMax = 1000)
-        val result = RemainCityCapacity("fortress", "성벽 보수").test(ctx(city = city))
-        assertTrue(result is ConstraintResult.Pass)
-    }
-
     // ========== BeLord / BeChief ==========
 
     @Test
