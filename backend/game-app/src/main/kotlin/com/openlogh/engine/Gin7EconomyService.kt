@@ -1,5 +1,6 @@
 package com.openlogh.engine
 
+import com.openlogh.engine.economy.BillFormula
 import com.openlogh.entity.Faction
 import com.openlogh.entity.Officer
 import com.openlogh.entity.Planet
@@ -59,6 +60,42 @@ class Gin7EconomyService(
     ) : this(factionRepository, planetRepository, officerRepository, null)
 
     private val logger = LoggerFactory.getLogger(Gin7EconomyService::class.java)
+
+    companion object {
+        /**
+         * Faction rank thresholds — count of planets with `level >= 4` required to reach
+         * each rank level. Ported from legacy `EconomyService.NATION_LEVEL_THRESHOLDS`
+         * (upstream a7a19cc3~1). 10 levels total.
+         *
+         * ```
+         *   index (rank level) → min high-level planet count
+         *   0 → 0   (방랑군)
+         *   1 → 1   (도위)
+         *   2 → 2   (주자사)
+         *   3 → 4   (주목)
+         *   4 → 6   (중랑장)
+         *   5 → 9   (대장군)
+         *   6 → 12  (대사마)
+         *   7 → 16  (공)
+         *   8 → 20  (왕)
+         *   9 → 25  (황제)
+         * ```
+         */
+        val FACTION_RANK_THRESHOLDS: IntArray = intArrayOf(0, 1, 2, 4, 6, 9, 12, 16, 20, 25)
+
+        /**
+         * Faction rank names — ported verbatim from legacy `EconomyService.NATION_LEVEL_NAME`
+         * for OpenSamguk parity. Plan 23-10 will layer LOGH-specific rank titles from
+         * CLAUDE.md's Empire/Alliance rank tables alongside history logging.
+         */
+        val FACTION_RANK_NAME: Array<String> = arrayOf(
+            "방랑군", "도위", "주자사", "주목", "중랑장", "대장군", "대사마", "공", "왕", "황제",
+        )
+
+        /** Legacy parity helper — returns `"???"` for out-of-range levels. */
+        fun getFactionRankName(level: Int): String =
+            FACTION_RANK_NAME.getOrElse(level) { "???" }
+    }
 
     /**
      * 월별 경제 처리 진입점.
@@ -197,10 +234,92 @@ class Gin7EconomyService(
 
         factionRepository.saveAll(factions)
 
+        // Plan 23-04: salary outlay runs only on the gold branch (month 1 schedule).
+        // Officer salaries are paid in funds, not supplies, so the rice branch
+        // never triggers the outlay step. Guarded on non-null officerRepository
+        // to preserve the 2-arg legacy test path (Plan 23-02 precedent).
+        var totalSalariesPaid = 0
+        val officerRepo = officerRepository
+        if (isGold && officerRepo != null) {
+            val allOfficers = officerRepo.findBySessionId(sessionId)
+            val officersByFaction = allOfficers.groupBy { it.factionId }
+            for (faction in factions) {
+                if (faction.id == 0L) continue
+                val factionOfficers = officersByFaction[faction.id] ?: continue
+                if (factionOfficers.isEmpty()) continue
+                totalSalariesPaid += payOfficerSalaries(world, faction, factionOfficers)
+            }
+            factionRepository.saveAll(factions)
+            if (allOfficers.isNotEmpty()) officerRepo.saveAll(allOfficers)
+        }
+
         logger.info(
-            "[World {}] processIncome({}): {} factions, total delta={}",
-            world.id, resource, factions.size, totalDelta,
+            "[World {}] processIncome({}): {} factions, total delta={}, salaries={}",
+            world.id, resource, factions.size, totalDelta, totalSalariesPaid,
         )
+    }
+
+    /**
+     * Faction → officer monthly salary transfer — Phase 23-04.
+     *
+     * Legacy reference: upstream opensamguk inlines this loop inside
+     * `com.opensam.engine.EconomyService.processIncome(world, …, "gold")`. The
+     * LOGH port extracts it as its own public method so it can be unit-tested
+     * in isolation and composed by sibling scheduled events.
+     *
+     * ### Formula (Phase 22-01 parity)
+     *
+     * Per active officer (`npcState.toInt() != 5`):
+     * ```
+     *   individualSalary = BillFormula.fromDedication(officer.dedication) * faction.taxRate / 100
+     *   faction.funds   -= individualSalary
+     *   officer.funds   += individualSalary
+     * ```
+     *
+     * The returned `totalPaid` is the sum of `individualSalary` across active
+     * officers — equal to `-(faction.funds delta)` by conservation.
+     *
+     * ### Legacy semantics preserved
+     *
+     * - **Inactive officers excluded** — `npcState == 5` (graveyard sentinel)
+     *   officers do not contribute to the outlay and are not paid. Matches
+     *   Phase 22-01 `FactionAI.adjustTaxAndBill` filter.
+     * - **Negative funds allowed** — legacy PHP
+     *   `hwe/sammo/Event/Action/ProcessIncome.php` does not guard against
+     *   overdraft. Faction.funds can go below zero; NPC `FactionAI` recovers
+     *   via `adjustTaxAndBill` / disband cycles on subsequent ticks.
+     * - **Formula authority** — [BillFormula.fromDedication] is the single
+     *   source of truth shared with Phase 22-01 `FactionAI.getBillFromDedication`.
+     *
+     * ### Not persisted here
+     *
+     * Callers are responsible for persisting the mutated `faction` and
+     * `officers` via their respective repositories. When invoked from
+     * `processIncome(world, "gold")`, both `factionRepository.saveAll` and
+     * `officerRepository.saveAll` are called once after all factions are
+     * processed, so this method is a pure in-memory transform.
+     *
+     * @param world the active session (reserved for logging context)
+     * @param faction the payer — `faction.funds` is decremented by `totalPaid`
+     * @param officers candidate recipients — inactive entries are filtered out
+     * @return `totalPaid` — sum of individual salaries across active officers
+     */
+    fun payOfficerSalaries(
+        world: SessionState,
+        faction: Faction,
+        officers: List<Officer>,
+    ): Int {
+        val taxRate = faction.taxRate.toInt()
+        var totalPaid = 0
+        for (officer in officers) {
+            if (officer.npcState.toInt() == 5) continue // graveyard — skip
+            val bill = BillFormula.fromDedication(officer.dedication)
+            val individualSalary = bill * taxRate / 100
+            officer.funds += individualSalary
+            totalPaid += individualSalary
+        }
+        faction.funds -= totalPaid
+        return totalPaid
     }
 
     /**
@@ -571,5 +690,82 @@ class Gin7EconomyService(
                 }
             }
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Plan 23-05: Faction rank update (legacy updateNationLevelEvent)
+    //
+    // Ports upstream `com.opensam.engine.EconomyService.updateNationLevel` (last seen
+    // intact in commit `a7a19cc3~1`) into LOGH's Gin7EconomyService. The rank level
+    // is derived from the count of planets with `level >= 4` owned by each faction.
+    // Unlike the upstream body (which only promotes), this LOGH port writes the new
+    // level unconditionally so factions can rank DOWN when they lose high-level
+    // planets — per Plan 23-05 acceptance criterion. History logging, level-up gold
+    // rewards, and inheritance point accrual are deferred to Plan 23-10 cleanup.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Recalculates `Faction.factionRank` for every non-neutral faction in the world.
+     *
+     * Algorithm:
+     *   1. Neutral faction (`id = 0`) is skipped.
+     *   2. For each faction, count owned planets with `level >= 4` → `highCount`.
+     *   3. Walk `FACTION_RANK_THRESHOLDS` and pick the highest index whose threshold
+     *      is `<= highCount`. That index becomes the new rank level.
+     *   4. Write `faction.factionRank = newLevel.coerceIn(0, 9).toShort()`
+     *      **unconditionally** — supports both rank-up and rank-down.
+     *
+     * Triggered annually via scenario event (legacy month 1 / Jan 1) or by the
+     * `UpdateNationLevelAction` event bridge. See Plan 23-10 for pipeline wire-up.
+     *
+     * @param world the active session
+     */
+    @Transactional
+    fun updateFactionRank(world: SessionState) {
+        val sessionId = world.id.toLong()
+        val factions = factionRepository.findBySessionId(sessionId)
+        if (factions.isEmpty()) {
+            logger.debug("[World {}] updateFactionRank: no factions, no-op", world.id)
+            return
+        }
+        val planets = planetRepository.findBySessionId(sessionId)
+        val planetsByFaction = planets.groupBy { it.factionId }
+
+        var mutations = 0
+        for (faction in factions) {
+            if (faction.id == 0L) continue // skip neutral
+            val factionPlanets = planetsByFaction[faction.id] ?: emptyList()
+            val highCount = factionPlanets.count { it.level.toInt() >= 4 }
+
+            // Walk thresholds ascending; last threshold that fits becomes new level.
+            var newLevel = 0
+            for (level in FACTION_RANK_THRESHOLDS.indices) {
+                if (highCount >= FACTION_RANK_THRESHOLDS[level]) {
+                    newLevel = level
+                }
+            }
+
+            val clamped = newLevel.coerceIn(0, 9).toShort()
+            if (faction.factionRank != clamped) {
+                val oldName = getFactionRankName(faction.factionRank.toInt())
+                val newName = getFactionRankName(clamped.toInt())
+                val direction = if (clamped > faction.factionRank) "승격" else "강등"
+                logger.info(
+                    "[World {}] Faction {} (id={}) 등급 {} → {} ({} → {}, highCount={})",
+                    world.id, faction.name, faction.id, direction,
+                    oldName, newName, highCount,
+                )
+                faction.factionRank = clamped
+                mutations++
+            }
+        }
+
+        if (mutations > 0) {
+            factionRepository.saveAll(factions)
+        }
+        logger.info(
+            "[World {}] updateFactionRank: {} factions scanned, {} rank changes",
+            world.id, factions.size, mutations,
+        )
     }
 }
