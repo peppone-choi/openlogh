@@ -283,7 +283,7 @@ Plans:
 - [x] 23-05-PLAN.md — Gin7.updateFactionRank
 - [x] 23-06-PLAN.md — Gin7.updatePlanetSupplyState (move from legacy)
 - [ ] 23-07-PLAN.md — Gin7.processYearlyStatistics
-- [ ] 23-08-PLAN.md — Gin7.processDisasterOrBoom
+- [x] 23-08-PLAN.md — Gin7.processDisasterOrBoom
 - [ ] 23-09-PLAN.md — Gin7.randomizePlanetTradeRate
 - [ ] 23-10-PLAN.md — Pipeline wire-up + 24-tick regression + legacy test audit
 **UI hint**: no
@@ -309,4 +309,4 @@ Plans:
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
 | 14. 프론트엔드 통합 | v2.1 | 18/18 | Complete    | 2026-04-09 |
 | 22. upstream bugfix sync | v2.2 | 3/3 | Complete   | 2026-04-10 |
-| 23. gin7 economy full port | v2.3 | 5/10 | In Progress|  |
+| 23. gin7 economy full port | v2.3 | 7/10 | In Progress|  |

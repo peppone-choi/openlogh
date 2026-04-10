@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Gin7 economy pipeline full port
 status: executing
-stopped_at: Completed 23-04-PLAN.md (payOfficerSalaries + BillFormula extraction — 5 new tests, source absorbed into sibling 23-05 commit d193138f)
-last_updated: "2026-04-10T07:52:41.885Z"
+stopped_at: Completed 23-08-PLAN.md (processDisasterOrBoom port — 5/5 tests pass, 364-line method ported verbatim with RNG injection)
+last_updated: "2026-04-10T08:09:59.571Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 24
   completed_phases: 19
   total_plans: 128
-  completed_plans: 115
+  completed_plans: 116
   percent: 93
 ---
 
@@ -102,6 +102,7 @@ Progress: [█████████▓] 93%
 | Phase 23-gin7-economy-port P23-06 | 25m | 2 tasks | 3 files |
 | Phase 23-gin7-economy-port P23-05 | 21min | 2 tasks | 2 files |
 | Phase 23-gin7-economy-port P23-04 | 35min | 2 tasks | 4 files |
+| Phase 23-gin7-economy-port P23-08 | 16min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -235,6 +236,7 @@ Recent decisions affecting current work:
 - [Phase 23-gin7-economy-port]: Plan 23-04: BillFormula extracted to engine.economy top-level object (option B) shared between FactionAI and Gin7EconomyService; FactionAI.getBillFromDedication kept as thin private delegator to preserve Phase 22-01 reflection test
 - [Phase 23-gin7-economy-port]: Plan 23-04: payOfficerSalaries wired into processIncome gold branch only (isGold && officerRepo != null guard) — preserves 2-arg legacy ctor path for Gin7ProcessIncomeTest regression; rice branch pure income, no salary outlay
 - [Phase 23-gin7-economy-port]: Plan 23-04: Task 2 GREEN source edits to Gin7EconomyService.kt (payOfficerSalaries + BillFormula import + processIncome wiring) absorbed into sibling 23-05 commit d193138f via parallel-wave git-add race; canonical attribution in 23-04-SUMMARY.md
+- [Phase 23]: Plan 23-08: processDisasterOrBoom uses method-param kotlin.random.Random (not ctor DeterministicRng) — enables AlwaysZeroRandom/AlwaysHighRandom stubs + seeded runs. Korean event templates preserved verbatim; historyService/MessageRepository calls stubbed to logger.info with TODO(23-10) markers. Officer injury loop null-guarded for 2-arg test ctor parity.
 
 ### Pending Todos
 
@@ -249,6 +251,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T07:52:28.581Z
-Stopped at: Completed 23-04-PLAN.md (payOfficerSalaries + BillFormula extraction — 5 new tests, source absorbed into sibling 23-05 commit d193138f)
+Last session: 2026-04-10T08:09:59.558Z
+Stopped at: Completed 23-08-PLAN.md (processDisasterOrBoom port — 5/5 tests pass, 364-line method ported verbatim with RNG injection)
 Resume file: None
