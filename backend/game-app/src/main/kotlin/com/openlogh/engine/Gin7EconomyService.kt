@@ -768,4 +768,408 @@ class Gin7EconomyService(
             world.id, factions.size, mutations,
         )
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Plan 23-08: processDisasterOrBoom (disaster/boom event generator)
+    //
+    // Ports legacy `EconomyService.processDisasterOrBoom` (EconomyService.kt:484-644)
+    // and its private `DisasterOrBoomEntry` data class (EconomyService.kt:98-102) into
+    // Gin7EconomyService. This is the largest single method in the legacy economy
+    // pipeline (~164 lines). Domain names were already LOGH-mapped in the legacy copy
+    // (city→planet, nation→faction, pop→population, agri→production, comm→commerce,
+    // trust→approval); this port preserves the exact probability table + affectRatio
+    // formulas + Korean event templates verbatim.
+    //
+    // **Deviations from legacy**:
+    //   1. RNG: Gin7 port accepts a `kotlin.random.Random` instance as an optional
+    //      method parameter instead of using `DeterministicRng.create(hiddenSeed, ...)`.
+    //      This lets tests inject stub RNGs (AlwaysZeroRandom / AlwaysHighRandom) and
+    //      seeded Randoms without reaching through the config map. Production callers
+    //      omit the parameter and get a `Random.Default` instance.
+    //   2. History logging + officer injury messages: legacy calls `historyService.logWorldHistory`
+    //      and writes per-officer injury Messages. Neither `HistoryService` nor
+    //      `MessageRepository` is wired into `Gin7EconomyService` (Plan 23-10 will wire
+    //      the event broadcast bus). This port preserves the Korean title/body templates
+    //      in the entry table and logs via `logger.info` with a TODO marker.
+    //   3. `officerRepository.findBySessionIdAndPlanetIdIn` officer injury loop is
+    //      preserved behind a null-guard on `officerRepository` — sibling Phase 23
+    //      plans already wire this repository, but older 2-arg test ctors skip it.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Single disaster/boom entry — ported verbatim from legacy `EconomyService.DisasterOrBoomEntry`.
+     * `stateCode` becomes `Planet.state` for the duration of the event window.
+     * `title` + `body` are Korean flavor strings for history logging.
+     *
+     * State code ranges (legacy convention, preserved):
+     *   - 1..10  → transient disaster/boom (cleared at top of next cycle)
+     *   - 11+    → persistent (not cleared; not yet used)
+     */
+    private data class DisasterOrBoomEntry(
+        val stateCode: Short,
+        val title: String,
+        val body: String,
+    )
+
+    /**
+     * Processes a single disaster-or-boom event cycle for the active session.
+     *
+     * Algorithm (verbatim legacy port):
+     *   1. Skip the first 3 years after session start
+     *      (`startYear + 3 > currentYear` → no-op).
+     *   2. Reset every planet's `state` to 0 if it was in a transient code (<= 10).
+     *   3. Roll the boom probability: months 4/7 have a 25% chance of being a boom
+     *      cycle; other months are always disaster cycles (`boomRate = 0`).
+     *   4. Per-planet probability:
+     *       - boom:     `0.02 + secuRatio * 0.05`     (2%..7%)
+     *       - disaster: `0.06 - secuRatio * 0.05`     (1%..6%)
+     *      where `secuRatio = security / securityMax`.
+     *   5. For targeted planets, apply `affectRatio` to population/approval/production/
+     *      commerce/security/orbitalDefense/fortress:
+     *       - boom:     `1.01 + min(secuRatio/0.8, 1)*0.04`   (1.01..1.05), coerced to max
+     *       - disaster: `0.80 + min(secuRatio/0.8, 1)*0.15`   (0.80..0.95)
+     *   6. Write `planet.state` to the selected entry's `stateCode`.
+     *   7. Emit a history log line (TODO: Plan 23-10 will wire the event bus).
+     *
+     * @param world the active session
+     * @param rng   optional RNG for test determinism — defaults to `Random.Default`
+     */
+    @Transactional
+    fun processDisasterOrBoom(world: SessionState, rng: kotlin.random.Random = kotlin.random.Random.Default) {
+        val sessionId = world.id.toLong()
+
+        val startYear = try {
+            (world.config["startYear"] as? Number)?.toInt() ?: world.currentYear.toInt()
+        } catch (e: Exception) {
+            logger.warn("Failed to resolve startYear from config: {}", e.message)
+            world.currentYear.toInt()
+        }
+
+        // Skip first 3 years
+        if (startYear + 3 > world.currentYear.toInt()) {
+            logger.debug(
+                "[World {}] processDisasterOrBoom: skipped ({}+3 > {})",
+                world.id, startYear, world.currentYear,
+            )
+            return
+        }
+
+        val planets = planetRepository.findBySessionId(sessionId)
+        if (planets.isEmpty()) return
+
+        val month = world.currentMonth.toInt()
+
+        // Step 1: Reset transient disaster state on every planet
+        for (planet in planets) {
+            if (planet.state <= 10) {
+                planet.state = 0
+            }
+        }
+
+        // Step 2: Boom probability by month (4,7 = 25%, others = 0)
+        val boomRate = when (month) {
+            4, 7 -> 0.25
+            else -> 0.0
+        }
+        val isGood = boomRate > 0 && rng.nextDouble() < boomRate
+
+        // Step 3: Per-planet targeting roll
+        val targetPlanets = mutableListOf<Planet>()
+        for (planet in planets) {
+            val secuRatio = if (planet.securityMax > 0) {
+                planet.security.toDouble() / planet.securityMax
+            } else 0.0
+            val raiseProp = if (isGood) {
+                0.02 + secuRatio * 0.05  // 2~7%
+            } else {
+                0.06 - secuRatio * 0.05  // 1~6%
+            }
+            if (rng.nextDouble() < raiseProp) {
+                targetPlanets.add(planet)
+            }
+        }
+
+        if (targetPlanets.isEmpty()) {
+            // State-reset pass still needs to persist
+            planetRepository.saveAll(planets)
+            return
+        }
+
+        // Step 4: Entry table — Korean flavor text preserved verbatim from legacy.
+        // LOGH re-skinning deferred to a later phase; state codes match legacy numbers.
+        val disasterEntries = mapOf(
+            1 to listOf(
+                DisasterOrBoomEntry(4, "【재난】", "역병이 발생하여 행성이 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "항성 폭풍으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(3, "【재난】", "에너지 부족으로 주민들이 고통받고 있습니다."),
+                DisasterOrBoomEntry(9, "【재난】", "반란군이 출현해 행성을 습격하고 있습니다."),
+            ),
+            4 to listOf(
+                DisasterOrBoomEntry(7, "【재난】", "우주 방사선으로 인해 피해가 급증하고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "항성 폭풍으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(6, "【재난】", "소행성 충돌로 인해 피해가 속출하고 있습니다."),
+            ),
+            7 to listOf(
+                DisasterOrBoomEntry(8, "【재난】", "자원 고갈로 인해 행성이 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "항성 폭풍으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(8, "【재난】", "흉작으로 굶어죽는 주민들이 늘어나고 있습니다."),
+            ),
+            10 to listOf(
+                DisasterOrBoomEntry(3, "【재난】", "혹한 행성 환경으로 행성이 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(5, "【재난】", "항성 폭풍으로 피해가 속출하고 있습니다."),
+                DisasterOrBoomEntry(3, "【재난】", "함대 봉쇄로 인해 행성이 황폐해지고 있습니다."),
+                DisasterOrBoomEntry(9, "【재난】", "반란군이 출현해 행성을 습격하고 있습니다."),
+            ),
+        )
+        val boomEntries = mapOf(
+            4 to DisasterOrBoomEntry(2, "【호황】", "호황으로 행성이 번창하고 있습니다."),
+            7 to DisasterOrBoomEntry(1, "【풍작】", "풍년으로 행성이 번창하고 있습니다."),
+        )
+
+        if (isGood) {
+            // Step 5a: Boom path — multiply up, coerce to max
+            val entry = boomEntries[month] ?: boomEntries[4]!!
+            for (planet in targetPlanets) {
+                val secuRatio = if (planet.securityMax > 0) {
+                    planet.security.toDouble() / planet.securityMax / 0.8
+                } else 0.0
+                val affectRatio = 1.01 + secuRatio.coerceIn(0.0, 1.0) * 0.04
+
+                planet.state = entry.stateCode
+                planet.population = (planet.population * affectRatio).toInt()
+                    .coerceAtMost(planet.populationMax)
+                planet.approval = (planet.approval * affectRatio.toFloat()).coerceAtMost(100F)
+                planet.production = (planet.production * affectRatio).toInt()
+                    .coerceAtMost(planet.productionMax)
+                planet.commerce = (planet.commerce * affectRatio).toInt()
+                    .coerceAtMost(planet.commerceMax)
+                planet.security = (planet.security * affectRatio).toInt()
+                    .coerceAtMost(planet.securityMax)
+                planet.orbitalDefense = (planet.orbitalDefense * affectRatio).toInt()
+                    .coerceAtMost(planet.orbitalDefenseMax)
+                planet.fortress = (planet.fortress * affectRatio).toInt()
+                    .coerceAtMost(planet.fortressMax)
+            }
+
+            val planetNames = targetPlanets.joinToString(" ") { it.name }
+            // TODO(Plan 23-10): replace with historyService.logWorldHistory once event bus is wired
+            logger.info(
+                "[World {}] {} {}에 {} (year={}, month={})",
+                world.id, entry.title, planetNames, entry.body, world.currentYear, month,
+            )
+        } else {
+            // Step 5b: Disaster path — multiply down
+            val entries = disasterEntries[month] ?: disasterEntries[1]!!
+            val entry = entries[rng.nextInt(entries.size)]
+            for (planet in targetPlanets) {
+                val secuRatio = if (planet.securityMax > 0) {
+                    planet.security.toDouble() / planet.securityMax / 0.8
+                } else 0.0
+                val affectRatio = 0.8 + secuRatio.coerceIn(0.0, 1.0) * 0.15
+
+                planet.state = entry.stateCode
+                planet.population = (planet.population * affectRatio).toInt()
+                planet.approval = planet.approval * affectRatio.toFloat()
+                planet.production = (planet.production * affectRatio).toInt()
+                planet.commerce = (planet.commerce * affectRatio).toInt()
+                planet.security = (planet.security * affectRatio).toInt()
+                planet.orbitalDefense = (planet.orbitalDefense * affectRatio).toInt()
+                planet.fortress = (planet.fortress * affectRatio).toInt()
+            }
+
+            // Officer injury loop — only if officerRepository is wired (non-null)
+            val officerRepo = officerRepository
+            if (officerRepo != null) {
+                val affectedPlanetIds = targetPlanets.map { it.id }
+                val officers = try {
+                    officerRepo.findBySessionIdAndPlanetIdIn(sessionId, affectedPlanetIds)
+                } catch (e: Exception) {
+                    logger.warn(
+                        "[World {}] findBySessionIdAndPlanetIdIn unavailable — skipping officer injury: {}",
+                        world.id, e.message,
+                    )
+                    emptyList()
+                }
+                var injuredCount = 0
+                for (officer in officers) {
+                    if (rng.nextDouble() >= 0.3) continue
+                    val injuryAmount = rng.nextInt(1, 17)
+                    officer.injury = (officer.injury + injuryAmount).coerceIn(0, 80).toShort()
+                    officer.ships = (officer.ships * 0.98).toInt()
+                    officer.morale = (officer.morale * 0.98).toInt().coerceIn(0, 150).toShort()
+                    officer.training = (officer.training * 0.98).toInt().coerceIn(0, 110).toShort()
+                    injuredCount++
+                }
+                if (injuredCount > 0) {
+                    officerRepo.saveAll(officers)
+                    // TODO(Plan 23-10): emit per-officer injury Messages via MessageRepository
+                    logger.info(
+                        "[World {}] disaster injured {} officers (of {} on affected planets)",
+                        world.id, injuredCount, officers.size,
+                    )
+                }
+            }
+
+            val planetNames = targetPlanets.joinToString(" ") { it.name }
+            // TODO(Plan 23-10): replace with historyService.logWorldHistory once event bus is wired
+            logger.info(
+                "[World {}] {} {}에 {} (year={}, month={})",
+                world.id, entry.title, planetNames, entry.body, world.currentYear, month,
+            )
+        }
+
+        planetRepository.saveAll(planets)
+        logger.info(
+            "[World {}] processDisasterOrBoom: month={}, isGood={}, {} planets affected",
+            world.id, month, isGood, targetPlanets.size,
+        )
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Plan 23-07: Annual statistics refresh (militaryPower + officerCount)
+    //
+    // Ports legacy `EconomyService.processYearlyStatistics` (EconomyService.kt:362-438)
+    // into LOGH's Gin7EconomyService. Refreshes each non-neutral faction's
+    // `militaryPower` (was `nation.power`) and `officerCount` (was `nation.gennum`)
+    // based on current roster, resources, tech level, and supplied-planet aggregates.
+    //
+    // Triggered annually on Jan 1 via scenario event (pipeline wire-up in Plan 23-10).
+    //
+    // LOGH deviations from legacy formula (documented in Plan 23-07 SUMMARY):
+    //   1. Repository-based access — uses factionRepository/planetRepository/
+    //      officerRepository instead of worldPortFactory (matches sibling Gin7 methods).
+    //   2. No `dex1..dex5` term — LOGH Officer lacks these fields (ship-class mastery
+    //      was not ported). `dexPower = 0` for parity-audit traceability.
+    //   3. Officer statPower = sum of all 8 LOGH stats per active officer
+    //      (leadership+command+intelligence+politics+administration+mobility+attack+defense),
+    //      replacing legacy's `npcMul * leaderCore * 2 + (sqrt(intel*str)*2 + lead/2)/2`.
+    //   4. No RNG jitter — legacy applied `DeterministicRng.nextDouble(0.95, 1.05)` as
+    //      seed-noise. Deterministic output for testability.
+    //   5. Neutral skip uses `id == 0L` (mirrors sibling updateFactionRank / processIncome),
+    //      not `factionRank.toInt() == 0` which would also skip valid rank-0 factions.
+    //   6. officerCount = active officer count (excludes npcState == 5 graveyard),
+    //      matching legacy `gennum` semantics.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Recalculates `Faction.militaryPower` and `Faction.officerCount` for every
+     * non-neutral faction in the world.
+     *
+     * Legacy source: `EconomyService.processYearlyStatistics(world)` (lines 362-438).
+     *
+     * ### Formula (LOGH-adapted)
+     *
+     * ```
+     *   militaryPower = round((resource + tech + cityPower + statPower + dexPower + expDed) / 10)
+     *
+     *   resource  = (faction.funds + faction.supplies + Σ(officer.funds + officer.supplies)) / 100
+     *   tech      = faction.techLevel
+     *   cityPower = if (maxSum > 0) (popSum × valueSum) / maxSum / 100 else 0
+     *     popSum    = Σ(planet.population) over supplied planets (supplyState==1)
+     *     valueSum  = Σ(pop+prod+comm+sec+fort+orbDef) over supplied planets
+     *     maxSum    = Σ(popMax+prodMax+commMax+secMax+fortMax+orbDefMax) over supplied planets
+     *   statPower = Σ(leadership+command+intelligence+politics+administration+mobility+attack+defense)
+     *               over active officers (npcState != 5)
+     *   dexPower  = 0   (LOGH Officer has no dex1..dex5 — dropped from formula)
+     *   expDed    = Σ(officer.experience + officer.dedication) / 100
+     * ```
+     *
+     * ### Algorithm
+     *
+     *   1. Fetch all factions / planets / officers for the session.
+     *   2. Group planets and officers by faction.
+     *   3. For each faction (skip `id == 0L` neutral):
+     *      a. Compute resource / tech / cityPower / statPower / dexPower / expDed.
+     *      b. militaryPower = round(sum / 10), coerced >= 0.
+     *      c. Record max-power watermark in `faction.meta["maxPower"]` (legacy parity).
+     *      d. officerCount = count(officers where npcState != 5).
+     *   4. Persist via factionRepository.saveAll.
+     *
+     * Empty world short-circuits before touching the planet/officer repositories.
+     *
+     * @param world the active session
+     */
+    @Transactional
+    fun processYearlyStatistics(world: SessionState) {
+        val sessionId = world.id.toLong()
+        val factions = factionRepository.findBySessionId(sessionId)
+        if (factions.isEmpty()) {
+            logger.debug("[World {}] processYearlyStatistics: no factions, no-op", world.id)
+            return
+        }
+
+        val planets = planetRepository.findBySessionId(sessionId)
+        val officerRepo = officerRepository
+        val officers = officerRepo?.findBySessionId(sessionId) ?: emptyList()
+
+        val planetsByFaction = planets.groupBy { it.factionId }
+        val officersByFaction = officers
+            .filter { it.npcState.toInt() != 5 }
+            .groupBy { it.factionId }
+
+        var mutatedCount = 0
+        for (faction in factions) {
+            if (faction.id == 0L) continue // skip neutral
+
+            val factionOfficers = officersByFaction[faction.id] ?: emptyList()
+            val factionPlanets = planetsByFaction[faction.id] ?: emptyList()
+
+            // 자원: (faction.funds + faction.supplies + Σ(officer.funds + officer.supplies)) / 100
+            val officerStockpile = factionOfficers.sumOf { (it.funds + it.supplies).toLong() }
+            val resource = ((faction.funds + faction.supplies).toLong() + officerStockpile) / 100.0
+
+            // 기술
+            val tech = faction.techLevel.toDouble()
+
+            // 도시파워: sum(pop) * sum(pop+production+commerce+security+fortress+orbitalDefense)
+            //           / sum(popMax+productionMax+commerceMax+securityMax+fortressMax+orbitalDefenseMax)
+            //           / 100
+            // Only supplied planets contribute (supplyState == 1).
+            val suppliedPlanets = factionPlanets.filter { it.supplyState.toInt() == 1 }
+            val cityPower = if (suppliedPlanets.isNotEmpty()) {
+                val popSum = suppliedPlanets.sumOf { it.population.toLong() }
+                val valueSum = suppliedPlanets.sumOf {
+                    (it.population + it.production + it.commerce + it.security + it.fortress + it.orbitalDefense).toLong()
+                }
+                val maxSum = suppliedPlanets.sumOf {
+                    (it.populationMax + it.productionMax + it.commerceMax + it.securityMax + it.fortressMax + it.orbitalDefenseMax).toLong()
+                }
+                if (maxSum > 0) (popSum.toDouble() * valueSum) / maxSum / 100.0 else 0.0
+            } else 0.0
+
+            // 장수능력: Σ 8-stat sum over active officers (LOGH adaptation)
+            val statPower = factionOfficers.sumOf { o ->
+                (o.leadership.toInt() + o.command.toInt() + o.intelligence.toInt() +
+                    o.politics.toInt() + o.administration.toInt() + o.mobility.toInt() +
+                    o.attack.toInt() + o.defense.toInt()).toLong()
+            }.toDouble()
+
+            // 숙련: LOGH Officer has no dex1..dex5 → dexPower = 0 (documented deviation)
+            val dexPower = 0.0
+
+            // 경험공헌: Σ(experience + dedication) / 100
+            val expDed = factionOfficers.sumOf { (it.experience + it.dedication).toLong() } / 100.0
+
+            val rawPower = (resource + tech + cityPower + statPower + dexPower + expDed) / 10.0
+            val power = kotlin.math.round(rawPower).toInt().coerceAtLeast(0)
+
+            // 최대 국력 기록 (legacy parity — faction.meta["maxPower"] watermark)
+            val prevMaxPower = (faction.meta["maxPower"] as? Number)?.toInt() ?: 0
+            if (power > prevMaxPower) {
+                faction.meta["maxPower"] = power
+            }
+
+            faction.militaryPower = power
+            faction.officerCount = factionOfficers.size
+            mutatedCount++
+        }
+
+        if (mutatedCount > 0) {
+            factionRepository.saveAll(factions)
+        }
+        logger.info(
+            "[World {}] processYearlyStatistics: {} factions updated (of {} total)",
+            world.id, mutatedCount, factions.size,
+        )
+    }
 }
