@@ -4,7 +4,8 @@
 
 - ✅ **v2.0 gin7 게임 로직 전면 재작성** - Phases 1-7 (shipped 2026-04-06)
 - ✅ **v2.1 전술전 지휘체계 + AI** - Phases 8-14 (shipped 2026-04-09)
-- 🚧 **v2.2 upstream 버그픽스 동기화** - Phase 22 (in progress)
+- ✅ **v2.2 upstream 버그픽스 동기화** - Phase 22 (shipped 2026-04-10)
+- 🚧 **v2.3 Gin7 economy pipeline full port** - Phase 23 (in progress)
 
 ## Phases
 
@@ -33,7 +34,11 @@
 
 ### v2.2 upstream 버그픽스 동기화
 
-- [ ] **Phase 22: upstream bugfix sync** - opensamguk `a7a19cc3` NPC 금 증발 버그 포팅 (FactionAI 산식, OfficerAI donate 게이트, EconomyService 스케줄 분리)
+- [x] **Phase 22: upstream bugfix sync** - opensamguk `a7a19cc3` NPC 금 증발 버그 포팅 (FactionAI 산식, OfficerAI donate 게이트, EconomyService 스케줄 분리) (2026-04-10)
+
+### v2.3 Gin7 economy pipeline full port
+
+- [ ] **Phase 23: gin7 economy full port** - legacy EconomyService 9개 메서드 Gin7으로 전면 포팅, 파이프라인 wire-up, 24-tick drain invariant 활성화, 205 legacy 테스트 감사
 
 ## Phase Details
 
@@ -260,9 +265,32 @@ Plans:
 - [x] 22-03-PLAN.md — EconomyService schedule split port
 **UI hint**: no
 
+### Phase 23: gin7 economy full port
+**Goal**: legacy `EconomyService` (640 lines, 18 methods) 경제 파이프라인을 `Gin7EconomyService`로 전면 포팅. Phase 22에서 API guard로만 남겨둔 stubs 실제 구현 + 파이프라인 wire-up + 24-tick drain invariant 활성화 + 205 legacy 테스트 감사.
+**Depends on**: Phase 22 (v2.2 milestone 완료)
+**Requirement IDs**: EC-01..EC-10
+**Must Haves**:
+- Gin7EconomyService: income/semi-annual (per-resource), war income, salary outlay, faction rank, planet supply state, yearly stats, disaster/boom, trade rate
+- EconomyService stubs → Gin7 routing
+- 월 1/7 per-resource 이벤트 스케줄
+- 24-tick 빈 NPC 월드 drain invariant <10% 통과
+- 205 legacy 삼국지 테스트 감사 문서
+**Plans**:
+- [ ] 23-01-PLAN.md — Gin7.processIncome per-resource
+- [ ] 23-02-PLAN.md — Gin7.processSemiAnnual per-resource
+- [ ] 23-03-PLAN.md — Gin7.processWarIncome
+- [ ] 23-04-PLAN.md — Gin7 salary outlay + FactionAI bill integration
+- [ ] 23-05-PLAN.md — Gin7.updateFactionRank
+- [ ] 23-06-PLAN.md — Gin7.updatePlanetSupplyState (move from legacy)
+- [ ] 23-07-PLAN.md — Gin7.processYearlyStatistics
+- [ ] 23-08-PLAN.md — Gin7.processDisasterOrBoom
+- [ ] 23-09-PLAN.md — Gin7.randomizePlanetTradeRate
+- [ ] 23-10-PLAN.md — Pipeline wire-up + 24-tick regression + legacy test audit
+**UI hint**: no
+
 ## Progress
 
-**Execution Order:** 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 22
+**Execution Order:** 8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 22 -> 23
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -281,3 +309,4 @@ Plans:
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
 | 14. 프론트엔드 통합 | v2.1 | 18/18 | Complete    | 2026-04-09 |
 | 22. upstream bugfix sync | v2.2 | 3/3 | Complete   | 2026-04-10 |
+| 23. gin7 economy full port | v2.3 | 0/10 | In Progress | - |

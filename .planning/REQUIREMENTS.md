@@ -70,6 +70,25 @@ Requirements for milestone v2.2: upstream opensamguk 버그픽스 동기화. Eac
 
 **Regression invariant:** 빈 NPC 월드를 24틱 실행해도 total faction funds 감소 < 10%
 
+## v2.3 Requirements
+
+Requirements for milestone v2.3: Gin7 Economy Pipeline full port. Each maps to Phase 23 plans.
+
+### Economy Pipeline (EC)
+
+- [ ] **EC-01**: Gin7EconomyService.processIncome(world, resource) 가 per-resource 격리로 동작한다
+- [ ] **EC-02**: Gin7EconomyService.processSemiAnnual(world, resource) 가 per-resource 격리 progressive decay 를 적용한다
+- [ ] **EC-03**: Gin7EconomyService.processWarIncome(world) 가 전쟁 상태(warState > 0) 팩션에만 월별 보너스를 지급한다
+- [ ] **EC-04**: Gin7EconomyService 가 FactionAI.getBillFromDedication 공식으로 officer salary outlay 를 처리한다
+- [ ] **EC-05**: Gin7EconomyService.updateFactionRank 가 military_power 기반 계층 재계산을 수행한다
+- [ ] **EC-06**: Gin7EconomyService.updatePlanetSupplyState 가 BFS 기반 보급선 판정 + 고립 행성 감쇠를 처리한다
+- [ ] **EC-07**: Gin7EconomyService.processYearlyStatistics 가 매년 1월 국력/officerCount 갱신을 수행한다
+- [ ] **EC-08**: Gin7EconomyService.processDisasterOrBoom 이 확률 기반 재해/호황 이벤트를 생성한다
+- [ ] **EC-09**: Gin7EconomyService.randomizePlanetTradeRate 가 주기적으로 행성 교역률을 랜덤화한다
+- [ ] **EC-10**: 모든 EconomyService stub 이 Gin7 route 로 연결되고 24-tick drain invariant (<10%) 가 통과하며 205 legacy 테스트가 감사 문서로 분류된다
+
+**Regression invariant:** 빈 NPC 월드를 24틱 실행했을 때 total faction funds 감소 < 10%
+
 ## Future Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -127,9 +146,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FE-03 | Phase 14 | In Progress (scaffolds ready) |
 | FE-04 | Phase 14 | In Progress (scaffolds ready) |
 | FE-05 | Phase 14 | Complete |
-| US-01 | Phase 22 | In Progress |
-| US-02 | Phase 22 | In Progress |
-| US-03 | Phase 22 | In Progress |
+| US-01 | Phase 22 | Complete |
+| US-02 | Phase 22 | Complete |
+| US-03 | Phase 22 | Complete |
+| EC-01 | Phase 23 | In Progress |
+| EC-02 | Phase 23 | In Progress |
+| EC-03 | Phase 23 | In Progress |
+| EC-04 | Phase 23 | In Progress |
+| EC-05 | Phase 23 | In Progress |
+| EC-06 | Phase 23 | In Progress |
+| EC-07 | Phase 23 | In Progress |
+| EC-08 | Phase 23 | In Progress |
+| EC-09 | Phase 23 | In Progress |
+| EC-10 | Phase 23 | In Progress |
 
 **Coverage:**
 - v2.1 requirements: 30 total
