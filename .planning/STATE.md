@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Gin7 economy pipeline full port
 status: executing
-stopped_at: Completed 23-01-PLAN.md (Gin7EconomyService.processIncome per-resource — 5 new tests, RED+GREEN GREEN-verified, sibling 23-02 constructor absorbed)
-last_updated: "2026-04-10T07:17:41.431Z"
+stopped_at: Completed 23-02-PLAN.md (processSemiAnnual per-resource — 5 new tests, per-resource isolation + progressive bracket decay + nullable OfficerRepository ctor, source absorbed into sibling 23-01 commit 9a22d47a)
+last_updated: "2026-04-10T07:19:15.104Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 24
   completed_phases: 19
   total_plans: 128
-  completed_plans: 111
+  completed_plans: 112
   percent: 93
 ---
 
@@ -98,6 +98,7 @@ Progress: [█████████▓] 93%
 | Phase 22-upstream-bugfix-sync P22-03 | 14m | 4 tasks | 5 files |
 | Phase 23 P03 | 12m | 2 tasks | 2 files |
 | Phase 23-gin7-economy-port P01 | 17min | 2 tasks | 2 files |
+| Phase 23-gin7-economy-port P23-02 | 18m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -221,6 +222,7 @@ Recent decisions affecting current work:
 - [Phase 23]: Plan 23-03: processWarIncome upstream body has no warState filter (plan text was wrong) — gate is planet.dead>0, formula is faction.funds+=dead/10 + planet.population+=(dead*0.2).coerceAtMost(headroom), plan EC-03 semantic text deferred to 23-10 cleanup
 - [Phase 23-gin7-economy-port]: Plan 23-01: processIncome narrow port — gold uses commerce*tax/100, rice uses production sum; salary/wall-income/modifiers deferred to 23-02..23-04 per CONTEXT.md scope
 - [Phase 23-gin7-economy-port]: Plan 23-01: Split attribution — sibling 23-02 OfficerRepository constructor prelude absorbed into commit 9a22d47a during parallel Wave 1 race; 23-02 GREEN will land only processSemiAnnual body
+- [Phase 23-gin7-economy-port]: Plan 23-02: processSemiAnnual per-resource — nullable OfficerRepository ctor + secondary 2-arg ctor for parallel-wave safety; strict > bracket semantics (10000 falls in 0.99 bracket, not 0.97); GREEN source absorbed into sibling 23-01 commit 9a22d47a via git-add race (Phase 14 precedent)
 
 ### Pending Todos
 
@@ -235,6 +237,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T07:17:41.421Z
-Stopped at: Completed 23-01-PLAN.md (Gin7EconomyService.processIncome per-resource — 5 new tests, RED+GREEN GREEN-verified, sibling 23-02 constructor absorbed)
+Last session: 2026-04-10T07:19:15.092Z
+Stopped at: Completed 23-02-PLAN.md (processSemiAnnual per-resource — 5 new tests, per-resource isolation + progressive bracket decay + nullable OfficerRepository ctor, source absorbed into sibling 23-01 commit 9a22d47a)
 Resume file: None

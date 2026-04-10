@@ -277,7 +277,7 @@ Plans:
 - 205 legacy 삼국지 테스트 감사 문서
 **Plans**:
 - [x] 23-01-PLAN.md — Gin7.processIncome per-resource
-- [ ] 23-02-PLAN.md — Gin7.processSemiAnnual per-resource
+- [x] 23-02-PLAN.md — Gin7.processSemiAnnual per-resource
 - [x] 23-03-PLAN.md — Gin7.processWarIncome
 - [ ] 23-04-PLAN.md — Gin7 salary outlay + FactionAI bill integration
 - [ ] 23-05-PLAN.md — Gin7.updateFactionRank
