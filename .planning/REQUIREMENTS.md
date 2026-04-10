@@ -78,14 +78,14 @@ Requirements for milestone v2.3: Gin7 Economy Pipeline full port. Each maps to P
 
 - [x] **EC-01**: Gin7EconomyService.processIncome(world, resource) 가 per-resource 격리로 동작한다
 - [x] **EC-02**: Gin7EconomyService.processSemiAnnual(world, resource) 가 per-resource 격리 progressive decay 를 적용한다
-- [x] **EC-03**: Gin7EconomyService.processWarIncome(world) 가 전쟁 상태(warState > 0) 팩션에만 월별 보너스를 지급한다
+- [x] **EC-03**: Gin7EconomyService.processWarIncome(world) 가 `planet.dead > 0` 인 행성에서 casualty salvage 를 처리한다 (faction.funds += dead/10, population 회복, dead 카운터 초기화). 상위 upstream a7a19cc3 parity 확인: warState 게이트가 아닌 `planet.dead` 게이트. Plan 23-03 port drift correction
 - [x] **EC-04**: Gin7EconomyService 가 FactionAI.getBillFromDedication 공식으로 officer salary outlay 를 처리한다
-- [x] **EC-05**: Gin7EconomyService.updateFactionRank 가 military_power 기반 계층 재계산을 수행한다
+- [x] **EC-05**: Gin7EconomyService.updateFactionRank 가 `count(planet.level >= 4)` 기반으로 FACTION_RANK_THRESHOLDS (10-level 테이블)을 walk 하여 faction.factionRank 를 재계산한다. military_power 는 입력이 아니며 Plan 23-07 processYearlyStatistics 에서 별도로 갱신된다. Plan 23-05 port drift correction
 - [x] **EC-06**: Gin7EconomyService.updatePlanetSupplyState 가 BFS 기반 보급선 판정 + 고립 행성 감쇠를 처리한다
 - [x] **EC-07**: Gin7EconomyService.processYearlyStatistics 가 매년 1월 국력/officerCount 갱신을 수행한다
 - [x] **EC-08**: Gin7EconomyService.processDisasterOrBoom 이 확률 기반 재해/호황 이벤트를 생성한다
 - [x] **EC-09**: Gin7EconomyService.randomizePlanetTradeRate 가 주기적으로 행성 교역률을 랜덤화한다
-- [ ] **EC-10**: 모든 EconomyService stub 이 Gin7 route 로 연결되고 24-tick drain invariant (<10%) 가 통과하며 205 legacy 테스트가 감사 문서로 분류된다
+- [x] **EC-10**: 모든 EconomyService stub 이 Gin7 route 로 연결되고 24-tick drain invariant (<10%) 가 통과하며 205 legacy 테스트가 감사 문서로 분류된다
 
 **Regression invariant:** 빈 NPC 월드를 24틱 실행했을 때 total faction funds 감소 < 10%
 
@@ -149,16 +149,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | US-01 | Phase 22 | Complete |
 | US-02 | Phase 22 | Complete |
 | US-03 | Phase 22 | Complete |
-| EC-01 | Phase 23 | In Progress |
-| EC-02 | Phase 23 | In Progress |
-| EC-03 | Phase 23 | In Progress |
-| EC-04 | Phase 23 | In Progress |
-| EC-05 | Phase 23 | In Progress |
-| EC-06 | Phase 23 | In Progress |
-| EC-07 | Phase 23 | In Progress |
-| EC-08 | Phase 23 | In Progress |
-| EC-09 | Phase 23 | In Progress |
-| EC-10 | Phase 23 | In Progress |
+| EC-01 | Phase 23 | Complete |
+| EC-02 | Phase 23 | Complete |
+| EC-03 | Phase 23 | Complete |
+| EC-04 | Phase 23 | Complete |
+| EC-05 | Phase 23 | Complete |
+| EC-06 | Phase 23 | Complete |
+| EC-07 | Phase 23 | Complete |
+| EC-08 | Phase 23 | Complete |
+| EC-09 | Phase 23 | Complete |
+| EC-10 | Phase 23 | Complete |
 
 **Coverage:**
 - v2.1 requirements: 30 total
