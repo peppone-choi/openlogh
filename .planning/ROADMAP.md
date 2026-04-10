@@ -276,7 +276,7 @@ Plans:
 - 24-tick 빈 NPC 월드 drain invariant <10% 통과
 - 205 legacy 삼국지 테스트 감사 문서
 **Plans**:
-- [ ] 23-01-PLAN.md — Gin7.processIncome per-resource
+- [x] 23-01-PLAN.md — Gin7.processIncome per-resource
 - [ ] 23-02-PLAN.md — Gin7.processSemiAnnual per-resource
 - [x] 23-03-PLAN.md — Gin7.processWarIncome
 - [ ] 23-04-PLAN.md — Gin7 salary outlay + FactionAI bill integration
@@ -309,4 +309,4 @@ Plans:
 | 13. 전략 AI | v2.1 | 2/2 | Complete    | 2026-04-09 |
 | 14. 프론트엔드 통합 | v2.1 | 18/18 | Complete    | 2026-04-09 |
 | 22. upstream bugfix sync | v2.2 | 3/3 | Complete   | 2026-04-10 |
-| 23. gin7 economy full port | v2.3 | 1/10 | In Progress|  |
+| 23. gin7 economy full port | v2.3 | 2/10 | In Progress|  |
