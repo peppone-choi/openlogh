@@ -1172,4 +1172,96 @@ class Gin7EconomyService(
             world.id, mutatedCount, factions.size,
         )
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Plan 23-09: randomizePlanetTradeRate (periodic trade-rate shuffle)
+    //
+    // Ports legacy `EconomyService.randomizeCityTradeRate` (EconomyService.kt:648-672,
+    // ~25 lines) into Gin7EconomyService. The method periodically re-rolls each
+    // planet's `tradeRoute` to introduce market variance: high-level planets
+    // (level >= 4) get a level-scaled chance of randomising into 95..105, while
+    // low-level planets (level < 4) are reset to the default 100.
+    //
+    // **Deviations from legacy**:
+    //   1. Domain rename: `city.tradeRoute → planet.tradeRoute` (same field name,
+    //      entity renamed per Phase 23 CONTEXT.md).
+    //   2. Isolated-planet skip: `supplyState != 1` planets are excluded from the
+    //      randomisation pass, mirroring the sibling Gin7 convention documented in
+    //      the class-level KDoc (line 26: "고립 행성은 세금 징수에서 제외"). The
+    //      legacy body processed every city unconditionally. Rule 2 additive
+    //      correctness tweak — isolated planets have no trade route to shuffle.
+    //   3. Deterministic seed tag preserved verbatim:
+    //      `hiddenSeed | "tradeRate" | year | month`.
+    //   4. Value bounds preserved: `rng.nextInt(95, 106)` yields 95..105 inclusive,
+    //      default reset value remains 100.
+    //
+    // Wire-up to the TickEngine monthly pipeline is deferred to Plan 23-10.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Re-rolls every supplied planet's `tradeRoute` using a deterministic RNG.
+     *
+     * Algorithm (verbatim legacy port with LOGH isolation guard):
+     *   1. Derive RNG: `DeterministicRng.create(hiddenSeed, "tradeRate", year, month)`
+     *      — replay-safe because inputs are the session's hidden seed plus the turn
+     *      coordinates.
+     *   2. Walk every planet returned by `planetRepository.findBySessionId(sessionId)`.
+     *   3. Skip planets with `supplyState != 1` (isolated — no trade route to shuffle).
+     *   4. Lookup level probability in `probByLevel`:
+     *      `4→0.2, 5→0.4, 6→0.6, 7→0.8, 8→1.0`. Levels outside this table (≤3 or ≥9)
+     *      → prob=0.0 → reset branch.
+     *   5. Roll `rng.nextDouble()`. If it falls under prob, assign
+     *      `rng.nextInt(95, 106)` (95..105 inclusive). Otherwise reset to 100.
+     *   6. Persist all touched planets via `planetRepository.saveAll(planets)`.
+     *
+     * @param world the active session — must expose `currentYear`, `currentMonth`,
+     *              and optionally `config["hiddenSeed"]`. Falls back to `world.id`
+     *              if the seed is missing, matching legacy behaviour.
+     */
+    @Transactional
+    fun randomizePlanetTradeRate(world: SessionState) {
+        val sessionId = world.id.toLong()
+        val planets = planetRepository.findBySessionId(sessionId)
+        if (planets.isEmpty()) {
+            logger.debug("[World {}] randomizePlanetTradeRate: no planets, no-op", world.id)
+            return
+        }
+
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
+        val rng = DeterministicRng.create(
+            hiddenSeed, "tradeRate",
+            world.currentYear, world.currentMonth,
+        )
+
+        // Level-based randomisation probability — verbatim from legacy
+        // `EconomyService.randomizeCityTradeRate` (EconomyService.kt:658-660).
+        val probByLevel = mapOf(
+            4 to 0.2, 5 to 0.4, 6 to 0.6, 7 to 0.8, 8 to 1.0,
+        )
+
+        var mutated = 0
+        var reset = 0
+        var skipped = 0
+        for (planet in planets) {
+            // LOGH addition: skip isolated planets (see class KDoc line 26).
+            if (planet.supplyState.toInt() != 1) {
+                skipped++
+                continue
+            }
+            val prob = probByLevel[planet.level.toInt()] ?: 0.0
+            if (prob > 0 && rng.nextDouble() < prob) {
+                planet.tradeRoute = rng.nextInt(95, 106) // 95..105 inclusive
+                mutated++
+            } else {
+                planet.tradeRoute = 100
+                reset++
+            }
+        }
+
+        planetRepository.saveAll(planets)
+        logger.info(
+            "[World {}] randomizePlanetTradeRate: year={}, month={}, mutated={}, reset={}, skipped={}",
+            world.id, world.currentYear, world.currentMonth, mutated, reset, skipped,
+        )
+    }
 }
