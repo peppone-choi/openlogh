@@ -5,12 +5,10 @@ import com.openlogh.dto.CreateGeneralRequest
 import com.openlogh.entity.AppUser
 import com.openlogh.entity.Planet
 import com.openlogh.entity.Officer
-import com.openlogh.entity.OfficerTurn
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.AppUserRepository
 import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.OfficerRepository
-import com.openlogh.repository.OfficerTurnRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.SessionStateRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -20,12 +18,9 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyList
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import java.util.Optional
 
@@ -35,7 +30,6 @@ class OfficerServiceTest {
     private lateinit var sessionStateRepository: SessionStateRepository
     private lateinit var planetRepository: PlanetRepository
     private lateinit var factionRepository: FactionRepository
-    private lateinit var officerTurnRepository: OfficerTurnRepository
     private lateinit var gameConstService: GameConstService
     private lateinit var service: OfficerService
 
@@ -46,7 +40,6 @@ class OfficerServiceTest {
         sessionStateRepository = mock(SessionStateRepository::class.java)
         planetRepository = mock(PlanetRepository::class.java)
         factionRepository = mock(FactionRepository::class.java)
-        officerTurnRepository = mock(OfficerTurnRepository::class.java)
         gameConstService = mock(GameConstService::class.java)
 
         service = OfficerService(
@@ -82,13 +75,10 @@ class OfficerServiceTest {
             }
             general
         }
-        `when`(officerTurnRepository.saveAll(anyList())).thenAnswer { invocation ->
-            invocation.getArgument<List<OfficerTurn>>(0)
-        }
     }
 
     @Test
-    fun `createGeneral applies legacy join options and seeds rest turns`() {
+    fun `createGeneral applies legacy join options and updates inherit balance`() {
         val user = AppUser(
             id = 1,
             loginId = "user",
@@ -150,13 +140,7 @@ class OfficerServiceTest {
         assertEquals(71.toShort(), general?.command)
         assertEquals(70.toShort(), general?.intelligence)
         assertEquals(3000, user.meta["inheritPoints"])
-
-        @Suppress("UNCHECKED_CAST")
-        val turnCaptor = ArgumentCaptor.forClass(Iterable::class.java) as ArgumentCaptor<Iterable<OfficerTurn>>
-        verify(officerTurnRepository).saveAll(turnCaptor.capture())
-        val turns = turnCaptor.value.toList()
-        assertEquals(30, turns.size)
-        assertTrue(turns.all { it.actionCode == "휴식" && it.officerId == 77L })
+        assertNotNull(general?.turnTime)
     }
 
     @Test

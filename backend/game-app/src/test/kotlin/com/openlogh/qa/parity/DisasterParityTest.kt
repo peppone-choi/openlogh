@@ -365,7 +365,7 @@ class DisasterParityTest {
             // ships *= 0.98, morale *= 0.98, training *= 0.98
 
             // Verify formula constants by reading source
-            val sourceFile = java.io.File("src/main/kotlin/com/opensam/engine/EconomyService.kt")
+            val sourceFile = java.io.File("src/main/kotlin/com/openlogh/engine/EconomyService.kt")
             val source = sourceFile.readText()
 
             // Check 30% threshold

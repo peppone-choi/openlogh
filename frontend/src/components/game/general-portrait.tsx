@@ -27,6 +27,7 @@ export function GeneralPortrait({ picture, name, size = 'sm', className }: Gener
 
     const src =
         stage === 0 ? getPortraitUrl(picture) : stage === 1 ? getPortraitUrl(null) : null;
+    const isRemoteSrc = !!src && /^https?:\/\//i.test(src);
 
     if (src) {
         return (
@@ -37,6 +38,7 @@ export function GeneralPortrait({ picture, name, size = 'sm', className }: Gener
                     width={px}
                     height={px}
                     className="size-full object-cover"
+                    unoptimized={isRemoteSrc}
                     onError={() => setStage((s) => s + 1)}
                 />
             </Avatar>

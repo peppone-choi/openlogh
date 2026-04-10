@@ -10,6 +10,8 @@ interface EventData {
 }
 
 let stompClient: Client | null = null;
+let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
+const DISCONNECT_GRACE_MS = 1500;
 
 export function connectWebSocket(
     worldId: number,
@@ -20,6 +22,11 @@ export function connectWebSocket(
         onMessage?: (data: EventData) => void;
     }
 ) {
+    if (disconnectTimer) {
+        clearTimeout(disconnectTimer);
+        disconnectTimer = null;
+    }
+
     if (stompClient?.active) return;
 
     stompClient = new Client({
@@ -85,6 +92,21 @@ export function publishWebSocket(destination: string, body: unknown): boolean {
 }
 
 export function disconnectWebSocket() {
-    stompClient?.deactivate();
-    stompClient = null;
+    if (disconnectTimer) {
+        clearTimeout(disconnectTimer);
+        disconnectTimer = null;
+    }
+
+    const client = stompClient;
+    if (!client) return;
+
+    disconnectTimer = setTimeout(() => {
+        if (stompClient !== client) return;
+        void client.deactivate().finally(() => {
+            if (stompClient === client) {
+                stompClient = null;
+            }
+        });
+        disconnectTimer = null;
+    }, DISCONNECT_GRACE_MS);
 }

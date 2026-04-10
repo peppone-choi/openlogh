@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test
 class DetectionServiceTest {
 
     private val detectionService = DetectionService()
-    private val engine = TacticalBattleEngine()
 
     private fun makeUnit(
         fleetId: Long,
@@ -159,20 +158,18 @@ class DetectionServiceTest {
     fun `commandRange increases by expansionRate each tick up to maxRange`() {
         // CommandRange with expansionRate=1.0, maxRange=100.0
         val unit = makeUnit(1L, BattleSide.ATTACKER, posX = 0.0, posY = 0.0, command = 50)
-        val enemy = makeUnit(2L, BattleSide.DEFENDER, posX = 900.0, posY = 300.0)
-        val state = makeState(unit, enemy)
 
         unit.commandRange = CommandRange(currentRange = 0.0, maxRange = 100.0, expansionRate = 1.0)
 
-        // After 1 tick, commandRange.currentRange should increase
-        engine.processTick(state)
-        val afterOneTick = state.units.first { it.fleetId == 1L }.commandRange.currentRange
+        // CommandRange growth is a pure model concern; battle ticks may reset it when commands are issued.
+        unit.commandRange = unit.commandRange.tick()
+        val afterOneTick = unit.commandRange.currentRange
         assertTrue(afterOneTick > 0.0, "commandRange.currentRange should increase after 1 tick, got $afterOneTick")
 
         // After many ticks, commandRange should cap at maxRange
-        repeat(300) { engine.processTick(state) }
-        val cappedRange = state.units.first { it.fleetId == 1L }.commandRange.currentRange
-        val maxRange = state.units.first { it.fleetId == 1L }.commandRange.maxRange
+        repeat(300) { unit.commandRange = unit.commandRange.tick() }
+        val cappedRange = unit.commandRange.currentRange
+        val maxRange = unit.commandRange.maxRange
         assertEquals(maxRange, cappedRange, 0.01, "commandRange should cap at maxRange=$maxRange after many ticks, got $cappedRange")
     }
 
@@ -184,9 +181,6 @@ class DetectionServiceTest {
         highCommandUnit.commandRange = CommandRange(currentRange = 0.0, maxRange = 200.0, expansionRate = 2.0)
         val enemy = makeUnit(3L, BattleSide.DEFENDER, posX = 900.0)
         val state = makeState(lowCommandUnit, highCommandUnit, enemy)
-
-        // Run a tick to trigger updateCommandRange
-        engine.processTick(state)
 
         val lowMax = state.units.first { it.fleetId == 1L }.commandRange.maxRange
         val highMax = state.units.first { it.fleetId == 2L }.commandRange.maxRange

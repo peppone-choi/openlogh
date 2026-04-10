@@ -406,7 +406,7 @@ class GameEndParityTest {
         fun `unifier point awarded to high officers`() {
             // Legacy: officers of winning nation with officerLevel > 4 get 2000 points
             // Verify by reading source code for the condition
-            val sourceFile = java.io.File("src/main/kotlin/com/opensam/engine/UnificationService.kt")
+            val sourceFile = java.io.File("src/main/kotlin/com/openlogh/engine/UnificationService.kt")
             assertThat(sourceFile.exists()).isTrue()
             val source = sourceFile.readText()
 
@@ -428,7 +428,7 @@ class GameEndParityTest {
         fun `no unifier point for low officers`() {
             // The settleInheritance logic awards 0 for officerLevel <= 4
             // Verify via source that unifierAward = 0 in the else branch
-            val sourceFile = java.io.File("src/main/kotlin/com/opensam/engine/UnificationService.kt")
+            val sourceFile = java.io.File("src/main/kotlin/com/openlogh/engine/UnificationService.kt")
             val source = sourceFile.readText()
 
             // The else branch sets unifierAward = 0

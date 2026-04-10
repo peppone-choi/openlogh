@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 // CommandGroup matches the gin7 7-group classification
 type CommandGroup =
     | 'OPERATION'
@@ -49,6 +51,21 @@ function cardToGroup(code: string): CommandGroup | null {
     return null;
 }
 
+function normalizePositionCards(positionCards: unknown): string[] {
+    if (Array.isArray(positionCards)) {
+        return positionCards.filter((card): card is string => typeof card === 'string' && card.length > 0);
+    }
+    if (typeof positionCards === 'string' && positionCards.length > 0) {
+        return [positionCards];
+    }
+    if (positionCards && typeof positionCards === 'object') {
+        return Object.values(positionCards).filter(
+            (card): card is string => typeof card === 'string' && card.length > 0
+        );
+    }
+    return [];
+}
+
 function getAvailableGroups(positionCards: string[]): Map<CommandGroup, number> {
     const counts = new Map<CommandGroup, number>();
     for (const card of positionCards) {
@@ -61,14 +78,15 @@ function getAvailableGroups(positionCards: string[]): Map<CommandGroup, number> 
 }
 
 interface PositionCardPanelProps {
-    positionCards: string[];
+    positionCards: unknown;
     selectedGroup: CommandGroup | null;
     onSelectGroup: (group: CommandGroup | null) => void;
 }
 
 export function PositionCardPanel({ positionCards, selectedGroup, onSelectGroup }: PositionCardPanelProps) {
-    const groupCounts = getAvailableGroups(positionCards);
-    const totalCards = positionCards.length;
+    const normalizedCards = useMemo(() => normalizePositionCards(positionCards), [positionCards]);
+    const groupCounts = getAvailableGroups(normalizedCards);
+    const totalCards = normalizedCards.length;
 
     // Order tabs: 전체 first, then available groups in definition order
     const orderedGroups = (Object.keys(GROUP_LABELS) as CommandGroup[]).filter((g) =>

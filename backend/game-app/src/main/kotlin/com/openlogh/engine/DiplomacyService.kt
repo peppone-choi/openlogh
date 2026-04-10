@@ -349,8 +349,8 @@ class DiplomacyService(
             IllegalArgumentException("Message not found: $messageId")
         }
 
-        val srcNationId = (message.payload["srcNationId"] as Number).toLong()
-        val destNationId = (message.payload["destNationId"] as Number).toLong()
+        val srcNationId = readPayloadNationId(message, "srcNationId", "srcFactionId")
+        val destNationId = readPayloadNationId(message, "destNationId", "destFactionId")
 
         when (message.messageType) {
             MSG_NON_AGGRESSION_PROPOSAL -> acceptNonAggression(worldId, srcNationId, destNationId)
@@ -577,6 +577,12 @@ class DiplomacyService(
     private fun isRelationBetween(relation: Diplomacy, nationA: Long, nationB: Long): Boolean {
         return (relation.srcFactionId == nationA && relation.destFactionId == nationB) ||
             (relation.srcFactionId == nationB && relation.destFactionId == nationA)
+    }
+
+    private fun readPayloadNationId(message: Message, primaryKey: String, legacyKey: String): Long {
+        val value = message.payload[primaryKey] ?: message.payload[legacyKey]
+        return (value as? Number)?.toLong()
+            ?: throw IllegalArgumentException("Message $primaryKey is missing from payload for message ${message.id}")
     }
 }
 

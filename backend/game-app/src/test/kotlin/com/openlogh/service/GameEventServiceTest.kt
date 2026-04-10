@@ -94,13 +94,13 @@ class GameEventServiceTest {
 
         service.onGameEvent(event)
 
-        // broadcastCommand sends to /topic/world/{sessionId}/command and /topic/general/{officerId}
+        // broadcastCommand sends to /topic/world/{sessionId}/command and /topic/officer/{officerId}
         verify(messagingTemplate).convertAndSend(
             org.mockito.ArgumentMatchers.eq("/topic/world/1/command"),
             org.mockito.ArgumentMatchers.any<Any>(),
         )
         verify(messagingTemplate).convertAndSend(
-            org.mockito.ArgumentMatchers.eq("/topic/general/42"),
+            org.mockito.ArgumentMatchers.eq("/topic/officer/42"),
             org.mockito.ArgumentMatchers.any<Any>(),
         )
     }
