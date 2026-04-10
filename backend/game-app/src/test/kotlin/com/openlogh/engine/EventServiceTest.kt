@@ -350,7 +350,8 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "MONTH")
 
-        verify(economyService).processIncomeEvent(world)
+        // 22-03 port: ProcessIncomeAction defaults to "gold" when params["resource"] missing
+        verify(economyService).processIncomeEvent(world, "gold")
     }
 
     @Test
@@ -368,7 +369,8 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "MONTH")
 
-        verify(economyService).processSemiAnnualEvent(world)
+        // 22-03 port: ProcessSemiAnnualAction defaults to "gold" when params["resource"] missing
+        verify(economyService).processSemiAnnualEvent(world, "gold")
     }
 
     @Test
@@ -466,7 +468,8 @@ class EventServiceTest {
 
         service.dispatchEvents(world, "MONTH")
 
-        verify(economyService).processIncomeEvent(world)
+        // 22-03 port: ProcessIncomeAction defaults to "gold" when params["resource"] missing
+        verify(economyService).processIncomeEvent(world, "gold")
         verify(economyService).updateNationLevelEvent(world)
     }
 

@@ -83,23 +83,47 @@ class EconomyService @Autowired constructor(
     }
 
     /**
-     * TODO Phase 4: gin7 Gin7EconomyService로 대체 예정.
-     * 삼국지 수입(agri/comm) 계산 로직 제거됨.
-     * 현재 stub — 아무 처리도 하지 않음.
+     * Legacy parity: hwe/func_gamerule.php:189 preUpdateMonthly()
+     *
+     * Upstream a7a19cc3 fix: this method must NOT process income or war income.
+     * Income/salary is handled exclusively via scheduled events:
+     *   - ProcessIncomeAction: month 1 (gold/funds) and month 7 (rice/supplies)
+     *   - ProcessWarIncomeAction: every month via pre_month event
+     *
+     * Previously the upstream version drained gold 12x/year by calling processIncome
+     * every month with default "all" resourceType. This LOGH port keeps the method as
+     * an explicit no-op for call-site compatibility (InMemoryTurnProcessor,
+     * EconomyPreUpdateStep) so any future Phase 4 economy wiring inherits the
+     * legacy-correct schedule by default.
+     *
+     * TODO Phase 4: when Gin7EconomyService gains salary outlay, ensure that work
+     * still flows through the event scheduler — never call it from here.
      */
     @Transactional
     fun preUpdateMonthly(world: SessionState) {
-        // TODO Phase 4: gin7EconomyService.preUpdateMonthly(world)
+        // No-op: see KDoc. Income/salary is event-driven only (legacy month 1/7 schedule).
     }
 
     /**
-     * TODO Phase 4: gin7 Gin7EconomyService로 대체 예정.
-     * 삼국지 반기 처리(semi-annual) 및 국가레벨 갱신 로직 제거됨.
-     * 현재 stub — 아무 처리도 하지 않음.
+     * Legacy parity: hwe/func_gamerule.php:260 postUpdateMonthly()
+     *
+     * Upstream a7a19cc3 fix: this method must NOT call processSemiAnnual. Semi-annual
+     * decay is handled exclusively via ProcessSemiAnnualAction (month 1 funds decay,
+     * month 7 supplies decay). Previously the upstream version decayed both resources
+     * 4x/year by calling processSemiAnnual at both months 1 and 7 AND decaying both
+     * resources per call.
+     *
+     * This LOGH port keeps the method as an explicit no-op for call-site compatibility
+     * (InMemoryTurnProcessor, EconomyPostUpdateStep). Other post-month responsibilities
+     * (city supply state recompute, faction-rank refresh, disaster/boom, trade-rate
+     * randomization) live in their own scheduled events / pipeline steps.
+     *
+     * TODO Phase 4: when Gin7EconomyService gains semi-annual decay, route it through
+     * the event scheduler — never call it from here.
      */
     @Transactional
     fun postUpdateMonthly(world: SessionState) {
-        // TODO Phase 4: gin7EconomyService.postUpdateMonthly(world)
+        // No-op: see KDoc. Semi-annual decay is event-driven only (legacy month 1/7 schedule).
     }
 
     /**
@@ -119,22 +143,110 @@ class EconomyService @Autowired constructor(
 
     /**
      * Public entry point for event-driven income processing.
-     * TODO Phase 4: wire to gin7 income calculation.
+     *
+     * Legacy parity: hwe/sammo/Event/Action/ProcessIncome.php (upstream a7a19cc3)
+     *
+     * Triggered by scenario events on a strict per-resource schedule:
+     *   - ["ProcessIncome", "gold"] in month 1 → processes faction.funds only
+     *   - ["ProcessIncome", "rice"] in month 7 → processes faction.supplies only
+     *
+     * The resource literal is the OpenSamguk wire format ("gold"/"rice"); internally
+     * this maps to LOGH's faction.funds / faction.supplies. Kept on the wire so any
+     * imported legacy event JSON works without translation.
+     *
+     * CRITICAL: This method MUST NOT be called every month. It is designed to run
+     * ONCE per year per resource (gold in Jan, rice in Jul). Calling it monthly
+     * results in the upstream 12x salary drain bug.
+     *
+     * TODO Phase 4: wire to gin7 income calculation in Gin7EconomyService. Today
+     * this is a no-op stub that only validates the resource literal — sufficient
+     * for the action layer + scenario JSON contract.
+     *
+     * @param world the active session
+     * @param resource "gold" (→ funds) or "rice" (→ supplies)
+     * @throws IllegalArgumentException if resource is anything other than "gold" or "rice"
      */
     @Transactional
+    fun processIncomeEvent(world: SessionState, resource: String) {
+        require(resource == "gold" || resource == "rice") {
+            "Invalid resource for processIncomeEvent: $resource (expected 'gold' or 'rice')"
+        }
+        // TODO Phase 4: route to gin7EconomyService.processIncomeEvent(world, resource)
+        log.debug("[World {}] processIncomeEvent({}): stub (Phase 4 pending)", world.id, resource)
+    }
+
+    /**
+     * Backward-compatible 1-arg overload — defaults resource to "gold" (month 1 schedule).
+     *
+     * Retained for EventServiceTest compatibility and any LOGH-internal call sites that
+     * predate the upstream a7a19cc3 per-resource port. New call sites MUST use the
+     * 2-arg overload to make the resource explicit.
+     */
+    @Deprecated(
+        "Use processIncomeEvent(world, resource) — resource literal is now required by upstream a7a19cc3 contract",
+        ReplaceWith("processIncomeEvent(world, \"gold\")"),
+    )
+    @Transactional
     fun processIncomeEvent(world: SessionState) {
-        // TODO Phase 4: gin7EconomyService.processIncomeEvent(world)
-        log.debug("[World {}] processIncomeEvent: stub (Phase 4 pending)", world.id)
+        processIncomeEvent(world, "gold")
     }
 
     /**
      * Public entry point for event-driven semi-annual processing.
-     * TODO Phase 4: wire to gin7 semi-annual processing.
+     *
+     * Legacy parity: hwe/sammo/Event/Action/ProcessSemiAnnual.php::run($resource) (upstream a7a19cc3)
+     *
+     * Triggered by scenario events on a strict per-resource schedule:
+     *   - ["ProcessSemiAnnual", "gold"] in month 1 → decays faction.funds maintenance only
+     *   - ["ProcessSemiAnnual", "rice"] in month 7 → decays faction.supplies maintenance only
+     *
+     * Previously the upstream version decayed BOTH gold and rice per call AND was
+     * triggered from both postUpdateMonthly AND the scenario event, resulting in 4x
+     * decay. The fix splits the work per resource and runs each exactly once per year.
+     *
+     * @param world the active session
+     * @param resource "gold" (→ funds decay) or "rice" (→ supplies decay)
+     * @throws IllegalArgumentException if resource is anything other than "gold" or "rice"
      */
     @Transactional
+    fun processSemiAnnualEvent(world: SessionState, resource: String) {
+        require(resource == "gold" || resource == "rice") {
+            "Invalid resource for processSemiAnnualEvent: $resource (expected 'gold' or 'rice')"
+        }
+        // TODO Phase 4: route to gin7EconomyService.processSemiAnnualEvent(world, resource)
+        log.debug("[World {}] processSemiAnnualEvent({}): stub (Phase 4 pending)", world.id, resource)
+    }
+
+    /**
+     * Backward-compatible 1-arg overload — defaults resource to "gold" (month 1 schedule).
+     */
+    @Deprecated(
+        "Use processSemiAnnualEvent(world, resource) — resource literal is now required by upstream a7a19cc3 contract",
+        ReplaceWith("processSemiAnnualEvent(world, \"gold\")"),
+    )
+    @Transactional
     fun processSemiAnnualEvent(world: SessionState) {
-        // TODO Phase 4: gin7EconomyService.processSemiAnnualEvent(world)
-        log.debug("[World {}] processSemiAnnualEvent: stub (Phase 4 pending)", world.id)
+        processSemiAnnualEvent(world, "gold")
+    }
+
+    /**
+     * Public test entry point for war income processing.
+     *
+     * Upstream a7a19cc3 added this as a public method so tests can drive war-income
+     * generation without going through the full event scheduler. LOGH currently has
+     * no war-income calculation (Phase 4 TODO), so this is a no-op stub that exists
+     * solely to satisfy the upstream API contract.
+     *
+     * Distinct from processIncomeEvent: war income is paid every month (not just
+     * Jan/Jul) per legacy hwe/sammo/Event/Action/ProcessWarIncome.php, and applies
+     * only to factions in war_state > 0.
+     *
+     * TODO Phase 4: wire to gin7EconomyService war-income calculation.
+     */
+    @Transactional
+    fun processWarIncomeEvent(world: SessionState) {
+        // TODO Phase 4: route to gin7EconomyService.processWarIncomeEvent(world)
+        log.debug("[World {}] processWarIncomeEvent: stub (Phase 4 pending)", world.id)
     }
 
     /**
