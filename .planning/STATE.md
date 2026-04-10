@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Gin7 economy pipeline full port
 status: executing
-stopped_at: Completed 23-02-PLAN.md (processSemiAnnual per-resource — 5 new tests, per-resource isolation + progressive bracket decay + nullable OfficerRepository ctor, source absorbed into sibling 23-01 commit 9a22d47a)
-last_updated: "2026-04-10T07:19:15.104Z"
+stopped_at: Completed 23-06-PLAN.md (updatePlanetSupplyState move — 5 new tests, LOGH domain var renames, MapService ctor injection, legacy delegation with 7-arg-ctor fallback, single RED+GREEN commit 7a15f663)
+last_updated: "2026-04-10T07:37:23.628Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 24
   completed_phases: 19
   total_plans: 128
-  completed_plans: 112
+  completed_plans: 113
   percent: 93
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 23 (gin7-economy-port) — EXECUTING
-Plan: 2 of 10
+Plan: 3 of 10
 Status: Ready to execute
 Last activity: 2026-04-10
 
@@ -99,6 +99,7 @@ Progress: [█████████▓] 93%
 | Phase 23 P03 | 12m | 2 tasks | 2 files |
 | Phase 23-gin7-economy-port P01 | 17min | 2 tasks | 2 files |
 | Phase 23-gin7-economy-port P23-02 | 18m | 2 tasks | 2 files |
+| Phase 23-gin7-economy-port P23-06 | 25m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -223,6 +224,10 @@ Recent decisions affecting current work:
 - [Phase 23-gin7-economy-port]: Plan 23-01: processIncome narrow port — gold uses commerce*tax/100, rice uses production sum; salary/wall-income/modifiers deferred to 23-02..23-04 per CONTEXT.md scope
 - [Phase 23-gin7-economy-port]: Plan 23-01: Split attribution — sibling 23-02 OfficerRepository constructor prelude absorbed into commit 9a22d47a during parallel Wave 1 race; 23-02 GREEN will land only processSemiAnnual body
 - [Phase 23-gin7-economy-port]: Plan 23-02: processSemiAnnual per-resource — nullable OfficerRepository ctor + secondary 2-arg ctor for parallel-wave safety; strict > bracket semantics (10000 falls in 0.99 bracket, not 0.97); GREEN source absorbed into sibling 23-01 commit 9a22d47a via git-add race (Phase 14 precedent)
+- [Phase 23-gin7-economy-port]: Plan 23-06: Move-not-port — supply-state logic was already functional LOGH code; relocated from legacy EconomyService with LOGH domain var renames (cities->planets, nations->factions, generals->officers), no upstream PHP translation needed
+- [Phase 23-gin7-economy-port]: Plan 23-06: MapService injected as 4th optional primary-ctor param of Gin7EconomyService (default null) + new secondary 3-arg ctor for sibling wave compatibility; mirrors 23-02 OfficerRepository nullable precedent
+- [Phase 23-gin7-economy-port]: Plan 23-06: EconomyService.updateCitySupplyState delegates to Gin7 when wired, falls back to legacy inline BFS otherwise — keeps UpdateCitySupplyAction / InMemoryTurnProcessor / EventServiceTest mock setup green without any test rewrites
+- [Phase 23-gin7-economy-port]: Plan 23-06: TDD RED+GREEN compressed into single commit 7a15f663 (Phase 14-03 Wave 2 precedent) — test references a 4-arg Gin7EconomyService ctor that doesn't exist until GREEN, so RED-only commit would wedge shared compileTestKotlin for sibling executors 23-04/23-05
 
 ### Pending Todos
 
@@ -237,6 +242,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T07:19:15.092Z
-Stopped at: Completed 23-02-PLAN.md (processSemiAnnual per-resource — 5 new tests, per-resource isolation + progressive bracket decay + nullable OfficerRepository ctor, source absorbed into sibling 23-01 commit 9a22d47a)
+Last session: 2026-04-10T07:37:23.615Z
+Stopped at: Completed 23-06-PLAN.md (updatePlanetSupplyState move — 5 new tests, LOGH domain var renames, MapService ctor injection, legacy delegation with 7-arg-ctor fallback, single RED+GREEN commit 7a15f663)
 Resume file: None

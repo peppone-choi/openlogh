@@ -81,7 +81,7 @@ Requirements for milestone v2.3: Gin7 Economy Pipeline full port. Each maps to P
 - [x] **EC-03**: Gin7EconomyService.processWarIncome(world) 가 전쟁 상태(warState > 0) 팩션에만 월별 보너스를 지급한다
 - [ ] **EC-04**: Gin7EconomyService 가 FactionAI.getBillFromDedication 공식으로 officer salary outlay 를 처리한다
 - [ ] **EC-05**: Gin7EconomyService.updateFactionRank 가 military_power 기반 계층 재계산을 수행한다
-- [ ] **EC-06**: Gin7EconomyService.updatePlanetSupplyState 가 BFS 기반 보급선 판정 + 고립 행성 감쇠를 처리한다
+- [x] **EC-06**: Gin7EconomyService.updatePlanetSupplyState 가 BFS 기반 보급선 판정 + 고립 행성 감쇠를 처리한다
 - [ ] **EC-07**: Gin7EconomyService.processYearlyStatistics 가 매년 1월 국력/officerCount 갱신을 수행한다
 - [ ] **EC-08**: Gin7EconomyService.processDisasterOrBoom 이 확률 기반 재해/호황 이벤트를 생성한다
 - [ ] **EC-09**: Gin7EconomyService.randomizePlanetTradeRate 가 주기적으로 행성 교역률을 랜덤화한다
