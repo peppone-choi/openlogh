@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Gin7 economy pipeline full port
 status: executing
-stopped_at: Completed 23-06-PLAN.md (updatePlanetSupplyState move — 5 new tests, LOGH domain var renames, MapService ctor injection, legacy delegation with 7-arg-ctor fallback, single RED+GREEN commit 7a15f663)
-last_updated: "2026-04-10T07:37:23.628Z"
+stopped_at: Completed 23-05-PLAN.md (updateFactionRank — highCount threshold algo + FACTION_RANK_NAME companion + bidirectional rank-up/down, 5 new tests, stash-isolated compileTestKotlin during sibling 23-04 RED)
+last_updated: "2026-04-10T07:45:59.065Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 24
   completed_phases: 19
   total_plans: 128
-  completed_plans: 113
+  completed_plans: 114
   percent: 93
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 23 (gin7-economy-port) — EXECUTING
-Plan: 3 of 10
+Plan: 4 of 10
 Status: Ready to execute
 Last activity: 2026-04-10
 
@@ -100,6 +100,7 @@ Progress: [█████████▓] 93%
 | Phase 23-gin7-economy-port P01 | 17min | 2 tasks | 2 files |
 | Phase 23-gin7-economy-port P23-02 | 18m | 2 tasks | 2 files |
 | Phase 23-gin7-economy-port P23-06 | 25m | 2 tasks | 3 files |
+| Phase 23-gin7-economy-port P23-05 | 21min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -228,6 +229,8 @@ Recent decisions affecting current work:
 - [Phase 23-gin7-economy-port]: Plan 23-06: MapService injected as 4th optional primary-ctor param of Gin7EconomyService (default null) + new secondary 3-arg ctor for sibling wave compatibility; mirrors 23-02 OfficerRepository nullable precedent
 - [Phase 23-gin7-economy-port]: Plan 23-06: EconomyService.updateCitySupplyState delegates to Gin7 when wired, falls back to legacy inline BFS otherwise — keeps UpdateCitySupplyAction / InMemoryTurnProcessor / EventServiceTest mock setup green without any test rewrites
 - [Phase 23-gin7-economy-port]: Plan 23-06: TDD RED+GREEN compressed into single commit 7a15f663 (Phase 14-03 Wave 2 precedent) — test references a 4-arg Gin7EconomyService ctor that doesn't exist until GREEN, so RED-only commit would wedge shared compileTestKotlin for sibling executors 23-04/23-05
+- [Phase 23-gin7-economy-port]: Plan 23-05: updateFactionRank uses upstream highCount formula (count of owned planets with level >= 4) NOT plan-text military_power/population formula — Rule 1 plan-vs-upstream correction (same pattern as 23-03 warState)
+- [Phase 23-gin7-economy-port]: Plan 23-05: write factionRank UNCONDITIONALLY on level change so rank-down works (upstream body only promotes — Rule 2 additive enhancement per plan acceptance); level-up gold reward + 작위 history log + inheritance accrual deferred to 23-10 cleanup
 
 ### Pending Todos
 
@@ -242,6 +245,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T07:37:23.615Z
-Stopped at: Completed 23-06-PLAN.md (updatePlanetSupplyState move — 5 new tests, LOGH domain var renames, MapService ctor injection, legacy delegation with 7-arg-ctor fallback, single RED+GREEN commit 7a15f663)
+Last session: 2026-04-10T07:45:51.782Z
+Stopped at: Completed 23-05-PLAN.md (updateFactionRank — highCount threshold algo + FACTION_RANK_NAME companion + bidirectional rank-up/down, 5 new tests, stash-isolated compileTestKotlin during sibling 23-04 RED)
 Resume file: None
