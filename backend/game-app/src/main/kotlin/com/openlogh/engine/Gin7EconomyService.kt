@@ -93,4 +93,83 @@ class Gin7EconomyService(
      * 세금 징수 월 여부 확인 (1, 4, 7, 10 — 분기마다 = 90일 주기).
      */
     fun isTaxMonth(month: Short): Boolean = month.toInt() in setOf(1, 4, 7, 10)
+
+    /**
+     * War income — upstream a7a19cc3 `com.opensam.engine.EconomyService.processWarIncome` port.
+     *
+     * Unlike tax collection (month 1/4/7/10 only), war income is paid **every month** via the
+     * scenario pre_month event `["ProcessWarIncome"]`. It models casualty salvage:
+     *   - For each planet with `dead > 0`:
+     *       - The owning faction gains `dead / 10` funds (material/ship salvage)
+     *       - The planet recovers `(dead * 0.2)` population, capped by headroom to populationMax
+     *       - `planet.dead` is reset to 0
+     *
+     * Legacy PHP source: `hwe/sammo/Event/Action/ProcessWarIncome.php`.
+     *
+     * **Note on the 23-03 plan description vs. upstream body:**
+     * Plan 23-03 described a "factions with warState > 0 receive a bonus" filter, but the
+     * actual upstream Kotlin body (see a7a19cc3 opensam `EconomyService.kt`) has no such
+     * warState gate — it iterates every city with `dead > 0`. This implementation follows
+     * the upstream body faithfully; the gate is `planet.dead > 0`, not `faction.warState`.
+     * Documented as Rule 1 (plan-vs-reality correction) in Plan 23-03 SUMMARY deviations.
+     *
+     * Domain mapping (삼국지 → LOGH):
+     *   - `Nation.gold` → `Faction.funds`
+     *   - `City.dead` → `Planet.dead` (casualty count)
+     *   - `City.pop` → `Planet.population`
+     *   - `City.popMax` → `Planet.populationMax`
+     *
+     * Takes no resource parameter: war income is always paid in funds.
+     *
+     * @param world the active session
+     */
+    @Transactional
+    fun processWarIncome(world: SessionState) {
+        val sessionId = world.id.toLong()
+
+        val factions = factionRepository.findBySessionId(sessionId)
+        val planets = planetRepository.findBySessionId(sessionId)
+
+        if (planets.isEmpty()) {
+            logger.debug("[World {}] processWarIncome: no planets, no-op", world.id)
+            return
+        }
+
+        val factionMap = factions.associateBy { it.id }
+        var totalFundsCredited = 0
+        var totalPopulationRecovered = 0
+        var payoutCount = 0
+
+        for (planet in planets) {
+            if (planet.dead <= 0) continue
+            val faction = factionMap[planet.factionId] ?: continue
+
+            // Legacy formula: nation.gold += city.dead / 10
+            val fundsGain = planet.dead / 10
+            faction.funds += fundsGain
+            totalFundsCredited += fundsGain
+
+            // Legacy formula: popGain = (city.dead * 0.2).toInt().coerceAtMost(headroom)
+            // headroom = (popMax - pop).coerceAtLeast(0)
+            val uncappedPopGain = (planet.dead * 0.2).toInt()
+            val headroom = (planet.populationMax - planet.population).coerceAtLeast(0)
+            val popGain = uncappedPopGain.coerceAtMost(headroom)
+            planet.population += popGain
+            totalPopulationRecovered += popGain
+
+            // Clear casualty counter after payout
+            planet.dead = 0
+            payoutCount++
+        }
+
+        if (payoutCount > 0) {
+            factionRepository.saveAll(factions)
+            planetRepository.saveAll(planets)
+        }
+
+        logger.info(
+            "[World {}] processWarIncome: {} planets paid, funds+={}, pop+={}",
+            world.id, payoutCount, totalFundsCredited, totalPopulationRecovered,
+        )
+    }
 }
