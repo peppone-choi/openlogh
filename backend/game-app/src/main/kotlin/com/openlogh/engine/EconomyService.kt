@@ -28,9 +28,10 @@ class EconomyService @Autowired constructor(
     private val worldPortFactory: JpaWorldPortFactory,
     private val officerRepository: OfficerRepository,
     private val messageRepository: MessageRepository,
-    private val mapService: MapService,
+    @Suppress("unused") private val mapService: MapService,
     @Suppress("unused") private val historyService: HistoryService,
     @Suppress("unused") private val inheritanceService: InheritanceService,
+    private val gin7EconomyService: Gin7EconomyService? = null,
 ) {
     constructor(
         planetRepository: PlanetRepository,
@@ -51,6 +52,34 @@ class EconomyService @Autowired constructor(
         mapService,
         historyService,
         inheritanceService,
+        null,
+    )
+
+    /**
+     * 8-arg constructor for production wiring — passes Gin7EconomyService through for
+     * delegation of `updateCitySupplyState` (Plan 23-06).
+     */
+    constructor(
+        planetRepository: PlanetRepository,
+        factionRepository: FactionRepository,
+        officerRepository: OfficerRepository,
+        messageRepository: MessageRepository,
+        mapService: MapService,
+        historyService: HistoryService,
+        inheritanceService: InheritanceService,
+        gin7EconomyService: Gin7EconomyService?,
+    ) : this(
+        JpaWorldPortFactory(
+            officerRepository = officerRepository,
+            planetRepository = planetRepository,
+            factionRepository = factionRepository,
+        ),
+        officerRepository,
+        messageRepository,
+        mapService,
+        historyService,
+        inheritanceService,
+        gin7EconomyService,
     )
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -129,9 +158,25 @@ class EconomyService @Autowired constructor(
     /**
      * Public entry point for per-turn supply state recalculation (traffic update).
      * Called by TurnService each turn to keep supply routes current.
+     *
+     * Plan 23-06: the logic lives in `Gin7EconomyService.updatePlanetSupplyState` now.
+     * This method delegates so existing call sites (UpdateCitySupplyAction,
+     * InMemoryTurnProcessor.updateTraffic, EventServiceTest) keep working without
+     * a rename cascade. When `gin7EconomyService` is absent (legacy 7-arg test
+     * constructor), falls back to the in-place legacy `updateCitySupply` helper
+     * that still exists below as dead-for-production code.
      */
     @Transactional
     fun updateCitySupplyState(world: SessionState) {
+        val gin7 = gin7EconomyService
+        if (gin7 != null) {
+            gin7.updatePlanetSupplyState(world)
+            return
+        }
+        // Legacy fallback path — Gin7EconomyService not wired. Retained for the
+        // pre-23-06 7-arg constructor so any tests relying on that path still
+        // exercise the original BFS logic identically. Production wiring always
+        // provides gin7EconomyService via the 8-arg constructor / Spring DI.
         val ports = worldPortFactory.create(world.id.toLong())
         val cities = ports.allPlanets().map { it.toEntity() }
         val nations = ports.allFactions().map { it.toEntity() }

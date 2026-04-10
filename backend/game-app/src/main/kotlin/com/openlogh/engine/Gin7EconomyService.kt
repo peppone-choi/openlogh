@@ -1,9 +1,13 @@
 package com.openlogh.engine
 
+import com.openlogh.entity.Faction
+import com.openlogh.entity.Officer
+import com.openlogh.entity.Planet
 import com.openlogh.entity.SessionState
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.PlanetRepository
+import com.openlogh.service.MapService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,21 +29,34 @@ class Gin7EconomyService(
     private val factionRepository: FactionRepository,
     private val planetRepository: PlanetRepository,
     private val officerRepository: OfficerRepository? = null,
+    private val mapService: MapService? = null,
 ) {
     /**
      * Secondary constructor for legacy 2-arg test call sites that do not exercise
      * any officer-touching paths. `processSemiAnnual` (Plan 23-02) requires an
      * `OfficerRepository` because officer personal stockpiles are part of the
      * semi-annual decay pipeline (upstream a7a19cc3 ProcessSemiAnnual.php:89-91).
+     * `updatePlanetSupplyState` (Plan 23-06) additionally requires a `MapService`
+     * for map-connectivity BFS.
      *
-     * Production wiring resolves all three dependencies via Spring DI; this
+     * Production wiring resolves all four dependencies via Spring DI; this
      * overload exists purely to preserve source compatibility for sibling Phase 23
      * plans and pre-23 tests that only exercise `processMonthly` / `processWarIncome`.
      */
     constructor(
         factionRepository: FactionRepository,
         planetRepository: PlanetRepository,
-    ) : this(factionRepository, planetRepository, null)
+    ) : this(factionRepository, planetRepository, null, null)
+
+    /**
+     * Three-arg overload for sibling Phase 23 plans (23-01, 23-02, 23-03) that
+     * exercise officer-touching paths but not `updatePlanetSupplyState`.
+     */
+    constructor(
+        factionRepository: FactionRepository,
+        planetRepository: PlanetRepository,
+        officerRepository: OfficerRepository?,
+    ) : this(factionRepository, planetRepository, officerRepository, null)
 
     private val logger = LoggerFactory.getLogger(Gin7EconomyService::class.java)
 
@@ -391,5 +408,168 @@ class Gin7EconomyService(
         value > 10_000 -> (value * 0.97).toInt()
         value > 1_000 -> (value * 0.99).toInt()
         else -> value
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Plan 23-06: Planet supply state (map-connectivity based)
+    //
+    // Moved from legacy `EconomyService.updateCitySupplyState` +
+    // private `updateCitySupply` helper (EconomyService.kt:134-353).
+    // The BFS algorithm is unchanged; only the internal variable names were
+    // renamed for LOGH domain consistency:
+    //   cities  → planets
+    //   nations → factions
+    //   generals → officers
+    // Legacy `EconomyService.updateCitySupplyState` now delegates to this.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Recalculates `Planet.supplyState` for every planet in the world.
+     *
+     * Algorithm:
+     *   1. Neutral planets (`factionId = 0`) are always supplied.
+     *   2. For each faction, BFS from its capital planet through adjacent
+     *      same-faction planets via `mapService.getAdjacentCities(mapCode, mapPlanetId)`.
+     *   3. Planets reachable from the capital → `supplyState = 1` (supplied).
+     *   4. Planets NOT reached → `supplyState = 0` (isolated) and suffer
+     *      10% decay on population / approval / production / commerce / security /
+     *      orbital_defense / fortress. Officers stationed on isolated planets
+     *      lose 5% ships / morale / training.
+     *   5. Isolated planets below `approval < 30` (and not a capital) defect
+     *      to neutral (`factionId = 0`).
+     *
+     * Called by `TurnService` (traffic update) every tick, and by
+     * `UpdateCitySupplyAction` scheduled event.
+     *
+     * If `mapService` is null (test-only legacy constructors), the method
+     * silently degrades: no planets will be marked isolated, and the method
+     * acts as a defensive no-op. Production wiring always supplies the
+     * MapService via Spring DI.
+     *
+     * @param world the active session
+     */
+    @Transactional
+    fun updatePlanetSupplyState(world: SessionState) {
+        val sessionId = world.id.toLong()
+        val planets = planetRepository.findBySessionId(sessionId)
+        val factions = factionRepository.findBySessionId(sessionId)
+        val officerRepo = officerRepository
+        val officers = officerRepo?.findBySessionId(sessionId) ?: emptyList()
+
+        updatePlanetSupply(world, factions, planets, officers)
+
+        if (planets.isNotEmpty()) planetRepository.saveAll(planets)
+        if (officerRepo != null && officers.isNotEmpty()) officerRepo.saveAll(officers)
+    }
+
+    /**
+     * Private BFS helper — direct move of legacy `EconomyService.updateCitySupply`.
+     * Internal vars renamed to LOGH domain (cities→planets, nations→factions,
+     * generals→officers) but the control flow is identical.
+     */
+    private fun updatePlanetSupply(
+        world: SessionState,
+        factions: List<Faction>,
+        planets: List<Planet>,
+        officers: List<Officer>,
+    ) {
+        val mapCode = (world.config["mapCode"] as? String) ?: "logh"
+        val planetsByFaction = planets.groupBy { it.factionId }
+        val planetById = planets.associateBy { it.id }
+        val officersByPlanet = officers.groupBy { it.planetId }
+
+        // Build map mapPlanetId <-> DB planetId lookups
+        val dbToMapId = planets.associate { it.id to it.mapPlanetId }
+        val mapToDbId = planets.associate { it.mapPlanetId to it.id }
+
+        // Neutral planets are always supplied
+        for (planet in planets) {
+            if (planet.factionId == 0L) {
+                planet.supplyState = 1
+            }
+        }
+
+        val mapSvc = mapService
+        if (mapSvc == null) {
+            logger.warn(
+                "[World {}] updatePlanetSupplyState: mapService not wired — skipping BFS. " +
+                    "Legacy test constructor path. Production wiring must supply MapService.",
+                world.id,
+            )
+            return
+        }
+
+        for (faction in factions) {
+            val factionPlanets = planetsByFaction[faction.id] ?: continue
+            val suppliedMapIds = mutableSetOf<Int>()
+
+            val capitalId = faction.capitalPlanetId
+            val capitalMapId = if (capitalId != null) dbToMapId[capitalId] else null
+            if (capitalMapId != null && capitalMapId != 0) {
+                val queue = ArrayDeque<Int>()
+                queue.add(capitalMapId)
+                suppliedMapIds.add(capitalMapId)
+
+                while (queue.isNotEmpty()) {
+                    val currentMapId = queue.removeFirst()
+                    val adjacentMapIds = try {
+                        mapSvc.getAdjacentCities(mapCode, currentMapId)
+                    } catch (e: Exception) {
+                        logger.warn("Failed to get adjacent cities for mapPlanetId={}: {}", currentMapId, e.message)
+                        emptyList()
+                    }
+                    for (adjMapId in adjacentMapIds) {
+                        if (adjMapId !in suppliedMapIds) {
+                            val adjDbId = mapToDbId[adjMapId]
+                            val adjPlanet = if (adjDbId != null) planetById[adjDbId] else null
+                            if (adjPlanet != null && adjPlanet.factionId == faction.id) {
+                                suppliedMapIds.add(adjMapId)
+                                queue.add(adjMapId)
+                            }
+                        }
+                    }
+                }
+            }
+
+            val supplied = suppliedMapIds.mapNotNull { mapToDbId[it] }.toMutableSet()
+            if (capitalId != null) supplied.add(capitalId)
+
+            for (planet in factionPlanets) {
+                if (planet.id in supplied) {
+                    planet.supplyState = 1
+                } else {
+                    planet.supplyState = 0
+                    planet.population = (planet.population * 0.9).toInt()
+                    planet.approval = planet.approval * 0.9F
+                    planet.production = (planet.production * 0.9).toInt()
+                    planet.commerce = (planet.commerce * 0.9).toInt()
+                    planet.security = (planet.security * 0.9).toInt()
+                    planet.orbitalDefense = (planet.orbitalDefense * 0.9).toInt()
+                    planet.fortress = (planet.fortress * 0.9).toInt()
+
+                    val planetOfficers = officersByPlanet[planet.id] ?: emptyList()
+                    for (officer in planetOfficers) {
+                        officer.ships = (officer.ships * 0.95).toInt()
+                        officer.morale = (officer.morale * 0.95).toInt().coerceIn(0, 150).toShort()
+                        officer.training = (officer.training * 0.95).toInt().coerceIn(0, 110).toShort()
+                    }
+
+                    if (planet.approval < 30 && planet.id != faction.capitalPlanetId) {
+                        logger.info("Planet {} (id={}) lost to isolation (approval={})", planet.name, planet.id, planet.approval)
+                        for (officer in planetOfficers) {
+                            if (officer.officerPlanet == planet.id.toInt()) {
+                                officer.officerLevel = 1
+                                officer.officerPlanet = 0
+                            }
+                        }
+                        planet.factionId = 0
+                        planet.officerSet = 0
+                        planet.conflict = mutableMapOf()
+                        planet.term = 0
+                        planet.frontState = 0
+                    }
+                }
+            }
+        }
     }
 }
