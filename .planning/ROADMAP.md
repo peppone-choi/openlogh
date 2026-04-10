@@ -279,7 +279,7 @@ Plans:
 - [x] 23-01-PLAN.md — Gin7.processIncome per-resource
 - [x] 23-02-PLAN.md — Gin7.processSemiAnnual per-resource
 - [x] 23-03-PLAN.md — Gin7.processWarIncome
-- [ ] 23-04-PLAN.md — Gin7 salary outlay + FactionAI bill integration
+- [x] 23-04-PLAN.md — Gin7 salary outlay + FactionAI bill integration
 - [x] 23-05-PLAN.md — Gin7.updateFactionRank
 - [x] 23-06-PLAN.md — Gin7.updatePlanetSupplyState (move from legacy)
 - [ ] 23-07-PLAN.md — Gin7.processYearlyStatistics
