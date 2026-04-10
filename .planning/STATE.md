@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: upstream 버그픽스 동기화
 status: executing
-stopped_at: Completed 22-01-PLAN.md (FactionAI bill formula port)
-last_updated: "2026-04-10T06:14:21.900Z"
+stopped_at: Completed 22-02-PLAN.md (OfficerAI.doDonate probability gate — primary + secondary sites gated, 4 new tests passing, 0 regressions)
+last_updated: "2026-04-10T06:17:32.651Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 23
   completed_phases: 18
   total_plans: 118
-  completed_plans: 107
+  completed_plans: 108
   percent: 93
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-07)
 ## Current Position
 
 Phase: 22 (upstream-bugfix-sync) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-10
 
@@ -94,6 +94,7 @@ Progress: [█████████▓] 93%
 | Phase 14 P18 | 12min | 1 tasks | 4 files |
 | Phase 14 P17 | 20min | 2 tasks | 7 files |
 | Phase 22 P01 | 5m | 2 tasks | 2 files |
+| Phase 22-upstream-bugfix-sync P22-02 | 7min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -211,6 +212,7 @@ Recent decisions affecting current work:
 - [Phase 14]: Plan 14-17: '작전계획' command-panel entry routes through existing /processing?command=작전계획 flow — no new endpoint, no new store action, mirrors recent-actions bar pattern for COMMAND_ARGS-form commands
 - [Phase 14]: Plan 14-17: Task 1 files (galaxyStore, OperationsOverlay, OperationsSidePanel, GalaxyMap, OperationsOverlay.test, map-canvas) absorbed into sibling Wave 5 commit eb9112bb under feat(14-18): header due to parallel git-add race; Task 2 (command-panel 작전계획 button) committed cleanly at cbcc9b36 under feat(14-17). Canonical attribution lives in 14-17-SUMMARY.md — same pattern as 14-09/14-10/14-14/14-16.
 - [Phase 22]: Plan 22-01: getBillFromDedication arithmetic correction — plan listed 4400 for ded=10000 but legacy PHP formula yields 2400 (sqrt(10000)/10=10, *200+400). Test asserts the legacy-correct value.
+- [Phase 22]: Plan 22-02: Ported upstream a7a19cc3 probability gate to OfficerAI.doDonate (primary) + doNpcDedicate (secondary, LOGH-only) — excess funds/supplies branches now gated by rng < (res/req - 0.5) with reqX > 0 divide-by-zero guards
 
 ### Pending Todos
 
@@ -225,6 +227,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T06:14:14.861Z
-Stopped at: Completed 22-01-PLAN.md (FactionAI bill formula port)
+Last session: 2026-04-10T06:17:32.640Z
+Stopped at: Completed 22-02-PLAN.md (OfficerAI.doDonate probability gate — primary + secondary sites gated, 4 new tests passing, 0 regressions)
 Resume file: None
