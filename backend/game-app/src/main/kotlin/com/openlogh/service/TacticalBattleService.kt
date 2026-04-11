@@ -207,8 +207,25 @@ class TacticalBattleService(
      * Thread-safe: ConcurrentLinkedQueue.offer() is lock-free.
      */
     fun enqueueCommand(battleId: Long, command: TacticalCommand) {
-        activeBattles[battleId]?.commandBuffer?.offer(command)
-            ?: log.warn("Cannot enqueue command: battle {} not found", battleId)
+        val state = activeBattles[battleId] ?: run {
+            log.warn("Cannot enqueue command: battle {} not found", battleId)
+            return
+        }
+        // Phase 24-32 (gap C17, gin7 매뉴얼 p52):
+        // 전술 커맨드는 0..20 틱 (= 0~20 초) 범위의 통신 지연을 받는다. 관리/위기
+        // 대응 커맨드는 delay 예외 — immediate path 로 main 버퍼에 직접 들어간다.
+        if (!TacticalBattleEngine.shouldApplyCommunicationDelay(command)) {
+            state.commandBuffer.offer(command)
+            return
+        }
+        val delay = (0..TacticalBattleEngine.COMMUNICATION_DELAY_MAX_TICKS).random()
+        if (delay == 0) {
+            state.commandBuffer.offer(command)
+        } else {
+            state.delayedCommandBuffer.offer(
+                DelayedTacticalCommand(dispatchTick = state.currentTick + delay, command = command)
+            )
+        }
     }
 
     /**

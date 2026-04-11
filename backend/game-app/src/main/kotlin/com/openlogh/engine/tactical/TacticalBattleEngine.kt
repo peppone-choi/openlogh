@@ -233,6 +233,14 @@ data class TacticalBattleState(
     var currentTick: Int = 0,
 
     /**
+     * Phase 24-32 (gap C17, gin7 매뉴얼 p52 커맨드 처리 딜레이):
+     * 통신 지연을 시뮬레이션하기 위해 enqueue 된 커맨드를 0..20 틱 뒤에 실제
+     * commandBuffer 로 흘려 보내는 홀딩 큐. 관리 커맨드(승계, 분함대 할당,
+     * 적 방해전파 트리거 등)는 지연 대상에서 제외된다.
+     */
+    val delayedCommandBuffer: ConcurrentLinkedQueue<DelayedTacticalCommand> = ConcurrentLinkedQueue(),
+
+    /**
      * Phase 24-20 (gap E42, gin7 매뉴얼 p46-47): 지형 장애물 배치 엔티티.
      * 플라즈마 폭풍(`PLASMA_STORM`) — 사선을 차단하고 내부 진입 시 데미지.
      * 사르가소 성운(`SARGASSO`) — 사선 차단 + 엔진 출력 저하.
@@ -248,6 +256,17 @@ data class BattleTickEvent(
     val targetUnitId: Long = 0,
     val value: Int = 0,
     val detail: String = "",
+)
+
+/**
+ * Phase 24-32 (gap C17, gin7 매뉴얼 p52):
+ * 커맨드가 실제로 처리되기 시작하는 tick 을 붙여서 `delayedCommandBuffer` 에
+ * 보관한다. drainCommandBuffer 는 매 틱 시작 시점에 `dispatchTick <= currentTick`
+ * 인 항목을 꺼내 main commandBuffer 로 promote 한 뒤 종전처럼 drain 한다.
+ */
+data class DelayedTacticalCommand(
+    val dispatchTick: Int,
+    val command: TacticalCommand,
 )
 
 /**
@@ -355,6 +374,27 @@ class TacticalBattleEngine(
          * 매뉴얼은 10 초를 명시하고 이 엔진은 1 tick = 1 초로 동작하므로 10 ticks.
          */
         const val REVERSE_PREP_TICKS = 10
+
+        /**
+         * Phase 24-32 (gap C17, gin7 매뉴얼 p52):
+         * 전술 커맨드 통신 지연 상한. 플레이어가 enqueue 한 커맨드는 0..MAX
+         * 사이의 랜덤 틱만큼 처리가 지연된다. 1 tick = 1 초이므로 매뉴얼의
+         * "0~20 초 딜레이" 규정과 직접 매칭된다.
+         */
+        const val COMMUNICATION_DELAY_MAX_TICKS = 20
+
+        /**
+         * 특정 커맨드 종류는 통신 지연을 적용받지 않는다 (관리/위기 대응 커맨드).
+         */
+        fun shouldApplyCommunicationDelay(command: TacticalCommand): Boolean = when (command) {
+            is TacticalCommand.PlanetConquest,
+            is TacticalCommand.AssignSubFleet,
+            is TacticalCommand.ReassignUnit,
+            is TacticalCommand.TriggerJamming,
+            is TacticalCommand.DesignateSuccessor,
+            is TacticalCommand.DelegateCommand -> false
+            else -> true
+        }
     }
 
     /** Expose missile system for SORTIE command in TacticalBattleService. */
@@ -617,6 +657,18 @@ class TacticalBattleEngine(
      * Called BEFORE any other tick processing (movement, detection, combat).
      */
     fun drainCommandBuffer(state: TacticalBattleState) {
+        // Phase 24-32 (gap C17): promote ripe delayed commands before draining.
+        // `dispatchTick <= currentTick` 인 항목은 지연 시간이 끝났으므로 main
+        // buffer 로 옮긴다. 나머지는 다음 tick 을 기다린다.
+        val delayedIter = state.delayedCommandBuffer.iterator()
+        while (delayedIter.hasNext()) {
+            val delayed = delayedIter.next()
+            if (delayed.dispatchTick <= state.currentTick) {
+                state.commandBuffer.offer(delayed.command)
+                delayedIter.remove()
+            }
+        }
+
         var cmd = state.commandBuffer.poll()
         while (cmd != null) {
             applyCommand(cmd, state)
