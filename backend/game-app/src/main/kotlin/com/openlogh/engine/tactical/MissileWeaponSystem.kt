@@ -75,7 +75,18 @@ class MissileWeaponSystem {
      * Only CARRIER unit types may launch fighters.
      * On hit: applies fighterSpeedDebuffTicks = 60 to target.
      * FIGHTER vs CARRIER: damage is doubled (intercept).
-     * Returns null if not a carrier, out of range, or miss.
+     * Returns null if not a carrier, out of range, insufficient supplies, or miss.
+     *
+     * Phase 24-18 (gap A5/C2, gin7 manual p49):
+     *   "戦闘艇の発進 — 攻撃力は弱いが相手の移動速度を低下させる。空母のみ運用可能。
+     *    出撃には一律 10 軍需物資が必要。自艦を攻撃する戦闘艇も攻撃対象になる (迎撃)"
+     *
+     * Implementation notes:
+     *   - 10 軍需物資 is deducted from `source.supplies` up front — the cost is per
+     *     SORTIE (出撃), not per hit. A missed launch still consumes supplies.
+     *   - If supplies < 10, the launch is gated entirely (no partial sortie).
+     *   - FIGHTER vs CARRIER is 迎撃戦 (intercept): damage is doubled per the
+     *     manual's "自艦を攻撃する戦闘艇も攻撃対象" rule.
      */
     fun processFighterAttack(
         source: TacticalUnit,
@@ -90,8 +101,32 @@ class MissileWeaponSystem {
         val fighterRange = TacticalWeaponType.FIGHTER.baseRange * 100.0  // 6.0 * 100 = 600 units
         if (dist > fighterRange) return null
 
+        // Phase 24-18 gin7 p49: 戦闘艇 sortie requires 10 軍需物資. Gate the launch
+        // before the RNG hit roll so that an impossible sortie never fires at all.
+        val sortieCost = TacticalWeaponType.FIGHTER.supplyCostPerUse
+        if (source.supplies < sortieCost) {
+            state.tickEvents.add(
+                BattleTickEvent(
+                    "fighter_sortie_aborted", source.fleetId, target.fleetId, 0,
+                    "스파르타니안 출격 실패 — 軍需物資 부족 (필요 $sortieCost / 보유 ${source.supplies})"
+                )
+            )
+            return null
+        }
+
+        // Cost is paid at sortie time, not at hit time (manual rule).
+        source.supplies -= sortieCost
+
         val hitChance = (0.65 + source.energy.sensorMultiplier() * 0.2).coerceAtMost(0.90)
-        if (rng.nextDouble() >= hitChance) return null
+        if (rng.nextDouble() >= hitChance) {
+            state.tickEvents.add(
+                BattleTickEvent(
+                    "fighter_miss", source.fleetId, target.fleetId, 0,
+                    "스파르타니안 발진 실패 — 요격당함 / 빗나감 (軍需物資 -$sortieCost)"
+                )
+            )
+            return null
+        }
 
         val isFighterVsFighter = target.unitType.contains("CARRIER", ignoreCase = true)
         val rawDmg = TacticalWeaponType.FIGHTER.baseDamage *
@@ -104,7 +139,7 @@ class MissileWeaponSystem {
         state.tickEvents.add(
             BattleTickEvent(
                 "fighter_attack", source.fleetId, target.fleetId, rawDmg,
-                "전투정 발진 → 속도저하${if (isFighterVsFighter) " (인터셉트 2배)" else ""}"
+                "스파르타니안 발진 → 속도저하${if (isFighterVsFighter) " (迎撃戦 2배)" else " (対艦戦)"} (軍需物資 -$sortieCost)"
             )
         )
 
@@ -113,7 +148,7 @@ class MissileWeaponSystem {
             sourceFleetId = source.fleetId,
             targetFleetId = target.fleetId,
             damage = rawDmg,
-            supplyCost = TacticalWeaponType.FIGHTER.supplyCostPerUse,
+            supplyCost = sortieCost,
             tick = state.tickCount,
             isIntercept = isFighterVsFighter,
             speedReduction = TacticalWeaponType.FIGHTER_SPEED_REDUCTION,

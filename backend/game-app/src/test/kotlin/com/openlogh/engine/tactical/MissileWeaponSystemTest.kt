@@ -32,6 +32,10 @@ class MissileWeaponSystemTest {
         unitType: String = "FLEET",
         attack: Int = 50,
         defense: Int = 50,
+        // Phase 24-18: carriers must carry 軍需物資 to launch fighters (10 per sortie).
+        // Default high enough that existing tests exercising the fighter path do not
+        // trip the new supply guard; tests that want to verify the guard set this to 0.
+        supplies: Int = 1000,
     ) = TacticalUnit(
         fleetId = fleetId,
         officerId = fleetId,
@@ -53,6 +57,7 @@ class MissileWeaponSystemTest {
         attack = attack,
         defense = defense,
         missileCount = missileCount,
+        supplies = supplies,
         unitType = unitType,
         formation = Formation.MIXED,
         stance = UnitStance.NAVIGATION,
@@ -171,6 +176,99 @@ class MissileWeaponSystemTest {
 
         assertEquals(fleetDamage * 2, carrierDamage,
             "Fighter vs CARRIER (intercept) should deal 2x damage compared to vs FLEET: carrier=$carrierDamage, fleet=$fleetDamage")
+    }
+
+    // ── Phase 24-18: Spartanian sortie cost (gin7 manual p49) ──
+
+    private val alwaysHitRng = object : Random() {
+        override fun nextBits(bitCount: Int): Int = 0
+        override fun nextDouble(): Double = 0.0
+    }
+
+    @Test
+    fun `spartanian sortie consumes 10 military supplies per launch`() {
+        val source = makeUnit(1L, BattleSide.ATTACKER, posX = 0.0, posY = 0.0,
+            unitType = "CARRIER", supplies = 100)
+        val target = makeUnit(2L, BattleSide.DEFENDER, posX = 200.0, posY = 0.0, unitType = "FLEET")
+        val state = makeState(source, target)
+
+        val event = system.processFighterAttack(source, target, state, rng = alwaysHitRng)
+
+        assertNotNull(event, "carrier with sufficient supplies must launch")
+        assertEquals(90, source.supplies, "sortie must deduct exactly 10 軍需物資")
+        assertEquals(TacticalWeaponType.FIGHTER.supplyCostPerUse, event!!.supplyCost)
+    }
+
+    @Test
+    fun `spartanian sortie is gated when supplies are below 10`() {
+        val source = makeUnit(1L, BattleSide.ATTACKER, posX = 0.0, posY = 0.0,
+            unitType = "CARRIER", supplies = 9)
+        val target = makeUnit(2L, BattleSide.DEFENDER, posX = 200.0, posY = 0.0, unitType = "FLEET")
+        val state = makeState(source, target)
+
+        val event = system.processFighterAttack(source, target, state, rng = alwaysHitRng)
+
+        assertNull(event, "carrier with < 10 supplies must not be able to sortie")
+        assertEquals(9, source.supplies, "supplies must not change when sortie is aborted")
+        assertTrue(state.tickEvents.any { it.type == "fighter_sortie_aborted" },
+            "battle log must record the aborted sortie")
+    }
+
+    @Test
+    fun `spartanian sortie pays cost even on miss`() {
+        // 항상 실패(nextDouble = 0.999) RNG — 미사일 hitChance < 1.0 보장
+        val alwaysMissRng = object : Random() {
+            override fun nextBits(bitCount: Int): Int = Int.MAX_VALUE
+            override fun nextDouble(): Double = 0.999999
+        }
+        val source = makeUnit(1L, BattleSide.ATTACKER, posX = 0.0, posY = 0.0,
+            unitType = "CARRIER", supplies = 50)
+        val target = makeUnit(2L, BattleSide.DEFENDER, posX = 200.0, posY = 0.0, unitType = "FLEET")
+        val state = makeState(source, target)
+
+        val event = system.processFighterAttack(source, target, state, rng = alwaysMissRng)
+
+        assertNull(event, "miss returns null")
+        assertEquals(40, source.supplies,
+            "gin7 p49: cost applies per SORTIE not per hit — supplies drop by 10 even on miss")
+        assertTrue(state.tickEvents.any { it.type == "fighter_miss" })
+    }
+
+    @Test
+    fun `spartanian intercept vs carrier still consumes 10 supplies per sortie`() {
+        val source = makeUnit(1L, BattleSide.ATTACKER, posX = 0.0, posY = 0.0,
+            unitType = "CARRIER", supplies = 100)
+        val carrierTarget = makeUnit(2L, BattleSide.DEFENDER, posX = 200.0, posY = 0.0, unitType = "CARRIER")
+        val state = makeState(source, carrierTarget)
+
+        val event = system.processFighterAttack(source, carrierTarget, state, rng = alwaysHitRng)
+
+        assertNotNull(event)
+        assertTrue(event!!.isIntercept, "CARRIER target = 迎撃戦")
+        assertEquals(90, source.supplies, "intercept sortie also costs 10 supplies")
+    }
+
+    @Test
+    fun `spartanian sortie label indicates intercept vs antiship mode`() {
+        val source = makeUnit(1L, BattleSide.ATTACKER, posX = 0.0, posY = 0.0,
+            unitType = "CARRIER", supplies = 100)
+        val fleetTarget = makeUnit(2L, BattleSide.DEFENDER, posX = 200.0, posY = 0.0, unitType = "FLEET")
+        val stateAnti = makeState(source, fleetTarget)
+        system.processFighterAttack(source, fleetTarget, stateAnti, rng = alwaysHitRng)
+        assertTrue(
+            stateAnti.tickEvents.any { it.type == "fighter_attack" && it.detail.contains("対艦戦") },
+            "対艦戦 label must appear when target is not a carrier"
+        )
+
+        val source2 = makeUnit(3L, BattleSide.ATTACKER, posX = 0.0, posY = 0.0,
+            unitType = "CARRIER", supplies = 100)
+        val carrierTarget = makeUnit(4L, BattleSide.DEFENDER, posX = 200.0, posY = 0.0, unitType = "CARRIER")
+        val stateIntercept = makeState(source2, carrierTarget)
+        system.processFighterAttack(source2, carrierTarget, stateIntercept, rng = alwaysHitRng)
+        assertTrue(
+            stateIntercept.tickEvents.any { it.type == "fighter_attack" && it.detail.contains("迎撃戦") },
+            "迎撃戦 label must appear when target is a carrier"
+        )
     }
 
     // ── BEAM distance factor tests (via engine) ──
