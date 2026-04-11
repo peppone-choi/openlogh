@@ -39,6 +39,25 @@ const EQUIPMENT_KEYS: Array<{ key: keyof GeneralFrontInfo; label: string }> = [
     { key: 'item', label: '도구' },
 ];
 
+/**
+ * Phase 25-02: 기함 코드 → 한국어 tier 라벨 매핑.
+ * 백엔드 FlagshipProgression 이 승진/강등 시 자동 배정하는 8 tier 코드를 커버한다.
+ * 관리 집합 밖의 특수 보상/구매 기함은 원본 코드 문자열을 그대로 보여 준다.
+ */
+function flagshipLabel(code: string): string {
+    const managed: Record<string, string> = {
+        CADET_FRIGATE: '사관 경호위함',
+        PATROL_CORVETTE: '순찰 콜벳',
+        LIGHT_CRUISER: '경순양함',
+        HEAVY_CRUISER: '중순양함',
+        BATTLE_CRUISER: '전투순양함',
+        FLAG_BATTLESHIP: '기함급 전함',
+        COMMAND_BATTLESHIP: '사령부 전함',
+        SOVEREIGN_BATTLESHIP: '최고사령부 전함',
+    };
+    return managed[code] ?? code;
+}
+
 type TabKey = 'profile' | 'nation-generals';
 
 export default function GeneralPage() {
@@ -244,6 +263,28 @@ export default function GeneralPage() {
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <NationBadge name={nation?.name} color={nation?.color} />
                                         <Badge variant="outline">{officerText}</Badge>
+                                        {/* Phase 25-02: 서훈(medal) 배지. medalRank > 0 이면 랭크와 총 훈장 수를 함께 표시. */}
+                                        {g.medalRank > 0 && (
+                                            <Badge
+                                                variant="outline"
+                                                className="border-yellow-400 text-yellow-300"
+                                                title={`서훈 ${g.medalRank}급 (총 ${g.medalCount}개)`}
+                                            >
+                                                훈장 {g.medalRank}급
+                                                {g.medalCount > 1 ? ` ×${g.medalCount}` : ''}
+                                            </Badge>
+                                        )}
+                                        {/* Phase 25-02: 기함(flagship) 배지. "None" 기본값은 숨기고,
+                                            Phase 24-22 FlagshipProgression 의 managed 코드면 tier 라벨을 덧붙인다. */}
+                                        {g.weaponCode && g.weaponCode !== 'None' && (
+                                            <Badge
+                                                variant="outline"
+                                                className="border-cyan-400 text-cyan-200"
+                                                title={`기함: ${g.weaponCode}`}
+                                            >
+                                                기함 {flagshipLabel(g.weaponCode)}
+                                            </Badge>
+                                        )}
                                     </div>
                                     <p className="text-sm">
                                         <span className="text-muted-foreground">유형:</span>{' '}

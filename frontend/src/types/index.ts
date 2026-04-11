@@ -155,6 +155,10 @@ export interface General {
     attackExp: number;
     defense: number;
     defenseExp: number;
+    // Phase 25-02: 서훈(medal) 시스템 — Phase 24-09 에서 Officer 에 추가된
+    // medalRank / medalCount. 프론트엔드 오피서 배지용.
+    medalRank: number;
+    medalCount: number;
     dex1: number;
     dex2: number;
     dex3: number;

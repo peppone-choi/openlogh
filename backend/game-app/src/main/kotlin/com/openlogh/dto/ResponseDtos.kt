@@ -37,6 +37,10 @@ data class GeneralResponse(
     val attackExp: Short,
     val defense: Short,
     val defenseExp: Short,
+    // Phase 25-02: 서훈(medal) 시스템 — Phase 24-09 에서 추가된 Officer.medalRank /
+    // medalCount 를 프론트엔드에 노출해 오피서 카드가 훈장 배지를 렌더링할 수 있게 한다.
+    val medalRank: Short,
+    val medalCount: Short,
     val dex1: Int,
     val dex2: Int,
     val dex3: Int,
@@ -122,6 +126,8 @@ data class GeneralResponse(
             attackExp = e.attackExp,
             defense = e.defense,
             defenseExp = e.defenseExp,
+            medalRank = e.medalRank,
+            medalCount = e.medalCount,
             dex1 = e.dex1,
             dex2 = e.dex2,
             dex3 = e.dex3,

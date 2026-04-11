@@ -35,6 +35,9 @@ const BASE_GENERAL: Omit<
     attackExp: 0,
     defense: 50,
     defenseExp: 0,
+    // Phase 25-02: 서훈(medal) 시스템.
+    medalRank: 0,
+    medalCount: 0,
     dex1: 50,
     dex2: 50,
     dex3: 50,
