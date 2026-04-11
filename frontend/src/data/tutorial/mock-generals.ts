@@ -28,6 +28,13 @@ const BASE_GENERAL: Omit<
     intelExp: 0,
     politicsExp: 0,
     charmExp: 0,
+    // Phase 25-01: LOGH 8-stat 추가 필드 (기동/공격/방어).
+    mobility: 50,
+    mobilityExp: 0,
+    attack: 50,
+    attackExp: 0,
+    defense: 50,
+    defenseExp: 0,
     dex1: 50,
     dex2: 50,
     dex3: 50,

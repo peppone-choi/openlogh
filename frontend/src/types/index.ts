@@ -147,6 +147,14 @@ export interface General {
     politicsExp: number;
     charm: number;
     charmExp: number;
+    // Phase 25-01: LOGH 8-stat UI catch-up. administration 은 charm alias 로
+    // 이미 전달되므로 따로 두지 않고, 나머지 3 종(기동/공격/방어)만 신규 노출한다.
+    mobility: number;
+    mobilityExp: number;
+    attack: number;
+    attackExp: number;
+    defense: number;
+    defenseExp: number;
     dex1: number;
     dex2: number;
     dex3: number;

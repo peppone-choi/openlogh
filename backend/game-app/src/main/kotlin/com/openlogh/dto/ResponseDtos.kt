@@ -28,6 +28,15 @@ data class GeneralResponse(
     val politicsExp: Short,
     val charm: Short,
     val charmExp: Short,
+    // Phase 25-01: LOGH 8-stat UI catch-up — 신규 5 stat 중 3 종(기동/공격/방어)
+    // 이 legacy 응답에 노출되지 않아 프론트엔드가 성장 진척을 표시할 수 없었다.
+    // administration 은 이미 charm alias 로 노출되어 있으므로 제외.
+    val mobility: Short,
+    val mobilityExp: Short,
+    val attack: Short,
+    val attackExp: Short,
+    val defense: Short,
+    val defenseExp: Short,
     val dex1: Int,
     val dex2: Int,
     val dex3: Int,
@@ -107,6 +116,12 @@ data class GeneralResponse(
             politicsExp = e.politicsExp,
             charm = e.administration,
             charmExp = e.administrationExp,
+            mobility = e.mobility,
+            mobilityExp = e.mobilityExp,
+            attack = e.attack,
+            attackExp = e.attackExp,
+            defense = e.defense,
+            defenseExp = e.defenseExp,
             dex1 = e.dex1,
             dex2 = e.dex2,
             dex3 = e.dex3,

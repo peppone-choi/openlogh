@@ -292,10 +292,10 @@ export default function GeneralPage() {
                     </Card>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                        {/* 5-Stat with bars */}
+                        {/* Phase 25-01: LOGH 8-stat with exp bars */}
                         <Card>
                             <CardHeader className="pb-2">
-                                <CardTitle className="text-sm">능력치</CardTitle>
+                                <CardTitle className="text-sm">능력치 (8계통)</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-1.5">
                                 {[
@@ -320,14 +320,32 @@ export default function GeneralPage() {
                                     {
                                         label: '정치',
                                         value: g.politics,
-                                        exp: 0,
+                                        exp: g.politicsExp,
                                         color: 'limegreen',
                                     },
                                     {
                                         label: '운영',
                                         value: g.charm,
-                                        exp: 0,
+                                        exp: g.charmExp,
                                         color: 'mediumpurple',
+                                    },
+                                    {
+                                        label: '기동',
+                                        value: g.mobility,
+                                        exp: g.mobilityExp,
+                                        color: 'deepskyblue',
+                                    },
+                                    {
+                                        label: '공격',
+                                        value: g.attack,
+                                        exp: g.attackExp,
+                                        color: 'crimson',
+                                    },
+                                    {
+                                        label: '방어',
+                                        value: g.defense,
+                                        exp: g.defenseExp,
+                                        color: 'goldenrod',
                                     },
                                 ].map((s) => (
                                     <div key={s.label} className="flex items-center gap-2">
