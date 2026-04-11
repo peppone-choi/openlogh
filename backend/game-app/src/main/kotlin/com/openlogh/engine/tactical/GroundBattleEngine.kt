@@ -5,12 +5,24 @@ import kotlin.random.Random
 /**
  * Ground unit in tactical land combat.
  *
- * gin7 지상전 병종: ARMORED_GRENADIER(장갑유탄병), ARMORED_INFANTRY(장갑병), LIGHT_MARINE(경장육전병)
+ * gin7 지상전 병종 (Phase 24-26 gap D4, enum 정렬):
+ *   ARMORED_INFANTRY(장갑병), GRENADIER(장갑유탄병), LIGHT_INFANTRY(경장육전병),
+ *   + 특수 단위 IMPERIAL_GUARD, GRENADIER_GUARD, ROSENRITTER (Phase 24-24).
+ *
+ * 레거시 문자열 "ARMORED_GRENADIER" / "LIGHT_MARINE" 은 D4 alias 테이블에서
+ * 신규 enum 이름으로 매핑한다 — 기존 저장된 groundUnitType 문자열이 있어도
+ * 데미지 계산이 올바르게 동작한다.
  */
 data class GroundUnit(
     val unitId: Long,
     val factionId: Long,
-    /** "ARMORED_INFANTRY", "ARMORED_GRENADIER", "LIGHT_MARINE" */
+    /**
+     * GroundUnitType enum 이름 문자열 (D4 신규 정렬 완료):
+     *   "ARMORED_INFANTRY", "GRENADIER", "LIGHT_INFANTRY",
+     *   "IMPERIAL_GUARD", "GRENADIER_GUARD", "ROSENRITTER"
+     * 구 버전 레거시 문자열 "ARMORED_GRENADIER" / "LIGHT_MARINE" 도 읽기는
+     * 허용하며 데미지 계산 시 신규 이름과 동일하게 처리된다.
+     */
     val groundUnitType: String,
     var count: Int,
     val maxCount: Int,
@@ -73,12 +85,35 @@ class GroundBattleEngine {
          */
         fun isUnitAllowedOnPlanetType(unit: GroundUnit, planetType: String): Boolean {
             val normalized = unit.groundUnitType.uppercase()
-            // Heavy armor banned on gas/fortress per gin7 manual p50.
+            // gin7 매뉴얼 p50:
+            //   · 가스 행성 : 중장비 병종(장갑병/근위사단) 배치 불가
+            //   · 요새      : 장갑병 배치 불가 (근위사단은 요새 수비 가능)
             val isHeavyArmor = normalized == "ARMORED_INFANTRY"
+            val isImperialGuard = normalized == "IMPERIAL_GUARD"
             return when (planetType) {
-                "gas", "fortress" -> !isHeavyArmor
+                "gas"      -> !isHeavyArmor && !isImperialGuard
+                "fortress" -> !isHeavyArmor
                 else -> true
             }
+        }
+
+        /**
+         * Phase 24-26 (gap D4): groundUnitType 문자열 → 데미지 배수 매핑.
+         * 신규 enum 이름(`GRENADIER`, `LIGHT_INFANTRY`) 과 레거시 drift 이름
+         * (`ARMORED_GRENADIER`, `LIGHT_MARINE`) 양쪽을 모두 수용한다. Phase 24-24
+         * 에서 도입한 특수 단위(IMPERIAL_GUARD/GRENADIER_GUARD/ROSENRITTER) 는
+         * 엘리트 배수(1.5~1.6) 로 반영한다.
+         */
+        fun typeModifierFor(rawType: String): Double = when (rawType.uppercase()) {
+            "ARMORED_INFANTRY"   -> 1.0   // 장갑병 — 균형
+            "GRENADIER",
+            "ARMORED_GRENADIER"  -> 1.3   // 장갑유탄병 — 공격↑ (legacy alias)
+            "LIGHT_INFANTRY",
+            "LIGHT_MARINE"       -> 0.8   // 경장육전병 — 공격↓, 기동↑ (legacy alias)
+            "IMPERIAL_GUARD"     -> 1.5   // 근위사단 — 엘리트
+            "GRENADIER_GUARD"    -> 1.5   // 척탄병교도대 — 엘리트
+            "ROSENRITTER"        -> 1.6   // 장미기사단 — 엘리트 돌격
+            else -> 1.0
         }
     }
 
@@ -159,12 +194,7 @@ class GroundBattleEngine {
     }
 
     private fun calculateGroundDamage(unit: GroundUnit): Int {
-        val typeModifier = when (unit.groundUnitType.uppercase()) {
-            "ARMORED_GRENADIER" -> 1.3  // 장갑유탄병: 공격↑
-            "ARMORED_INFANTRY"  -> 1.0  // 장갑병: 균형
-            "LIGHT_MARINE"      -> 0.8  // 경장육전병: 공격↓, 속도↑
-            else -> 1.0
-        }
+        val typeModifier = typeModifierFor(unit.groundUnitType)
         return ((BASE_GROUND_DAMAGE * typeModifier * unit.morale / 100.0)
             .coerceAtLeast(1.0)).toInt()
     }
