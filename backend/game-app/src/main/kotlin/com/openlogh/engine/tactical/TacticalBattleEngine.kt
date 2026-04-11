@@ -986,8 +986,12 @@ class TacticalBattleEngine(
         val beamBaseDamage = subtypeStat?.beamPower?.takeIf { it > 0 }?.toDouble() ?: BEAM_BASE_DAMAGE
         val gunBaseDamage  = subtypeStat?.gunPower?.takeIf { it > 0 }?.toDouble()  ?: GUN_BASE_DAMAGE
 
+        // Phase 24-08 (gin7 manual p49): line-of-sight check. Friendly units
+        // between source and target block BEAM/GUN/MISSILE fire.
+        val hasLoS = hasLineOfSight(unit, target, state)
+
         // BEAM damage — gin7 rule: 최대사거리 70% 지점에서 최대 위력, 너무 가깝거나 멀면 선형 감소
-        if (unit.energy.beam > 0 && dist <= BEAM_RANGE) {
+        if (hasLoS && unit.energy.beam > 0 && dist <= BEAM_RANGE) {
             val optimalDist = BEAM_RANGE * 0.7
             val distFactor = (1.0 - abs(dist - optimalDist) / optimalDist).coerceAtLeast(0.0)
             val beamDmg = (beamBaseDamage * unit.energy.beamMultiplier() * attackStatModifier
@@ -1000,7 +1004,7 @@ class TacticalBattleEngine(
         }
 
         // GUN damage
-        if (unit.energy.gun > 0 && dist <= GUN_RANGE) {
+        if (hasLoS && unit.energy.gun > 0 && dist <= GUN_RANGE) {
             val gunDmg = (gunBaseDamage * unit.energy.gunMultiplier() * attackStatModifier
                 * formationAttack * stanceAttack * moraleModifier * trainingModifier)
             val sensorAccuracy = unit.energy.sensorMultiplier()
@@ -1011,13 +1015,17 @@ class TacticalBattleEngine(
         }
 
         // MISSILE attack (long range, missileCount > 0)
-        val missileTarget = enemies.filter { distance(unit, it) <= MISSILE_RANGE }
+        // Phase 24-08: missiles also respect line-of-sight — guided, but not
+        // "around corners". Only fire at a target with clear LoS.
+        val missileTarget = enemies
+            .filter { distance(unit, it) <= MISSILE_RANGE && hasLineOfSight(unit, it, state) }
             .minByOrNull { distance(unit, it) }
         if (missileTarget != null) {
             missileSystem.processMissileAttack(unit, missileTarget, state, rng)
         }
 
-        // FIGHTER launch (carrier only, medium range)
+        // FIGHTER launch (carrier only, medium range) — fighters are small
+        // mobile craft, not affected by ship-silhouette line-of-sight.
         val fighterTarget = enemies.filter { distance(unit, it) <= FIGHTER_RANGE }
             .minByOrNull { distance(unit, it) }
         if (fighterTarget != null) {
@@ -1049,6 +1057,60 @@ class TacticalBattleEngine(
     private fun processFortressGun(state: TacticalBattleState, rng: Random) {
         // Delegate to FortressGunSystem — handles 4-type enum, full power per unit (not split), friendly fire
         fortressGunSystem.processFortressGunFire(state, rng)
+    }
+
+    /**
+     * Phase 24-08 (Gap C1, gin7 manual p49): ship-to-ship line-of-sight check.
+     *
+     * Returns true iff there is NO friendly unit (or blocking terrain proxy)
+     * between [source] and [target]. Used to gate BEAM/GUN/MISSILE fire so
+     * 射線判定 matches the manual:
+     *
+     *   "射線上に味方の艦艇ユニット(移動要塞も含む)が存在する場合。
+     *    射線上に射線障害地形が存在する場合。"
+     *
+     * Unlike [calculateLineOfFire] (which is designed for fortress guns and
+     * returns every unit in the beam path, friendly or otherwise), this check
+     * only looks for *friendly blockers* between source and target. Enemy
+     * units on the path are fair game and do not block.
+     *
+     * Terrain obstacles (plasma storm / sargasso) are not yet modeled as
+     * placed entities; see phase 25+ for that follow-up. Until then, the
+     * `obstacleInPath` check is a no-op placeholder.
+     */
+    private fun hasLineOfSight(
+        source: TacticalUnit,
+        target: TacticalUnit,
+        state: TacticalBattleState,
+        blockingWidth: Double = 15.0,
+    ): Boolean {
+        val totalLen = distance(source, target)
+        if (totalLen < 0.001) return true
+
+        for (unit in state.units) {
+            if (!unit.isAlive || unit.isRetreating) continue
+            if (unit.fleetId == source.fleetId) continue
+            if (unit.fleetId == target.fleetId) continue
+            // gin7 p49: only FRIENDLY (same-side) units block the line of fire.
+            if (unit.side != source.side) continue
+
+            val perp = distanceToLine(
+                unit.posX, unit.posY,
+                source.posX, source.posY,
+                target.posX, target.posY,
+            )
+            if (perp > blockingWidth) continue
+
+            val proj = projectOnLine(
+                unit.posX, unit.posY,
+                source.posX, source.posY,
+                target.posX, target.posY,
+            )
+            if (proj <= 0.0 || proj >= totalLen) continue
+
+            return false
+        }
+        return true
     }
 
     /**
