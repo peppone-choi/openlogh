@@ -45,7 +45,7 @@
     "minAvailableRecruitPop": 30000,
     "defaultCityWall": 1000,
     "initialNationGenLimit": 10,
-    "defaultMaxGeneral": 500,
+    "defaultMaxGeneral": 2000,
     "defaultMaxNation": 55,
     "defaultMaxGenius": 5,
     "defaultStartYear": 180,

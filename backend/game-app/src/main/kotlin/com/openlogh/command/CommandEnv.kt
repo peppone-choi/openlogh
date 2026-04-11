@@ -10,7 +10,9 @@ data class CommandEnv(
     val scenario: Int = 0,
     val exchangeFee: Double = 0.03,
     val initialNationGenLimit: Int = 5,
-    val defaultMaxGeneral: Int = 30,
+    // Phase 24-23 (gap E1, gin7 매뉴얼 p8-9): 세션 동시 참가 장교 수 상한.
+    // 원작은 한 게임 세션당 최대 2000명을 권고 스펙으로 명시한다.
+    val defaultMaxGeneral: Int = 2000,
     val startMonth: Int? = 1,
     val sabotageDamageMin: Int = 200,
     val sabotageDamageMax: Int = 400,
