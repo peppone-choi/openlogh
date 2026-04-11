@@ -592,6 +592,13 @@ class TacticalBattleEngine(
             applyAssignSubFleet(cmd, state)
             return
         }
+        // Phase 24-19 (gap C11, gin7 manual p52): group formation command dispatches
+        // a single formation change to many subordinates at once. Handled before the
+        // single-unit dispatch path because it operates on multiple officer ids.
+        if (cmd is TacticalCommand.GroupFormationChange) {
+            applyGroupFormationChange(cmd, state)
+            return
+        }
         if (cmd is TacticalCommand.ReassignUnit) {
             applyReassignUnit(cmd, state)
             return
@@ -656,6 +663,9 @@ class TacticalBattleEngine(
                 state.pendingConquestCommands.add(cmd)
             }
             is TacticalCommand.AssignSubFleet -> {
+                // Handled above; exhaustive when requires this branch
+            }
+            is TacticalCommand.GroupFormationChange -> {
                 // Handled above; exhaustive when requires this branch
             }
             is TacticalCommand.ReassignUnit -> {
@@ -763,6 +773,69 @@ class TacticalBattleEngine(
     }
 
     /**
+     * Phase 24-19 (gap C11, gin7 manual p52): 隊列命令 group formation command.
+     *
+     * A fleet commander (or sub-commander) designates a set of subordinate officer
+     * ids and changes their formation in a single dispatch. Each target unit is
+     * validated individually:
+     *   - Must be alive.
+     *   - Must be on the same side as the commander.
+     *   - Must be reachable from the commander's CRC (otherwise silently skipped;
+     *     it keeps its last order just like a single-unit out-of-CRC command).
+     *
+     * The commander's own unit is included if present in targetOfficerIds. Missing
+     * ids are ignored (they may have been destroyed between enqueue and dispatch).
+     */
+    private fun applyGroupFormationChange(cmd: TacticalCommand.GroupFormationChange, state: TacticalBattleState) {
+        val commanderUnit = state.units.find { it.officerId == cmd.officerId && it.isAlive } ?: return
+
+        // Jamming rule mirrors the single-unit SetFormation path: if the commander
+        // is jammed their fleet-wide orders are blocked. 隊列命令 is by definition
+        // fleet-wide so we guard it at the commander level once.
+        val hierarchy = getHierarchyForUnit(commanderUnit, state)
+        if (hierarchy != null && CommunicationJamming.isFleetWideCommandBlocked(
+                TacticalCommand.SetFormation(cmd.battleId, cmd.officerId, cmd.formation),
+                commanderUnit,
+                hierarchy,
+            )
+        ) {
+            return
+        }
+
+        val targetIds = cmd.targetOfficerIds.toSet()
+        var applied = 0
+        for (target in state.units) {
+            if (!target.isAlive) continue
+            if (target.side != commanderUnit.side) continue
+            if (target.officerId !in targetIds) continue
+
+            // CRC gating per target — out-of-reach units are left alone. Gating is
+            // only enforced when a command hierarchy exists; in hierarchy-less
+            // scenarios (fallback sandbox / tests / flat command) the dispatch
+            // applies directly, mirroring the single-unit SetFormation path.
+            if (hierarchy != null && target.officerId != commanderUnit.officerId) {
+                val reachable = CrcValidator.isCommandReachable(cmd, target, hierarchy, state.units)
+                if (!reachable) continue
+            }
+
+            target.formation = cmd.formation
+            target.commandRange = target.commandRange.resetOnCommand()
+            target.lastCommandTick = state.currentTick
+            applied++
+        }
+
+        if (applied > 0) {
+            state.tickEvents.add(
+                BattleTickEvent(
+                    "group_formation", sourceUnitId = commanderUnit.fleetId,
+                    value = applied,
+                    detail = "${commanderUnit.officerName}: 隊列命令 ${cmd.formation.name} → ${applied}유닛",
+                )
+            )
+        }
+    }
+
+    /**
      * Process ReassignUnit command: fleet commander reassigns a unit between sub-fleets.
      * CMD-05 condition: unit must be outside CRC AND stopped.
      */
@@ -853,7 +926,11 @@ class TacticalBattleEngine(
                         value = resupplyAmount, detail = "${unit.officerName} 미사일 보급 (+$resupplyAmount)"))
                 }
             }
-            "SORTIE" -> {
+            // Phase 24-19 (gap C13, gin7 manual p49 空戰命令):
+            // SORTIE 는 gin7 원본의 "戦闘艇 空戰命令"이며 대상이 CARRIER 인지에 따라
+            // processFighterAttack 내부에서 対艦戦/迎撃戦을 자동 판정한다.
+            // AIR_COMBAT 은 매뉴얼 표기와 정렬된 alias 로 동일 경로를 탄다.
+            "SORTIE", "AIR_COMBAT" -> {
                 val enemies = state.units.filter { it.side != unit.side && it.isAlive }
                 val target = enemies.minByOrNull {
                     val dx = unit.posX - it.posX

@@ -609,8 +609,13 @@ class TacticalBattleService(
                         value = resupplyAmount, detail = "${unit.officerName} 미사일 보급 (+$resupplyAmount)"))
                 }
             }
-            "SORTIE" -> {
-                // 전투정 발진: 가장 가까운 적에게 전투정 공격
+            // Phase 24-19 (gap C13, gin7 manual p49): 空戰命令 — SORTIE는 gin7 원문의
+            // "戦闘艇 空戰命令"에 해당하며, 対艦戦 vs 迎撃戦 판정은 이미
+            // MissileWeaponSystem.processFighterAttack(대상이 CARRIER인지)에서 자동
+            // 수행된다. 매뉴얼 친화적 명칭 AIR_COMBAT 을 alias 로 추가하여
+            // frontend / 외부 클라이언트가 gin7 표기로 호출할 수 있게 한다.
+            "SORTIE", "AIR_COMBAT" -> {
+                // 전투정 발진: 가장 가까운 적에게 스파르타니안 발진.
                 val enemies = state.units.filter { it.side != unit.side && it.isAlive }
                 val target = enemies.minByOrNull {
                     val dx = unit.posX - it.posX

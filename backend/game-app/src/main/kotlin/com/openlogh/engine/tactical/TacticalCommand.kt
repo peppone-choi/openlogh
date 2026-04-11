@@ -39,6 +39,22 @@ sealed class TacticalCommand {
         val formation: Formation,
     ) : TacticalCommand()
 
+    /**
+     * Phase 24-19 (gap C11, gin7 manual p52): 隊列命令 (group formation command).
+     * A commander designates multiple subordinate units and sets their formation
+     * in a single dispatch, rather than issuing one FORMATION_CHANGE per unit.
+     *
+     * - officerId: the commander who issues the order (for CRC/jamming gating).
+     * - targetOfficerIds: officer ids of every unit that should receive the formation.
+     *   Units outside the commander's CRC or not on the same side are silently skipped.
+     */
+    data class GroupFormationChange(
+        override val battleId: Long,
+        override val officerId: Long,
+        val targetOfficerIds: List<Long>,
+        val formation: Formation,
+    ) : TacticalCommand()
+
     /** Retreat order (/app/battle/{sessionId}/{battleId}/retreat) */
     data class Retreat(
         override val battleId: Long,
