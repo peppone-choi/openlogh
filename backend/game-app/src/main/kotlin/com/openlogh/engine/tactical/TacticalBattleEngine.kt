@@ -301,7 +301,11 @@ class TacticalBattleEngine(
         const val GUN_RANGE = 150.0        // mid-close range
         const val BASE_SPEED = 3.0         // base movement per tick
         const val COMMAND_RANGE_GROWTH_RATE = 0.5  // per tick, scaled by command stat
-        const val RETREAT_SPEED = 0.02     // progress per tick when retreating
+        // Phase 24-13 (gap C10, gin7 manual p52): 撤退 命令 all所要時間 = 2.5分.
+        // At 1 tick/sec the retreat progress must take 150 ticks from 0 → 1.0,
+        // so RETREAT_SPEED = 1.0 / 150.0 ≈ 0.006667. The legacy 0.02 value
+        // reached the warp threshold in 50 ticks (~50 s) — roughly 3× too fast.
+        const val RETREAT_SPEED = 1.0 / 150.0
         const val MORALE_DAMAGE_THRESHOLD = 20  // below this, combat effectiveness drops
         const val MISSILE_RANGE = 800.0    // TacticalWeaponType.MISSILE.baseRange * 100
         const val FIGHTER_RANGE = 600.0    // TacticalWeaponType.FIGHTER.baseRange * 100
@@ -1054,8 +1058,22 @@ class TacticalBattleEngine(
 
         target.hp -= finalDamage
         // Calculate ship losses proportional to HP loss
-        val shipLoss = (finalDamage.toDouble() / target.maxHp.coerceAtLeast(1) * target.maxShips).toInt().coerceAtLeast(0)
+        val shipLossRatio = finalDamage.toDouble() / target.maxHp.coerceAtLeast(1)
+        val shipLoss = (shipLossRatio * target.maxShips).toInt().coerceAtLeast(0)
+        val oldShips = target.ships
         target.ships = (target.ships - shipLoss).coerceAtLeast(0)
+
+        // Phase 24-13 (gap C6, gin7 manual p51):
+        // "搭載物: 艦艇ユニットに搭載されている資源/武器/軍需物資は、艦艇ユニットの隻数と
+        //  比例して、同一の割合で減少します。"
+        // When a unit loses ships, its carried supplies/missiles drop by the
+        // same fraction. shipsRatio = newShips / oldShips. Use the ratio to
+        // avoid discarding all cargo on a single grazing hit.
+        if (oldShips > 0 && target.ships < oldShips) {
+            val carryoverRatio = target.ships.toDouble() / oldShips.toDouble()
+            target.supplies = (target.supplies * carryoverRatio).toInt().coerceAtLeast(0)
+            target.missileCount = (target.missileCount * carryoverRatio).toInt().coerceAtLeast(0)
+        }
 
         state.tickEvents.add(BattleTickEvent(
             "damage", sourceUnitId = source.fleetId, targetUnitId = target.fleetId,
