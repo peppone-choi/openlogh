@@ -502,6 +502,67 @@ class Gin7CommandPipelineTest {
     }
 
     // ================================================================
+    // Phase 24-05 (Gap B): CP cost full rewire via CommandCostTable
+    // gin7 manual p69-78 — 81 strategic commands with real CP values
+    // ================================================================
+
+    @Test
+    fun `B-05 - CommandCostTable returns manual-correct costs`() {
+        // Spot-check values from gin7 manual 戦略コマンド一覧表
+        assertEquals(40, CommandCostTable.get("워프항행"), "manual p69")
+        assertEquals(160, CommandCostTable.get("연료보급"), "manual p69")
+        assertEquals(80, CommandCostTable.get("군기유지"), "manual p69")
+        assertEquals(10, CommandCostTable.get("원거리이동"), "manual p70")
+        assertEquals(5, CommandCostTable.get("근거리이동"), "manual p70")
+        assertEquals(320, CommandCostTable.get("망명"), "manual p70")
+        assertEquals(640, CommandCostTable.get("반란"), "manual p70")
+        assertEquals(640, CommandCostTable.get("발탁"), "manual p73")
+        assertEquals(80, CommandCostTable.get("통치목표"), "manual p72 — Gap B1")
+        assertEquals(800, CommandCostTable.get("체포허가"), "manual p76 — Gap B2")
+        assertEquals(800, CommandCostTable.get("집행명령"), "manual p76 — Gap B3")
+        assertEquals(320, CommandCostTable.get("침입공작"), "manual p77 — Gap B4")
+        assertEquals(320, CommandCostTable.get("귀환공작"), "manual p77 — Gap B5")
+    }
+
+    @Test
+    fun `B-05 - CommandCostTable unknown command falls back to 1`() {
+        assertEquals(1, CommandCostTable.get("존재하지않는커맨드"))
+        assertEquals(1, CommandCostTable.get(""))
+    }
+
+    @Test
+    fun `B-05 - BaseCommand getCommandPointCost delegates to CommandCostTable`() {
+        // 워프항행 has no local override yet, so it must pick 40 from the table.
+        val officer = makeOfficer(listOf("PERSONAL", "CAPTAIN"))
+        val cmd = com.openlogh.command.gin7.operations.WarpNavigationCommand(
+            officer, makeEnv(), null
+        )
+        assertEquals(40, cmd.getCommandPointCost(), "gin7 manual p69 — 워프항행 40 CP via CommandCostTable")
+    }
+
+    @Test
+    fun `B-05 - CpPoolConfig scaled max supports real CP values`() {
+        // Rank 0 (cadet) can afford small personal actions
+        assertTrue(com.openlogh.model.CpPoolConfig.getMaxPool(0) >= 10,
+            "Rank 0 must afford 10 CP 원거리이동 at least once")
+        // Rank 6 (rear admiral) can afford 반란 (640)
+        assertTrue(com.openlogh.model.CpPoolConfig.getMaxPool(6) >= 640,
+            "Rank 6 must afford single 반란 command (640 CP)")
+        // Rank 10 (Reichsmarschall) can afford 체포허가 (800) with cushion
+        assertTrue(com.openlogh.model.CpPoolConfig.getMaxPool(10) >= 800,
+            "Rank 10 must afford single 체포허가 command (800 CP)")
+    }
+
+    @Test
+    fun `B-05 - Officer default pools start at rank-0 scale`() {
+        val officer = makeOfficer(listOf("PERSONAL"))
+        assertEquals(200, officer.pcpMax, "Default rank 0 pcpMax")
+        assertEquals(200, officer.mcpMax, "Default rank 0 mcpMax")
+        assertEquals(200, officer.pcp, "Initial pcp == pcpMax")
+        assertEquals(200, officer.mcp, "Initial mcp == mcpMax")
+    }
+
+    // ================================================================
     // Phase 24-10 (E51): 반란군 진영 분리 배선
     // gin7 manual p11/p27 — 반란 → 반란군 진영 신설
     // ================================================================

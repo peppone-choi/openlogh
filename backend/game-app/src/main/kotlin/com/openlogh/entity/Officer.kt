@@ -237,17 +237,34 @@ class Officer(
     @Column(name = "command_points", nullable = false)
     var commandPoints: Int = 10,
 
+    /**
+     * Current PCP (Political Command Points) pool.
+     * Phase 24-05: default raised from 5 to 200 to match rank-0 CpPoolConfig
+     * scaling after CommandCostTable started enforcing real manual CP values.
+     */
     @Column(nullable = false)
-    var pcp: Int = 5,
+    var pcp: Int = 200,
 
+    /**
+     * Current MCP (Military Command Points) pool.
+     * Phase 24-05: default raised from 5 to 200 to match rank-0 CpPoolConfig.
+     */
     @Column(nullable = false)
-    var mcp: Int = 5,
+    var mcp: Int = 200,
 
+    /**
+     * Maximum PCP pool size (rank-based, starts at 200 for rank 0).
+     * Phase 24-05: see [com.openlogh.model.CpPoolConfig] for the full scale.
+     */
     @Column(name = "pcp_max", nullable = false)
-    var pcpMax: Int = 5,
+    var pcpMax: Int = 200,
 
+    /**
+     * Maximum MCP pool size (rank-based, starts at 200 for rank 0).
+     * Phase 24-05: see [com.openlogh.model.CpPoolConfig] for the full scale.
+     */
     @Column(name = "mcp_max", nullable = false)
-    var mcpMax: Int = 5,
+    var mcpMax: Int = 200,
 
     @Column(name = "command_end_time")
     var commandEndTime: OffsetDateTime? = null,

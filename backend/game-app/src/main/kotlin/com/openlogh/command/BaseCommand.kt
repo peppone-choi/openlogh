@@ -40,7 +40,22 @@ abstract class BaseCommand(
     var modifiers: List<com.openlogh.engine.modifier.ActionModifier> = emptyList()
 
     abstract fun getCost(): CommandCost
-    open fun getCommandPointCost(): Int = 1
+
+    /**
+     * CP cost for this command.
+     *
+     * Phase 24-05 (docs/03-analysis/gin7-manual-complete-gap.analysis.md §B):
+     * The default implementation delegates to [CommandCostTable] keyed on
+     * [actionName], which loads the 81 gin7 manual values from
+     * `backend/shared/src/main/resources/data/commands.json` via a static
+     * lookup table. Individual commands may still override this for dynamic
+     * scaling (e.g. 작전계획 10~1280, 작전철회 5~320 per manual).
+     *
+     * Returns [CommandCostTable.DEFAULT_COST] (1) for any command whose
+     * actionName is not registered in the table, preserving the pre-24-05
+     * behavior as a safety net.
+     */
+    open fun getCommandPointCost(): Int = CommandCostTable.get(actionName)
 
     /** Which CP pool this command draws from. Override in subclasses to change. */
     open fun getCommandPoolType(): StatCategory = StatCategory.PCP
