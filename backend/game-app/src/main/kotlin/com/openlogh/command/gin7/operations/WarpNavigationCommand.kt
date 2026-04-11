@@ -4,6 +4,7 @@ import com.openlogh.command.CommandCost
 import com.openlogh.command.CommandEnv
 import com.openlogh.command.CommandResult
 import com.openlogh.command.OfficerCommand
+import com.openlogh.engine.GridCapacityChecker
 import com.openlogh.entity.Officer
 import com.openlogh.model.StatCategory
 import kotlin.random.Random
@@ -11,6 +12,8 @@ import kotlin.random.Random
 /**
  * 워프항행 — 목표 행성으로 워프 이동한다.
  * MCP 커맨드. cpCost=40, waitTime=0, duration=0 (Phase 3에서 거리 연동 예정)
+ *
+ * Phase 24-06 (gin7 manual p30): enforces 300-unit/faction grid capacity.
  */
 class WarpNavigationCommand(
     general: Officer,
@@ -36,6 +39,23 @@ class WarpNavigationCommand(
                 else -> null
             }
         } ?: return CommandResult.fail("목표 행성 미지정")
+
+        // Phase 24-06: enforce 300-unit/faction grid capacity (gin7 manual p30).
+        val fleetRepo = services?.fleetRepository
+        if (fleetRepo != null && !GridCapacityChecker.canEnterGrid(
+                fleetRepository = fleetRepo,
+                sessionId = env.sessionId,
+                factionId = general.factionId,
+                destPlanetId = destPlanetId,
+                movingFleet = troop,
+            )) {
+            val available = GridCapacityChecker.availableCapacity(
+                fleetRepo, env.sessionId, general.factionId, destPlanetId, troop?.id
+            )
+            return CommandResult.fail(
+                "그리드 진입 불가: 목표 행성에 진영 함선 ${300 - available}유닛 이미 배치 (상한 300)"
+            )
+        }
 
         val prevPlanetId = general.planetId
         general.planetId = destPlanetId

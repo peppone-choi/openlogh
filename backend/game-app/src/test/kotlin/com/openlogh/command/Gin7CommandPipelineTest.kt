@@ -4,15 +4,20 @@ import com.openlogh.command.gin7.intelligence.ArrestAuthorizationCommand
 import com.openlogh.command.gin7.intelligence.ExecutionOrderCommand
 import com.openlogh.command.gin7.personnel.AppointCommand
 import com.openlogh.command.gin7.politics.GovernanceGoalCommand
+import com.openlogh.engine.GridCapacityChecker
+import com.openlogh.entity.Fleet
 import com.openlogh.entity.Officer
 import com.openlogh.model.CommandGroup
 import com.openlogh.model.InjuryEvent
 import com.openlogh.model.PositionCard
 import com.openlogh.model.PositionCardRegistry
 import com.openlogh.model.StatCategory
+import com.openlogh.repository.FleetRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
 import kotlin.random.Random
 
@@ -301,4 +306,122 @@ class Gin7CommandPipelineTest {
             )
         )
     }
+
+    // ================================================================
+    // Phase 24-06 (E39): 그리드 300 유닛/진영 capacity
+    // gin7 manual p30 — 1つのグリッドに進入できる艦船ユニット数は1陣営 300 이하
+    // ================================================================
+
+    private fun mockFleetRepoAt(planetId: Long, fleets: List<Fleet>): FleetRepository {
+        val repo = mock(FleetRepository::class.java)
+        `when`(repo.findBySessionIdAndPlanetIdAndFactionId(anyLong(), eqLong(planetId), anyLong()))
+            .thenReturn(fleets)
+        return repo
+    }
+
+    @Test
+    fun `E39 - GridCapacityChecker constant is 300 per manual p30`() {
+        assertEquals(
+            300,
+            GridCapacityChecker.MAX_UNITS_PER_GRID_PER_FACTION,
+            "gin7 manual p30 — 300 units/faction/grid"
+        )
+    }
+
+    @Test
+    fun `E39 - availableCapacity returns 300 on empty grid`() {
+        val repo = mockFleetRepoAt(99L, emptyList())
+        val available = GridCapacityChecker.availableCapacity(
+            repo, sessionId = 1L, factionId = 1L, destPlanetId = 99L, movingFleetId = null
+        )
+        assertEquals(300, available, "Empty grid should allow full 300 units")
+    }
+
+    @Test
+    fun `E39 - availableCapacity subtracts existing fleet units`() {
+        val existing = listOf(
+            Fleet(id = 10L, sessionId = 1L, factionId = 1L, planetId = 99L, currentUnits = 60),
+            Fleet(id = 11L, sessionId = 1L, factionId = 1L, planetId = 99L, currentUnits = 40),
+        )
+        val repo = mockFleetRepoAt(99L, existing)
+        val available = GridCapacityChecker.availableCapacity(
+            repo, sessionId = 1L, factionId = 1L, destPlanetId = 99L, movingFleetId = null
+        )
+        assertEquals(200, available, "Grid with 60+40=100 units used should leave 200")
+    }
+
+    @Test
+    fun `E39 - availableCapacity excludes the moving fleet from the sum`() {
+        val existing = listOf(
+            Fleet(id = 10L, sessionId = 1L, factionId = 1L, planetId = 99L, currentUnits = 60),
+            Fleet(id = 11L, sessionId = 1L, factionId = 1L, planetId = 99L, currentUnits = 40),
+        )
+        val repo = mockFleetRepoAt(99L, existing)
+        val available = GridCapacityChecker.availableCapacity(
+            repo, sessionId = 1L, factionId = 1L, destPlanetId = 99L, movingFleetId = 10L
+        )
+        assertEquals(260, available, "Excluding the moving fleet #10 (60) leaves 260")
+    }
+
+    @Test
+    fun `E39 - canEnterGrid rejects fleet that would exceed 300 cap`() {
+        val existing = listOf(
+            Fleet(id = 10L, sessionId = 1L, factionId = 1L, planetId = 99L, currentUnits = 280),
+        )
+        val repo = mockFleetRepoAt(99L, existing)
+        val movingFleet = Fleet(
+            id = 20L, sessionId = 1L, factionId = 1L, planetId = 5L, currentUnits = 30
+        )
+        assertFalse(
+            GridCapacityChecker.canEnterGrid(
+                repo, sessionId = 1L, factionId = 1L, destPlanetId = 99L, movingFleet = movingFleet
+            ),
+            "280 + 30 > 300 should be blocked"
+        )
+    }
+
+    @Test
+    fun `E39 - canEnterGrid allows fleet at exact 300 boundary`() {
+        val existing = listOf(
+            Fleet(id = 10L, sessionId = 1L, factionId = 1L, planetId = 99L, currentUnits = 270),
+        )
+        val repo = mockFleetRepoAt(99L, existing)
+        val movingFleet = Fleet(
+            id = 20L, sessionId = 1L, factionId = 1L, planetId = 5L, currentUnits = 30
+        )
+        assertTrue(
+            GridCapacityChecker.canEnterGrid(
+                repo, sessionId = 1L, factionId = 1L, destPlanetId = 99L, movingFleet = movingFleet
+            ),
+            "270 + 30 = 300 should be allowed (boundary)"
+        )
+    }
+
+    @Test
+    fun `E39 - canEnterGrid uses 1 unit minimum for solo officer (null fleet)`() {
+        val existing299 = listOf(
+            Fleet(id = 10L, sessionId = 1L, factionId = 1L, planetId = 99L, currentUnits = 299),
+        )
+        assertTrue(
+            GridCapacityChecker.canEnterGrid(
+                mockFleetRepoAt(99L, existing299),
+                sessionId = 1L, factionId = 1L, destPlanetId = 99L, movingFleet = null
+            ),
+            "299 + 1 (solo officer) = 300 should be allowed at boundary"
+        )
+
+        val full = listOf(
+            Fleet(id = 10L, sessionId = 1L, factionId = 1L, planetId = 99L, currentUnits = 300),
+        )
+        assertFalse(
+            GridCapacityChecker.canEnterGrid(
+                mockFleetRepoAt(99L, full),
+                sessionId = 1L, factionId = 1L, destPlanetId = 99L, movingFleet = null
+            ),
+            "300 + 1 (solo officer) = 301 should be rejected"
+        )
+    }
+
+    private fun anyLong(): Long = org.mockito.ArgumentMatchers.anyLong()
+    private fun eqLong(value: Long): Long = org.mockito.ArgumentMatchers.eq(value)
 }
