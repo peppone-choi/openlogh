@@ -96,6 +96,14 @@ data class TacticalUnit(
      * 값이 0 보다 크면 선회 준비 중 — 매 틱 -1, 0 이 되는 순간 velocity 를 반전한다.
      */
     var reverseChargeTicksRemaining: Int = 0,
+    /**
+     * Phase 24-33 (gap C12, gin7 매뉴얼 p52): 사격(FIRE) 커맨드 전용 일회성 타겟.
+     * ATTACK 이 `targetFleetId` 에 지속 타겟을 설정하는 것과 달리, FIRE 는 이
+     * 필드에 한 번만 타겟을 찍어 두고 다음 combat 처리에서 소비된 뒤 즉시
+     * null 로 리셋된다. 이를 통해 플레이어가 "이 대상을 지금 한 발 쏘고 나면
+     * 기존 자동 우선순위로 돌아가라" 는 지시를 표현할 수 있다.
+     */
+    var fireOnceTargetId: Long? = null,
     /** 플레이어 지정 공격 대상 함대 ID (null=자동 선택) */
     var targetFleetId: Long? = null,
     /** 선회 중 여부 (ORBIT 커맨드) */
@@ -1012,8 +1020,16 @@ class TacticalBattleEngine(
                     unit.reverseChargeTicksRemaining = REVERSE_PREP_TICKS
                 }
             }
-            "ATTACK", "FIRE" -> {
+            // Phase 24-33 (gap C12, gin7 매뉴얼 p52): ATTACK 은 지속 타겟, FIRE 는
+            // 일회성 지명 사격이다. 두 경로는 같은 지휘 의도지만 적용 범위가 다르다.
+            "ATTACK" -> {
                 if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
+            }
+            "FIRE" -> {
+                if (cmd.targetFleetId != null) {
+                    // 한 번의 combat 스텝에서만 유효. processCombat 이 소비 후 리셋한다.
+                    unit.fireOnceTargetId = cmd.targetFleetId
+                }
             }
             "ORBIT" -> {
                 if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
@@ -1184,13 +1200,26 @@ class TacticalBattleEngine(
         val enemies = allUnits.filter { it.side != unit.side && it.isAlive && !it.isRetreating }
         if (enemies.isEmpty()) return
 
-        // Target: player-designated target takes priority; fallback to closest in range
-        val target = if (unit.targetFleetId != null) {
-            enemies.find { it.fleetId == unit.targetFleetId && it.isAlive }
+        // Phase 24-33 (gap C12, gin7 매뉴얼 p52): 타겟 우선순위 —
+        //   1. FIRE 로 지정된 일회성 타겟 (fireOnceTargetId) — combat 스텝 종료 후 소모.
+        //   2. ATTACK 으로 설정된 지속 타겟 (targetFleetId).
+        //   3. 범위 내 가장 가까운 적 (자동 선택).
+        val fireOnce = unit.fireOnceTargetId
+        val target = when {
+            fireOnce != null -> enemies.find { it.fleetId == fireOnce && it.isAlive }
                 ?: enemies.filter { distance(unit, it) <= BEAM_RANGE }.minByOrNull { distance(unit, it) }
-        } else {
-            enemies.filter { distance(unit, it) <= BEAM_RANGE }.minByOrNull { distance(unit, it) }
-        } ?: return
+            unit.targetFleetId != null -> enemies.find { it.fleetId == unit.targetFleetId && it.isAlive }
+                ?: enemies.filter { distance(unit, it) <= BEAM_RANGE }.minByOrNull { distance(unit, it) }
+            else -> enemies.filter { distance(unit, it) <= BEAM_RANGE }.minByOrNull { distance(unit, it) }
+        } ?: run {
+            // FIRE 타겟이 존재하지 않아 fallback 조차 잡히지 못하면 일회성 플래그는 폐기한다.
+            if (fireOnce != null) unit.fireOnceTargetId = null
+            return
+        }
+        // FIRE 커맨드는 단발성이므로 이번 combat 스텝 이후 즉시 클리어.
+        if (fireOnce != null) {
+            unit.fireOnceTargetId = null
+        }
 
         val dist = distance(unit, target)
 

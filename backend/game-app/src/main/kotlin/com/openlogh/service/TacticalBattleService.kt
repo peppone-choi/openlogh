@@ -599,8 +599,12 @@ class TacticalBattleService(
                     unit.reverseChargeTicksRemaining = TacticalBattleEngine.REVERSE_PREP_TICKS
                 }
             }
-            "ATTACK", "FIRE" -> {
+            // Phase 24-33 (gap C12, gin7 매뉴얼 p52): ATTACK 지속 타겟 vs FIRE 일회성 사격.
+            "ATTACK" -> {
                 if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
+            }
+            "FIRE" -> {
+                if (cmd.targetFleetId != null) unit.fireOnceTargetId = cmd.targetFleetId
             }
             "ORBIT" -> {
                 if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
