@@ -575,8 +575,12 @@ class TacticalBattleService(
                 unit.velY = cmd.dirY * TacticalBattleEngine.BASE_SPEED
             }
             "REVERSE" -> {
-                unit.velX = -unit.velX
-                unit.velY = -unit.velY
+                // Phase 24-25 (gap C9, gin7 매뉴얼 p52): 反転 커맨드는 명령 수신 후
+                // 10 초 대기를 두고 실제 선회가 일어난다. 즉시 flip 하는 대신 charge
+                // 카운터만 설정 — 엔진 tick 에서 만료 시 velX/velY 가 반전된다.
+                if (unit.reverseChargeTicksRemaining <= 0) {
+                    unit.reverseChargeTicksRemaining = TacticalBattleEngine.REVERSE_PREP_TICKS
+                }
             }
             "ATTACK", "FIRE" -> {
                 if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId

@@ -90,6 +90,12 @@ data class TacticalUnit(
     var fighterSpeedDebuffTicks: Int = 0,
     /** 태세 변경 쿨다운 잔여 틱 (0 이하이면 변경 가능) */
     var stanceChangeTicksRemaining: Int = 0,
+    /**
+     * Phase 24-25 (gap C9, gin7 매뉴얼 p52):
+     * REVERSE(反転) 커맨드는 명령 수신 후 10초 대기 뒤 실제 선회가 발생한다.
+     * 값이 0 보다 크면 선회 준비 중 — 매 틱 -1, 0 이 되는 순간 velocity 를 반전한다.
+     */
+    var reverseChargeTicksRemaining: Int = 0,
     /** 플레이어 지정 공격 대상 함대 ID (null=자동 선택) */
     var targetFleetId: Long? = null,
     /** 선회 중 여부 (ORBIT 커맨드) */
@@ -342,6 +348,13 @@ class TacticalBattleEngine(
         const val MISSILE_RANGE = 800.0    // TacticalWeaponType.MISSILE.baseRange * 100
         const val FIGHTER_RANGE = 600.0    // TacticalWeaponType.FIGHTER.baseRange * 100
         const val STANCE_CHANGE_COOLDOWN = 10  // ticks between stance changes
+
+        /**
+         * Phase 24-25 (gap C9, gin7 매뉴얼 p52):
+         * REVERSE(反転) 커맨드 수신 후 실제 진행 방향이 반전되기까지 걸리는 시간.
+         * 매뉴얼은 10 초를 명시하고 이 엔진은 1 tick = 1 초로 동작하므로 10 ticks.
+         */
+        const val REVERSE_PREP_TICKS = 10
     }
 
     /** Expose missile system for SORTIE command in TacticalBattleService. */
@@ -380,6 +393,24 @@ class TacticalBattleEngine(
         for (unit in aliveUnits) {
             if (unit.stanceChangeTicksRemaining > 0) {
                 unit.stanceChangeTicksRemaining--
+            }
+            // Phase 24-25 (gap C9, gin7 매뉴얼 p52): 反転 charge tick-down.
+            // charge 카운터가 1 → 0 으로 넘어가는 순간에만 실제로 velocity 를 반전한다.
+            // mobility 스케일은 24-12 에서 도입한 공식을 그대로 사용 — mobility 50 = 1.0,
+            // 0 = 0.5, 100 = 1.5 (clamp).
+            if (unit.reverseChargeTicksRemaining > 0) {
+                unit.reverseChargeTicksRemaining--
+                if (unit.reverseChargeTicksRemaining == 0) {
+                    val mobilityFactor = (0.5 + unit.mobility / 100.0).coerceIn(0.5, 1.5)
+                    unit.velX = -unit.velX * mobilityFactor
+                    unit.velY = -unit.velY * mobilityFactor
+                    state.tickEvents.add(
+                        BattleTickEvent(
+                            "reverse_complete", sourceUnitId = unit.fleetId,
+                            detail = "${unit.officerName} 선회 완료 (反転 10 초 대기 종료)"
+                        )
+                    )
+                }
             }
         }
 
@@ -922,12 +953,12 @@ class TacticalBattleEngine(
                 unit.velY = cmd.dirY * BASE_SPEED
             }
             "REVERSE" -> {
-                // Phase 24-12 (gap C7, gin7 manual p52):
-                // 「艦艇ユニットを含む反転の速度は、キャラクターの[機動]能力によって変化します」
-                // mobility stat 50 = neutral (1.0), 0 = 50% slow (0.5), 100 = 50% fast (1.5).
-                val mobilityFactor = (0.5 + unit.mobility / 100.0).coerceIn(0.5, 1.5)
-                unit.velX = -unit.velX * mobilityFactor
-                unit.velY = -unit.velY * mobilityFactor
+                // Phase 24-12 (gap C7): mobility scaling — charge 완료 후에 곱해진다.
+                // Phase 24-25 (gap C9, gin7 매뉴얼 p52): 反転 커맨드는 명령 수신 후
+                // 10 초 대기를 두고 실제 선회가 일어난다. 이미 charge 중이면 재명령을 무시.
+                if (unit.reverseChargeTicksRemaining <= 0) {
+                    unit.reverseChargeTicksRemaining = REVERSE_PREP_TICKS
+                }
             }
             "ATTACK", "FIRE" -> {
                 if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
