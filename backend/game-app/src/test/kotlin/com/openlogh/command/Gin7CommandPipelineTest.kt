@@ -2,9 +2,16 @@ package com.openlogh.command
 
 import com.openlogh.command.gin7.intelligence.ArrestAuthorizationCommand
 import com.openlogh.command.gin7.intelligence.ExecutionOrderCommand
+import com.openlogh.command.gin7.personal.RebellionCommand
 import com.openlogh.command.gin7.personnel.AppointCommand
 import com.openlogh.command.gin7.personnel.AwardDecorationCommand
 import com.openlogh.command.gin7.politics.GovernanceGoalCommand
+import com.openlogh.command.CommandServices
+import com.openlogh.entity.Faction
+import com.openlogh.repository.FactionRepository
+import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.PlanetRepository
+import com.openlogh.engine.DiplomacyService
 import com.openlogh.engine.GridCapacityChecker
 import com.openlogh.entity.Fleet
 import com.openlogh.entity.Officer
@@ -492,6 +499,135 @@ class Gin7CommandPipelineTest {
 
         assertEquals(5.toShort(), target.medalRank, "Highest medalRank wins")
         assertEquals(2.toShort(), target.medalCount, "Count still increments on each award")
+    }
+
+    // ================================================================
+    // Phase 24-10 (E51): 반란군 진영 분리 배선
+    // gin7 manual p11/p27 — 반란 → 반란군 진영 신설
+    // ================================================================
+
+    @Test
+    fun `E51 - RebellionCommand costs 640 PCP per manual p27`() {
+        val leader = makeOfficer(listOf("PERSONAL", "CAPTAIN"))
+        val cmd = RebellionCommand(leader, makeEnv(), null)
+        assertEquals(640, cmd.getCommandPointCost(), "gin7 manual p27 — 반란 640 PCP")
+    }
+
+    @Test
+    fun `E51 - RebellionCommand fails when services are not injected`() {
+        val leader = makeOfficer(listOf("PERSONAL"))
+        val cmd = RebellionCommand(leader, makeEnv(), null)
+        val result = runBlocking { cmd.run(Random.Default) }
+        assertFalse(result.success, "Rebellion should fail with no services")
+    }
+
+    @Test
+    fun `E51 - RebellionCommand creates rebel faction and moves leader`() {
+        val imperial = Faction(
+            id = 100L, sessionId = 1L, name = "은하제국",
+            abbreviation = "제국", color = "#000000",
+            factionType = "empire", chiefOfficerId = 999L,
+        )
+        val leader = Officer(
+            id = 50L, sessionId = 1L, name = "반란주동자",
+            factionId = 100L, planetId = 77L,
+            positionCards = mutableListOf("PERSONAL", "CAPTAIN"),
+            turnTime = OffsetDateTime.now(),
+        )
+
+        val factionRepo = mock(FactionRepository::class.java)
+        val officerRepo = mock(OfficerRepository::class.java)
+        val planetRepo = mock(PlanetRepository::class.java)
+        val diplomacySvc = mock(DiplomacyService::class.java)
+
+        `when`(factionRepo.findById(100L)).thenReturn(java.util.Optional.of(imperial))
+        `when`(factionRepo.save<Faction>(org.mockito.ArgumentMatchers.any(Faction::class.java)))
+            .thenAnswer { invocation ->
+                val f = invocation.getArgument<Faction>(0)
+                f.id = 200L
+                f
+            }
+
+        val cmd = RebellionCommand(leader, makeEnv(), null)
+        cmd.services = CommandServices(
+            officerRepository = officerRepo,
+            planetRepository = planetRepo,
+            factionRepository = factionRepo,
+            diplomacyService = diplomacySvc,
+        )
+
+        val result = runBlocking { cmd.run(Random.Default) }
+
+        assertTrue(result.success, "Rebellion should succeed against a valid imperial faction")
+        assertEquals(200L, leader.factionId, "Leader should be moved to the new rebel faction")
+        assertEquals("EXECUTED", leader.meta["rebellionStatus"])
+    }
+
+    @Test
+    fun `E51 - RebellionCommand rejects repeat execution`() {
+        val imperial = Faction(
+            id = 100L, sessionId = 1L, name = "은하제국",
+            abbreviation = "제국", color = "#000000",
+            factionType = "empire", chiefOfficerId = 999L,
+        )
+        val leader = Officer(
+            id = 50L, sessionId = 1L, name = "반란주동자",
+            factionId = 100L, planetId = 77L,
+            positionCards = mutableListOf("PERSONAL", "CAPTAIN"),
+            turnTime = OffsetDateTime.now(),
+        )
+        leader.meta["rebellionStatus"] = "EXECUTED"
+
+        val factionRepo = mock(FactionRepository::class.java)
+        val officerRepo = mock(OfficerRepository::class.java)
+        val planetRepo = mock(PlanetRepository::class.java)
+        val diplomacySvc = mock(DiplomacyService::class.java)
+
+        `when`(factionRepo.findById(100L)).thenReturn(java.util.Optional.of(imperial))
+
+        val cmd = RebellionCommand(leader, makeEnv(), null)
+        cmd.services = CommandServices(
+            officerRepository = officerRepo,
+            planetRepository = planetRepo,
+            factionRepository = factionRepo,
+            diplomacyService = diplomacySvc,
+        )
+
+        val result = runBlocking { cmd.run(Random.Default) }
+        assertFalse(result.success, "Second rebellion attempt should fail")
+    }
+
+    @Test
+    fun `E51 - RebellionCommand rejects officer already in rebel faction`() {
+        val rebel = Faction(
+            id = 200L, sessionId = 1L, name = "반란군",
+            abbreviation = "반", color = "#FFA500",
+            factionType = "rebel", chiefOfficerId = 50L,
+        )
+        val officer = Officer(
+            id = 50L, sessionId = 1L, name = "반란주동자",
+            factionId = 200L, planetId = 77L,
+            positionCards = mutableListOf("PERSONAL", "CAPTAIN"),
+            turnTime = OffsetDateTime.now(),
+        )
+
+        val factionRepo = mock(FactionRepository::class.java)
+        val officerRepo = mock(OfficerRepository::class.java)
+        val planetRepo = mock(PlanetRepository::class.java)
+        val diplomacySvc = mock(DiplomacyService::class.java)
+
+        `when`(factionRepo.findById(200L)).thenReturn(java.util.Optional.of(rebel))
+
+        val cmd = RebellionCommand(officer, makeEnv(), null)
+        cmd.services = CommandServices(
+            officerRepository = officerRepo,
+            planetRepository = planetRepo,
+            factionRepository = factionRepo,
+            diplomacyService = diplomacySvc,
+        )
+
+        val result = runBlocking { cmd.run(Random.Default) }
+        assertFalse(result.success, "Already-rebel officer cannot rebel again")
     }
 
     private fun anyLong(): Long = org.mockito.ArgumentMatchers.anyLong()
