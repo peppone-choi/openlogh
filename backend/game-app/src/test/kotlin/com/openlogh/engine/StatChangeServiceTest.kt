@@ -108,4 +108,92 @@ class StatChangeServiceTest {
         // Exp adjusted: -5 + 30 = 25
         assertEquals(25.toShort(), general.leadershipExp)
     }
+
+    // ── Phase 24-29 (gap A10): LOGH 8-stat 자동 성장 ──
+
+    private fun createLoghOfficer(): Officer = Officer(
+        id = 1,
+        sessionId = 1,
+        name = "테스트",
+        factionId = 1,
+        planetId = 1,
+        leadership = 50, command = 50, intelligence = 50,
+        politics = 50, administration = 50,
+        mobility = 50, attack = 50, defense = 50,
+        turnTime = OffsetDateTime.now(),
+    )
+
+    @Test
+    fun `A10 - politics levels up when politicsExp reaches threshold`() {
+        val g = createLoghOfficer().also { it.politicsExp = 30 }
+        val r = service.checkStatChange(g)
+        assertTrue(r.hasChanges)
+        assertEquals(51.toShort(), g.politics)
+        assertEquals(0.toShort(), g.politicsExp)
+    }
+
+    @Test
+    fun `A10 - administration levels up when administrationExp reaches threshold`() {
+        val g = createLoghOfficer().also { it.administrationExp = 30 }
+        val r = service.checkStatChange(g)
+        assertTrue(r.hasChanges)
+        assertEquals(51.toShort(), g.administration)
+    }
+
+    @Test
+    fun `A10 - mobility levels up when mobilityExp reaches threshold`() {
+        val g = createLoghOfficer().also { it.mobilityExp = 30 }
+        val r = service.checkStatChange(g)
+        assertTrue(r.hasChanges)
+        assertEquals(51.toShort(), g.mobility)
+    }
+
+    @Test
+    fun `A10 - attack levels up when attackExp reaches threshold`() {
+        val g = createLoghOfficer().also { it.attackExp = 30 }
+        val r = service.checkStatChange(g)
+        assertTrue(r.hasChanges)
+        assertEquals(51.toShort(), g.attack)
+    }
+
+    @Test
+    fun `A10 - defense levels up when defenseExp reaches threshold`() {
+        val g = createLoghOfficer().also { it.defenseExp = 30 }
+        val r = service.checkStatChange(g)
+        assertTrue(r.hasChanges)
+        assertEquals(51.toShort(), g.defense)
+    }
+
+    @Test
+    fun `A10 - mobility can decrease when mobilityExp is negative`() {
+        val g = createLoghOfficer().also { it.mobility = 50; it.mobilityExp = (-5).toShort() }
+        val r = service.checkStatChange(g)
+        assertTrue(r.hasChanges)
+        assertEquals(49.toShort(), g.mobility)
+        assertEquals(25.toShort(), g.mobilityExp, "negative exp rolls to (-5 + 30) = 25")
+    }
+
+    @Test
+    fun `A10 - all 8 stats can level up in a single check`() {
+        val g = createLoghOfficer().also {
+            it.leadershipExp = 30
+            it.commandExp = 30
+            it.intelligenceExp = 30
+            it.politicsExp = 30
+            it.administrationExp = 30
+            it.mobilityExp = 30
+            it.attackExp = 30
+            it.defenseExp = 30
+        }
+        val r = service.checkStatChange(g)
+        assertEquals(8, r.changes.size, "모든 8 개 스탯이 동시에 +1 되어야 한다")
+        assertEquals(51.toShort(), g.leadership)
+        assertEquals(51.toShort(), g.command)
+        assertEquals(51.toShort(), g.intelligence)
+        assertEquals(51.toShort(), g.politics)
+        assertEquals(51.toShort(), g.administration)
+        assertEquals(51.toShort(), g.mobility)
+        assertEquals(51.toShort(), g.attack)
+        assertEquals(51.toShort(), g.defense)
+    }
 }

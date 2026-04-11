@@ -44,10 +44,20 @@ class StatChangeService {
         val expName: String,
     )
 
+    // Phase 24-29 (gap A10, gin7 매뉴얼 p14): 캐릭터 경험치 자동 성장 —
+    // OpenLOGH 8-stat(통솔·지휘·정보·정치·운영·기동·공격·방어) 전부에 대해
+    // {statExp} ≥ UPGRADE_LIMIT 이면 stat +1, statExp < 0 이면 stat -1.
+    // v2.4 까지는 legacy 삼국지 3-stat(leadership/strength/intel) 만 다뤘고
+    // 나머지 5 항목은 누적되지만 stat level-up 경로가 없었다.
     private val statTable = listOf(
-        StatEntry("통솔", "leadership", "leadershipExp"),
-        StatEntry("무력", "strength", "strengthExp"),
-        StatEntry("지력", "intel", "intelExp"),
+        StatEntry("통솔", "leadership",     "leadershipExp"),
+        StatEntry("무력", "strength",       "strengthExp"),     // alias → command
+        StatEntry("지력", "intel",          "intelExp"),        // alias → intelligence
+        StatEntry("정치", "politics",       "politicsExp"),
+        StatEntry("운영", "administration", "administrationExp"),
+        StatEntry("기동", "mobility",       "mobilityExp"),
+        StatEntry("공격", "attack",         "attackExp"),
+        StatEntry("방어", "defense",        "defenseExp"),
     )
 
     /**
@@ -90,32 +100,52 @@ class StatChangeService {
     }
 
     private fun getExp(general: Officer, expName: String): Int = when (expName) {
-        "leadershipExp" -> general.leadershipExp.toInt()
-        "strengthExp" -> general.commandExp.toInt()
-        "intelExp" -> general.intelligenceExp.toInt()
+        "leadershipExp"     -> general.leadershipExp.toInt()
+        "strengthExp"       -> general.commandExp.toInt()        // alias
+        "intelExp"          -> general.intelligenceExp.toInt()   // alias
+        "politicsExp"       -> general.politicsExp.toInt()
+        "administrationExp" -> general.administrationExp.toInt()
+        "mobilityExp"       -> general.mobilityExp.toInt()
+        "attackExp"         -> general.attackExp.toInt()
+        "defenseExp"        -> general.defenseExp.toInt()
         else -> 0
     }
 
     private fun setExp(general: Officer, expName: String, value: Short) {
         when (expName) {
-            "leadershipExp" -> general.leadershipExp = value
-            "strengthExp" -> general.commandExp = value
-            "intelExp" -> general.intelligenceExp = value
+            "leadershipExp"     -> general.leadershipExp = value
+            "strengthExp"       -> general.commandExp = value        // alias
+            "intelExp"          -> general.intelligenceExp = value   // alias
+            "politicsExp"       -> general.politicsExp = value
+            "administrationExp" -> general.administrationExp = value
+            "mobilityExp"       -> general.mobilityExp = value
+            "attackExp"         -> general.attackExp = value
+            "defenseExp"        -> general.defenseExp = value
         }
     }
 
     private fun getStat(general: Officer, statName: String): Int = when (statName) {
-        "leadership" -> general.leadership.toInt()
-        "strength" -> general.command.toInt()
-        "intel" -> general.intelligence.toInt()
+        "leadership"     -> general.leadership.toInt()
+        "strength"       -> general.command.toInt()       // alias
+        "intel"          -> general.intelligence.toInt()  // alias
+        "politics"       -> general.politics.toInt()
+        "administration" -> general.administration.toInt()
+        "mobility"       -> general.mobility.toInt()
+        "attack"         -> general.attack.toInt()
+        "defense"        -> general.defense.toInt()
         else -> 0
     }
 
     private fun setStat(general: Officer, statName: String, value: Int) {
         when (statName) {
-            "leadership" -> general.leadership = value.coerceIn(0, 100).toShort()
-            "strength" -> general.command = value.coerceIn(0, 100).toShort()
-            "intel" -> general.intelligence = value.coerceIn(0, 100).toShort()
+            "leadership"     -> general.leadership     = value.coerceIn(0, 100).toShort()
+            "strength"       -> general.command        = value.coerceIn(0, 100).toShort()
+            "intel"          -> general.intelligence   = value.coerceIn(0, 100).toShort()
+            "politics"       -> general.politics       = value.coerceIn(0, 100).toShort()
+            "administration" -> general.administration = value.coerceIn(0, 100).toShort()
+            "mobility"       -> general.mobility       = value.coerceIn(0, 100).toShort()
+            "attack"         -> general.attack         = value.coerceIn(0, 100).toShort()
+            "defense"        -> general.defense        = value.coerceIn(0, 100).toShort()
         }
     }
 }
