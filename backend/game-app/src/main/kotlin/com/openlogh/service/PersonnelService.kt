@@ -1,5 +1,6 @@
 package com.openlogh.service
 
+import com.openlogh.engine.FlagshipProgression
 import com.openlogh.entity.Officer
 import com.openlogh.model.PositionCard
 import com.openlogh.model.RankHeadcount
@@ -99,11 +100,20 @@ class PersonnelService(
         }
 
         rankLadderService.applyPromotion(officer)
+
+        // Phase 24-22 (gap A11, gin7 매뉴얼 p36):
+        // 계급 변경 시 기함 자동 교체. 특수 보상/구매 기함은 보존된다.
+        val previousFlagship = officer.flagshipCode
+        val newTier = officer.officerLevel.toInt()
+        officer.flagshipCode = FlagshipProgression.resolveOnRankChange(previousFlagship, newTier)
+        val flagshipChanged = officer.flagshipCode != previousFlagship
+
         val saved = officerRepository.save(officer)
 
         log.info(
-            "Officer {} ({}) promoted to tier {} by {} ({})",
+            "Officer {} ({}) promoted to tier {} by {} ({}){}",
             officer.id, officer.name, targetTier, promoter.id, promoter.name,
+            if (flagshipChanged) " — 기함 교체: $previousFlagship → ${officer.flagshipCode}" else "",
         )
 
         return saved
@@ -136,11 +146,20 @@ class PersonnelService(
         validateAuthority(demoter, currentTier)
 
         rankLadderService.applyDemotion(officer)
+
+        // Phase 24-22 (gap A11, gin7 매뉴얼 p36):
+        // 강등 시에도 기함을 하위 tier 기본 기함으로 교체. 특수 보상/구매 기함은 보존.
+        val previousFlagship = officer.flagshipCode
+        val newTier = officer.officerLevel.toInt()
+        officer.flagshipCode = FlagshipProgression.resolveOnRankChange(previousFlagship, newTier)
+        val flagshipChanged = officer.flagshipCode != previousFlagship
+
         val saved = officerRepository.save(officer)
 
         log.info(
-            "Officer {} ({}) demoted to tier {} by {} ({})",
+            "Officer {} ({}) demoted to tier {} by {} ({}){}",
             officer.id, officer.name, currentTier - 1, demoter.id, demoter.name,
+            if (flagshipChanged) " — 기함 교체: $previousFlagship → ${officer.flagshipCode}" else "",
         )
 
         return saved
