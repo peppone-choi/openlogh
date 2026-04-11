@@ -307,6 +307,22 @@ class Officer(
     @Column(name = "return_planet_id")
     var returnPlanetId: Long? = null,
 
+    /**
+     * Highest rank of medals held by this officer (叙勲 勲章 랭크).
+     * 0 = no medals, 1..N = increasing medal importance.
+     * gin7 manual p34 rank ladder 第三法則: tie-breaker after 功績 (merit).
+     * Source: gin7 manual p35 — 叙勲 커맨드 결과.
+     */
+    @Column(name = "medal_rank", nullable = false)
+    var medalRank: Short = 0,
+
+    /**
+     * Total count of medals awarded to this officer.
+     * Used as a secondary tie-breaker under medalRank.
+     */
+    @Column(name = "medal_count", nullable = false)
+    var medalCount: Short = 0,
+
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime = OffsetDateTime.now(),
 ) {

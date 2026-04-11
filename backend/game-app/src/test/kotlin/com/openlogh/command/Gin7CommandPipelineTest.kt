@@ -3,6 +3,7 @@ package com.openlogh.command
 import com.openlogh.command.gin7.intelligence.ArrestAuthorizationCommand
 import com.openlogh.command.gin7.intelligence.ExecutionOrderCommand
 import com.openlogh.command.gin7.personnel.AppointCommand
+import com.openlogh.command.gin7.personnel.AwardDecorationCommand
 import com.openlogh.command.gin7.politics.GovernanceGoalCommand
 import com.openlogh.engine.GridCapacityChecker
 import com.openlogh.entity.Fleet
@@ -420,6 +421,77 @@ class Gin7CommandPipelineTest {
             ),
             "300 + 1 (solo officer) = 301 should be rejected"
         )
+    }
+
+    // ================================================================
+    // Phase 24-09 (A3): 叙勲 Medal system
+    // gin7 manual p34-35 — 階級ラダー 第三法則 勲章順
+    // ================================================================
+
+    @Test
+    fun `A3 - Officer medalRank defaults to 0 and medalCount to 0`() {
+        val officer = makeOfficer(listOf("PERSONAL"))
+        assertEquals(0.toShort(), officer.medalRank)
+        assertEquals(0.toShort(), officer.medalCount)
+    }
+
+    @Test
+    fun `A3 - AwardDecorationCommand costs 160 PCP per manual p76`() {
+        val dummy = makeOfficer(listOf("PERSONAL"))
+        val cmd = AwardDecorationCommand(dummy, makeEnv(), null)
+        assertEquals(160, cmd.getCommandPointCost(), "gin7 manual p76 — 叙勲 160 PCP")
+        assertEquals(StatCategory.PCP, cmd.getCommandPoolType())
+    }
+
+    @Test
+    fun `A3 - AwardDecorationCommand increments medal count and rank`() {
+        val appointer = makeOfficer(listOf("PERSONAL", "CAPTAIN"))
+        val target = makeOfficer(listOf("PERSONAL"))
+        assertEquals(0.toShort(), target.medalCount)
+        assertEquals(0.toShort(), target.medalRank)
+
+        val cmd = AwardDecorationCommand(appointer, makeEnv(), mapOf("decoration" to "은성훈장"))
+        cmd.destOfficer = target
+        val result = runBlocking { cmd.run(Random.Default) }
+
+        assertTrue(result.success)
+        assertEquals(1.toShort(), target.medalCount, "First award bumps count to 1")
+        assertEquals(1.toShort(), target.medalRank, "First award bumps rank to 1 (default = current+1)")
+    }
+
+    @Test
+    fun `A3 - AwardDecorationCommand respects explicit medalRank arg`() {
+        val appointer = makeOfficer(listOf("PERSONAL", "CAPTAIN"))
+        val target = makeOfficer(listOf("PERSONAL"))
+
+        val cmd = AwardDecorationCommand(
+            appointer, makeEnv(),
+            mapOf("decoration" to "제국 최고훈장", "medalRank" to 7)
+        )
+        cmd.destOfficer = target
+        val result = runBlocking { cmd.run(Random.Default) }
+
+        assertTrue(result.success)
+        assertEquals(7.toShort(), target.medalRank, "Explicit medalRank should be applied")
+        assertEquals(1.toShort(), target.medalCount)
+    }
+
+    @Test
+    fun `A3 - AwardDecorationCommand preserves highest rank on multiple awards`() {
+        val appointer = makeOfficer(listOf("PERSONAL", "CAPTAIN"))
+        val target = makeOfficer(listOf("PERSONAL"))
+
+        // Award rank 5 first, then rank 3 — the 3 should NOT lower the medalRank.
+        val cmd1 = AwardDecorationCommand(appointer, makeEnv(), mapOf("medalRank" to 5))
+        cmd1.destOfficer = target
+        runBlocking { cmd1.run(Random.Default) }
+
+        val cmd2 = AwardDecorationCommand(appointer, makeEnv(), mapOf("medalRank" to 3))
+        cmd2.destOfficer = target
+        runBlocking { cmd2.run(Random.Default) }
+
+        assertEquals(5.toShort(), target.medalRank, "Highest medalRank wins")
+        assertEquals(2.toShort(), target.medalCount, "Count still increments on each award")
     }
 
     private fun anyLong(): Long = org.mockito.ArgumentMatchers.anyLong()

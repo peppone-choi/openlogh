@@ -14,7 +14,15 @@ import org.springframework.transaction.annotation.Transactional
  * Manages the rank ladder ordering and auto-promotion system.
  *
  * gin7 rules (p.33-36):
- * - Officers within the same rank are ordered by: merit > fame > total stats
+ * - Officers within the same rank are ordered by (in order, Phase 24-09 A3):
+ *     第一法則: 功績ポイント (meritPoints) — desc
+ *     第三法則: 叙勲最高位 (medalRank), then 叙勲回数 (medalCount) — desc
+ *     名声 (famePoints) — desc, pragma: gin7 does not list this but the
+ *       existing codebase uses it as a continuous-career signal between
+ *       the (skipped) 第二法則 (爵位) and 第四法則 (影響力).
+ *     第五法則: 全パラメータ値の合計 — desc
+ * - 第二法則 (爵位) and 第四法則 (影響力) remain out of scope for Phase 24
+ *   (no fields available on Officer today; see gap analysis §D1).
  * - Auto-promotion: below tier 4 (Captain), every 30 game days, top of ladder promoted
  * - On promotion: merit -> 0, position cards revoked except PERSONAL/CAPTAIN/FIEF
  * - Headcount limits enforced for tier 5+
@@ -27,8 +35,12 @@ class RankLadderService(
     private val log = LoggerFactory.getLogger(javaClass)
 
     /**
-     * Builds the rank ladder for a faction, ordered by rank tier desc, then merit desc,
-     * fame desc, total stats desc.
+     * Builds the rank ladder for a faction, ordered by:
+     *   rank tier desc (outer segmentation),
+     *   meritPoints desc (第一法則),
+     *   medalRank desc, medalCount desc (第三法則, Phase 24-09 A3),
+     *   famePoints desc,
+     *   totalStats desc (第五法則).
      */
     fun buildLadder(sessionId: Long, factionId: Long): List<Officer> {
         val officers = officerRepository.findBySessionIdAndFactionId(sessionId, factionId)
@@ -37,6 +49,8 @@ class RankLadderService(
         return officers.sortedWith(
             compareByDescending<Officer> { it.officerLevel.toInt() }
                 .thenByDescending { it.meritPoints }
+                .thenByDescending { it.medalRank.toInt() }
+                .thenByDescending { it.medalCount.toInt() }
                 .thenByDescending { it.famePoints }
                 .thenByDescending { totalStats(it) }
         )

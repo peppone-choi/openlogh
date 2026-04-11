@@ -36,7 +36,20 @@ class GrantTitleCommand(
 }
 
 /**
- * 서훈 커맨드 — PCP 160 소모, destOfficer.meta["decoration"] 설정
+ * 서훈 커맨드 (gin7 manual p35, Phase 24-09 A3).
+ *
+ * PCP 160 consumed. Increments `destOfficer.medalRank` / `medalCount` so the
+ * rank ladder's 第三法則 (medal tiebreaker) is actually populated.
+ *
+ * Accepted args:
+ *   - decoration (String, optional): display name for the log line
+ *   - medalRank (Int, optional): rank of this medal (default = one above
+ *     the recipient's current medalRank, clamped to `Short.MAX_VALUE`)
+ *
+ * Effects:
+ *   - destOfficer.medalCount += 1
+ *   - destOfficer.medalRank = max(destOfficer.medalRank, requestedRank)
+ *   - destOfficer.meta["decoration"] set to the display name for legacy readers.
  */
 class AwardDecorationCommand(
     general: Officer,
@@ -48,6 +61,8 @@ class AwardDecorationCommand(
 
     override fun getCost(): CommandCost = CommandCost()
 
+    override fun getCommandPointCost(): Int = 160
+
     override fun getPreReqTurn(): Int = 0
 
     override fun getPostReqTurn(): Int = 0
@@ -55,10 +70,18 @@ class AwardDecorationCommand(
     override suspend fun run(rng: Random): CommandResult {
         val target = destOfficer ?: return CommandResult.fail("대상 장교 미지정")
         val decoration = arg?.get("decoration") as? String ?: "훈장"
+        val requestedRank = (arg?.get("medalRank") as? Number)?.toInt()
+            ?: (target.medalRank.toInt() + 1)
 
+        val newMedalCount = (target.medalCount.toInt() + 1).coerceAtMost(Short.MAX_VALUE.toInt())
+        val newMedalRank = maxOf(target.medalRank.toInt(), requestedRank)
+            .coerceIn(0, Short.MAX_VALUE.toInt())
+
+        target.medalCount = newMedalCount.toShort()
+        target.medalRank = newMedalRank.toShort()
         target.meta["decoration"] = decoration
 
-        pushLog("${target.name}에게 ${decoration}이(가) 수여됐다.")
+        pushLog("${target.name}에게 ${decoration}이(가) 수여됐다. (등급 $newMedalRank, 총 ${newMedalCount}회)")
         return CommandResult.success(logs)
     }
 }
