@@ -225,6 +225,15 @@ data class TacticalBattleState(
 
     /** Current tick counter (alias for tickCount, used by command hierarchy logic) */
     var currentTick: Int = 0,
+
+    /**
+     * Phase 24-20 (gap E42, gin7 manual p46-47): 地形障害 placed entities.
+     * 플라즈마 폭풍(`PLASMA_STORM`) — 射線을 차단하고 진입 시 데미지.
+     * 사르가소 暗礁域(`SARGASSO`) — 射線 차단 + 엔진 출력 저하.
+     * 隕石帯(`ASTEROID_FIELD`) — 射線 차단 + 워프 진입 차단 가능.
+     * 비어 있는 목록이면 맵에 장애물이 없는 상태와 동일.
+     */
+    val obstacles: MutableList<TerrainObstacle> = mutableListOf(),
 )
 
 data class BattleTickEvent(
@@ -234,6 +243,29 @@ data class BattleTickEvent(
     val value: Int = 0,
     val detail: String = "",
 )
+
+/**
+ * Phase 24-20 (gap E42, gin7 manual p46-47):
+ * 전술전 맵 위에 놓이는 地形障害 단일 노드. gin7 는 원형 장애물 모델을 쓰므로
+ * 중심 좌표 + 반경으로 충분하다. type 은 렌더링/특수 효과 분기용.
+ */
+data class TerrainObstacle(
+    val posX: Double,
+    val posY: Double,
+    val radius: Double,
+    val type: TerrainObstacleType,
+    /** Optional label for debugging / telemetry. */
+    val label: String = type.displayNameKo,
+)
+
+enum class TerrainObstacleType(val displayNameKo: String, val blocksLineOfSight: Boolean, val blocksWarp: Boolean) {
+    /** 플라즈마 폭풍 — 射線 차단, 내부 진입 시 데미지(후속 phase 에서 배선). */
+    PLASMA_STORM("플라즈마 폭풍", blocksLineOfSight = true, blocksWarp = false),
+    /** 사르가소 暗礁域 — 射線 차단, 내부 이동 속도 감소(후속). */
+    SARGASSO("사르가소", blocksLineOfSight = true, blocksWarp = false),
+    /** 隕石帯 — 射線 차단 + 워프 경로 차단. */
+    ASTEROID_FIELD("隕石帯", blocksLineOfSight = true, blocksWarp = true),
+}
 
 /**
  * Phase 14 Plan 03 (FE-05 / D-19): sensorRange formula.
@@ -1203,9 +1235,11 @@ class TacticalBattleEngine(
      * only looks for *friendly blockers* between source and target. Enemy
      * units on the path are fair game and do not block.
      *
-     * Terrain obstacles (plasma storm / sargasso) are not yet modeled as
-     * placed entities; see phase 25+ for that follow-up. Until then, the
-     * `obstacleInPath` check is a no-op placeholder.
+     * Phase 24-20 (gap E42): terrain obstacles (플라즈마 폭풍 / 사르가소 / 隕石帯)
+     * are now placed entities on the battle map. Any obstacle whose circular body
+     * straddles the shot-line between source and target blocks the shot, per
+     * manual p46-47 "射線障害地形". The check is O(units + obstacles) per shot
+     * and short-circuits on the first blocker.
      */
     private fun hasLineOfSight(
         source: TacticalUnit,
@@ -1239,6 +1273,32 @@ class TacticalBattleEngine(
 
             return false
         }
+
+        // Phase 24-20 (gap E42): Terrain obstacle blockers. An obstacle blocks
+        // the line-of-fire iff its centre lies within `radius` perpendicular
+        // distance from the shot-line AND the closest approach lies strictly
+        // between source and target (so obstacles behind the shooter or past
+        // the target never block).
+        for (obstacle in state.obstacles) {
+            if (!obstacle.type.blocksLineOfSight) continue
+
+            val perp = distanceToLine(
+                obstacle.posX, obstacle.posY,
+                source.posX, source.posY,
+                target.posX, target.posY,
+            )
+            if (perp > obstacle.radius) continue
+
+            val proj = projectOnLine(
+                obstacle.posX, obstacle.posY,
+                source.posX, source.posY,
+                target.posX, target.posY,
+            )
+            if (proj <= 0.0 || proj >= totalLen) continue
+
+            return false
+        }
+
         return true
     }
 
