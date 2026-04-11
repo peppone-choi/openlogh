@@ -42,6 +42,14 @@ class InheritanceService(
         private const val MAX_BUFF_LEVEL = 5
         private const val RESET_ATTR_BASE = 1000
 
+        /**
+         * Phase 24-30 (gap E13, gin7 매뉴얼 p14):
+         * 인계 시스템의 나이 컷오프. 현역 장교 나이가 이 값 이상이면 인계 포인트
+         * 추가 사용이 차단된다 — 60 세 이상인 캐릭터로 다음 승계 대상을 계속
+         * 보강하는 플레이를 방지하기 위한 규칙.
+         */
+        const val AGE_INHERITANCE_CUTOFF: Int = 60
+
         val COMBAT_BUFF_TYPES = setOf(
             "warAvoidRatio",
             "warCriticalRatio",
@@ -192,6 +200,11 @@ class InheritanceService(
 
     fun buyInheritBuff(worldId: Long, loginId: String, request: BuyInheritBuffRequest): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null
+
+        // Phase 24-30 (gap E13): 현역 장교가 60 세 이상이면 신규 인계 포인트 사용 차단.
+        val currentOfficer = findOwnedOfficer(worldId, user)
+        checkInheritanceAgeGate(currentOfficer)?.let { return InheritanceActionResult(error = it) }
+
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
 
         if (request.type !in COMBAT_BUFF_TYPES) return InheritanceActionResult(error = "잘못된 전투 버프 타입")
@@ -218,6 +231,9 @@ class InheritanceService(
         val officer = findOwnedOfficer(worldId, user) ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
         val world = findWorld(worldId) ?: return InheritanceActionResult(error = "월드를 찾을 수 없습니다")
         if (isWorldUnited(world)) return InheritanceActionResult(error = "이미 천하가 통일되었습니다.")
+
+        // Phase 24-30 (gap E13): 60 세 이상 현역 장교의 승계 특기 예약 차단.
+        checkInheritanceAgeGate(officer)?.let { return InheritanceActionResult(error = it) }
 
         val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
         if (specialCode !in availableSpecialWar) return InheritanceActionResult(error = "잘못된 전투 특기")
@@ -479,6 +495,21 @@ class InheritanceService(
 
     private fun findOwnedOfficer(worldId: Long, user: AppUser): Officer? {
         return officerRepository.findBySessionIdAndUserId(worldId, user.id!!).firstOrNull { it.npcState.toInt() < 5 }
+    }
+
+    /**
+     * Phase 24-30 (gap E13, gin7 매뉴얼 p14):
+     * 60 세 이상인 현역 장교는 인계 시스템으로 추가 버프 구매나 신규 승계 설정을
+     * 할 수 없다. 원작은 "늙은 캐릭터가 인계 포인트를 계속 쌓아 다음 캐릭터를
+     * 과도하게 강화하는 것" 을 방지하기 위해 60 세에서 컷을 둔다.
+     *
+     * 반환값이 non-null 이면 해당 에러 메시지로 실패 처리해야 한다.
+     */
+    private fun checkInheritanceAgeGate(officer: Officer?): String? {
+        if (officer == null) return null
+        return if (officer.age >= AGE_INHERITANCE_CUTOFF) {
+            "인계 불가: 현역 장교가 ${AGE_INHERITANCE_CUTOFF}세 이상이므로 인계 포인트를 사용할 수 없습니다."
+        } else null
     }
 
     private fun findWorld(worldId: Long): SessionState? {

@@ -1,5 +1,6 @@
 package com.openlogh.service
 
+import com.openlogh.dto.BuyInheritBuffRequest
 import com.openlogh.engine.modifier.TraitSpecRegistry
 import com.openlogh.entity.AppUser
 import com.openlogh.entity.Officer
@@ -123,6 +124,101 @@ class InheritanceServiceTest {
         assertEquals("None", general.special2Code)
         assertEquals(0, general.meta["inheritResetSpecialWar"])
         assertEquals(listOf("che_저격"), general.meta["prev_special2"])
+    }
+
+    // ── Phase 24-30 (gap E13): 60세 인계 제한 ──
+
+    @Test
+    fun `E13 - buyInheritBuff blocked when current officer age is 60`() {
+        val user = createUser(points = 10_000)
+        val general = createGeneral(userId = user.id).also { it.age = 60 }
+        val world = createWorld()
+        stubOwnership(user, general, world)
+
+        val result = service.buyInheritBuff(
+            world.id.toLong(), user.loginId,
+            BuyInheritBuffRequest(type = "warAvoidRatio", level = 1),
+        )
+
+        assertNotNull(result)
+        assertNotNull(result!!.error)
+        assertTrue(result.error!!.contains("인계 불가"),
+            "60 세 cutoff 도달 시 인계 에러 메시지를 반환해야 한다. got: ${result.error}")
+        // 포인트는 그대로 유지되어야 한다.
+        assertEquals(10_000, user.meta["inheritPoints"])
+    }
+
+    @Test
+    fun `E13 - buyInheritBuff blocked when current officer age is above 60`() {
+        val user = createUser(points = 10_000)
+        val general = createGeneral(userId = user.id).also { it.age = 75 }
+        val world = createWorld()
+        stubOwnership(user, general, world)
+
+        val result = service.buyInheritBuff(
+            world.id.toLong(), user.loginId,
+            BuyInheritBuffRequest(type = "warAvoidRatio", level = 2),
+        )
+
+        assertNotNull(result!!.error)
+        assertEquals(10_000, user.meta["inheritPoints"])
+    }
+
+    @Test
+    fun `E13 - buyInheritBuff allowed when current officer age is 59`() {
+        val user = createUser(points = 10_000)
+        val general = createGeneral(userId = user.id).also { it.age = 59 }
+        val world = createWorld()
+        stubOwnership(user, general, world)
+
+        val result = service.buyInheritBuff(
+            world.id.toLong(), user.loginId,
+            BuyInheritBuffRequest(type = "warAvoidRatio", level = 1),
+        )
+
+        assertNull(result?.error, "59 세는 cutoff 이하이므로 인계 가능해야 한다")
+        assertEquals(9_800, user.meta["inheritPoints"], "Lv1 비용 200 차감")
+    }
+
+    @Test
+    fun `E13 - setInheritSpecial blocked when age is at cutoff`() {
+        val user = createUser(points = 10_000)
+        val general = createGeneral(userId = user.id).also { it.age = 60 }
+        val world = createWorld()
+        stubOwnership(user, general, world)
+        val specialCode = TraitSpecRegistry.war.first().key
+
+        val result = service.setInheritSpecial(world.id.toLong(), user.loginId, specialCode)
+
+        assertNotNull(result!!.error)
+        assertTrue(result.error!!.contains("인계 불가"))
+        // 특기 예약도 일어나지 않아야 한다.
+        assertNull(general.meta["inheritSpecificSpecialWar"])
+    }
+
+    @Test
+    fun `E13 - cutoff constant is pinned at 60`() {
+        assertEquals(60, InheritanceService.AGE_INHERITANCE_CUTOFF)
+    }
+
+    @Test
+    fun `E13 - buyInheritBuff still works when user has no current officer`() {
+        // Edge case: 사용자가 장교 없이(사망 후 재접속) 인계 버프를 사야 할 때는
+        // 현역 장교가 없으므로 age gate 가 발동하지 않아야 한다.
+        val user = createUser(points = 10_000)
+        val world = createWorld()
+        `when`(appUserRepository.findByLoginId(user.loginId)).thenReturn(user)
+        `when`(appUserRepository.findById(user.id)).thenReturn(java.util.Optional.of(user))
+        `when`(officerRepository.findBySessionIdAndUserId(world.id.toLong(), user.id)).thenReturn(emptyList())
+        `when`(sessionStateRepository.findById(world.id)).thenReturn(java.util.Optional.of(world))
+
+        val result = service.buyInheritBuff(
+            world.id.toLong(), user.loginId,
+            BuyInheritBuffRequest(type = "warAvoidRatio", level = 1),
+        )
+
+        assertNull(result?.error,
+            "현역 장교가 없을 때는 인계 버프 구매를 가로막지 않아야 한다 (post-death 시나리오)")
     }
 
     private fun stubOwnership(user: AppUser, general: Officer, world: SessionState) {
