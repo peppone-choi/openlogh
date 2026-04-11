@@ -12,7 +12,7 @@ import kotlin.random.Random
  * 재편성 — 함대 진형을 변경한다.
  * MCP 커맨드. cpCost=160, waitTime=0, duration=0
  *
- * 유효 진형: WEDGE(紡錘), BY_CLASS(艦種), MIXED(混成), THREE_COLUMN(三列)
+ * 유효 진형: WEDGE(방추), BY_CLASS(함종), MIXED(혼성), THREE_COLUMN(삼렬)
  */
 class ReorganizeCommand(
     general: Officer,

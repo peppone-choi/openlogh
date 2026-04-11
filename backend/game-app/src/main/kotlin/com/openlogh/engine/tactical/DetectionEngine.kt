@@ -6,7 +6,7 @@ import com.openlogh.model.EnergyAllocation
 import kotlin.math.hypot
 
 /**
- * Detection System (索敵) engine for tactical combat.
+ * Detection System (색적) engine for tactical combat.
  *
  * All flagships/fleet units/defense HQ have detection ability.
  * Detection is automatic (no command needed).

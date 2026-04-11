@@ -9,9 +9,8 @@ import com.openlogh.repository.FleetRepository
  * Gap: docs/03-analysis/gin7-manual-complete-gap.analysis.md §E39
  *
  * Manual spec (gin7 p30):
- *   "1つのグリッドに進入できる艦船ユニット数は、1つの陣営で 300 ユニット以下に制限
- *    されています。そのため、300ユニットがすでに存在しているグリッドには、進入する
- *    ことができません。"
+ *   한 그리드에 진입할 수 있는 함선 유닛 수는 1 진영당 300 유닛 이하로 제한된다.
+ *   따라서 이미 같은 진영의 300 유닛이 배치된 그리드에는 추가 진입이 불가능하다.
  *
  * Interpretation for OpenLOGH:
  *   - "Grid" maps to the `planet_id` column (each planet is a discrete grid cell).

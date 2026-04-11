@@ -1,5 +1,5 @@
 -- V49: Add return_planet_id to officer for tactical injury warp (Phase 24-07)
--- Source: gin7 manual p51 — 戦死/負傷 처리, 귀환성 워프
+-- Source: gin7 manual p51 — 전사/부상 처리, 귀환성 워프
 -- Gap reference: docs/03-analysis/gin7-manual-complete-gap.analysis.md §A7/C4
 --
 -- When an officer's flagship is destroyed in tactical combat, the character is

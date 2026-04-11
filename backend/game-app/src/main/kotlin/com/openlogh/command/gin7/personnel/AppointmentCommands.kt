@@ -35,7 +35,7 @@ class AppointCommand(
             return CommandResult.success(logs)
         }
 
-        // gin7 manual p26: 最大保有 16매 (D2/E54 gap).
+        // gin7 manual p26: 최대 보유 16매 (D2/E54 gap).
         if (!target.canAcceptAdditionalPositionCard()) {
             return CommandResult.fail(
                 "${target.name}은(는) 이미 직무권한카드 ${Officer.MAX_POSITION_CARDS}매를 보유하여 추가 임명할 수 없다.",

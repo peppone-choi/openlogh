@@ -39,7 +39,7 @@ data class GroundUnit(
  * Phase 24-12 (gap A6/C3, gin7 manual p50): [planetType] gates which unit
  * types can enter the ground battle box:
  *   - "normal"   — all unit types
- *   - "gas"      — no ARMORED_INFANTRY (heavy 装甲兵)
+ *   - "gas"      — no ARMORED_INFANTRY (heavy 장갑병)
  *   - "fortress" — no ARMORED_INFANTRY (fortress assault)
  */
 data class GroundBattleState(
@@ -78,9 +78,9 @@ class GroundBattleEngine {
         const val BASE_GROUND_DAMAGE = 10
 
         /**
-         * Phase 24-12 (gap A6/C3, gin7 manual p50): returns true if [unit]
-         * can legally deploy on a planet of the given [planetType]. Heavy
-         * 装甲兵 (ARMORED_INFANTRY) is blocked on gas giants and fortresses;
+         * Phase 24-12 (gap A6/C3, gin7 매뉴얼 p50): returns true if [unit]
+         * can legally deploy on a planet of the given [planetType]. 장갑병
+         * (ARMORED_INFANTRY) is blocked on gas giants and fortresses;
          * all other unit types are accepted everywhere.
          */
         fun isUnitAllowedOnPlanetType(unit: GroundUnit, planetType: String): Boolean {

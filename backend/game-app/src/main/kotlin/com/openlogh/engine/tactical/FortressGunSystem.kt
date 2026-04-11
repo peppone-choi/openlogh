@@ -4,7 +4,7 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
- * Fortress gun system (要塞砲) — gin7 tactical combat Chapter 4.
+ * Fortress gun system (요새포) — gin7 tactical combat Chapter 4.
  *
  * Fires along a line of sight, hitting ALL units in the path including friendlies.
  * Each unit in the path takes FULL damage (not split).

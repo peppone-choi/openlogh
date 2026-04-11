@@ -8,7 +8,7 @@ package com.openlogh.model
  * - Gas planet: GRENADIER and LIGHT_INFANTRY only
  * - Fortress: GRENADIER and LIGHT_INFANTRY only
  *
- * Phase 24-24 (gap A8, gin7 매뉴얼 p100 "未生産 단위"):
+ * Phase 24-24 (gap A8, gin7 매뉴얼 p100 "생산 불가 단위"):
  * 원작 매뉴얼 p100 은 세 가지 **생산 불가 특수 병종**을 별도 표기한다 —
  * 근위사단(은하제국 황제 친위대), 척탄병교도대(엘리트 훈련대), 장미기사단
  * (자유행성동맹 특수 습격단 — 로젠리터). 이들은 커맨드로 징집되지 않고

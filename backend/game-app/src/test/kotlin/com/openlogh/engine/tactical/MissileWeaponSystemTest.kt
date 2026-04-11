@@ -32,7 +32,7 @@ class MissileWeaponSystemTest {
         unitType: String = "FLEET",
         attack: Int = 50,
         defense: Int = 50,
-        // Phase 24-18: carriers must carry 軍需物資 to launch fighters (10 per sortie).
+        // Phase 24-18: carriers must carry 군수물자 to launch fighters (10 per sortie).
         // Default high enough that existing tests exercising the fighter path do not
         // trip the new supply guard; tests that want to verify the guard set this to 0.
         supplies: Int = 1000,
@@ -195,7 +195,7 @@ class MissileWeaponSystemTest {
         val event = system.processFighterAttack(source, target, state, rng = alwaysHitRng)
 
         assertNotNull(event, "carrier with sufficient supplies must launch")
-        assertEquals(90, source.supplies, "sortie must deduct exactly 10 軍需物資")
+        assertEquals(90, source.supplies, "sortie must deduct exactly 10 군수물자")
         assertEquals(TacticalWeaponType.FIGHTER.supplyCostPerUse, event!!.supplyCost)
     }
 

@@ -71,22 +71,23 @@ class MissileWeaponSystem {
     }
 
     /**
-     * Process a fighter (Spartanian) launch from source to target.
-     * Only CARRIER unit types may launch fighters.
-     * On hit: applies fighterSpeedDebuffTicks = 60 to target.
-     * FIGHTER vs CARRIER: damage is doubled (intercept).
-     * Returns null if not a carrier, out of range, insufficient supplies, or miss.
+     * 스파르타니안(FIGHTER) 출격 처리.
+     * 출격은 CARRIER 유닛만 가능하며, 피격 시 target.fighterSpeedDebuffTicks = 60 이
+     * 적용되어 60 틱 동안 이동 속도가 감소한다. 대상이 또 다른 CARRIER 이면 요격전으로
+     * 판정되어 데미지가 2 배가 된다.
+     * 반환값: 비 CARRIER, 사정 거리 초과, 군수물자 부족, 빗나감 시 null.
      *
-     * Phase 24-18 (gap A5/C2, gin7 manual p49):
-     *   "戦闘艇の発進 — 攻撃力は弱いが相手の移動速度を低下させる。空母のみ運用可能。
-     *    出撃には一律 10 軍需物資が必要。自艦を攻撃する戦闘艇も攻撃対象になる (迎撃)"
+     * Phase 24-18 (gap A5/C2, gin7 매뉴얼 p49):
+     *   "전투정 발진 — 공격력은 낮으나 상대의 이동 속도를 저하시킨다. 공모함만 운용 가능.
+     *    출격에는 일률 10 군수물자가 소모된다. 자함을 공격하는 전투정도 공격 대상이
+     *    될 수 있다 (요격전)."
      *
-     * Implementation notes:
-     *   - 10 軍需物資 is deducted from `source.supplies` up front — the cost is per
-     *     SORTIE (出撃), not per hit. A missed launch still consumes supplies.
-     *   - If supplies < 10, the launch is gated entirely (no partial sortie).
-     *   - FIGHTER vs CARRIER is 迎撃戦 (intercept): damage is doubled per the
-     *     manual's "自艦を攻撃する戦闘艇も攻撃対象" rule.
+     * 구현 노트:
+     *   - 10 군수물자는 source.supplies 에서 출격 시점에 즉시 차감된다 — 비용은 출격당
+     *     한 번이며 명중 여부와 무관하다. 빗나가도 물자는 사라진다.
+     *   - supplies < 10 이면 출격 자체가 gating 되어 null 이 반환된다.
+     *   - FIGHTER vs CARRIER 는 요격전으로 자동 판정 — 데미지 2 배. 매뉴얼의
+     *     "자함을 공격하는 전투정도 공격 대상" 규칙을 구현한다.
      */
     fun processFighterAttack(
         source: TacticalUnit,
@@ -101,7 +102,7 @@ class MissileWeaponSystem {
         val fighterRange = TacticalWeaponType.FIGHTER.baseRange * 100.0  // 6.0 * 100 = 600 units
         if (dist > fighterRange) return null
 
-        // Phase 24-18 gin7 p49: 戰鬪艇(Spartanian) sortie requires 10 군수물자.
+        // Phase 24-18 gin7 p49: 전투정(Spartanian) sortie requires 10 군수물자.
         // Gate the launch before the RNG hit roll so that an impossible sortie
         // never fires at all.
         val sortieCost = TacticalWeaponType.FIGHTER.supplyCostPerUse

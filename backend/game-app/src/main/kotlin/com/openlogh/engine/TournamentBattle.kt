@@ -159,7 +159,7 @@ object TournamentBattle {
             totalDamageDefender += damageDefender
 
             val entryText =
-                "<S>●</> ${phase.toString().padStart(2, '0')}合 : " +
+                "<S>●</> ${phase.toString().padStart(2, '0')}R : " +
                     "<C>${round(energyAttacker).toString().padStart(3, '0')}</>" +
                     "<span class=\"ev_highlight\">(-${round(damageAttacker).toString().padStart(3, '0')})</span>" +
                     " vs " +

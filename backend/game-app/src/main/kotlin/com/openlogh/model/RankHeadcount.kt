@@ -5,14 +5,14 @@ package com.openlogh.model
  *
  * Based on gin7 manual (p.33-36):
  *
- * **Empire (帝国軍):** tier 10 (元帥) 5 / tier 9 (上級大将) 5 / tier 8 (大将) 10 /
- * tier 7 (中将) 20 / tier 6 (少将) 40 / tier 5 (准将) 80 / tier 0-4 unlimited.
+ * **Empire (제국군):** tier 10 (원수) 5 / tier 9 (상급대장) 5 / tier 8 (대장) 10 /
+ * tier 7 (중장) 20 / tier 6 (소장) 40 / tier 5 (준장) 80 / tier 0-4 unlimited.
  *
- * **Alliance (自由惑星同盟軍):** tier 10 (元帥) 5 / tier 8 (大将) 10 /
- * tier 7 (中将) 20 / tier 6 (少将) 40 / tier 5 (准将) 80 / tier 0-4 unlimited.
+ * **Alliance (자유행성동맹군):** tier 10 (원수) 5 / tier 8 (대장) 10 /
+ * tier 7 (중장) 20 / tier 6 (소장) 40 / tier 5 (준장) 80 / tier 0-4 unlimited.
  *
  * Phase 24-11: Alliance has NO tier 9 (상급대장); manual p34 explicitly lists
- * 上級大将 as Empire-only. Alliance officers promote tier 8 → tier 10 directly.
+ * 상급대장 as Empire-only. Alliance officers promote tier 8 → tier 10 directly.
  */
 object RankHeadcount {
 
@@ -66,7 +66,7 @@ object RankHeadcount {
 
     /**
      * Faction-aware headcount limit. Phase 24-11: Alliance tier 9 returns 0
-     * because 上級大将 does not exist in the Alliance hierarchy.
+     * because 상급대장 does not exist in the Alliance hierarchy.
      */
     fun getLimit(tier: Int, factionType: String): Int {
         val table = when (factionType) {

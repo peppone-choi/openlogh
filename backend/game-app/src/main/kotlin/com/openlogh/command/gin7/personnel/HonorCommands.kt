@@ -39,7 +39,7 @@ class GrantTitleCommand(
  * 서훈 커맨드 (gin7 manual p35, Phase 24-09 A3).
  *
  * PCP 160 consumed. Increments `destOfficer.medalRank` / `medalCount` so the
- * rank ladder's 第三法則 (medal tiebreaker) is actually populated.
+ * rank ladder's 제3법칙 (medal tiebreaker) is actually populated.
  *
  * Accepted args:
  *   - decoration (String, optional): display name for the log line

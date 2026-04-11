@@ -1,7 +1,7 @@
 package com.openlogh.model
 
 /**
- * Detection system (索敵) data model.
+ * Detection system (색적) data model.
  *
  * Detection is automatic (no command needed).
  * SENSOR energy allocation affects range and precision.

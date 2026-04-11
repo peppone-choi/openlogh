@@ -40,7 +40,7 @@ sealed class TacticalCommand {
     ) : TacticalCommand()
 
     /**
-     * Phase 24-19 (gap C11, gin7 manual p52): 隊列命令 (group formation command).
+     * Phase 24-19 (gap C11, gin7 manual p52): 대형 일괄 변경 (group formation command).
      * A commander designates multiple subordinate units and sets their formation
      * in a single dispatch, rather than issuing one FORMATION_CHANGE per unit.
      *

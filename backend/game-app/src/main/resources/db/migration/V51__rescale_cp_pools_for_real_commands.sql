@@ -1,7 +1,7 @@
 -- V51: Rescale Officer.pcp_max / mcp_max to match real gin7 manual CP costs.
 --
 -- Phase 24-05 (docs/03-analysis/gin7-manual-complete-gap.analysis.md §B).
--- Source: gin7 manual p69-78 戦略コマンド一覧表.
+-- Source: gin7 manual p69-78 전략 커맨드 일람표.
 --
 -- Before this migration, pool caps were 5..35 (CpPoolConfig pre-24-05) because
 -- the runtime always deducted exactly 1 CP regardless of command. CommandCostTable

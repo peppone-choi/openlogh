@@ -110,9 +110,9 @@ class Planet(
      * ground units can be deployed during planetary ground combat.
      *
      * Values (gin7 manual p50):
-     *   - "normal"   : all three types (裝甲兵 / 裝甲擲彈兵 / 軽裝陸戰兵)
-     *   - "gas"      : only 裝甲擲彈兵 and 軽裝陸戰兵 (no 裝甲兵)
-     *   - "fortress" : only 裝甲擲彈兵 and 軽裝陸戰兵 (fortress assault)
+     *   - "normal"   : 세 병종 모두 (장갑병 / 장갑유탄병 / 경장육전병)
+     *   - "gas"      : 장갑유탄병 + 경장육전병만 (장갑병 배치 불가)
+     *   - "fortress" : 장갑유탄병 + 경장육전병만 (요새 침공 제한)
      *
      * Consumed by GroundBattleEngine.addAttackers / initDefenders which
      * filter out disallowed unit types before they enter the 30-unit box.

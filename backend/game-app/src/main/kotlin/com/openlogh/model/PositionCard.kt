@@ -1,8 +1,8 @@
 package com.openlogh.model
 
 /**
- * gin7 directorial-권한 카드 집합.
- * Phase 24-17 (gap D1, gin7 manual p58-65): Alliance 国防委員会 산하 11 부장직을
+ * gin7 직무권한카드 집합.
+ * Phase 24-17 (gap D1, gin7 매뉴얼 p58-65): 동맹 국방위원회 산하 11 부장직을
  * 각각 독립 카드로 분리하여 매뉴얼 별표와 1:1 정렬. 이전까지는 `DEFENSE_DEPT_CHIEF`
  * 한 장에 maxHolders=11로 뭉쳐 있었음.
  *
@@ -40,7 +40,7 @@ enum class PositionCard(
         setOf(CommandGroup.OPERATIONS),
     ),
 
-    // ===== Empire Imperial Court (皇宮 / 황궁) =====
+    // ===== Empire Imperial Court (황궁) =====
 
     EMPEROR(
         "EMPEROR", "황제", "Emperor", "황궁", 1, 10, 10, "empire",
@@ -350,8 +350,8 @@ enum class PositionCard(
 
     // ===== Alliance Defense Committee Departments =====
     //
-    // Phase 24-17 (gap D1, gin7 manual p61 同盟軍組織構成表):
-    // 매뉴얼 별표는 国防委員会 산하 11개 부장직을 각각 별도의 직무권한카드로 명시한다.
+    // Phase 24-17 (gap D1, gin7 매뉴얼 p61 동맹군 조직 구성표):
+    // 매뉴얼 별표는 국방위원회 산하 11개 부장직을 각각 별도의 직무권한카드로 명시한다.
     // v2.4 까지는 `DEFENSE_DEPT_CHIEF` 한 장 + maxHolders=11로 뭉쳐져 있었으나,
     // 실제 gin7 권한 체계는 부서별로 발령 가능한 커맨드 그룹이 다르므로 11장 분리 구현.
 

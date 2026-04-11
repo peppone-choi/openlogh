@@ -1,10 +1,10 @@
 package com.openlogh.model
 
 /**
- * Death and Injury system (戦死) for tactical combat.
+ * Death and Injury system (전사) for tactical combat.
  *
  * - Flagship destroyed -> character injury (not death by default)
- * - Injury -> instant warp to return planet (帰還星)
+ * - Injury -> instant warp to return planet (귀환성)
  * - Return planet configurable in system settings
  * - Death is optional in gin7; we implement as injury by default
  */
@@ -15,7 +15,7 @@ data class InjuryEvent(
     val officerName: String,
     /** Injury severity (0 = none, 1-80 scale from Officer entity) */
     val severity: Int,
-    /** The return planet ID (帰還星) where the officer warps to */
+    /** The return planet ID (귀환성) where the officer warps to */
     val returnPlanetId: Long,
     /** Whether this was a death event (false = injury only, default behavior) */
     val isDeath: Boolean = false,

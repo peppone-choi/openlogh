@@ -166,7 +166,7 @@ class Gin7CommandPipelineTest {
         assertEquals(
             16,
             Officer.MAX_POSITION_CARDS,
-            "gin7 manual p26 — 最大保有 16매"
+            "gin7 manual p26 — 최대 보유 16매"
         )
     }
 
@@ -258,8 +258,8 @@ class Gin7CommandPipelineTest {
     }
 
     // ================================================================
-    // Phase 24-07 (A7/C4): 戦死 → 帰還惑星 워프
-    // gin7 manual p51 — 戦死는 미구현, 負傷 → 帰還惑星 워프
+    // Phase 24-07 (A7/C4): 전사 → 귀환성 워프
+    // gin7 manual p51 — 전사는 미구현, 부상 → 귀환성 워프
     // ================================================================
 
     @Test
@@ -317,7 +317,7 @@ class Gin7CommandPipelineTest {
 
     // ================================================================
     // Phase 24-06 (E39): 그리드 300 유닛/진영 capacity
-    // gin7 manual p30 — 1つのグリッドに進入できる艦船ユニット数は1陣営 300 이하
+    // gin7 manual p30 — 1 그리드에 진입할 수 있는 함선유닛 수는1진영 300 이하
     // ================================================================
 
     private fun mockFleetRepoAt(planetId: Long, fleets: List<Fleet>): FleetRepository {
@@ -431,8 +431,8 @@ class Gin7CommandPipelineTest {
     }
 
     // ================================================================
-    // Phase 24-09 (A3): 叙勲 Medal system
-    // gin7 manual p34-35 — 階級ラダー 第三法則 勲章順
+    // Phase 24-09 (A3): 서훈 Medal system
+    // gin7 manual p34-35 — 계급 사다리 제3법칙 훈장순
     // ================================================================
 
     @Test
@@ -446,7 +446,7 @@ class Gin7CommandPipelineTest {
     fun `A3 - AwardDecorationCommand costs 160 PCP per manual p76`() {
         val dummy = makeOfficer(listOf("PERSONAL"))
         val cmd = AwardDecorationCommand(dummy, makeEnv(), null)
-        assertEquals(160, cmd.getCommandPointCost(), "gin7 manual p76 — 叙勲 160 PCP")
+        assertEquals(160, cmd.getCommandPointCost(), "gin7 manual p76 — 서훈 160 PCP")
         assertEquals(StatCategory.PCP, cmd.getCommandPoolType())
     }
 
@@ -508,7 +508,7 @@ class Gin7CommandPipelineTest {
 
     @Test
     fun `B-05 - CommandCostTable returns manual-correct costs`() {
-        // Spot-check values from gin7 manual 戦略コマンド一覧表
+        // Spot-check values from gin7 manual 전략 커맨드 일람표
         assertEquals(40, CommandCostTable.get("워프항행"), "manual p69")
         assertEquals(160, CommandCostTable.get("연료보급"), "manual p69")
         assertEquals(80, CommandCostTable.get("군기유지"), "manual p69")
@@ -693,7 +693,7 @@ class Gin7CommandPipelineTest {
 
     // ================================================================
     // Phase 24-12 (A6/C3): Planet type ground combat filter
-    // gin7 manual p50 — 裝甲兵 blocked on gas giants and fortresses
+    // gin7 manual p50 — 장갑병 blocked on gas giants and fortresses
     // ================================================================
 
     @Test
@@ -720,7 +720,7 @@ class Gin7CommandPipelineTest {
     }
 
     @Test
-    fun `A6 - GroundBattleEngine rejects 裝甲兵 on gas giant`() {
+    fun `A6 - GroundBattleEngine rejects 장갑병 on gas giant`() {
         val state = com.openlogh.engine.tactical.GroundBattleState(
             planetId = 1L, attackerFactionId = 1L, defenderFactionId = 2L,
             planetType = "gas",
@@ -737,7 +737,7 @@ class Gin7CommandPipelineTest {
     }
 
     @Test
-    fun `A6 - GroundBattleEngine rejects 裝甲兵 on fortress assault`() {
+    fun `A6 - GroundBattleEngine rejects 장갑병 on fortress assault`() {
         val state = com.openlogh.engine.tactical.GroundBattleState(
             planetId = 1L, attackerFactionId = 1L, defenderFactionId = 2L,
             planetType = "fortress",
@@ -754,8 +754,8 @@ class Gin7CommandPipelineTest {
 
     // ================================================================
     // Phase 24-11 (D1 complement): Alliance 상급대장 tier removed
-    // gin7 manual p34 — 帝国 only has 上級大将 (Fleet Admiral, tier 9).
-    // Alliance promotes 大将 (tier 8) → 元帥 (tier 10) directly.
+    // gin7 manual p34 — 제국 only has 상급대장 (Fleet Admiral, tier 9).
+    // Alliance promotes 대장 (tier 8) → 원수 (tier 10) directly.
     // ================================================================
 
     @Test
@@ -780,7 +780,7 @@ class Gin7CommandPipelineTest {
     }
 
     @Test
-    fun `D1 - Alliance 元帥 is still tier 10`() {
+    fun `D1 - Alliance 원수 is still tier 10`() {
         val title = com.openlogh.model.RankTitleResolver.resolve(10, "alliance")
         assertEquals("원수", title.korean)
         assertFalse(title.isVacant)

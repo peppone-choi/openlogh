@@ -9,13 +9,13 @@
 -- Alliance officer that happened to land at tier 9 (via seed data or test
 -- fixtures) is structurally invalid under the corrected rules.
 --
--- We clamp all such officers down to tier 8 (大将 / Admiral) — the highest
--- valid Alliance tier below 元帥. They can legitimately re-promote to tier 10
+-- We clamp all such officers down to tier 8 (대장 / Admiral) — the highest
+-- valid Alliance tier below 원수. They can legitimately re-promote to tier 10
 -- through the normal auto-promotion loop in RankLadderService.getPromotionCandidates,
 -- which now uses RankHeadcount.nextTier to skip the vacant tier 9 slot.
 --
 -- We intentionally DO NOT batch-promote them straight to tier 10 here; the
--- 元帥 cap is 5 heads and bulk-filling that table behind the scenes would
+-- 원수 cap is 5 heads and bulk-filling that table behind the scenes would
 -- distort merit rankings set by normal gameplay. Tier-8 clamp is the safer
 -- default.
 

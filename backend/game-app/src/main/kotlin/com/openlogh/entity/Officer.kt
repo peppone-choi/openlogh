@@ -316,19 +316,17 @@ class Officer(
     var lastAccessAt: OffsetDateTime? = null,
 
     /**
-     * Configured return planet (帰還惑星) for tactical injury warp.
-     * When this officer's flagship is destroyed, they are warped here instead
-     * of the faction capital. Null = fall back to faction capital → current planet.
-     * Source: gin7 manual p51 — 戦死/負傷 처리 귀환성.
+     * 귀환성(return planet) — 전술전 부상 시 워프 목적지.
+     * 이 장교의 기함이 파괴되면 여기로 워프한다. 값이 null 이면 진영 수도 →
+     * 현재 위치 순으로 폴백. gin7 매뉴얼 p51 전사/부상 처리 규정 참조.
      */
     @Column(name = "return_planet_id")
     var returnPlanetId: Long? = null,
 
     /**
-     * Highest rank of medals held by this officer (叙勲 勲章 랭크).
-     * 0 = no medals, 1..N = increasing medal importance.
-     * gin7 manual p34 rank ladder 第三法則: tie-breaker after 功績 (merit).
-     * Source: gin7 manual p35 — 叙勲 커맨드 결과.
+     * 보유 훈장 중 가장 높은 서훈 등급 (0 = 무훈장, 1..N = 등급 상승).
+     * gin7 매뉴얼 p34 계급 사다리 제3법칙의 tie-breaker 로 사용된다 — 공적(merit)
+     * 동률일 때 훈장 등급이 높은 쪽이 상위에 위치. 매뉴얼 p35 서훈 커맨드 결과로 갱신.
      */
     @Column(name = "medal_rank", nullable = false)
     var medalRank: Short = 0,

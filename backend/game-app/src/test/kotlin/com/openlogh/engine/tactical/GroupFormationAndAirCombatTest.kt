@@ -11,10 +11,10 @@ import kotlin.random.Random
 
 /**
  * Phase 24-19 coverage:
- *   - Gap C11 (gin7 manual p52): 隊列命令 — group formation command that changes
+ *   - Gap C11 (gin7 manual p52): 대형 일괄 변경 — group formation command that changes
  *     the formation of many subordinate units in a single dispatch.
- *   - Gap C13 (gin7 manual p49): 空戰命令 — SORTIE/AIR_COMBAT alias with automatic
- *     対艦戦/迎撃戦 判定 driven by the target unit type.
+ *   - Gap C13 (gin7 manual p49): 공중전 명령 — SORTIE/AIR_COMBAT alias with automatic
+ *     대함전/요격전 판정 driven by the target unit type.
  */
 class GroupFormationAndAirCombatTest {
 
@@ -166,7 +166,7 @@ class GroupFormationAndAirCombatTest {
 
         // Supply was deducted regardless of hit outcome (sortie rule).
         assertTrue(carrier.supplies <= 90,
-            "AIR_COMBAT must launch a spartanian sortie and pay the 10 軍需物資 cost")
+            "AIR_COMBAT must launch a spartanian sortie and pay the 10 군수물자 cost")
     }
 
     @Test
@@ -202,7 +202,7 @@ class GroupFormationAndAirCombatTest {
         val state1 = makeState(carrier, carrierTarget)
         val interceptEvent = system.processFighterAttack(carrier, carrierTarget, state1, alwaysHitRng)
         assertTrue(interceptEvent != null && interceptEvent.isIntercept,
-            "CARRIER target triggers 迎撃戦 automatically")
+            "CARRIER target triggers 요격전 automatically")
 
         val carrier2 = makeUnit(3L, BattleSide.ATTACKER, posX = 0.0, posY = 0.0,
             unitType = "CARRIER", supplies = 100)
@@ -210,6 +210,6 @@ class GroupFormationAndAirCombatTest {
         val state2 = makeState(carrier2, fleetTarget)
         val antiEvent = system.processFighterAttack(carrier2, fleetTarget, state2, alwaysHitRng)
         assertTrue(antiEvent != null && !antiEvent.isIntercept,
-            "non-CARRIER target triggers 対艦戦 automatically")
+            "non-CARRIER target triggers 대함전 automatically")
     }
 }

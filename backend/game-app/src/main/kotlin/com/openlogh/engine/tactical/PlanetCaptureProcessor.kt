@@ -37,10 +37,12 @@ data class CaptureProcessingInput(
 )
 
 /**
- * Phase 24-16 (gap A4, gin7 manual p40):
- * フェザーン自治領は中立条約で保護되어 있어, 帝国/同盟이 페잔 영토를 점령하면
- * 국제적 비난과 제재를 받는다. 본 데이터는 순수 엔진에서 산출되며, 실제 DB 적용은
- * TacticalBattleService가 수행한다.
+ * Phase 24-16 (gap A4, gin7 매뉴얼 p40):
+ * 페잔 자치령은 제국·동맹 양쪽과 거래하는 교역 중계국이라, 한 진영이 페잔
+ * 영토를 점령하면 페잔 통상망이 붕괴되고 페잔 상인 가문들이 자본을 회수한다.
+ * 기술·물자 교역선이 끊기고, 페잔을 통해 유지되던 상대 진영과의 불가침 조약
+ * 역시 파기된다. 본 데이터는 순수 엔진에서 산출되며, 실제 DB 적용은
+ * TacticalBattleService 가 수행한다.
  */
 data class NeutralityViolationPenalty(
     /** Aggressor faction that captured a neutral (fezzan) planet. */

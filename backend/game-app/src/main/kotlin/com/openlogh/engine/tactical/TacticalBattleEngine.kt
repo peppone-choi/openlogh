@@ -92,7 +92,7 @@ data class TacticalUnit(
     var stanceChangeTicksRemaining: Int = 0,
     /**
      * Phase 24-25 (gap C9, gin7 매뉴얼 p52):
-     * REVERSE(反転) 커맨드는 명령 수신 후 10초 대기 뒤 실제 선회가 발생한다.
+     * REVERSE(반전) 커맨드는 명령 수신 후 10초 대기 뒤 실제 선회가 발생한다.
      * 값이 0 보다 크면 선회 준비 중 — 매 틱 -1, 0 이 되는 순간 velocity 를 반전한다.
      */
     var reverseChargeTicksRemaining: Int = 0,
@@ -233,10 +233,10 @@ data class TacticalBattleState(
     var currentTick: Int = 0,
 
     /**
-     * Phase 24-20 (gap E42, gin7 manual p46-47): 地形障害 placed entities.
-     * 플라즈마 폭풍(`PLASMA_STORM`) — 射線을 차단하고 진입 시 데미지.
-     * 사르가소 暗礁域(`SARGASSO`) — 射線 차단 + 엔진 출력 저하.
-     * 隕石帯(`ASTEROID_FIELD`) — 射線 차단 + 워프 진입 차단 가능.
+     * Phase 24-20 (gap E42, gin7 매뉴얼 p46-47): 지형 장애물 배치 엔티티.
+     * 플라즈마 폭풍(`PLASMA_STORM`) — 사선을 차단하고 내부 진입 시 데미지.
+     * 사르가소 성운(`SARGASSO`) — 사선 차단 + 엔진 출력 저하.
+     * 소행성대(`ASTEROID_FIELD`) — 사선 차단 + 워프 진입 차단 가능.
      * 비어 있는 목록이면 맵에 장애물이 없는 상태와 동일.
      */
     val obstacles: MutableList<TerrainObstacle> = mutableListOf(),
@@ -252,7 +252,7 @@ data class BattleTickEvent(
 
 /**
  * Phase 24-20 (gap E42, gin7 manual p46-47):
- * 전술전 맵 위에 놓이는 地形障害 단일 노드. gin7 는 원형 장애물 모델을 쓰므로
+ * 전술전 맵 위에 놓이는 지형 장애물 단일 노드. gin7 은 원형 장애물 모델을 쓰므로
  * 중심 좌표 + 반경으로 충분하다. type 은 렌더링/특수 효과 분기용.
  */
 data class TerrainObstacle(
@@ -339,7 +339,7 @@ class TacticalBattleEngine(
         const val GUN_RANGE = 150.0        // mid-close range
         const val BASE_SPEED = 3.0         // base movement per tick
         const val COMMAND_RANGE_GROWTH_RATE = 0.5  // per tick, scaled by command stat
-        // Phase 24-13 (gap C10, gin7 manual p52): 撤退 命令 all所要時間 = 2.5分.
+        // Phase 24-13 (gap C10, gin7 매뉴얼 p52): 후퇴 명령 소요 시간 = 2.5 분.
         // At 1 tick/sec the retreat progress must take 150 ticks from 0 → 1.0,
         // so RETREAT_SPEED = 1.0 / 150.0 ≈ 0.006667. The legacy 0.02 value
         // reached the warp threshold in 50 ticks (~50 s) — roughly 3× too fast.
@@ -351,7 +351,7 @@ class TacticalBattleEngine(
 
         /**
          * Phase 24-25 (gap C9, gin7 매뉴얼 p52):
-         * REVERSE(反転) 커맨드 수신 후 실제 진행 방향이 반전되기까지 걸리는 시간.
+         * REVERSE(반전) 커맨드 수신 후 실제 진행 방향이 반전되기까지 걸리는 시간.
          * 매뉴얼은 10 초를 명시하고 이 엔진은 1 tick = 1 초로 동작하므로 10 ticks.
          */
         const val REVERSE_PREP_TICKS = 10
@@ -394,7 +394,7 @@ class TacticalBattleEngine(
             if (unit.stanceChangeTicksRemaining > 0) {
                 unit.stanceChangeTicksRemaining--
             }
-            // Phase 24-25 (gap C9, gin7 매뉴얼 p52): 反転 charge tick-down.
+            // Phase 24-25 (gap C9, gin7 매뉴얼 p52): 반전 charge tick-down.
             // charge 카운터가 1 → 0 으로 넘어가는 순간에만 실제로 velocity 를 반전한다.
             // mobility 스케일은 24-12 에서 도입한 공식을 그대로 사용 — mobility 50 = 1.0,
             // 0 = 0.5, 100 = 1.5 (clamp).
@@ -407,7 +407,7 @@ class TacticalBattleEngine(
                     state.tickEvents.add(
                         BattleTickEvent(
                             "reverse_complete", sourceUnitId = unit.fleetId,
-                            detail = "${unit.officerName} 선회 완료 (反転 10 초 대기 종료)"
+                            detail = "${unit.officerName} 선회 완료 (반전 10초 대기 종료)"
                         )
                     )
                 }
@@ -499,8 +499,8 @@ class TacticalBattleEngine(
                     }
 
                     // Phase 24-15 (gap C5, gin7 manual p51):
-                    // "艦艇ユニットに搭載されている陸戦隊ユニットは、艦艇が撃破されても
-                    //  自動的に他の艦艇に移動します。"
+                    // 함정 유닛에 탑승 중인 지상부대(육전대) 유닛은 함정이 격파되어도
+                    // 자동으로 다른 함정으로 이동한다.
                     // Redistribute the destroyed unit's embarked ground troops to the
                     // largest surviving same-side unit (prefer the new flagship). If no
                     // friendly survivor, the chitai is lost with the ship.
@@ -836,7 +836,7 @@ class TacticalBattleEngine(
     }
 
     /**
-     * Phase 24-19 (gap C11, gin7 manual p52): 隊列命令 group formation command.
+     * Phase 24-19 (gap C11, gin7 매뉴얼 p52): 함대 대형 일괄 변경 커맨드.
      *
      * A fleet commander (or sub-commander) designates a set of subordinate officer
      * ids and changes their formation in a single dispatch. Each target unit is
@@ -853,7 +853,7 @@ class TacticalBattleEngine(
         val commanderUnit = state.units.find { it.officerId == cmd.officerId && it.isAlive } ?: return
 
         // Jamming rule mirrors the single-unit SetFormation path: if the commander
-        // is jammed their fleet-wide orders are blocked. 隊列命令 is by definition
+        // is jammed their fleet-wide orders are blocked. 대형 일괄 변경 is by definition
         // fleet-wide so we guard it at the commander level once.
         val hierarchy = getHierarchyForUnit(commanderUnit, state)
         if (hierarchy != null && CommunicationJamming.isFleetWideCommandBlocked(
@@ -954,7 +954,7 @@ class TacticalBattleEngine(
             }
             "REVERSE" -> {
                 // Phase 24-12 (gap C7): mobility scaling — charge 완료 후에 곱해진다.
-                // Phase 24-25 (gap C9, gin7 매뉴얼 p52): 反転 커맨드는 명령 수신 후
+                // Phase 24-25 (gap C9, gin7 매뉴얼 p52): 반전 커맨드는 명령 수신 후
                 // 10 초 대기를 두고 실제 선회가 일어난다. 이미 charge 중이면 재명령을 무시.
                 if (unit.reverseChargeTicksRemaining <= 0) {
                     unit.reverseChargeTicksRemaining = REVERSE_PREP_TICKS
@@ -989,9 +989,9 @@ class TacticalBattleEngine(
                         value = resupplyAmount, detail = "${unit.officerName} 미사일 보급 (+$resupplyAmount)"))
                 }
             }
-            // Phase 24-19 (gap C13, gin7 manual p49 空戰命令):
-            // SORTIE 는 gin7 원본의 "戦闘艇 空戰命令"이며 대상이 CARRIER 인지에 따라
-            // processFighterAttack 내부에서 対艦戦/迎撃戦을 자동 판정한다.
+            // Phase 24-19 (gap C13, gin7 manual p49 공중전 명령):
+            // SORTIE 는 gin7 원본의 "전투정 공중전 명령"이며 대상이 CARRIER 인지에 따라
+            // processFighterAttack 내부에서 대함전/요격전을 자동 판정한다.
             // AIR_COMBAT 은 매뉴얼 표기와 정렬된 alias 로 동일 경로를 탄다.
             "SORTIE", "AIR_COMBAT" -> {
                 val enemies = state.units.filter { it.side != unit.side && it.isAlive }
@@ -1177,7 +1177,7 @@ class TacticalBattleEngine(
         }
 
         // GUN damage
-        // Phase 24-12 (gap A9, gin7 manual p49): GUN attacks consume 軍需物資
+        // Phase 24-12 (gap A9, gin7 manual p49): GUN attacks consume 군수물자
         // per shot. If the unit has no supplies left, the gun is inoperable.
         if (hasLoS && unit.energy.gun > 0 && dist <= GUN_RANGE && unit.supplies > 0) {
             val gunDmg = (gunBaseDamage * unit.energy.gunMultiplier() * attackStatModifier
@@ -1228,9 +1228,9 @@ class TacticalBattleEngine(
         val oldShips = target.ships
         target.ships = (target.ships - shipLoss).coerceAtLeast(0)
 
-        // Phase 24-13 (gap C6, gin7 manual p51):
-        // "搭載物: 艦艇ユニットに搭載されている資源/武器/軍需物資は、艦艇ユニットの隻数と
-        //  比例して、同一の割合で減少します。"
+        // Phase 24-13 (gap C6, gin7 매뉴얼 p51):
+        // 탑재물 규칙 — 함정 유닛에 실려 있는 자원/무기/군수물자는 함정 유닛의
+        // 함선 수에 비례해서 같은 비율로 감소한다.
         // When a unit loses ships, its carried supplies/missiles drop by the
         // same fraction. shipsRatio = newShips / oldShips. Use the ratio to
         // avoid discarding all cargo on a single grazing hit.
@@ -1256,20 +1256,19 @@ class TacticalBattleEngine(
      *
      * Returns true iff there is NO friendly unit (or blocking terrain proxy)
      * between [source] and [target]. Used to gate BEAM/GUN/MISSILE fire so
-     * 射線判定 matches the manual:
-     *
-     *   "射線上に味方の艦艇ユニット(移動要塞も含む)が存在する場合。
-     *    射線上に射線障害地形が存在する場合。"
+     * 사선 판정은 매뉴얼 규칙과 동일하다:
+     *   · 사선 위에 아군 함정 유닛(이동 요새 포함) 이 존재하면 차단.
+     *   · 사선 위에 사선 차단 지형이 존재하면 차단.
      *
      * Unlike [calculateLineOfFire] (which is designed for fortress guns and
      * returns every unit in the beam path, friendly or otherwise), this check
      * only looks for *friendly blockers* between source and target. Enemy
      * units on the path are fair game and do not block.
      *
-     * Phase 24-20 (gap E42): terrain obstacles (플라즈마 폭풍 / 사르가소 / 隕石帯)
+     * Phase 24-20 (gap E42): terrain obstacles (플라즈마 폭풍 / 사르가소 / 소행성대)
      * are now placed entities on the battle map. Any obstacle whose circular body
      * straddles the shot-line between source and target blocks the shot, per
-     * manual p46-47 "射線障害地形". The check is O(units + obstacles) per shot
+     * manual p46-47 "사선 차단 지형". The check is O(units + obstacles) per shot
      * and short-circuits on the first blocker.
      */
     private fun hasLineOfSight(

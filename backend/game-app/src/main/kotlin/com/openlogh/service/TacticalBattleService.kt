@@ -343,9 +343,9 @@ class TacticalBattleService(
             unit.missileCount = (unit.missileCount - result.missilesConsumed).coerceAtLeast(0)
         }
 
-        // Phase 24-14 (gap C20, gin7 manual p50):
-        // "職務権限カードの喪失 — 敗北した陣営のキャラクターは、管轄していた惑星/要塞固有の
-        //  職務権限カード(惑星総督や惑星守備隊指揮官、封土カード等)が直ちに失われます."
+        // Phase 24-14 (gap C20, gin7 매뉴얼 p50):
+        // 점령 시 직무권한카드 상실 규칙 — 패배 진영에 속한 장교가 관할하던 행성/요새
+        // 고유의 직무권한카드(행성총독·행성수비대 지휘관·봉토카드 등)는 즉시 소멸한다.
         //
         // PlanetCaptureProcessor returns the list of cards that should be
         // stripped from each defeated officer; here we actually apply that
@@ -575,7 +575,7 @@ class TacticalBattleService(
                 unit.velY = cmd.dirY * TacticalBattleEngine.BASE_SPEED
             }
             "REVERSE" -> {
-                // Phase 24-25 (gap C9, gin7 매뉴얼 p52): 反転 커맨드는 명령 수신 후
+                // Phase 24-25 (gap C9, gin7 매뉴얼 p52): 반전 커맨드는 명령 수신 후
                 // 10 초 대기를 두고 실제 선회가 일어난다. 즉시 flip 하는 대신 charge
                 // 카운터만 설정 — 엔진 tick 에서 만료 시 velX/velY 가 반전된다.
                 if (unit.reverseChargeTicksRemaining <= 0) {
@@ -613,8 +613,8 @@ class TacticalBattleService(
                         value = resupplyAmount, detail = "${unit.officerName} 미사일 보급 (+$resupplyAmount)"))
                 }
             }
-            // Phase 24-19 (gap C13, gin7 manual p49): 空戰命令 — SORTIE는 gin7 원문의
-            // "戦闘艇 空戰命令"에 해당하며, 対艦戦 vs 迎撃戦 판정은 이미
+            // Phase 24-19 (gap C13, gin7 manual p49): 공중전 명령 — SORTIE는 gin7 원문의
+            // "전투정 공중전 명령"에 해당하며, 대함전 vs 요격전 판정은 이미
             // MissileWeaponSystem.processFighterAttack(대상이 CARRIER인지)에서 자동
             // 수행된다. 매뉴얼 친화적 명칭 AIR_COMBAT 을 alias 로 추가하여
             // frontend / 외부 클라이언트가 gin7 표기로 호출할 수 있게 한다.

@@ -18,7 +18,7 @@ data class BattleCommandRequest(
 /**
  * Phase 14 D-21: Sub-fleet projection of [com.openlogh.engine.tactical.SubFleet].
  *
- * Frontend uses this to render分함대 배정 드로어 (FE-02) and to derive
+ * Frontend uses this to render분함대 배정 드로어 (FE-02) and to derive
  * "본인의 지휘권 하 유닛입니다" badges (FE-03 / D-11).
  *
  * Field naming: `commanderOfficerId` / `memberFleetIds` are kept as the DTO

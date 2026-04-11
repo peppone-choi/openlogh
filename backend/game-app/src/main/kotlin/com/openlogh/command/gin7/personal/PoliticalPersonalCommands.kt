@@ -93,11 +93,11 @@ class PersuasionCommand(
  *   3. 반란군 진영의 수도는 주동자의 현재 행성으로 설정한다.
  *   4. 주동자의 meta["rebellionStatus"] 를 "EXECUTED" 로 마킹한다.
  *
- * 최소 요건 — 주동자는 CAPTAIN 계급 이상 (gin7: 일반 士官 이상이면 반란 가능).
- * 이 최소치는 RebellionCommand 단독으로는 관대하며, 사전에 叛意/謀議/説得 을 거쳐야 실질적 성공.
+ * 최소 요건 — 주동자는 CAPTAIN 계급 이상 (gin7: 일반 사관 이상이면 반란 가능).
+ * 이 최소치는 RebellionCommand 단독으로는 관대하며, 사전에 반의/모의/설득 을 거쳐야 실질적 성공.
  *
  * Source: docs/03-analysis/gin7-manual-complete-gap.analysis.md §E51
- * Manual: gin7 p27 "叛意/謀議/説得/叛乱" 커맨드군, p11 "反乱軍陣営" 승패 판정.
+ * Manual: gin7 p27 "반의/모의/설득/반란" 커맨드군, p11 "반란군진영" 승패 판정.
  */
 class RebellionCommand(
     general: Officer,

@@ -6,7 +6,7 @@ import com.openlogh.model.DetectionCapability
  * Wraps DetectionEngine for use within TacticalBattleState.
  * Builds detectionMatrix per faction per tick.
  *
- * Based on gin7 manual Chapter 4 (索敵):
+ * Based on gin7 manual Chapter 4 (색적):
  * - SENSOR energy allocation × base range determines detection sphere.
  * - Stationary units (STATIONED/ANCHORING) get +20% range bonus.
  * - Detection confirmed when precision >= 0.5 OR 2+ friendly units detect same target.

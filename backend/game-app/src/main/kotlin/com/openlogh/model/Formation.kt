@@ -5,16 +5,16 @@ package com.openlogh.model
  *
  * Phase 24-13 (gap C16, docs/03-analysis/gin7-manual-complete-gap.analysis.md §8.2):
  * Extended from 4 formations to 8 to match the keyboard shortcut lineup on
- * gin7 manual p25 (隊列変更 submenu):
+ * gin7 manual p25 (대형 변경 submenu):
  *
- *   X = 防御       (DEFENSIVE — maximum defense posture)
- *   C = 紡錘       (WEDGE — offensive spindle)
- *   V = 艦種1      (BY_CLASS — type grouping, primary variant)
- *   B = 艦種2      (BY_CLASS_2 — type grouping, defensive variant)
- *   N = 混成1      (MIXED — balanced, primary variant)
- *   M = 混成2      (MIXED_2 — balanced, mobile variant)
- *   , = 三列       (THREE_COLUMN — three-column defense)
- *   Z = 隊列解除   (NONE — no formation, default)
+ *   X = 방어       (DEFENSIVE — maximum defense posture)
+ *   C = 방추       (WEDGE — offensive spindle)
+ *   V = 함종1      (BY_CLASS — type grouping, primary variant)
+ *   B = 함종2      (BY_CLASS_2 — type grouping, defensive variant)
+ *   N = 혼성1      (MIXED — balanced, primary variant)
+ *   M = 혼성2      (MIXED_2 — balanced, mobile variant)
+ *   , = 삼렬       (THREE_COLUMN — three-column defense)
+ *   Z = 대형 해제   (NONE — no formation, default)
  */
 enum class Formation(
     val attackModifier: Double,
@@ -23,7 +23,7 @@ enum class Formation(
     val displayNameKo: String,
     val description: String,
 ) {
-    /** 무편성 — 隊列解除. Formation disbanded, no modifier. */
+    /** 무편성 — 대형 해제. Formation disbanded, no modifier. */
     NONE(
         attackModifier = 1.0,
         defenseModifier = 1.0,

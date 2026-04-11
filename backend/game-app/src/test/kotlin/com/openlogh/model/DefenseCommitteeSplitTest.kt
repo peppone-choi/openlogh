@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Phase 24-17 (gap D1, gin7 manual p61 同盟軍組織構成表):
+ * Phase 24-17 (gap D1, gin7 manual p61 동맹군 조직 구성표):
  *
- * 매뉴얼은 国防委員会 산하 11개 부장직을 각각 별도의 직무권한카드로 나열한다.
+ * 매뉴얼은 국방위원회 산하 11개 부장직을 각각 별도의 직무권한카드로 나열한다.
  * v2.4 까지는 `DEFENSE_DEPT_CHIEF` 한 장에 maxHolders=11로 뭉쳐져 있었는데,
  * 이를 11장으로 분리해 매뉴얼 별표와 1:1 정렬시키고 부장별로 서로 다른
  * CommandGroup 권한을 부여한다.
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
  * 1. 분리 후 11 카드가 실제로 존재하는지,
  * 2. 소속/진영/계급 제약이 정확한지,
  * 3. 원래 DEFENSE_DEPT_CHIEF 열거값이 더 이상 enum에 존재하지 않는지,
- * 4. 각 부장의 commandGroups가 업무 성격과 일치하는지 (예: 情報部長→INTELLIGENCE),
+ * 4. 각 부장의 commandGroups가 업무 성격과 일치하는지 (예: 정보부장→INTELLIGENCE),
  * 5. PositionCard.entries 총수가 예상대로 증가했는지(76 → 86).
  */
 class DefenseCommitteeSplitTest {

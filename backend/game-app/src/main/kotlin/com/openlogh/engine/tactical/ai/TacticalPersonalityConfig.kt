@@ -31,11 +31,11 @@ data class TacticalTacticsProfile(
  * - DEFENSIVE/BALANCED/POLITICAL: 20% HP (moderate)
  *
  * Formation preferences (D-09):
- * - AGGRESSIVE -> WEDGE (紡錘, maximum offensive punch)
- * - DEFENSIVE -> MIXED (混成, balanced defense)
- * - CAUTIOUS -> BY_CLASS (艦種, organized by ship type)
- * - BALANCED -> MIXED (混成, general purpose)
- * - POLITICAL -> THREE_COLUMN (三列, conservative formation)
+ * - AGGRESSIVE -> WEDGE (방추, maximum offensive punch)
+ * - DEFENSIVE -> MIXED (혼성, balanced defense)
+ * - CAUTIOUS -> BY_CLASS (함종, organized by ship type)
+ * - BALANCED -> MIXED (혼성, general purpose)
+ * - POLITICAL -> THREE_COLUMN (삼렬, conservative formation)
  */
 object TacticalPersonalityConfig {
 

@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
  *
  * Phase 24-17 note: v2.4 이전에는 `DEFENSE_DEPT_CHIEF` 한 장으로 11개 부장직이 뭉쳐
  * 있었으나 gin7 매뉴얼 p61과 정렬하기 위해 11장으로 분리되었다. 인사 승진 권한은
- * 그중 `DEFENSE_HR_DEPT`(人事部長)에만 부여된다 — 나머지 부장직은 각자 맡은 권한
+ * 그중 `DEFENSE_HR_DEPT`(인사부장)에만 부여된다 — 나머지 부장직은 각자 맡은 권한
  * 그룹(LOGISTICS/INTELLIGENCE/PERSONNEL)만 행사한다.
  */
 @Service
@@ -61,7 +61,7 @@ class PersonnelService(
             PositionCard.MILITARY_HR_CHIEF,
             PositionCard.COUNCIL_DEFENSE_CHAIR,
             // Phase 24-17 (gap D1): DEFENSE_DEPT_CHIEF → 11 부장직 분리. 인사권은
-            // 人事部長(DEFENSE_HR_DEPT)에게만 귀속. 나머지 부장직은 tier 0-4 승진
+            // 인사부장(DEFENSE_HR_DEPT)에게만 귀속. 나머지 부장직은 tier 0-4 승진
             // 권한을 가지지 않는다.
             PositionCard.DEFENSE_HR_DEPT,
         )

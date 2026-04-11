@@ -10,7 +10,7 @@ import kotlin.random.Random
 
 /**
  * Phase 24-25 (gap C9, gin7 매뉴얼 p52):
- * 反転(REVERSE) 커맨드는 명령 수신 후 10 초 대기 뒤에 실제 선회가 일어난다.
+ * 반전(REVERSE) 커맨드는 명령 수신 후 10 초 대기 뒤에 실제 선회가 일어난다.
  * 엔진 tick rate 은 1 tick = 1 초이므로 10 ticks = 10 초.
  *
  * 테스트 관점:

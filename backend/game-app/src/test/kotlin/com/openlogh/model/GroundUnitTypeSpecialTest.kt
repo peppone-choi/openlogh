@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Phase 24-24 (gap A8, gin7 매뉴얼 p100 "未生産 단위"):
+ * Phase 24-24 (gap A8, gin7 매뉴얼 p100 "생산 불가 단위"):
  *
  * 매뉴얼 p100 은 3 개의 특수 지상 병종을 **생산 불가**로 별도 표기한다.
  *   · 근위사단 (제국 황제 친위대)

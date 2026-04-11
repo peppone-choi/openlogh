@@ -15,13 +15,13 @@ import org.springframework.transaction.annotation.Transactional
  *
  * gin7 rules (p.33-36):
  * - Officers within the same rank are ordered by (in order, Phase 24-09 A3):
- *     第一法則: 功績ポイント (meritPoints) — desc
- *     第三法則: 叙勲最高位 (medalRank), then 叙勲回数 (medalCount) — desc
- *     名声 (famePoints) — desc, pragma: gin7 does not list this but the
+ *     제1법칙: 공적포인트 (meritPoints) — desc
+ *     제3법칙: 서훈최고위 (medalRank), then 서훈횟수 (medalCount) — desc
+ *     명성 (famePoints) — desc, pragma: gin7 does not list this but the
  *       existing codebase uses it as a continuous-career signal between
- *       the (skipped) 第二法則 (爵位) and 第四法則 (影響力).
- *     第五法則: 全パラメータ値の合計 — desc
- * - 第二法則 (爵位) and 第四法則 (影響力) remain out of scope for Phase 24
+ *       the (skipped) 제2법칙 (작위) and 제4법칙 (영향력).
+ *     제5법칙: 전체 파라미터 값 합계 — desc
+ * - 제2법칙 (작위) and 제4법칙 (영향력) remain out of scope for Phase 24
  *   (no fields available on Officer today; see gap analysis §D1).
  * - Auto-promotion: below tier 4 (Captain), every 30 game days, top of ladder promoted
  * - On promotion: merit -> 0, position cards revoked except PERSONAL/CAPTAIN/FIEF
@@ -37,10 +37,10 @@ class RankLadderService(
     /**
      * Builds the rank ladder for a faction, ordered by:
      *   rank tier desc (outer segmentation),
-     *   meritPoints desc (第一法則),
-     *   medalRank desc, medalCount desc (第三法則, Phase 24-09 A3),
+     *   meritPoints desc (제1법칙),
+     *   medalRank desc, medalCount desc (제3법칙, Phase 24-09 A3),
      *   famePoints desc,
-     *   totalStats desc (第五法則).
+     *   totalStats desc (제5법칙).
      */
     fun buildLadder(sessionId: Long, factionId: Long): List<Officer> {
         val officers = officerRepository.findBySessionIdAndFactionId(sessionId, factionId)
@@ -61,7 +61,7 @@ class RankLadderService(
      * Only returns candidates where the next tier has headcount capacity.
      *
      * Phase 24-11: Alliance officers at tier 8 promote directly to tier 10 because
-     * tier 9 (上級大将) is Empire-only per gin7 manual p34.
+     * tier 9 (상급대장) is Empire-only per gin7 manual p34.
      */
     fun getPromotionCandidates(sessionId: Long, factionId: Long): List<Officer> {
         val ladder = buildLadder(sessionId, factionId)
@@ -160,7 +160,7 @@ class RankLadderService(
     /**
      * Apply demotion effects to an officer:
      * - Decrement rank tier (Phase 24-11: skipping vacant tiers per faction,
-     *   so an Alliance 元帥 demotes tier 10 → tier 8 directly)
+     *   so an Alliance 원수 demotes tier 10 → tier 8 directly)
      * - Reset merit to 100
      * - Revoke all position cards except PERSONAL, CAPTAIN, FIEF
      */

@@ -1,7 +1,7 @@
 package com.openlogh.model
 
 /**
- * Command Authority Transfer system (指揮権) for tactical combat.
+ * Command Authority Transfer system (지휘권) for tactical combat.
  *
  * Auto-assignment priority when entering tactical battle:
  *   1. Online players first

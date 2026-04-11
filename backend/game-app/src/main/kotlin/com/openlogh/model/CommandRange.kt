@@ -1,14 +1,14 @@
 package com.openlogh.model
 
 /**
- * Command Range Circle (指揮範囲) details for tactical combat.
+ * Command Range Circle (지휘 범위) details for tactical combat.
  *
  * - Expands over time from 0 to max value (based on flagship command stat)
  * - Resets to 0 on every command issue, then re-expands
- * - Expansion rate = 指揮 (command) stat value per tick
+ * - Expansion rate = 지휘 (command) stat value per tick
  * - Max range = flagship capability
  * - Units outside max range: continue current command, stop when command ends
- * - Solo ships (独行艦) have no command range circle concept
+ * - Solo ships (단독함) have no command range circle concept
  */
 data class CommandRange(
     /** Current command range radius */
@@ -57,7 +57,7 @@ data class CommandRange(
     companion object {
         /**
          * Create CommandRange from officer stats and flagship.
-         * @param commandStat Officer's command (指揮) stat value
+         * @param commandStat Officer's command (지휘) stat value
          * @param flagshipMaxRange Maximum range from flagship hardware
          * @param isSolo Whether this is a solo ship (no command circle)
          */

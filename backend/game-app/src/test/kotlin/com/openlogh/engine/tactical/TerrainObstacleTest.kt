@@ -9,7 +9,7 @@ import kotlin.random.Random
 
 /**
  * Phase 24-20 (gap E42, gin7 manual p46-47):
- * 전술전 맵의 地形障害(플라즈마 폭풍 / 사르가소 / 隕石帯) 가 射線을 차단하는지를
+ * 전술전 맵의 지형 장애물(플라즈마 폭풍 / 사르가소 / 소행성대) 가 사선을 차단하는지를
  * 검증한다. 엔진은 pure 하게 테스트되며, 장애물이 경로 위에 있으면 BEAM/GUN/MISSILE
  * 사격이 차단되어 적 HP 가 유지되어야 한다.
  *
@@ -160,6 +160,6 @@ class TerrainObstacleTest {
     fun `asteroid field blocks and also marks warp as blocked`() {
         assertTrue(TerrainObstacleType.ASTEROID_FIELD.blocksLineOfSight)
         assertTrue(TerrainObstacleType.ASTEROID_FIELD.blocksWarp,
-            "隕石帯 is the one obstacle type that also blocks warp entry per gin7 p47")
+            "소행성대 is the one obstacle type that also blocks warp entry per gin7 p47")
     }
 }

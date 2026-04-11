@@ -23,7 +23,7 @@ package com.openlogh.command
  * ## Source of truth
  *
  * Values come from `backend/shared/src/main/resources/data/commands.json`,
- * which was generated from the gin7 manual appendix 戦略コマンド一覧表
+ * which was generated from the gin7 manual appendix 전략 커맨드 일람표
  * (manual p69-78). When commands.json changes, update this table in lockstep —
  * both files are derived from the manual and must stay in sync.
  *

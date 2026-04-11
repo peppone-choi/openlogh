@@ -47,7 +47,7 @@ class RankTitleTest {
 
     @Test
     fun `alliance tier 9 is vacant per gin7 manual p34 (Phase 24-11)`() {
-        // gin7 manual p34: 帝国军 has 上級大将 (tier 9), 同盟軍 does NOT.
+        // gin7 manual p34: 제국군 has 상급대장 (tier 9), 동맹군 does NOT.
         // Alliance officers promote tier 8 → tier 10 directly.
         val rank = RankTitleResolver.resolve(9, "alliance")
         assertTrue(rank.isVacant, "Alliance tier 9 must be marked vacant")
@@ -73,7 +73,7 @@ class RankTitleTest {
 
     @Test
     fun `all 11 alliance tiers resolve correctly with tier 9 vacant`() {
-        // Phase 24-11: Alliance uses a 10-rank ladder — tier 9 (上級大将) is
+        // Phase 24-11: Alliance uses a 10-rank ladder — tier 9 (상급대장) is
         // Empire-only per gin7 manual p34, marked vacant in RankTitleResolver.
         val expectedTitles = listOf(
             "Sub-Lieutenant", "Lieutenant", "Lieutenant Commander", "Commander",

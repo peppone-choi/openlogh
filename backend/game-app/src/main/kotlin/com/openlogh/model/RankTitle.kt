@@ -5,8 +5,8 @@ package com.openlogh.model
  *
  * Phase 24-11 (docs/03-analysis/gin7-manual-complete-gap.analysis.md §D1):
  * gin7 manual p34 explicitly lists separate rank structures — the Galactic
- * Empire has a 上級大将 (Fleet Admiral) tier above 大将 that the Free Planets
- * Alliance does not. Alliance officers progress 大将(tier 8) → 元帥(tier 10)
+ * Empire has a 상급대장 (Fleet Admiral) tier above 대장 that the Free Planets
+ * Alliance does not. Alliance officers progress 대장(tier 8) → 원수(tier 10)
  * directly, with tier 9 left permanently vacant.
  *
  * [isVacant] flags those faction-specific holes so headcount logic and the
@@ -38,7 +38,7 @@ object RankTitleResolver {
 
     /**
      * Alliance rank ladder — gin7 manual p34 explicitly shows Alliance has
-     * NO 上級大将 tier; Admiral goes straight to Fleet Admiral. Tier 9 is
+     * NO 상급대장 tier; Admiral goes straight to Fleet Admiral. Tier 9 is
      * therefore marked vacant and must never accept an officer.
      */
     private val allianceTitles = listOf(
