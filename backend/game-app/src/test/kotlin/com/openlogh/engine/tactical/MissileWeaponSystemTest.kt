@@ -244,7 +244,7 @@ class MissileWeaponSystemTest {
         val event = system.processFighterAttack(source, carrierTarget, state, rng = alwaysHitRng)
 
         assertNotNull(event)
-        assertTrue(event!!.isIntercept, "CARRIER target = 迎撃戦")
+        assertTrue(event!!.isIntercept, "CARRIER target = 요격전")
         assertEquals(90, source.supplies, "intercept sortie also costs 10 supplies")
     }
 
@@ -256,8 +256,8 @@ class MissileWeaponSystemTest {
         val stateAnti = makeState(source, fleetTarget)
         system.processFighterAttack(source, fleetTarget, stateAnti, rng = alwaysHitRng)
         assertTrue(
-            stateAnti.tickEvents.any { it.type == "fighter_attack" && it.detail.contains("対艦戦") },
-            "対艦戦 label must appear when target is not a carrier"
+            stateAnti.tickEvents.any { it.type == "fighter_attack" && it.detail.contains("대함전") },
+            "대함전 label must appear when target is not a carrier"
         )
 
         val source2 = makeUnit(3L, BattleSide.ATTACKER, posX = 0.0, posY = 0.0,
@@ -266,8 +266,8 @@ class MissileWeaponSystemTest {
         val stateIntercept = makeState(source2, carrierTarget)
         system.processFighterAttack(source2, carrierTarget, stateIntercept, rng = alwaysHitRng)
         assertTrue(
-            stateIntercept.tickEvents.any { it.type == "fighter_attack" && it.detail.contains("迎撃戦") },
-            "迎撃戦 label must appear when target is a carrier"
+            stateIntercept.tickEvents.any { it.type == "fighter_attack" && it.detail.contains("요격전") },
+            "요격전 label must appear when target is a carrier"
         )
     }
 

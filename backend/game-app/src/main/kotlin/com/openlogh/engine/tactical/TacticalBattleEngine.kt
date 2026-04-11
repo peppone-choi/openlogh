@@ -259,12 +259,12 @@ data class TerrainObstacle(
 )
 
 enum class TerrainObstacleType(val displayNameKo: String, val blocksLineOfSight: Boolean, val blocksWarp: Boolean) {
-    /** 플라즈마 폭풍 — 射線 차단, 내부 진입 시 데미지(후속 phase 에서 배선). */
+    /** 플라즈마 폭풍 — 사선 차단, 내부 진입 시 데미지(후속 phase 에서 배선). */
     PLASMA_STORM("플라즈마 폭풍", blocksLineOfSight = true, blocksWarp = false),
-    /** 사르가소 暗礁域 — 射線 차단, 내부 이동 속도 감소(후속). */
+    /** 사르가소 성운 — 사선 차단, 내부 이동 속도 감소(후속). */
     SARGASSO("사르가소", blocksLineOfSight = true, blocksWarp = false),
-    /** 隕石帯 — 射線 차단 + 워프 경로 차단. */
-    ASTEROID_FIELD("隕石帯", blocksLineOfSight = true, blocksWarp = true),
+    /** 소행성대 — 사선 차단 + 워프 경로 차단. */
+    ASTEROID_FIELD("소행성대", blocksLineOfSight = true, blocksWarp = true),
 }
 
 /**
@@ -861,7 +861,7 @@ class TacticalBattleEngine(
                 BattleTickEvent(
                     "group_formation", sourceUnitId = commanderUnit.fleetId,
                     value = applied,
-                    detail = "${commanderUnit.officerName}: 隊列命令 ${cmd.formation.name} → ${applied}유닛",
+                    detail = "${commanderUnit.officerName}: 대형 일괄 변경 ${cmd.formation.name} → ${applied}유닛",
                 )
             )
         }

@@ -356,47 +356,47 @@ enum class PositionCard(
     // 실제 gin7 권한 체계는 부서별로 발령 가능한 커맨드 그룹이 다르므로 11장 분리 구현.
 
     DEFENSE_INVESTIGATION_DEPT(
-        "DEFENSE_INVESTIGATION_DEPT", "국방위원회査問部長", "Defense Investigation Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_INVESTIGATION_DEPT", "국방위원회 사문부장", "Defense Investigation Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.PERSONNEL, CommandGroup.INTELLIGENCE),
     ),
     DEFENSE_STRATEGY_DEPT(
-        "DEFENSE_STRATEGY_DEPT", "국방위원회戦略部長", "Defense Strategy Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_STRATEGY_DEPT", "국방위원회 전략부장", "Defense Strategy Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.COMMAND),
     ),
     DEFENSE_HR_DEPT(
-        "DEFENSE_HR_DEPT", "국방위원회人事部長", "Defense HR Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_HR_DEPT", "국방위원회 인사부장", "Defense HR Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.PERSONNEL),
     ),
     DEFENSE_COUNTERINTEL_DEPT(
-        "DEFENSE_COUNTERINTEL_DEPT", "국방위원회防諜部長", "Defense Counter-Intelligence Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_COUNTERINTEL_DEPT", "국방위원회 방첩부장", "Defense Counter-Intelligence Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.INTELLIGENCE),
     ),
     DEFENSE_INTEL_DEPT(
-        "DEFENSE_INTEL_DEPT", "국방위원회情報部長", "Defense Intelligence Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_INTEL_DEPT", "국방위원회 정보부장", "Defense Intelligence Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.INTELLIGENCE),
     ),
     DEFENSE_COMMUNICATIONS_DEPT(
-        "DEFENSE_COMMUNICATIONS_DEPT", "국방위원회通信部長", "Defense Communications Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_COMMUNICATIONS_DEPT", "국방위원회 통신부장", "Defense Communications Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.LOGISTICS),
     ),
     DEFENSE_EQUIPMENT_DEPT(
-        "DEFENSE_EQUIPMENT_DEPT", "국방위원회装備部長", "Defense Equipment Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_EQUIPMENT_DEPT", "국방위원회 장비부장", "Defense Equipment Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.LOGISTICS),
     ),
     DEFENSE_FACILITIES_DEPT(
-        "DEFENSE_FACILITIES_DEPT", "국방위원회施設部長", "Defense Facilities Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_FACILITIES_DEPT", "국방위원회 시설부장", "Defense Facilities Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.LOGISTICS),
     ),
     DEFENSE_ACCOUNTING_DEPT(
-        "DEFENSE_ACCOUNTING_DEPT", "국방위원회経理部長", "Defense Accounting Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_ACCOUNTING_DEPT", "국방위원회 경리부장", "Defense Accounting Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.LOGISTICS),
     ),
     DEFENSE_EDUCATION_DEPT(
-        "DEFENSE_EDUCATION_DEPT", "국방위원회教育部長", "Defense Education Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_EDUCATION_DEPT", "국방위원회 교육부장", "Defense Education Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.PERSONNEL),
     ),
     DEFENSE_HEALTH_DEPT(
-        "DEFENSE_HEALTH_DEPT", "국방위원회衛生部長", "Defense Health Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        "DEFENSE_HEALTH_DEPT", "국방위원회 위생부장", "Defense Health Dept Chief", "국방위원회", 1, 7, 10, "alliance",
         setOf(CommandGroup.LOGISTICS),
     ),
 

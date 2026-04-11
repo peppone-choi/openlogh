@@ -101,14 +101,15 @@ class MissileWeaponSystem {
         val fighterRange = TacticalWeaponType.FIGHTER.baseRange * 100.0  // 6.0 * 100 = 600 units
         if (dist > fighterRange) return null
 
-        // Phase 24-18 gin7 p49: 戦闘艇 sortie requires 10 軍需物資. Gate the launch
-        // before the RNG hit roll so that an impossible sortie never fires at all.
+        // Phase 24-18 gin7 p49: 戰鬪艇(Spartanian) sortie requires 10 군수물자.
+        // Gate the launch before the RNG hit roll so that an impossible sortie
+        // never fires at all.
         val sortieCost = TacticalWeaponType.FIGHTER.supplyCostPerUse
         if (source.supplies < sortieCost) {
             state.tickEvents.add(
                 BattleTickEvent(
                     "fighter_sortie_aborted", source.fleetId, target.fleetId, 0,
-                    "스파르타니안 출격 실패 — 軍需物資 부족 (필요 $sortieCost / 보유 ${source.supplies})"
+                    "스파르타니안 출격 실패 — 군수물자 부족 (필요 $sortieCost / 보유 ${source.supplies})"
                 )
             )
             return null
@@ -122,7 +123,7 @@ class MissileWeaponSystem {
             state.tickEvents.add(
                 BattleTickEvent(
                     "fighter_miss", source.fleetId, target.fleetId, 0,
-                    "스파르타니안 발진 실패 — 요격당함 / 빗나감 (軍需物資 -$sortieCost)"
+                    "스파르타니안 발진 실패 — 요격당함 / 빗나감 (군수물자 -$sortieCost)"
                 )
             )
             return null
@@ -139,7 +140,7 @@ class MissileWeaponSystem {
         state.tickEvents.add(
             BattleTickEvent(
                 "fighter_attack", source.fleetId, target.fleetId, rawDmg,
-                "스파르타니안 발진 → 속도저하${if (isFighterVsFighter) " (迎撃戦 2배)" else " (対艦戦)"} (軍需物資 -$sortieCost)"
+                "스파르타니안 발진 → 속도저하${if (isFighterVsFighter) " (요격전 2배)" else " (대함전)"} (군수물자 -$sortieCost)"
             )
         )
 
