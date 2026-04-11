@@ -10,6 +10,9 @@ import kotlin.random.Random
 // ============================================================
 // 정치커맨드 12종 (Politics Commands, PCP)
 // cpCost=320 (통치목표만 cpCost=80), waitTime=0, duration=0
+// gin7 manual appendix p69-78 — see data/commands.json for authoritative values.
+// Only GovernanceGoalCommand currently overrides getCommandPointCost() — the
+// broader CP system rebalance is tracked as phase v2.5-01.
 // ============================================================
 
 /**
@@ -284,7 +287,9 @@ class DiplomacyCommand(
 }
 
 /**
- * 통치목표 (Governance Goal): 행성 통치 목표 설정 (cpCost=80)
+ * 통치목표 (Governance Goal): 행성 통치 목표 설정 (cpCost=80).
+ * gin7 manual p72 — only Politics command with a non-default CP cost.
+ * Gap analysis B1.
  */
 class GovernanceGoalCommand(
     general: Officer,
@@ -295,6 +300,7 @@ class GovernanceGoalCommand(
     override val actionName: String = "통치목표"
 
     override fun getCost(): CommandCost = CommandCost()
+    override fun getCommandPointCost(): Int = 80
     override fun getPreReqTurn(): Int = 0
     override fun getPostReqTurn(): Int = 0
 

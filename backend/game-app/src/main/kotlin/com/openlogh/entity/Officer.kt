@@ -307,4 +307,20 @@ class Officer(
 
     /** Checks if this officer holds a specific position card. */
     fun hasPositionCard(card: PositionCard): Boolean = card.name in positionCards
+
+    /**
+     * Checks whether this officer can receive another position card.
+     * gin7 manual p26: 최대 보유 카드 수 16매.
+     */
+    fun canAcceptAdditionalPositionCard(): Boolean =
+        positionCards.size < MAX_POSITION_CARDS
+
+    companion object {
+        /**
+         * Maximum number of position (duty authority) cards an officer may hold.
+         * Source: gin7 manual p26 (Chapter 3 — 직무권한카드 상한).
+         * See gap analysis D2/E54.
+         */
+        const val MAX_POSITION_CARDS: Int = 16
+    }
 }

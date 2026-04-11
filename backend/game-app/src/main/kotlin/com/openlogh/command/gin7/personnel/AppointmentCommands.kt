@@ -29,9 +29,20 @@ class AppointCommand(
         val positionCard = arg?.get("positionCard") as? String
             ?: return CommandResult.fail("직위 카드 미지정")
 
-        if (!target.positionCards.contains(positionCard)) {
-            target.positionCards.add(positionCard)
+        if (target.positionCards.contains(positionCard)) {
+            // Already holds this card — no-op, still succeed for idempotency.
+            pushLog("${target.name}은(는) 이미 ${positionCard} 직위를 보유하고 있다.")
+            return CommandResult.success(logs)
         }
+
+        // gin7 manual p26: 最大保有 16매 (D2/E54 gap).
+        if (!target.canAcceptAdditionalPositionCard()) {
+            return CommandResult.fail(
+                "${target.name}은(는) 이미 직무권한카드 ${Officer.MAX_POSITION_CARDS}매를 보유하여 추가 임명할 수 없다.",
+            )
+        }
+
+        target.positionCards.add(positionCard)
 
         pushLog("${target.name}이(가) ${positionCard} 직위에 임명됐다.")
         return CommandResult.success(logs)

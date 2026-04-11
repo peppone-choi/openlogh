@@ -38,7 +38,9 @@ class GeneralSearchCommand(
 }
 
 /**
- * 체포허가 (Arrest Authorization): 대상 장교에 체포 영장 발부 (cpCost=800)
+ * 체포허가 (Arrest Authorization): 대상 장교에 체포 영장 발부 (cpCost=800).
+ * gin7 manual p76 — exceptionally high CP cost reflects political weight.
+ * Gap analysis B2.
  */
 class ArrestAuthorizationCommand(
     general: Officer,
@@ -49,6 +51,7 @@ class ArrestAuthorizationCommand(
     override val actionName: String = "체포허가"
 
     override fun getCost(): CommandCost = CommandCost()
+    override fun getCommandPointCost(): Int = 800
     override fun getCommandPoolType(): StatCategory = StatCategory.MCP
     override fun getPreReqTurn(): Int = 0
     override fun getPostReqTurn(): Int = 0
@@ -62,7 +65,9 @@ class ArrestAuthorizationCommand(
 }
 
 /**
- * 집행명령 (Execution Order): 대상 장교에 집행 명령 부여 (cpCost=800)
+ * 집행명령 (Execution Order): 대상 장교에 집행 명령 부여 (cpCost=800).
+ * gin7 manual p76 — mirrors ArrestAuthorization CP weight.
+ * Gap analysis B3.
  */
 class ExecutionOrderCommand(
     general: Officer,
@@ -73,6 +78,7 @@ class ExecutionOrderCommand(
     override val actionName: String = "집행명령"
 
     override fun getCost(): CommandCost = CommandCost()
+    override fun getCommandPointCost(): Int = 800
     override fun getCommandPoolType(): StatCategory = StatCategory.MCP
     override fun getPreReqTurn(): Int = 0
     override fun getPostReqTurn(): Int = 0
