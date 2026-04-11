@@ -40,6 +40,19 @@ const EQUIPMENT_KEYS: Array<{ key: keyof GeneralFrontInfo; label: string }> = [
 ];
 
 /**
+ * Phase 25-06: 육전대 출격 상태 판정.
+ * Phase 24-31 가 Officer.meta["groundForceStance"] 에 "DEPLOYED" / "WITHDRAWN"
+ * 을 기록한다. UI 는 기본값을 "WITHDRAWN" 으로 간주하고, 명시적으로 DEPLOYED
+ * 일 때만 출격 배지를 표시한다.
+ */
+function getGroundForceStance(meta: Record<string, unknown> | undefined): 'DEPLOYED' | 'WITHDRAWN' {
+    if (!meta) return 'WITHDRAWN';
+    const raw = meta.groundForceStance;
+    if (typeof raw === 'string' && raw.toUpperCase() === 'DEPLOYED') return 'DEPLOYED';
+    return 'WITHDRAWN';
+}
+
+/**
  * Phase 25-02: 기함 코드 → 한국어 tier 라벨 매핑.
  * 백엔드 FlagshipProgression 이 승진/강등 시 자동 배정하는 8 tier 코드를 커버한다.
  * 관리 집합 밖의 특수 보상/구매 기함은 원본 코드 문자열을 그대로 보여 준다.
@@ -283,6 +296,16 @@ export default function GeneralPage() {
                                                 title={`기함: ${g.weaponCode}`}
                                             >
                                                 기함 {flagshipLabel(g.weaponCode)}
+                                            </Badge>
+                                        )}
+                                        {/* Phase 25-06: 육전대 출격 배지. 출격 중일 때만 노출. */}
+                                        {getGroundForceStance(g.meta) === 'DEPLOYED' && (
+                                            <Badge
+                                                variant="outline"
+                                                className="border-orange-400 text-orange-300"
+                                                title="육전대 출격 중 (Phase 24-31)"
+                                            >
+                                                육전대 출격
                                             </Badge>
                                         )}
                                     </div>
