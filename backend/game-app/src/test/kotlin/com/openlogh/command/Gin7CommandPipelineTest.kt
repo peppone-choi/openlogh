@@ -691,6 +691,65 @@ class Gin7CommandPipelineTest {
         assertFalse(result.success, "Already-rebel officer cannot rebel again")
     }
 
+    // ================================================================
+    // Phase 24-11 (D1 complement): Alliance 상급대장 tier removed
+    // gin7 manual p34 — 帝国 only has 上級大将 (Fleet Admiral, tier 9).
+    // Alliance promotes 大将 (tier 8) → 元帥 (tier 10) directly.
+    // ================================================================
+
+    @Test
+    fun `D1 - Empire tier 9 is 상급대장 per manual p34`() {
+        val title = com.openlogh.model.RankTitleResolver.resolve(9, "empire")
+        assertEquals("상급대장", title.korean)
+        assertFalse(title.isVacant, "Empire tier 9 must exist")
+    }
+
+    @Test
+    fun `D1 - Alliance tier 9 is vacant per manual p34`() {
+        val title = com.openlogh.model.RankTitleResolver.resolve(9, "alliance")
+        assertTrue(title.isVacant, "Alliance tier 9 (상급대장) must not exist — manual p34")
+        assertFalse(
+            com.openlogh.model.RankTitleResolver.hasTier(9, "alliance"),
+            "Alliance.hasTier(9) must be false"
+        )
+        assertTrue(
+            com.openlogh.model.RankTitleResolver.hasTier(9, "empire"),
+            "Empire.hasTier(9) must be true"
+        )
+    }
+
+    @Test
+    fun `D1 - Alliance 元帥 is still tier 10`() {
+        val title = com.openlogh.model.RankTitleResolver.resolve(10, "alliance")
+        assertEquals("원수", title.korean)
+        assertFalse(title.isVacant)
+    }
+
+    @Test
+    fun `D1 - RankHeadcount Alliance tier 9 limit is 0`() {
+        assertEquals(
+            0,
+            com.openlogh.model.RankHeadcount.getLimit(9, "alliance"),
+            "Alliance tier 9 must refuse all officers"
+        )
+        assertEquals(
+            5,
+            com.openlogh.model.RankHeadcount.getLimit(9, "empire"),
+            "Empire tier 9 (상급대장) keeps the 5-officer cap"
+        )
+    }
+
+    @Test
+    fun `D1 - RankHeadcount nextTier skips Alliance vacant tier`() {
+        // Empire: tier 8 → tier 9 (상급대장)
+        assertEquals(9, com.openlogh.model.RankHeadcount.nextTier(8, "empire"))
+        // Alliance: tier 8 → tier 10 (skipping vacant 9)
+        assertEquals(10, com.openlogh.model.RankHeadcount.nextTier(8, "alliance"))
+        // Both: tier 10 → 11 (out of range sentinel)
+        assertEquals(11, com.openlogh.model.RankHeadcount.nextTier(10, "empire"))
+        assertEquals(11, com.openlogh.model.RankHeadcount.nextTier(10, "alliance"))
+    }
+
     private fun anyLong(): Long = org.mockito.ArgumentMatchers.anyLong()
     private fun eqLong(value: Long): Long = org.mockito.ArgumentMatchers.eq(value)
 }

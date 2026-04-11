@@ -46,10 +46,15 @@ class RankTitleTest {
     }
 
     @Test
-    fun `alliance tier 9 returns Admiral of the Fleet`() {
+    fun `alliance tier 9 is vacant per gin7 manual p34 (Phase 24-11)`() {
+        // gin7 manual p34: 帝国军 has 上級大将 (tier 9), 同盟軍 does NOT.
+        // Alliance officers promote tier 8 → tier 10 directly.
         val rank = RankTitleResolver.resolve(9, "alliance")
-        assertEquals("Admiral of the Fleet", rank.title)
-        assertEquals("상급대장", rank.korean)
+        assertTrue(rank.isVacant, "Alliance tier 9 must be marked vacant")
+        assertFalse(
+            RankTitleResolver.hasTier(9, "alliance"),
+            "RankTitleResolver.hasTier(9, alliance) must be false"
+        )
     }
 
     @Test
@@ -67,16 +72,23 @@ class RankTitleTest {
     }
 
     @Test
-    fun `all 11 alliance tiers resolve correctly`() {
+    fun `all 11 alliance tiers resolve correctly with tier 9 vacant`() {
+        // Phase 24-11: Alliance uses a 10-rank ladder — tier 9 (上級大将) is
+        // Empire-only per gin7 manual p34, marked vacant in RankTitleResolver.
         val expectedTitles = listOf(
             "Sub-Lieutenant", "Lieutenant", "Lieutenant Commander", "Commander",
             "Captain", "Commodore", "Rear Admiral", "Vice Admiral",
-            "Admiral", "Admiral of the Fleet", "Fleet Admiral"
+            "Admiral", "(vacant)", "Fleet Admiral"
         )
         for (tier in 0..10) {
             val rank = RankTitleResolver.resolve(tier, "alliance")
             assertEquals(tier, rank.tier)
             assertEquals(expectedTitles[tier], rank.title)
+            if (tier == 9) {
+                assertTrue(rank.isVacant, "Alliance tier 9 must be vacant")
+            } else {
+                assertFalse(rank.isVacant, "Alliance tier $tier must not be vacant")
+            }
         }
     }
 

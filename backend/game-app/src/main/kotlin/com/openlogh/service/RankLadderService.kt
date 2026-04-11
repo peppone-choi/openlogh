@@ -59,9 +59,14 @@ class RankLadderService(
     /**
      * Gets promotion candidates: top officer at each tier <= AUTO_PROMOTION_MAX_TIER.
      * Only returns candidates where the next tier has headcount capacity.
+     *
+     * Phase 24-11: Alliance officers at tier 8 promote directly to tier 10 because
+     * tier 9 (上級大将) is Empire-only per gin7 manual p34.
      */
     fun getPromotionCandidates(sessionId: Long, factionId: Long): List<Officer> {
         val ladder = buildLadder(sessionId, factionId)
+        val faction = factionRepository.findById(factionId).orElse(null)
+        val factionType = faction?.factionType ?: "empire"
         val candidates = mutableListOf<Officer>()
 
         for (tier in 0..RankHeadcount.AUTO_PROMOTION_MAX_TIER) {
@@ -69,7 +74,9 @@ class RankLadderService(
             if (officersAtTier.isEmpty()) continue
 
             val topOfficer = officersAtTier.first() // already sorted by merit desc
-            val nextTier = tier + 1
+            val nextTier = RankHeadcount.nextTier(tier, factionType)
+
+            if (nextTier > 10) continue // already at the top of this faction's ladder
 
             if (checkHeadcount(sessionId, factionId, nextTier, ladder)) {
                 candidates.add(topOfficer)
@@ -126,7 +133,7 @@ class RankLadderService(
 
     /**
      * Apply promotion effects to an officer:
-     * - Increment rank tier
+     * - Advance rank tier (Phase 24-11: skipping vacant tiers per faction)
      * - Reset merit to 0
      * - Revoke all position cards except PERSONAL, CAPTAIN, FIEF
      */
@@ -134,7 +141,14 @@ class RankLadderService(
         val oldTier = officer.officerLevel.toInt()
         require(oldTier < 10) { "Cannot promote beyond tier 10" }
 
-        officer.officerLevel = (oldTier + 1).toShort()
+        // Phase 24-11: resolve next tier respecting faction ladder shape
+        // (Alliance tier 8 → tier 10, skipping the vacant 상급대장 slot).
+        val faction = factionRepository.findById(officer.factionId).orElse(null)
+        val factionType = faction?.factionType ?: "empire"
+        val newTier = RankHeadcount.nextTier(oldTier, factionType)
+        require(newTier <= 10) { "Cannot promote beyond tier 10 for faction $factionType" }
+
+        officer.officerLevel = newTier.toShort()
         officer.meritPoints = RankHeadcount.MERIT_AFTER_PROMOTION
 
         // Revoke position cards except retained ones
@@ -145,7 +159,8 @@ class RankLadderService(
 
     /**
      * Apply demotion effects to an officer:
-     * - Decrement rank tier
+     * - Decrement rank tier (Phase 24-11: skipping vacant tiers per faction,
+     *   so an Alliance 元帥 demotes tier 10 → tier 8 directly)
      * - Reset merit to 100
      * - Revoke all position cards except PERSONAL, CAPTAIN, FIEF
      */
@@ -153,7 +168,15 @@ class RankLadderService(
         val oldTier = officer.officerLevel.toInt()
         require(oldTier > 0) { "Cannot demote below tier 0" }
 
-        officer.officerLevel = (oldTier - 1).toShort()
+        // Phase 24-11: walk down past vacant tiers (Alliance tier 10 → 8).
+        val faction = factionRepository.findById(officer.factionId).orElse(null)
+        val factionType = faction?.factionType ?: "empire"
+        var newTier = oldTier - 1
+        while (newTier > 0 && !RankTitleResolver.hasTier(newTier, factionType)) {
+            newTier--
+        }
+
+        officer.officerLevel = newTier.toShort()
         officer.meritPoints = RankHeadcount.MERIT_AFTER_DEMOTION
 
         // Revoke position cards except retained ones
