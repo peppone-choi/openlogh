@@ -29,6 +29,7 @@ const BASE_CITY: Omit<
     officerSet: 0,
     state: 0,
     term: 0,
+    planetType: 'normal',
     conflict: {},
     meta: {},
 };

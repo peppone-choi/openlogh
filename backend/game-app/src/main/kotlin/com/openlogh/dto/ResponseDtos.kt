@@ -269,6 +269,9 @@ data class CityResponse(
     val state: Short,
     val region: Short,
     val term: Short,
+    // Phase 25-03: Phase 24-12 가 도입한 planet_type (normal/gas/fortress) 노출.
+    // 프론트엔드가 지상전 배치 필터·맵 아이콘에 활용한다.
+    val planetType: String,
     val conflict: Map<String, Any>,
     val meta: Map<String, Any>,
 ) {
@@ -300,6 +303,7 @@ data class CityResponse(
             state = e.state,
             region = regionOverride ?: e.region,
             term = e.term,
+            planetType = e.planetType,
             conflict = e.conflict,
             meta = e.meta,
         )

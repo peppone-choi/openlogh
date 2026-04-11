@@ -112,6 +112,11 @@ export interface City {
     state: number;
     region: number;
     term: number;
+    /**
+     * Phase 25-03: gin7 행성 지형 분류 ("normal" / "gas" / "fortress").
+     * Phase 24-12 백엔드에서 추가 — 지상전 병종 필터/UI 배지 용도.
+     */
+    planetType: string;
     /** Conflict score map: nation ID (string) → conflict score (number) */
     conflict: Record<string, number>;
     meta: Record<string, unknown>;

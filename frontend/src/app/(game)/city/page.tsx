@@ -22,6 +22,40 @@ import {
 } from '@/lib/game-utils';
 import { calcCityGoldIncome, calcCityRiceIncome, calcCityWallRiceIncome, countCityOfficers } from '@/lib/income-calc';
 
+// Phase 25-03: planet_type 배지 헬퍼 (Phase 24-12 gin7 매뉴얼 p50).
+function planetTypeLabel(type: string): string {
+    switch (type) {
+        case 'gas':
+            return '가스 행성';
+        case 'fortress':
+            return '요새';
+        default:
+            return type;
+    }
+}
+
+function planetTypeTooltip(type: string): string {
+    switch (type) {
+        case 'gas':
+            return '가스 행성 — 장갑병 / 근위사단 배치 불가';
+        case 'fortress':
+            return '요새 — 장갑병 배치 불가, 근위사단 수비 가능';
+        default:
+            return type;
+    }
+}
+
+function planetTypeBadgeStyle(type: string): Record<string, string> {
+    switch (type) {
+        case 'gas':
+            return { borderColor: '#8ab4ff', color: '#8ab4ff' };
+        case 'fortress':
+            return { borderColor: '#ffd166', color: '#ffd166' };
+        default:
+            return { borderColor: '#888', color: '#888' };
+    }
+}
+
 // --- Sort ---
 
 type SortKey =
@@ -376,6 +410,16 @@ function CityPageContent() {
                                         <span style={{ color: 'cyan' }}>[{city.name}]</span>
                                     ) : (
                                         <span>{city.name}</span>
+                                    )}
+                                    {/* Phase 25-03: 행성 지형 배지 (normal 은 숨김). */}
+                                    {city.planetType && city.planetType !== 'normal' && (
+                                        <span
+                                            className="ml-1 text-[10px] px-1 py-[1px] rounded border"
+                                            style={planetTypeBadgeStyle(city.planetType)}
+                                            title={planetTypeTooltip(city.planetType)}
+                                        >
+                                            {planetTypeLabel(city.planetType)}
+                                        </span>
                                     )}
                                     <span className="ml-2 text-xs opacity-90">{owner?.name ?? '공백지'}</span>
                                     {!isMyNationCity && !isVisible && (
