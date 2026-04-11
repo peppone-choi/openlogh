@@ -160,6 +160,24 @@ export interface TacticalUnit {
     maxCommandRange?: number;
 }
 
+/**
+ * Phase 25-05 (gin7 매뉴얼 p46-47 지형 장애물):
+ * 전술전 맵에 놓인 원형 지형 장애물. 백엔드 Phase 24-20 에서 도입된 타입의
+ * 프론트엔드 미러. 캔버스가 obstacle 레이어로 렌더링하고, hover 시 label 툴팁을 띄운다.
+ */
+export type TerrainObstacleType = 'PLASMA_STORM' | 'SARGASSO' | 'ASTEROID_FIELD';
+
+export interface TerrainObstacle {
+    posX: number;
+    posY: number;
+    radius: number;
+    type: TerrainObstacleType;
+    /** 한국어 라벨 (예: "플라즈마 폭풍"). */
+    label: string;
+    blocksLineOfSight: boolean;
+    blocksWarp: boolean;
+}
+
 /** Tactical battle state */
 export interface TacticalBattle {
     id: number;
@@ -179,6 +197,8 @@ export interface TacticalBattle {
     attackerHierarchy?: CommandHierarchyDto | null;
     /** Phase 14 D-21 — initial-fetch command hierarchy (defender side). */
     defenderHierarchy?: CommandHierarchyDto | null;
+    /** Phase 25-05 — terrain obstacle layer (empty = no hazards). */
+    obstacles?: TerrainObstacle[];
 }
 
 /** Unit stance (v2.1 Phase 8) */

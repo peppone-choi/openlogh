@@ -769,6 +769,18 @@ class TacticalBattleService(
             // Phase 14 D-21: expose hierarchy to the frontend.
             attackerHierarchy = state?.attackerHierarchy?.let { CommandHierarchyDto.fromEngine(it, nameLookup) },
             defenderHierarchy = state?.defenderHierarchy?.let { CommandHierarchyDto.fromEngine(it, nameLookup) },
+            // Phase 25-05: 전술전 캔버스용 지형 장애물 직렬화.
+            obstacles = state?.obstacles?.map { o ->
+                TerrainObstacleDto(
+                    posX = o.posX,
+                    posY = o.posY,
+                    radius = o.radius,
+                    type = o.type.name,
+                    label = o.type.displayNameKo,
+                    blocksLineOfSight = o.type.blocksLineOfSight,
+                    blocksWarp = o.type.blocksWarp,
+                )
+            } ?: emptyList(),
         )
     }
 

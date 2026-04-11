@@ -113,6 +113,27 @@ data class TacticalBattleDto(
     // ── Phase 14 D-21 ──
     val attackerHierarchy: CommandHierarchyDto? = null,
     val defenderHierarchy: CommandHierarchyDto? = null,
+    // ── Phase 25-05 (gin7 매뉴얼 p46-47 지형 장애물) ──
+    // Phase 24-20 에서 TacticalBattleState.obstacles 로 도입된 배치 엔티티를
+    // 프론트엔드 캔버스가 렌더링할 수 있도록 직렬화한다. 비어 있으면 장애물
+    // 없는 맵과 동일.
+    val obstacles: List<TerrainObstacleDto> = emptyList(),
+)
+
+/**
+ * Phase 25-05: 전술전 캔버스에 그릴 지형 장애물 데이터.
+ * Phase 24-20 TerrainObstacle / TerrainObstacleType 을 그대로 평평하게 노출.
+ */
+data class TerrainObstacleDto(
+    val posX: Double,
+    val posY: Double,
+    val radius: Double,
+    /** "PLASMA_STORM" / "SARGASSO" / "ASTEROID_FIELD" */
+    val type: String,
+    /** 한국어 라벨 ("플라즈마 폭풍" / "사르가소" / "소행성대") */
+    val label: String,
+    val blocksLineOfSight: Boolean,
+    val blocksWarp: Boolean,
 )
 
 data class TacticalUnitDto(

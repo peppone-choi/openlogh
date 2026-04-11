@@ -330,6 +330,52 @@ export function BattleMap({
                     ))}
                 </Layer>
 
+                {/* ─── Layer 1.5: Terrain obstacles (25-05) ───────────────── */}
+                {/*
+                 * Phase 25-05 (gin7 매뉴얼 p46-47): 플라즈마 폭풍 / 사르가소 /
+                 * 소행성대 를 원형으로 렌더한다. 타입별 색상 구분, listening=false
+                 * 로 클릭 스틸 방지. 비어 있으면 아무것도 그리지 않는다.
+                 */}
+                <Layer listening={false} id="terrain-obstacles">
+                    {(currentBattle?.obstacles ?? []).map((obstacle, idx) => {
+                        const cx = obstacle.posX * scaleX;
+                        const cy = obstacle.posY * scaleY;
+                        const r = obstacle.radius * Math.min(scaleX, scaleY);
+                        let fill: string;
+                        let stroke: string;
+                        switch (obstacle.type) {
+                            case 'PLASMA_STORM':
+                                fill = 'rgba(180, 110, 255, 0.18)';
+                                stroke = '#b46eff';
+                                break;
+                            case 'SARGASSO':
+                                fill = 'rgba(90, 220, 200, 0.15)';
+                                stroke = '#5adcc8';
+                                break;
+                            case 'ASTEROID_FIELD':
+                                fill = 'rgba(180, 180, 180, 0.18)';
+                                stroke = '#b0b0b0';
+                                break;
+                            default:
+                                fill = 'rgba(200, 200, 200, 0.15)';
+                                stroke = '#c0c0c0';
+                        }
+                        return (
+                            <Circle
+                                key={`obstacle-${idx}-${obstacle.type}`}
+                                x={cx}
+                                y={cy}
+                                radius={r}
+                                fill={fill}
+                                stroke={stroke}
+                                strokeWidth={1.5}
+                                dash={[4, 3]}
+                                opacity={0.85}
+                            />
+                        );
+                    })}
+                </Layer>
+
                 {/* ─── Layer 2: Fog ghosts (14-11) ───────────────────────── */}
                 {/*
                  * FogLayer reads `tacticalStore.lastSeenEnemyPositions` +
