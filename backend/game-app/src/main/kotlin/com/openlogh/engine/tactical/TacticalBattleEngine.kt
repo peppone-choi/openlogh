@@ -788,8 +788,12 @@ class TacticalBattleEngine(
                 unit.velY = cmd.dirY * BASE_SPEED
             }
             "REVERSE" -> {
-                unit.velX = -unit.velX
-                unit.velY = -unit.velY
+                // Phase 24-12 (gap C7, gin7 manual p52):
+                // 「艦艇ユニットを含む反転の速度は、キャラクターの[機動]能力によって変化します」
+                // mobility stat 50 = neutral (1.0), 0 = 50% slow (0.5), 100 = 50% fast (1.5).
+                val mobilityFactor = (0.5 + unit.mobility / 100.0).coerceIn(0.5, 1.5)
+                unit.velX = -unit.velX * mobilityFactor
+                unit.velY = -unit.velY * mobilityFactor
             }
             "ATTACK", "FIRE" -> {
                 if (cmd.targetFleetId != null) unit.targetFleetId = cmd.targetFleetId
@@ -1004,11 +1008,16 @@ class TacticalBattleEngine(
         }
 
         // GUN damage
-        if (hasLoS && unit.energy.gun > 0 && dist <= GUN_RANGE) {
+        // Phase 24-12 (gap A9, gin7 manual p49): GUN attacks consume 軍需物資
+        // per shot. If the unit has no supplies left, the gun is inoperable.
+        if (hasLoS && unit.energy.gun > 0 && dist <= GUN_RANGE && unit.supplies > 0) {
             val gunDmg = (gunBaseDamage * unit.energy.gunMultiplier() * attackStatModifier
                 * formationAttack * stanceAttack * moraleModifier * trainingModifier)
             val sensorAccuracy = unit.energy.sensorMultiplier()
             val hitChance = (0.5 + sensorAccuracy * 0.3).coerceAtMost(0.90)
+            // Deduct a supply unit regardless of hit result — gin7 models it
+            // as shell expenditure, not accuracy.
+            unit.supplies = (unit.supplies - 1).coerceAtLeast(0)
             if (rng.nextDouble() < hitChance) {
                 applyDamage(target, gunDmg.toInt(), state, unit, "GUN")
             }

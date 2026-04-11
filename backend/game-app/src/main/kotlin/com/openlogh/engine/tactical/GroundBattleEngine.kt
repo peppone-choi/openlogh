@@ -23,14 +23,23 @@ data class GroundUnit(
  * Live ground battle box state.
  *
  * gin7 규칙: 지상전 박스 최대 30유닛 (공수 합산), 초과 유닛은 대기 큐에 보관.
+ *
+ * Phase 24-12 (gap A6/C3, gin7 manual p50): [planetType] gates which unit
+ * types can enter the ground battle box:
+ *   - "normal"   — all unit types
+ *   - "gas"      — no ARMORED_INFANTRY (heavy 装甲兵)
+ *   - "fortress" — no ARMORED_INFANTRY (fortress assault)
  */
 data class GroundBattleState(
     val planetId: Long,
     val attackerFactionId: Long,
     val defenderFactionId: Long,
+    /** "normal" / "gas" / "fortress" per [com.openlogh.entity.Planet.planetType]. */
+    val planetType: String = "normal",
     val attackers: MutableList<GroundUnit> = mutableListOf(),
     val defenders: MutableList<GroundUnit> = mutableListOf(),
     val waitingAttackers: MutableList<GroundUnit> = mutableListOf(),
+    val rejectedUnits: MutableList<GroundUnit> = mutableListOf(),
     var tickCount: Int = 0,
 ) {
     /** 현재 박스 내 총 유닛 수 (공수 합산) */
@@ -55,14 +64,38 @@ class GroundBattleEngine {
         const val MAX_UNITS_IN_BOX = 30
         /** 기본 지상전 피해 (count * morale / 100 비례) */
         const val BASE_GROUND_DAMAGE = 10
+
+        /**
+         * Phase 24-12 (gap A6/C3, gin7 manual p50): returns true if [unit]
+         * can legally deploy on a planet of the given [planetType]. Heavy
+         * 装甲兵 (ARMORED_INFANTRY) is blocked on gas giants and fortresses;
+         * all other unit types are accepted everywhere.
+         */
+        fun isUnitAllowedOnPlanetType(unit: GroundUnit, planetType: String): Boolean {
+            val normalized = unit.groundUnitType.uppercase()
+            // Heavy armor banned on gas/fortress per gin7 manual p50.
+            val isHeavyArmor = normalized == "ARMORED_INFANTRY"
+            return when (planetType) {
+                "gas", "fortress" -> !isHeavyArmor
+                else -> true
+            }
+        }
     }
 
     /**
      * 육전대 강하 — 공격 유닛을 박스에 추가.
      * 30유닛 초과 시 waitingAttackers 큐에 보관.
+     *
+     * Phase 24-12: units whose type is disallowed on [GroundBattleState.planetType]
+     * (e.g. ARMORED_INFANTRY on gas/fortress) are routed to `rejectedUnits`
+     * instead of entering the box.
      */
     fun addAttackers(state: GroundBattleState, units: List<GroundUnit>) {
         for (unit in units) {
+            if (!isUnitAllowedOnPlanetType(unit, state.planetType)) {
+                state.rejectedUnits.add(unit)
+                continue
+            }
             if (state.totalUnitsInBox < MAX_UNITS_IN_BOX) {
                 state.attackers.add(unit)
             } else {
@@ -73,9 +106,17 @@ class GroundBattleEngine {
 
     /**
      * 수비대 초기화 — 행성 수비 유닛 등록.
+     *
+     * Phase 24-12: filters out units disallowed by planet type.
      */
     fun initDefenders(state: GroundBattleState, units: List<GroundUnit>) {
-        state.defenders.addAll(units)
+        for (unit in units) {
+            if (isUnitAllowedOnPlanetType(unit, state.planetType)) {
+                state.defenders.add(unit)
+            } else {
+                state.rejectedUnits.add(unit)
+            }
+        }
     }
 
     /**

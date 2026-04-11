@@ -692,6 +692,67 @@ class Gin7CommandPipelineTest {
     }
 
     // ================================================================
+    // Phase 24-12 (A6/C3): Planet type ground combat filter
+    // gin7 manual p50 — 裝甲兵 blocked on gas giants and fortresses
+    // ================================================================
+
+    @Test
+    fun `A6 - Planet default type is normal`() {
+        val planet = com.openlogh.entity.Planet()
+        assertEquals("normal", planet.planetType)
+    }
+
+    @Test
+    fun `A6 - GroundBattleEngine allows all unit types on normal planet`() {
+        val state = com.openlogh.engine.tactical.GroundBattleState(
+            planetId = 1L, attackerFactionId = 1L, defenderFactionId = 2L,
+            planetType = "normal",
+        )
+        val engine = com.openlogh.engine.tactical.GroundBattleEngine()
+        val units = listOf(
+            com.openlogh.engine.tactical.GroundUnit(1L, 1L, "ARMORED_INFANTRY", 10, 10),
+            com.openlogh.engine.tactical.GroundUnit(2L, 1L, "ARMORED_GRENADIER", 10, 10),
+            com.openlogh.engine.tactical.GroundUnit(3L, 1L, "LIGHT_MARINE", 10, 10),
+        )
+        engine.addAttackers(state, units)
+        assertEquals(3, state.attackers.size, "Normal planet accepts all three types")
+        assertTrue(state.rejectedUnits.isEmpty())
+    }
+
+    @Test
+    fun `A6 - GroundBattleEngine rejects 裝甲兵 on gas giant`() {
+        val state = com.openlogh.engine.tactical.GroundBattleState(
+            planetId = 1L, attackerFactionId = 1L, defenderFactionId = 2L,
+            planetType = "gas",
+        )
+        val engine = com.openlogh.engine.tactical.GroundBattleEngine()
+        val units = listOf(
+            com.openlogh.engine.tactical.GroundUnit(1L, 1L, "ARMORED_INFANTRY", 10, 10),
+            com.openlogh.engine.tactical.GroundUnit(2L, 1L, "LIGHT_MARINE", 10, 10),
+        )
+        engine.addAttackers(state, units)
+        assertEquals(1, state.attackers.size, "Only LIGHT_MARINE should land on a gas giant")
+        assertEquals(1, state.rejectedUnits.size, "ARMORED_INFANTRY should be rejected")
+        assertEquals("ARMORED_INFANTRY", state.rejectedUnits[0].groundUnitType)
+    }
+
+    @Test
+    fun `A6 - GroundBattleEngine rejects 裝甲兵 on fortress assault`() {
+        val state = com.openlogh.engine.tactical.GroundBattleState(
+            planetId = 1L, attackerFactionId = 1L, defenderFactionId = 2L,
+            planetType = "fortress",
+        )
+        val engine = com.openlogh.engine.tactical.GroundBattleEngine()
+        val units = listOf(
+            com.openlogh.engine.tactical.GroundUnit(1L, 1L, "ARMORED_INFANTRY", 10, 10),
+            com.openlogh.engine.tactical.GroundUnit(2L, 1L, "ARMORED_GRENADIER", 10, 10),
+        )
+        engine.addAttackers(state, units)
+        assertEquals(1, state.attackers.size)
+        assertEquals("ARMORED_GRENADIER", state.attackers[0].groundUnitType)
+    }
+
+    // ================================================================
     // Phase 24-11 (D1 complement): Alliance 상급대장 tier removed
     // gin7 manual p34 — 帝国 only has 上級大将 (Fleet Admiral, tier 9).
     // Alliance promotes 大将 (tier 8) → 元帥 (tier 10) directly.

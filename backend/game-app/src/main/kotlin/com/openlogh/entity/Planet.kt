@@ -105,6 +105,21 @@ class Planet(
     @Column(name = "garrison_capacity", nullable = false)
     var garrisonCapacity: Int = 0,
 
+    /**
+     * Phase 24-12 (gap A6/C3): planet terrain classification that gates which
+     * ground units can be deployed during planetary ground combat.
+     *
+     * Values (gin7 manual p50):
+     *   - "normal"   : all three types (裝甲兵 / 裝甲擲彈兵 / 軽裝陸戰兵)
+     *   - "gas"      : only 裝甲擲彈兵 and 軽裝陸戰兵 (no 裝甲兵)
+     *   - "fortress" : only 裝甲擲彈兵 and 軽裝陸戰兵 (fortress assault)
+     *
+     * Consumed by GroundBattleEngine.addAttackers / initDefenders which
+     * filter out disallowed unit types before they enter the 30-unit box.
+     */
+    @Column(name = "planet_type", nullable = false)
+    var planetType: String = "normal",
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     var conflict: MutableMap<String, Any> = mutableMapOf(),
