@@ -11,6 +11,7 @@ import com.openlogh.model.Formation
 import com.openlogh.model.InjuryEvent
 import com.openlogh.model.OperationStatus
 import com.openlogh.model.UnitStance
+import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OfficerRepository
 import com.openlogh.repository.TacticalBattleRepository
@@ -31,6 +32,7 @@ class TacticalBattleService(
     private val tacticalBattleRepository: TacticalBattleRepository,
     private val fleetRepository: FleetRepository,
     private val officerRepository: OfficerRepository,
+    private val factionRepository: FactionRepository,
     private val battleTriggerService: BattleTriggerService,
     private val gameEventService: GameEventService,
     private val messagingTemplate: SimpMessagingTemplate,
@@ -527,11 +529,14 @@ class TacticalBattleService(
         for (injuryEvent in state.pendingInjuryEvents) {
             val officer = officerRepository.findById(injuryEvent.officerId).orElse(null) ?: continue
 
-            // 귀환성 결정: 설정된 귀환성 → 진영 수도(미구현, Phase 4) → 현재 행성
+            // 귀환성 결정 (Phase 24-07, gin7 manual p51):
+            //   officer.returnPlanetId → faction.capitalPlanetId → currentPlanetId
+            val factionCapital = factionRepository.findById(officer.factionId)
+                .orElse(null)?.capitalPlanetId
             val returnPlanetId = InjuryEvent.resolveReturnPlanet(
-                configuredReturnPlanetId = null,   // officer.returnPlanetId 미구현 — Phase 4에서 추가
-                factionCapitalPlanetId = null,     // FactionRepository 수도 조회 — Phase 4에서 구현
-                currentPlanetId = officer.planetId ?: 1L,
+                configuredReturnPlanetId = officer.returnPlanetId,
+                factionCapitalPlanetId = factionCapital,
+                currentPlanetId = officer.planetId,
             )
 
             // 부상 수치 누적 갱신 (0~80 스케일)

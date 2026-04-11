@@ -6,6 +6,7 @@ import com.openlogh.command.gin7.personnel.AppointCommand
 import com.openlogh.command.gin7.politics.GovernanceGoalCommand
 import com.openlogh.entity.Officer
 import com.openlogh.model.CommandGroup
+import com.openlogh.model.InjuryEvent
 import com.openlogh.model.PositionCard
 import com.openlogh.model.PositionCardRegistry
 import com.openlogh.model.StatCategory
@@ -241,5 +242,63 @@ class Gin7CommandPipelineTest {
 
         assertTrue(result.success, "임명 should succeed (no-op) for duplicate card")
         assertEquals(2, target.positionCards.size, "Card count should remain 2")
+    }
+
+    // ================================================================
+    // Phase 24-07 (A7/C4): 戦死 → 帰還惑星 워프
+    // gin7 manual p51 — 戦死는 미구현, 負傷 → 帰還惑星 워프
+    // ================================================================
+
+    @Test
+    fun `A7 - Officer returnPlanetId defaults to null per manual p51`() {
+        val officer = makeOfficer(listOf("PERSONAL"))
+        assertNull(
+            officer.returnPlanetId,
+            "New officers should have no configured return planet (fall back to faction capital)"
+        )
+    }
+
+    @Test
+    fun `A7 - Officer returnPlanetId can be set to target planet`() {
+        val officer = makeOfficer(listOf("PERSONAL"))
+        officer.returnPlanetId = 42L
+        assertEquals(42L, officer.returnPlanetId)
+    }
+
+    @Test
+    fun `A7 - resolveReturnPlanet prefers officer configured return planet`() {
+        // Officer wins: configured 10 > faction 20 > current 30
+        assertEquals(
+            10L,
+            InjuryEvent.resolveReturnPlanet(
+                configuredReturnPlanetId = 10L,
+                factionCapitalPlanetId = 20L,
+                currentPlanetId = 30L,
+            )
+        )
+    }
+
+    @Test
+    fun `A7 - resolveReturnPlanet falls back to faction capital when officer return null`() {
+        assertEquals(
+            20L,
+            InjuryEvent.resolveReturnPlanet(
+                configuredReturnPlanetId = null,
+                factionCapitalPlanetId = 20L,
+                currentPlanetId = 30L,
+            )
+        )
+    }
+
+    @Test
+    fun `A7 - resolveReturnPlanet falls back to current planet when both null`() {
+        assertEquals(
+            30L,
+            InjuryEvent.resolveReturnPlanet(
+                configuredReturnPlanetId = null,
+                factionCapitalPlanetId = null,
+                currentPlanetId = 30L,
+            )
+        )
     }
 }

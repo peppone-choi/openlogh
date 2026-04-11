@@ -298,6 +298,15 @@ class Officer(
     @Column(name = "last_access_at")
     var lastAccessAt: OffsetDateTime? = null,
 
+    /**
+     * Configured return planet (帰還惑星) for tactical injury warp.
+     * When this officer's flagship is destroyed, they are warped here instead
+     * of the faction capital. Null = fall back to faction capital → current planet.
+     * Source: gin7 manual p51 — 戦死/負傷 처리 귀환성.
+     */
+    @Column(name = "return_planet_id")
+    var returnPlanetId: Long? = null,
+
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime = OffsetDateTime.now(),
 ) {
