@@ -434,6 +434,31 @@ class TacticalBattleEngine(
                             sourceUnitId = replacementUnit.fleetId,
                             detail = "${replacementUnit.officerName} 기함 부대 대체"))
                     }
+
+                    // Phase 24-15 (gap C5, gin7 manual p51):
+                    // "艦艇ユニットに搭載されている陸戦隊ユニットは、艦艇が撃破されても
+                    //  自動的に他の艦艇に移動します。"
+                    // Redistribute the destroyed unit's embarked ground troops to the
+                    // largest surviving same-side unit (prefer the new flagship). If no
+                    // friendly survivor, the chitai is lost with the ship.
+                    if (unit.groundUnitsEmbark > 0) {
+                        val receiver = replacementUnit ?: state.units
+                            .filter { it.isAlive && it.side == unit.side && it.fleetId != unit.fleetId }
+                            .maxByOrNull { it.ships }
+                        if (receiver != null) {
+                            receiver.groundUnitsEmbark += unit.groundUnitsEmbark
+                            state.tickEvents.add(BattleTickEvent("ground_transfer",
+                                sourceUnitId = unit.fleetId, targetUnitId = receiver.fleetId,
+                                value = unit.groundUnitsEmbark,
+                                detail = "${unit.officerName} 육전대 ${unit.groundUnitsEmbark}유닛 → ${receiver.officerName}"))
+                            unit.groundUnitsEmbark = 0
+                        } else {
+                            state.tickEvents.add(BattleTickEvent("ground_annihilated",
+                                sourceUnitId = unit.fleetId, value = unit.groundUnitsEmbark,
+                                detail = "${unit.officerName} 육전대 ${unit.groundUnitsEmbark}유닛 전멸 (수령 부대 없음)"))
+                            unit.groundUnitsEmbark = 0
+                        }
+                    }
                 }
 
                 // SUCC-05: subfleet commander incapacitated -> return units to direct command
