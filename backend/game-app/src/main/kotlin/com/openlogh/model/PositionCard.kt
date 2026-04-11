@@ -1,7 +1,11 @@
 package com.openlogh.model
 
 /**
- * All 77 position cards from gin7's organizational simulation system.
+ * gin7 directorial-권한 카드 집합.
+ * Phase 24-17 (gap D1, gin7 manual p58-65): Alliance 国防委員会 산하 11 부장직을
+ * 각각 독립 카드로 분리하여 매뉴얼 별표와 1:1 정렬. 이전까지는 `DEFENSE_DEPT_CHIEF`
+ * 한 장에 maxHolders=11로 뭉쳐 있었음.
+ *
  * Each card grants access to specific command groups and has rank/faction constraints.
  *
  * @param code String identifier
@@ -345,10 +349,55 @@ enum class PositionCard(
     ),
 
     // ===== Alliance Defense Committee Departments =====
+    //
+    // Phase 24-17 (gap D1, gin7 manual p61 同盟軍組織構成表):
+    // 매뉴얼 별표는 国防委員会 산하 11개 부장직을 각각 별도의 직무권한카드로 명시한다.
+    // v2.4 까지는 `DEFENSE_DEPT_CHIEF` 한 장 + maxHolders=11로 뭉쳐져 있었으나,
+    // 실제 gin7 권한 체계는 부서별로 발령 가능한 커맨드 그룹이 다르므로 11장 분리 구현.
 
-    DEFENSE_DEPT_CHIEF(
-        "DEFENSE_DEPT_CHIEF", "국방위원회부장", "Defense Dept Chief", "국방위원회", 11, 7, 10, "alliance",
-        setOf(CommandGroup.COMMAND, CommandGroup.LOGISTICS, CommandGroup.INTELLIGENCE, CommandGroup.PERSONNEL),
+    DEFENSE_INVESTIGATION_DEPT(
+        "DEFENSE_INVESTIGATION_DEPT", "국방위원회査問部長", "Defense Investigation Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.PERSONNEL, CommandGroup.INTELLIGENCE),
+    ),
+    DEFENSE_STRATEGY_DEPT(
+        "DEFENSE_STRATEGY_DEPT", "국방위원회戦略部長", "Defense Strategy Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.COMMAND),
+    ),
+    DEFENSE_HR_DEPT(
+        "DEFENSE_HR_DEPT", "국방위원회人事部長", "Defense HR Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.PERSONNEL),
+    ),
+    DEFENSE_COUNTERINTEL_DEPT(
+        "DEFENSE_COUNTERINTEL_DEPT", "국방위원회防諜部長", "Defense Counter-Intelligence Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.INTELLIGENCE),
+    ),
+    DEFENSE_INTEL_DEPT(
+        "DEFENSE_INTEL_DEPT", "국방위원회情報部長", "Defense Intelligence Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.INTELLIGENCE),
+    ),
+    DEFENSE_COMMUNICATIONS_DEPT(
+        "DEFENSE_COMMUNICATIONS_DEPT", "국방위원회通信部長", "Defense Communications Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.LOGISTICS),
+    ),
+    DEFENSE_EQUIPMENT_DEPT(
+        "DEFENSE_EQUIPMENT_DEPT", "국방위원회装備部長", "Defense Equipment Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.LOGISTICS),
+    ),
+    DEFENSE_FACILITIES_DEPT(
+        "DEFENSE_FACILITIES_DEPT", "국방위원회施設部長", "Defense Facilities Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.LOGISTICS),
+    ),
+    DEFENSE_ACCOUNTING_DEPT(
+        "DEFENSE_ACCOUNTING_DEPT", "국방위원회経理部長", "Defense Accounting Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.LOGISTICS),
+    ),
+    DEFENSE_EDUCATION_DEPT(
+        "DEFENSE_EDUCATION_DEPT", "국방위원회教育部長", "Defense Education Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.PERSONNEL),
+    ),
+    DEFENSE_HEALTH_DEPT(
+        "DEFENSE_HEALTH_DEPT", "국방위원회衛生部長", "Defense Health Dept Chief", "국방위원회", 1, 7, 10, "alliance",
+        setOf(CommandGroup.LOGISTICS),
     ),
 
     // ===== Alliance Joint Operations HQ (통합작전본부) =====
