@@ -22,6 +22,18 @@ import {
 } from '@/lib/game-utils';
 import { calcCityGoldIncome, calcCityRiceIncome, calcCityWallRiceIncome, countCityOfficers } from '@/lib/income-calc';
 
+// Phase 25-04: 행성 meta["navigable"] false 여부 판정 (Phase 24-27 gin7 매뉴얼 p30).
+// 백엔드 jsonb 라운드트립 타입 드리프트(boolean/string/number) 모두 수용.
+function isCityNonNavigable(meta: Record<string, unknown> | undefined): boolean {
+    if (!meta) return false;
+    const flag = meta.navigable;
+    if (flag === undefined || flag === null) return false;
+    if (typeof flag === 'boolean') return !flag;
+    if (typeof flag === 'string') return flag.toLowerCase() === 'false';
+    if (typeof flag === 'number') return flag === 0;
+    return false;
+}
+
 // Phase 25-03: planet_type 배지 헬퍼 (Phase 24-12 gin7 매뉴얼 p50).
 function planetTypeLabel(type: string): string {
     switch (type) {
@@ -419,6 +431,16 @@ function CityPageContent() {
                                             title={planetTypeTooltip(city.planetType)}
                                         >
                                             {planetTypeLabel(city.planetType)}
+                                        </span>
+                                    )}
+                                    {/* Phase 25-04: 항행불능 그리드 경고 배지. */}
+                                    {isCityNonNavigable(city.meta) && (
+                                        <span
+                                            className="ml-1 text-[10px] px-1 py-[1px] rounded border"
+                                            style={{ borderColor: '#ff6b6b', color: '#ff6b6b' }}
+                                            title="항행불능 그리드 — 함대 진입 불가"
+                                        >
+                                            항행불능
                                         </span>
                                     )}
                                     <span className="ml-2 text-xs opacity-90">{owner?.name ?? '공백지'}</span>
