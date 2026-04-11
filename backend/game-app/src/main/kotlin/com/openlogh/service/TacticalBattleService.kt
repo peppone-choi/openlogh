@@ -11,9 +11,11 @@ import com.openlogh.model.Formation
 import com.openlogh.model.InjuryEvent
 import com.openlogh.model.OperationStatus
 import com.openlogh.model.UnitStance
+import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.TacticalBattleRepository
 import kotlin.math.sqrt
 import org.slf4j.LoggerFactory
@@ -33,6 +35,8 @@ class TacticalBattleService(
     private val fleetRepository: FleetRepository,
     private val officerRepository: OfficerRepository,
     private val factionRepository: FactionRepository,
+    private val planetRepository: PlanetRepository,
+    private val diplomacyRepository: DiplomacyRepository,
     private val battleTriggerService: BattleTriggerService,
     private val gameEventService: GameEventService,
     private val messagingTemplate: SimpMessagingTemplate,
@@ -364,6 +368,18 @@ class TacticalBattleService(
                     }
                 }
             }
+
+            // Phase 24-16 (gap A4, gin7 manual p40): 페잔 자치령 점령 페널티 적용.
+            //
+            // 페잔 통상망 붕괴로 가해 진영이 입는 실효 타격:
+            //   1. 모든 행성 민심 -10 (자본 이탈 / 페잔 교역 중단)
+            //   2. 진영 tech_level -0.5 (기술 교류 단절)
+            //   3. 진영 military_power × 0.95 (페잔 경유 물자·기술 수입 중단)
+            //   4. 해당 진영이 체결한 불가침 조약 전부 파기 (타 진영 반발)
+            //   5. faction.meta["neutralityViolations"] 카운터 누적
+            captureResult.neutralityViolation?.let { penalty ->
+                applyFezzanNeutralityPenalty(penalty)
+            }
         }
 
         state.tickEvents.add(BattleTickEvent("conquest", sourceUnitId = unit.fleetId,
@@ -371,6 +387,68 @@ class TacticalBattleService(
 
         log.info("Conquest {} by officer {}: {}", request.command, officerId, result.reason)
         return result
+    }
+
+    /**
+     * Phase 24-16 (gap A4, gin7 manual p40): 페잔 자치령 점령 페널티 DB 적용.
+     *
+     * 엔진(PlanetCaptureProcessor)이 중립 위반을 감지하면 [NeutralityViolationPenalty]
+     * 객체만 반환한다. 실제 진영/행성/외교 행 갱신은 서비스 계층인 여기에서 수행한다.
+     *
+     * 적용 효과:
+     *   - 위반 진영의 모든 행성: approval -= approvalPenalty
+     *   - 위반 진영의 tech_level -= techLevelPenalty (0 이하로 내려가지 않음)
+     *   - 위반 진영의 military_power *= militaryPowerMultiplier
+     *   - faction.meta["neutralityViolations"] 카운터 += 1
+     *   - 해당 진영이 체결한 활성 불가침 조약 전부 파기 (상대 진영 반발 시뮬레이션)
+     */
+    private fun applyFezzanNeutralityPenalty(penalty: NeutralityViolationPenalty) {
+        val violator = factionRepository.findById(penalty.violatorFactionId).orElse(null)
+            ?: run {
+                log.warn("Fezzan neutrality penalty target faction {} not found", penalty.violatorFactionId)
+                return
+            }
+
+        // 1. 진영 전체 행성 지지율 하락 — 자본 이탈 / 페잔 교역 중단 효과.
+        val planets = planetRepository.findBySessionIdAndFactionId(violator.sessionId, violator.id)
+        for (planet in planets) {
+            planet.approval = (planet.approval - penalty.approvalPenalty.toFloat()).coerceAtLeast(0f)
+        }
+        if (planets.isNotEmpty()) planetRepository.saveAll(planets)
+
+        // 2. 기술 교류 단절 / 군사력 저하.
+        violator.techLevel = (violator.techLevel - penalty.techLevelPenalty).coerceAtLeast(0f)
+        violator.militaryPower =
+            (violator.militaryPower * penalty.militaryPowerMultiplier).toInt().coerceAtLeast(0)
+
+        // 3. 중립 위반 이력 누적 (후속 페널티 스케일링 포인트).
+        val prior = (violator.meta["neutralityViolations"] as? Number)?.toInt() ?: 0
+        violator.meta["neutralityViolations"] = prior + 1
+
+        factionRepository.save(violator)
+
+        // 4. 활성 불가침 조약 파기 — 페잔 점령 소식에 상대 진영이 반발.
+        if (penalty.breakNonAggressionPacts) {
+            val relations = diplomacyRepository.findAll()
+                .filter { !it.isDead && it.sessionId == violator.sessionId }
+                .filter { it.srcFactionId == violator.id || it.destFactionId == violator.id }
+                .filter { it.stateCode == "불가침" }
+            for (rel in relations) {
+                rel.isDead = true
+            }
+            if (relations.isNotEmpty()) diplomacyRepository.saveAll(relations)
+            log.info(
+                "Fezzan neutrality violation by faction {}: broke {} non-aggression pacts",
+                violator.id, relations.size
+            )
+        }
+
+        log.info(
+            "Fezzan neutrality penalty applied to faction {}: approval -{} on {} planets, " +
+                "techLevel -{}, militaryPower *{}, violation count now {}",
+            violator.id, penalty.approvalPenalty, planets.size,
+            penalty.techLevelPenalty, penalty.militaryPowerMultiplier, prior + 1
+        )
     }
 
     // ── Battle End ──

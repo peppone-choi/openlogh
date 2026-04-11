@@ -15,12 +15,15 @@ class PlanetConquestServiceTest {
         missileCount: Int = 1000,
         militaryWorkPoint: Int = 0,
         intelWorkPoint: Int = 0,
+        attackerFactionType: String = "empire",
+        defenderFactionType: String = "alliance",
     ) = ConquestRequest(
         command = command,
         attackerOfficerId = 1L,
         attackerFactionId = 10L,
-        attackerFactionType = "empire",
+        attackerFactionType = attackerFactionType,
         defenderFactionId = 20L,
+        defenderFactionType = defenderFactionType,
         planetId = 99L,
         planetName = "테스트행성",
         planetDefense = planetDefense,
@@ -181,6 +184,97 @@ class PlanetConquestServiceTest {
         val req = baseRequest(ConquestCommand.INFILTRATION, militaryWorkPoint = 4000)
         val result = service.executeConquest(req)
         assertEquals(5, result.captureResult!!.garrisonAnnihilated)
+    }
+
+    // ── Phase 24-16: Fezzan neutrality violation (gap A4, gin7 manual p40) ──
+
+    @Test
+    fun `capturing a Fezzan planet emits neutralityViolation on empire attacker`() {
+        val req = baseRequest(
+            ConquestCommand.INFILTRATION,
+            militaryWorkPoint = 4000,
+            attackerFactionType = "empire",
+            defenderFactionType = "fezzan",
+        )
+        val result = service.executeConquest(req)
+        assertTrue(result.success)
+        val penalty = result.captureResult!!.neutralityViolation
+            ?: fail("Empire capturing fezzan planet must yield a neutrality penalty")
+        assertEquals(10L, penalty.violatorFactionId)
+        assertEquals(PlanetCaptureProcessor.FEZZAN_APPROVAL_PENALTY, penalty.approvalPenalty)
+        assertEquals(PlanetCaptureProcessor.FEZZAN_TECH_LEVEL_PENALTY, penalty.techLevelPenalty)
+        assertEquals(PlanetCaptureProcessor.FEZZAN_MILITARY_POWER_MULTIPLIER, penalty.militaryPowerMultiplier)
+        assertTrue(penalty.breakNonAggressionPacts)
+    }
+
+    @Test
+    fun `capturing a Fezzan planet emits neutralityViolation on alliance attacker`() {
+        val req = baseRequest(
+            ConquestCommand.SUBVERSION,
+            intelWorkPoint = 1000,
+            attackerFactionType = "alliance",
+            defenderFactionType = "fezzan",
+        )
+        val result = service.executeConquest(req)
+        assertTrue(result.success)
+        assertNotNull(result.captureResult!!.neutralityViolation)
+    }
+
+    @Test
+    fun `capturing a non-Fezzan planet does not emit neutralityViolation`() {
+        val req = baseRequest(
+            ConquestCommand.INFILTRATION,
+            militaryWorkPoint = 4000,
+            attackerFactionType = "empire",
+            defenderFactionType = "alliance",
+        )
+        val result = service.executeConquest(req)
+        assertTrue(result.success)
+        assertNull(result.captureResult!!.neutralityViolation,
+            "Non-fezzan defender must not produce a neutrality penalty")
+    }
+
+    @Test
+    fun `Fezzan self-capture does not emit neutralityViolation`() {
+        // 페잔이 (가상 시나리오: 내부 쿠데타 등) 자국 영토를 재탈환하는 경우 위반 아님.
+        val req = baseRequest(
+            ConquestCommand.INFILTRATION,
+            militaryWorkPoint = 4000,
+            attackerFactionType = "fezzan",
+            defenderFactionType = "fezzan",
+        )
+        val result = service.executeConquest(req)
+        assertTrue(result.success)
+        assertNull(result.captureResult!!.neutralityViolation,
+            "Fezzan recapturing its own planet is not a neutrality violation")
+    }
+
+    @Test
+    fun `failed conquest does not apply neutralityViolation even against Fezzan`() {
+        // 점거 실패(작전포인트 부족)는 점령이 성립하지 않으므로 페널티도 없음.
+        val req = baseRequest(
+            ConquestCommand.INFILTRATION,
+            militaryWorkPoint = 3000,
+            attackerFactionType = "empire",
+            defenderFactionType = "fezzan",
+        )
+        val result = service.executeConquest(req)
+        assertFalse(result.success)
+        assertNull(result.captureResult)
+    }
+
+    @Test
+    fun `neutralityViolation logs include Fezzan trade network message`() {
+        val req = baseRequest(
+            ConquestCommand.INFILTRATION,
+            militaryWorkPoint = 4000,
+            attackerFactionType = "empire",
+            defenderFactionType = "fezzan",
+        )
+        val result = service.executeConquest(req)
+        val logs = result.captureResult!!.logs
+        assertTrue(logs.any { it.contains("페잔 통상망 붕괴") },
+            "Capture log must describe Fezzan trade network collapse")
     }
 
     // ── ConquestCommand enum ──

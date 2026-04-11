@@ -69,6 +69,12 @@ data class ConquestRequest(
     /** "empire", "alliance", "fezzan", "rebel" */
     val attackerFactionType: String,
     val defenderFactionId: Long,
+    /**
+     * Phase 24-16 (gap A4): defender faction type ("empire"/"alliance"/"fezzan"/"rebel"/"neutral").
+     * Required for Fezzan neutrality-violation detection in [PlanetCaptureProcessor].
+     * Defaults to "neutral" for backward compatibility with older callsites.
+     */
+    val defenderFactionType: String = "neutral",
     val planetId: Long,
     val planetName: String,
     /** 현재 요새 방위력 */
@@ -242,6 +248,7 @@ class PlanetConquestService(
                 captorFactionId = req.attackerFactionId,
                 captorFactionType = req.attackerFactionType,
                 defeatedFactionId = req.defenderFactionId,
+                defeatedFactionType = req.defenderFactionType,
                 garrisonUnits = req.garrisonUnits,
                 warehouseSupplies = req.warehouseSupplies,
                 shipyardShipsInProgress = req.shipyardShipsInProgress,

@@ -138,6 +138,7 @@ class BattleWebSocketController(
                 attackerFactionId = payload.attackerFactionId,
                 attackerFactionType = payload.attackerFactionType,
                 defenderFactionId = payload.defenderFactionId,
+                defenderFactionType = payload.defenderFactionType,
                 planetId = payload.planetId,
                 planetName = payload.planetName,
                 planetDefense = payload.planetDefense,
@@ -316,6 +317,8 @@ data class PlanetConquestRequest(
     val attackerFactionId: Long,
     val attackerFactionType: String,
     val defenderFactionId: Long,
+    /** Phase 24-16 (gap A4): defender faction type for Fezzan neutrality detection. */
+    val defenderFactionType: String = "neutral",
     val planetId: Long,
     val planetName: String,
     val planetDefense: Int,

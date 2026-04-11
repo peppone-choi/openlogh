@@ -5,9 +5,11 @@ import com.openlogh.engine.tactical.TacticalBattleState
 import com.openlogh.engine.tactical.ai.MissionObjective
 import com.openlogh.entity.OperationPlan
 import com.openlogh.model.OperationStatus
+import com.openlogh.repository.DiplomacyRepository
 import com.openlogh.repository.FactionRepository
 import com.openlogh.repository.FleetRepository
 import com.openlogh.repository.OfficerRepository
+import com.openlogh.repository.PlanetRepository
 import com.openlogh.repository.TacticalBattleRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -28,8 +30,9 @@ import java.util.concurrent.ConcurrentHashMap
  * to seed the private `activeBattles` field.
  *
  * VERIFIED TacticalBattleService constructor (TacticalBattleService.kt:27-35)
- * — EXACTLY 8 params: tacticalBattleRepository, fleetRepository,
+ * — 10 params: tacticalBattleRepository, fleetRepository,
  *   officerRepository, factionRepository (Phase 24-07, for return-planet warp),
+ *   planetRepository + diplomacyRepository (Phase 24-16, Fezzan neutrality penalty),
  *   battleTriggerService, gameEventService, messagingTemplate, shipStatRegistry.
  *   `engine` and `planetConquestService` are CREATED inside the class, not injected.
  */
@@ -41,6 +44,8 @@ class TacticalBattleServiceSyncTest {
             fleetRepository = mock(FleetRepository::class.java),
             officerRepository = mock(OfficerRepository::class.java),
             factionRepository = mock(FactionRepository::class.java),
+            planetRepository = mock(PlanetRepository::class.java),
+            diplomacyRepository = mock(DiplomacyRepository::class.java),
             battleTriggerService = mock(BattleTriggerService::class.java),
             gameEventService = mock(GameEventService::class.java),
             messagingTemplate = mock(SimpMessagingTemplate::class.java),
