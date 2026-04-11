@@ -339,6 +339,33 @@ class TacticalBattleService(
             unit.missileCount = (unit.missileCount - result.missilesConsumed).coerceAtLeast(0)
         }
 
+        // Phase 24-14 (gap C20, gin7 manual p50):
+        // "職務権限カードの喪失 — 敗北した陣営のキャラクターは、管轄していた惑星/要塞固有の
+        //  職務権限カード(惑星総督や惑星守備隊指揮官、封土カード等)が直ちに失われます."
+        //
+        // PlanetCaptureProcessor returns the list of cards that should be
+        // stripped from each defeated officer; here we actually apply that
+        // mutation to the Officer rows so downstream systems (rank ladder,
+        // mail routing, command authority) see the new state.
+        val captureResult = result.captureResult
+        if (result.success && captureResult != null) {
+            val removedCards = captureResult.removedPositionCards.toSet()
+            if (removedCards.isNotEmpty() && request.defeatedOfficerIds.isNotEmpty()) {
+                for (defeatedOfficerId in request.defeatedOfficerIds) {
+                    val officer = officerRepository.findById(defeatedOfficerId).orElse(null)
+                        ?: continue
+                    val changed = officer.positionCards.removeAll(removedCards)
+                    if (changed) {
+                        officerRepository.save(officer)
+                        log.info(
+                            "Officer {} lost {} position cards on planet {} capture: {}",
+                            officer.id, removedCards.size, request.planetId, removedCards
+                        )
+                    }
+                }
+            }
+        }
+
         state.tickEvents.add(BattleTickEvent("conquest", sourceUnitId = unit.fleetId,
             detail = "${request.command.displayNameKo}: ${result.reason}"))
 
